@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -111,6 +112,45 @@ func TestNodeCheckIns_Get(t *testing.T) {
 			fmt.Sprintf("%s/api/v1/management/nodes/invalid/check-ins/%d", e.testServer.URL, e.checkIn.ID), nil, nil)
 		assertStatus(t, resp, http.StatusBadRequest)
 	})
+}
+
+// The read projection exposes the binary (software update) stream fields, not just the config ones, so
+// GET check-ins reflects a node installing or failing a binary update.
+func TestNodeCheckIns_ExposesBinaryFields(t *testing.T) {
+	e := setupNodeCheckInsEnv(t)
+
+	var checkIn queries.NodeCheckIn
+	err := e.store.Write(t.Context(), func(tx *store.Tx) error {
+		var err error
+		checkIn, err = tx.CreateNodeCheckIn(t.Context(), queries.CreateNodeCheckInParams{
+			NodeID:                       e.node.ID,
+			CurrentBinaryDeploymentID:    sql.NullInt64{Int64: 7, Valid: true},
+			InstallingBinaryDeploymentID: sql.NullInt64{Int64: 8, Valid: true},
+			InstallingBinaryError:        sql.NullString{String: "boom", Valid: true},
+			InstallingBinaryAttempts:     sql.NullInt64{Int64: 3, Valid: true},
+		})
+		return err
+	})
+	if err != nil {
+		t.Fatalf("create check-in: %v", err)
+	}
+
+	var got NodeCheckIn
+	resp := doRequest(t, e.client, "GET", nodeCheckInURL(e.testServer.URL, e.node.ID, checkIn.ID), nil, &got)
+	assertStatus(t, resp, http.StatusOK)
+
+	if got.CurrentBinaryDeploymentID == nil || *got.CurrentBinaryDeploymentID != 7 {
+		t.Errorf("CurrentBinaryDeploymentID = %v, want 7", got.CurrentBinaryDeploymentID)
+	}
+	if got.InstallingBinaryDeploymentID == nil || *got.InstallingBinaryDeploymentID != 8 {
+		t.Errorf("InstallingBinaryDeploymentID = %v, want 8", got.InstallingBinaryDeploymentID)
+	}
+	if got.InstallingBinaryError != "boom" {
+		t.Errorf("InstallingBinaryError = %q, want %q", got.InstallingBinaryError, "boom")
+	}
+	if got.InstallingBinaryAttempts == nil || *got.InstallingBinaryAttempts != 3 {
+		t.Errorf("InstallingBinaryAttempts = %v, want 3", got.InstallingBinaryAttempts)
+	}
 }
 
 func TestNodeCheckIns_List(t *testing.T) {

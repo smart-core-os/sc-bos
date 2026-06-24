@@ -21,8 +21,8 @@ const (
 	statusCancelled  = "cancelled"
 )
 
-// Deployment is the JSON representation of a deployment.
-type Deployment struct {
+// ConfigDeployment is the JSON representation of a deployment.
+type ConfigDeployment struct {
 	ID              int64      `json:"id,string"`
 	ConfigVersionID int64      `json:"configVersionId,string"`
 	Status          string     `json:"status"`
@@ -31,8 +31,8 @@ type Deployment struct {
 	Reason          string     `json:"reason,omitempty"`
 }
 
-func toDeployment(d queries.Deployment) Deployment {
-	out := Deployment{
+func toConfigDeployment(d queries.ConfigDeployment) ConfigDeployment {
+	out := ConfigDeployment{
 		ID:              d.ID,
 		ConfigVersionID: d.ConfigVersionID,
 		Status:          d.Status,
@@ -47,20 +47,20 @@ func toDeployment(d queries.Deployment) Deployment {
 	return out
 }
 
-func toDeployments(deployments []queries.Deployment) []Deployment {
-	out := make([]Deployment, len(deployments))
+func toConfigDeployments(deployments []queries.ConfigDeployment) []ConfigDeployment {
+	out := make([]ConfigDeployment, len(deployments))
 	for i, d := range deployments {
-		out[i] = toDeployment(d)
+		out[i] = toConfigDeployment(d)
 	}
 	return out
 }
 
-type createDeploymentRequest struct {
+type createConfigDeploymentRequest struct {
 	ConfigVersionID int64  `json:"configVersionId,string"`
 	Status          string `json:"status,omitempty"`
 }
 
-type updateDeploymentStatusRequest struct {
+type updateConfigDeploymentStatusRequest struct {
 	Status string `json:"status"`
 	Reason string `json:"reason,omitempty"`
 }
@@ -77,7 +77,7 @@ func isValidStatus(status string) bool {
 	return validStatuses[status]
 }
 
-func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
+func (s *Server) listConfigDeployments(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
 	beforeID, limit, err := parsePaginationDesc(r)
@@ -109,24 +109,24 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []queries.Deployment
+	var items []queries.ConfigDeployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
 		switch {
 		case nodeID != 0:
-			items, err = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
+			items, err = tx.ListConfigDeploymentsByNode(r.Context(), queries.ListConfigDeploymentsByNodeParams{
 				NodeID:   nodeID,
 				BeforeID: beforeID,
 				Limit:    limit + 1,
 			})
 		case configVersionID != 0:
-			items, err = tx.ListDeploymentsByConfigVersion(r.Context(), queries.ListDeploymentsByConfigVersionParams{
+			items, err = tx.ListConfigDeploymentsByConfigVersion(r.Context(), queries.ListConfigDeploymentsByConfigVersionParams{
 				ConfigVersionID: configVersionID,
 				BeforeID:        beforeID,
 				Limit:           limit + 1,
 			})
 		default:
-			items, err = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
+			items, err = tx.ListConfigDeployments(r.Context(), queries.ListConfigDeploymentsParams{
 				BeforeID: beforeID,
 				Limit:    limit + 1,
 			})
@@ -145,16 +145,16 @@ func (s *Server) listDeployments(w http.ResponseWriter, r *http.Request) {
 		items = items[:limit]
 	}
 
-	writeJSON(w, http.StatusOK, ListResponse[Deployment]{
-		Items:         toDeployments(items),
+	writeJSON(w, http.StatusOK, ListResponse[ConfigDeployment]{
+		Items:         toConfigDeployments(items),
 		NextPageToken: nextToken,
 	})
 }
 
-func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
-	var req createDeploymentRequest
+	var req createConfigDeploymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid json", zap.Error(err))
@@ -171,9 +171,10 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid status for creation", zap.String("status", status))
+		return
 	}
 
-	var item queries.Deployment
+	var item queries.ConfigDeployment
 	var conflicted bool
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		cv, err := tx.GetConfigVersion(r.Context(), req.ConfigVersionID)
@@ -184,23 +185,23 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		active, err := tx.GetActiveDeploymentByNode(r.Context(), cv.NodeID)
+		active, err := tx.GetActiveConfigDeploymentByNode(r.Context(), cv.NodeID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 		if err == nil {
 			if active.Status == statusInProgress {
 				conflicted = true
-				return errDeploymentInProgress
+				return errConfigDeploymentInProgress
 			}
 			// active is PENDING — cancel it
-			_, err = tx.CancelPendingDeploymentsByNode(r.Context(), cv.NodeID)
+			_, err = tx.CancelPendingConfigDeploymentsByNode(r.Context(), cv.NodeID)
 			if err != nil {
 				return err
 			}
 		}
 
-		item, err = tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
+		item, err = tx.CreateConfigDeployment(r.Context(), queries.CreateConfigDeploymentParams{
 			ConfigVersionID: req.ConfigVersionID,
 			Status:          status,
 		})
@@ -208,7 +209,7 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if conflicted {
-			writeError(w, errDeploymentInProgress)
+			writeError(w, errConfigDeploymentInProgress)
 			logger.Info("deployment in progress", zap.Int64("configVersionId", req.ConfigVersionID))
 			return
 		}
@@ -227,10 +228,10 @@ func (s *Server) createDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toDeployment(item))
+	writeJSON(w, http.StatusCreated, toConfigDeployment(item))
 }
 
-func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
 	id, err := parseID(r.PathValue("id"))
@@ -240,10 +241,10 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item queries.Deployment
+	var item queries.ConfigDeployment
 	err = s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.GetDeployment(r.Context(), id)
+		item, err = tx.GetConfigDeployment(r.Context(), id)
 		return err
 	})
 	if err != nil {
@@ -257,10 +258,10 @@ func (s *Server) getDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toDeployment(item))
+	writeJSON(w, http.StatusOK, toConfigDeployment(item))
 }
 
-func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateConfigDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
 	id, err := parseID(r.PathValue("id"))
@@ -270,7 +271,7 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req updateDeploymentStatusRequest
+	var req updateConfigDeploymentStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, errInvalidRequest)
 		logger.Info("invalid json", zap.Error(err))
@@ -283,10 +284,10 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var item queries.Deployment
+	var item queries.ConfigDeployment
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		item, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+		item, err = tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 			ID:     id,
 			Status: req.Status,
 			Reason: nullString(req.Reason),
@@ -304,10 +305,10 @@ func (s *Server) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toDeployment(item))
+	writeJSON(w, http.StatusOK, toConfigDeployment(item))
 }
 
-func (s *Server) deleteDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	logger := s.loggerFor(r)
 
 	id, err := parseID(r.PathValue("id"))
@@ -320,7 +321,7 @@ func (s *Server) deleteDeployment(w http.ResponseWriter, r *http.Request) {
 	var affected int64
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
-		affected, err = tx.DeleteDeployment(r.Context(), id)
+		affected, err = tx.DeleteConfigDeployment(r.Context(), id)
 		return err
 	})
 	if err != nil {

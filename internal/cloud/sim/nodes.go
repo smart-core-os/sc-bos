@@ -16,6 +16,8 @@ type Node struct {
 	ID         int64     `json:"id,string"`
 	Hostname   string    `json:"hostname"`
 	SiteID     int64     `json:"siteId,string"`
+	OS         string    `json:"os"`   // GOOS, empty until the node reports its platform on check-in
+	Arch       string    `json:"arch"` // GOARCH, empty until the node reports its platform on check-in
 	CreateTime time.Time `json:"createTime"`
 }
 
@@ -24,8 +26,20 @@ func toNode(n queries.Node) Node {
 		ID:         n.ID,
 		Hostname:   n.Hostname,
 		SiteID:     n.SiteID,
+		OS:         n.Os,
+		Arch:       n.Arch,
 		CreateTime: n.CreateTime,
 	}
+}
+
+// validOS reports whether os is a GOOS value the system supports.
+func validOS(os string) bool {
+	return os == "linux" || os == "freebsd"
+}
+
+// validArch reports whether arch is a GOARCH value the system supports.
+func validArch(arch string) bool {
+	return arch == "amd64" || arch == "arm64"
 }
 
 func toNodes(nodes []queries.Node) []Node {
@@ -39,11 +53,25 @@ func toNodes(nodes []queries.Node) []Node {
 type createNodeRequest struct {
 	Hostname string `json:"hostname"`
 	SiteID   int64  `json:"siteId,string"`
+	OS       string `json:"os"`
+	Arch     string `json:"arch"`
 }
 
 type updateNodeRequest struct {
 	Hostname string `json:"hostname"`
 	SiteID   int64  `json:"siteId,string"`
+	OS       string `json:"os"`
+	Arch     string `json:"arch"`
+}
+
+// validNodePlatform reports whether a node's os/arch are acceptable: either both empty (the platform
+// is unknown until the node first reports it on check-in) or both populated with supported values. A
+// half-specified platform (one set, one empty) is rejected.
+func validNodePlatform(os, arch string) bool {
+	if os == "" && arch == "" {
+		return true
+	}
+	return validOS(os) && validArch(arch)
 }
 
 func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
@@ -115,12 +143,20 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !validNodePlatform(req.OS, req.Arch) {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid platform", zap.String("os", req.OS), zap.String("arch", req.Arch))
+		return
+	}
+
 	var item queries.Node
 	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
 		item, err = tx.CreateNode(r.Context(), queries.CreateNodeParams{
 			Hostname: req.Hostname,
 			SiteID:   req.SiteID,
+			Os:       req.OS,
+			Arch:     req.Arch,
 		})
 		return err
 	})
@@ -191,6 +227,12 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !validNodePlatform(req.OS, req.Arch) {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid platform", zap.String("os", req.OS), zap.String("arch", req.Arch))
+		return
+	}
+
 	var item queries.Node
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
@@ -198,6 +240,8 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 			ID:       id,
 			Hostname: req.Hostname,
 			SiteID:   req.SiteID,
+			Os:       req.OS,
+			Arch:     req.Arch,
 		})
 		return err
 	})

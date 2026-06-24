@@ -10,7 +10,8 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
-// NodeCheckIn is the JSON representation of a node check-in.
+// NodeCheckIn is the JSON representation of a node check-in. Config and binary (software update) streams
+// each report their own current/installing deployment plus any install error and attempt count.
 type NodeCheckIn struct {
 	ID                           int64     `json:"id,string"`
 	NodeID                       int64     `json:"nodeId,string"`
@@ -19,6 +20,10 @@ type NodeCheckIn struct {
 	InstallingDeploymentID       *int64    `json:"installingDeploymentId,string,omitempty"`
 	InstallingDeploymentError    string    `json:"installingDeploymentError,omitempty"`
 	InstallingDeploymentAttempts *int64    `json:"installingDeploymentAttempts,omitempty"`
+	CurrentBinaryDeploymentID    *int64    `json:"currentBinaryDeploymentId,string,omitempty"`
+	InstallingBinaryDeploymentID *int64    `json:"installingBinaryDeploymentId,string,omitempty"`
+	InstallingBinaryError        string    `json:"installingBinaryError,omitempty"`
+	InstallingBinaryAttempts     *int64    `json:"installingBinaryAttempts,omitempty"`
 }
 
 func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
@@ -38,6 +43,18 @@ func toNodeCheckIn(c queries.NodeCheckIn) NodeCheckIn {
 	}
 	if c.InstallingDeploymentAttempts.Valid {
 		out.InstallingDeploymentAttempts = &c.InstallingDeploymentAttempts.Int64
+	}
+	if c.CurrentBinaryDeploymentID.Valid {
+		out.CurrentBinaryDeploymentID = &c.CurrentBinaryDeploymentID.Int64
+	}
+	if c.InstallingBinaryDeploymentID.Valid {
+		out.InstallingBinaryDeploymentID = &c.InstallingBinaryDeploymentID.Int64
+	}
+	if c.InstallingBinaryError.Valid {
+		out.InstallingBinaryError = c.InstallingBinaryError.String
+	}
+	if c.InstallingBinaryAttempts.Valid {
+		out.InstallingBinaryAttempts = &c.InstallingBinaryAttempts.Int64
 	}
 	return out
 }

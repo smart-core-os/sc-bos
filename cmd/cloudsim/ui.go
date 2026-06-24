@@ -1,14 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"database/sql"
 	"embed"
-	"fmt"
 	"html/template"
 	"io"
 	"math"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -39,18 +41,29 @@ func (s *uiServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /ui/config-versions", s.serveConfigVersions)
 	mux.HandleFunc("POST /ui/config-versions", s.createConfigVersion)
 	mux.HandleFunc("POST /ui/config-versions/{id}/delete", s.deleteConfigVersion)
-	mux.HandleFunc("GET /ui/deployments", s.serveDeployments)
-	mux.HandleFunc("POST /ui/deployments", s.createDeployment)
-	mux.HandleFunc("POST /ui/deployments/{id}/update-status", s.updateDeploymentStatus)
-	mux.HandleFunc("POST /ui/deployments/{id}/delete", s.deleteDeployment)
+	mux.HandleFunc("GET /ui/config-deployments", s.serveConfigDeployments)
+	mux.HandleFunc("POST /ui/config-deployments", s.createConfigDeployment)
+	mux.HandleFunc("POST /ui/config-deployments/{id}/update-status", s.updateConfigDeploymentStatus)
+	mux.HandleFunc("POST /ui/config-deployments/{id}/delete", s.deleteConfigDeployment)
+	mux.HandleFunc("GET /ui/binary-artefacts", s.serveBinaryArtefacts)
+	mux.HandleFunc("POST /ui/binary-artefacts", s.createBinaryArtefact)
+	mux.HandleFunc("POST /ui/binary-artefacts/{id}/delete", s.deleteBinaryArtefact)
+	mux.HandleFunc("GET /ui/binary-deployments", s.serveBinaryDeployments)
+	mux.HandleFunc("POST /ui/binary-deployments", s.createBinaryDeployment)
+	mux.HandleFunc("POST /ui/binary-deployments/{id}/update-status", s.updateBinaryDeploymentStatus)
+	mux.HandleFunc("POST /ui/binary-deployments/{id}/delete", s.deleteBinaryDeployment)
 }
 
 func (s *uiServer) render(w http.ResponseWriter, name string, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := uiTemplates.ExecuteTemplate(w, name, data); err != nil {
-		// headers already sent; append error to partial response
-		_, _ = fmt.Fprintf(w, "\n<!-- template error: %v -->", err)
+	// Render into a buffer first so a template error surfaces as a 500 rather than
+	// a 200 with a truncated page.
+	var buf bytes.Buffer
+	if err := uiTemplates.ExecuteTemplate(&buf, name, data); err != nil {
+		http.Error(w, "failed to render page: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = buf.WriteTo(w)
 }
 
 func parseIDPath(r *http.Request, name string) (int64, error) {
@@ -287,6 +300,7 @@ func (s *uiServer) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		errRedirect(w, r, "/ui/config-versions", "valid nodeId is required")
 		return
 	}
+	version := r.FormValue("version")
 	description := r.FormValue("description")
 
 	var payload []byte
@@ -304,11 +318,14 @@ func (s *uiServer) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	sum := sha256.Sum256(payload)
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		_, e := tx.CreateConfigVersion(r.Context(), queries.CreateConfigVersionParams{
 			NodeID:      nodeID,
+			Version:     sql.NullString{String: version, Valid: version != ""},
 			Description: sql.NullString{String: description, Valid: description != ""},
 			Payload:     payload,
+			Sha256:      sum[:],
 		})
 		return e
 	})
@@ -336,22 +353,22 @@ func (s *uiServer) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ui/config-versions", http.StatusSeeOther)
 }
 
-func (s *uiServer) serveDeployments(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) serveConfigDeployments(w http.ResponseWriter, r *http.Request) {
 	beforeID := parseBeforeIDQuery(r, "before")
 	nodeID := parseIDQuery(r, "nodeId")
 	errMsg := r.URL.Query().Get("error")
 
-	var items []queries.Deployment
+	var items []queries.ConfigDeployment
 	err := s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var e error
 		if nodeID != 0 {
-			items, e = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
+			items, e = tx.ListConfigDeploymentsByNode(r.Context(), queries.ListConfigDeploymentsByNodeParams{
 				NodeID:   nodeID,
 				BeforeID: beforeID,
 				Limit:    uiPageSize + 1,
 			})
 		} else {
-			items, e = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
+			items, e = tx.ListConfigDeployments(r.Context(), queries.ListConfigDeploymentsParams{
 				BeforeID: beforeID,
 				Limit:    uiPageSize + 1,
 			})
@@ -369,22 +386,22 @@ func (s *uiServer) serveDeployments(w http.ResponseWriter, r *http.Request) {
 		items = items[:uiPageSize]
 	}
 
-	s.render(w, "deployments", deploymentsViewData{
-		Deployments:   items,
-		NodeID:        nodeID,
-		NextPageToken: nextToken,
-		Error:         errMsg,
+	s.render(w, "config_deployments", configDeploymentsViewData{
+		ConfigDeployments: items,
+		NodeID:            nodeID,
+		NextPageToken:     nextToken,
+		Error:             errMsg,
 	})
 }
 
-func (s *uiServer) createDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) createConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid form data")
+		errRedirect(w, r, "/ui/config-deployments", "invalid form data")
 		return
 	}
 	configVersionID, err := strconv.ParseInt(r.PostForm.Get("configVersionId"), 10, 64)
 	if err != nil || configVersionID == 0 {
-		errRedirect(w, r, "/ui/deployments", "valid configVersionId is required")
+		errRedirect(w, r, "/ui/config-deployments", "valid configVersionId is required")
 		return
 	}
 	status := r.PostForm.Get("status")
@@ -393,38 +410,38 @@ func (s *uiServer) createDeployment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
+		_, e := tx.CreateConfigDeployment(r.Context(), queries.CreateConfigDeploymentParams{
 			ConfigVersionID: configVersionID,
 			Status:          status,
 		})
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
-func (s *uiServer) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) updateConfigDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	id, err := parseIDPath(r, "id")
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid id")
+		errRedirect(w, r, "/ui/config-deployments", "invalid id")
 		return
 	}
 	if err = r.ParseForm(); err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid form data")
+		errRedirect(w, r, "/ui/config-deployments", "invalid form data")
 		return
 	}
 	status := r.PostForm.Get("status")
 	if status == "" {
-		errRedirect(w, r, "/ui/deployments", "status is required")
+		errRedirect(w, r, "/ui/config-deployments", "status is required")
 		return
 	}
 	reason := r.PostForm.Get("reason")
 
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+		_, e := tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 			ID:     id,
 			Status: status,
 			Reason: sql.NullString{String: reason, Valid: reason != ""},
@@ -432,27 +449,27 @@ func (s *uiServer) updateDeploymentStatus(w http.ResponseWriter, r *http.Request
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
-func (s *uiServer) deleteDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) deleteConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	id, err := parseIDPath(r, "id")
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid id")
+		errRedirect(w, r, "/ui/config-deployments", "invalid id")
 		return
 	}
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.DeleteDeployment(r.Context(), id)
+		_, e := tx.DeleteConfigDeployment(r.Context(), id)
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
 func (s *uiServer) createEnrollmentCode(w http.ResponseWriter, r *http.Request) {
@@ -532,4 +549,236 @@ func (s *uiServer) serveCheckIns(w http.ResponseWriter, r *http.Request) {
 		CheckIns:      items,
 		NextPageToken: nextToken,
 	})
+}
+
+func (s *uiServer) serveBinaryArtefacts(w http.ResponseWriter, r *http.Request) {
+	afterID := parseIDQuery(r, "after")
+	siteID := parseIDQuery(r, "siteId")
+	os := r.URL.Query().Get("os")
+	arch := r.URL.Query().Get("arch")
+	errMsg := r.URL.Query().Get("error")
+
+	items, err := s.store.ListBinaryArtefacts(r.Context(), queries.ListBinaryArtefactsParams{
+		AfterID: afterID,
+		Os:      os,
+		Arch:    arch,
+		SiteID:  siteID,
+		Limit:   uiPageSize + 1,
+	})
+	if err != nil {
+		http.Error(w, "failed to load binary artefacts: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var nextToken string
+	if len(items) > uiPageSize {
+		nextToken = strconv.FormatInt(items[uiPageSize-1].ID, 10)
+		items = items[:uiPageSize]
+	}
+
+	s.render(w, "binary_artefacts", binaryArtefactsViewData{
+		BinaryArtefacts: items,
+		SiteID:          siteID,
+		OS:              os,
+		Arch:            arch,
+		DefaultArch:     runtime.GOARCH,
+		NextPageToken:   nextToken,
+		Error:           errMsg,
+	})
+}
+
+func (s *uiServer) createBinaryArtefact(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		errRedirect(w, r, "/ui/binary-artefacts", "invalid form data")
+		return
+	}
+	version := r.FormValue("version")
+	if version == "" {
+		errRedirect(w, r, "/ui/binary-artefacts", "version is required")
+		return
+	}
+	os := r.FormValue("os")
+	if os == "" {
+		errRedirect(w, r, "/ui/binary-artefacts", "os is required")
+		return
+	}
+	arch := r.FormValue("arch")
+	if arch == "" {
+		errRedirect(w, r, "/ui/binary-artefacts", "arch is required")
+		return
+	}
+
+	var siteIDPtr *int64
+	if v := r.FormValue("siteId"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n != 0 {
+			siteIDPtr = &n
+		}
+	}
+	description := r.FormValue("description")
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+
+	f, _, ferr := r.FormFile("payload")
+	if ferr != nil {
+		errRedirect(w, r, "/ui/binary-artefacts", "payload file is required: "+ferr.Error())
+		return
+	}
+	defer f.Close()
+
+	_, err := s.store.CreateBinaryArtefact(r.Context(), store.CreateBinaryArtefactParams{
+		SiteID:      siteIDPtr,
+		OS:          os,
+		Arch:        arch,
+		Version:     version,
+		Description: descPtr,
+	}, f)
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-artefacts", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/binary-artefacts", http.StatusSeeOther)
+}
+
+func (s *uiServer) deleteBinaryArtefact(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-artefacts", "invalid id")
+		return
+	}
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.DeleteBinaryArtefact(r.Context(), id)
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-artefacts", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/binary-artefacts", http.StatusSeeOther)
+}
+
+func (s *uiServer) serveBinaryDeployments(w http.ResponseWriter, r *http.Request) {
+	beforeID := parseBeforeIDQuery(r, "before")
+	nodeID := parseIDQuery(r, "nodeId")
+	errMsg := r.URL.Query().Get("error")
+
+	var items []queries.BinaryDeployment
+	err := s.store.Read(r.Context(), func(tx *store.Tx) error {
+		var e error
+		if nodeID != 0 {
+			items, e = tx.ListBinaryDeploymentsByNode(r.Context(), queries.ListBinaryDeploymentsByNodeParams{
+				NodeID:   nodeID,
+				BeforeID: beforeID,
+				Limit:    uiPageSize + 1,
+			})
+		} else {
+			items, e = tx.ListBinaryDeployments(r.Context(), queries.ListBinaryDeploymentsParams{
+				BeforeID: beforeID,
+				Limit:    uiPageSize + 1,
+			})
+		}
+		return e
+	})
+	if err != nil {
+		http.Error(w, "failed to load binary deployments: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var nextToken string
+	if len(items) > uiPageSize {
+		nextToken = strconv.FormatInt(items[uiPageSize-1].ID, 10)
+		items = items[:uiPageSize]
+	}
+
+	s.render(w, "binary_deployments", binaryDeploymentsViewData{
+		BinaryDeployments: items,
+		NodeID:            nodeID,
+		NextPageToken:     nextToken,
+		Error:             errMsg,
+	})
+}
+
+func (s *uiServer) createBinaryDeployment(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", "invalid form data")
+		return
+	}
+	nodeID, err := strconv.ParseInt(r.PostForm.Get("nodeId"), 10, 64)
+	if err != nil || nodeID == 0 {
+		errRedirect(w, r, "/ui/binary-deployments", "valid nodeId is required")
+		return
+	}
+	binaryArtefactID, err := strconv.ParseInt(r.PostForm.Get("binaryArtefactId"), 10, 64)
+	if err != nil || binaryArtefactID == 0 {
+		errRedirect(w, r, "/ui/binary-deployments", "valid binaryArtefactId is required")
+		return
+	}
+	status := r.PostForm.Get("status")
+	if status == "" {
+		status = "pending"
+	}
+
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.CreateBinaryDeployment(r.Context(), queries.CreateBinaryDeploymentParams{
+			BinaryArtefactID: binaryArtefactID,
+			NodeID:           nodeID,
+			Status:           status,
+		})
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/binary-deployments", http.StatusSeeOther)
+}
+
+func (s *uiServer) updateBinaryDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", "invalid id")
+		return
+	}
+	if err = r.ParseForm(); err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", "invalid form data")
+		return
+	}
+	status := r.PostForm.Get("status")
+	if status == "" {
+		errRedirect(w, r, "/ui/binary-deployments", "status is required")
+		return
+	}
+	reason := r.PostForm.Get("reason")
+
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.SetBinaryDeploymentStatus(r.Context(), queries.SetBinaryDeploymentStatusParams{
+			ID:     id,
+			Status: status,
+			Reason: sql.NullString{String: reason, Valid: reason != ""},
+		})
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/binary-deployments", http.StatusSeeOther)
+}
+
+func (s *uiServer) deleteBinaryDeployment(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", "invalid id")
+		return
+	}
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.DeleteBinaryDeployment(r.Context(), id)
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/binary-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/binary-deployments", http.StatusSeeOther)
 }

@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,14 +12,17 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
+	"github.com/smart-core-os/sc-bos/internal/util/checksum"
 )
 
 // ConfigVersion is the JSON representation of a config version.
 type ConfigVersion struct {
 	ID          int64     `json:"id,string"`
 	NodeID      int64     `json:"nodeId,string"`
+	Version     string    `json:"version,omitempty"` // human-readable version string; empty when unset
 	Description string    `json:"description"`
 	PayloadURL  string    `json:"payloadUrl"`
+	Checksum    string    `json:"checksum,omitempty"` // type-prefixed "<algo>:<base64>", empty for legacy versions
 	CreateTime  time.Time `json:"createTime"`
 }
 
@@ -33,13 +37,18 @@ func toConfigVersion(r *http.Request, cv queries.ConfigVersion) ConfigVersion {
 	if cv.Description.Valid {
 		description = cv.Description.String
 	}
-	return ConfigVersion{
+	out := ConfigVersion{
 		ID:          cv.ID,
 		NodeID:      cv.NodeID,
+		Version:     cv.Version.String,
 		Description: description,
 		PayloadURL:  payloadUrl(r, cv.ID),
 		CreateTime:  cv.CreateTime,
 	}
+	if len(cv.Sha256) > 0 {
+		out.Checksum = checksum.Format(checksum.SHA256, cv.Sha256)
+	}
+	return out
 }
 
 func toConfigVersions(r *http.Request, cvs []queries.ConfigVersion) []ConfigVersion {
@@ -52,6 +61,7 @@ func toConfigVersions(r *http.Request, cvs []queries.ConfigVersion) []ConfigVers
 
 type createConfigVersionRequest struct {
 	NodeID      int64  `json:"nodeId,string"`
+	Version     string `json:"version"`
 	Description string `json:"description"`
 	Payload     []byte `json:"payload"`
 }
@@ -132,10 +142,13 @@ func (s *Server) createConfigVersion(w http.ResponseWriter, r *http.Request) {
 		if req.Description != "" {
 			description = sql.NullString{String: req.Description, Valid: true}
 		}
+		sum := sha256.Sum256(req.Payload)
 		item, err = tx.CreateConfigVersion(r.Context(), queries.CreateConfigVersionParams{
 			NodeID:      req.NodeID,
+			Version:     sql.NullString{String: req.Version, Valid: req.Version != ""},
 			Description: description,
 			Payload:     req.Payload,
+			Sha256:      sum[:],
 		})
 		return err
 	})

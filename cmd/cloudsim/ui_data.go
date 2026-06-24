@@ -3,15 +3,16 @@ package main
 import (
 	"fmt"
 
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
 type baseViewData struct{}
 
-func (b baseViewData) SitesPath() string          { return "/ui/sites" }
-func (b baseViewData) NodesPath() string          { return "/ui/nodes" }
-func (b baseViewData) ConfigVersionsPath() string { return "/ui/config-versions" }
-func (b baseViewData) DeploymentsPath() string    { return "/ui/deployments" }
+func (b baseViewData) SitesPath() string             { return "/ui/sites" }
+func (b baseViewData) NodesPath() string             { return "/ui/nodes" }
+func (b baseViewData) ConfigVersionsPath() string    { return "/ui/config-versions" }
+func (b baseViewData) ConfigDeploymentsPath() string { return "/ui/config-deployments" }
 
 func (b baseViewData) NodeCheckInsPath(id int64) string {
 	return fmt.Sprintf("/ui/nodes/%d/check-ins", id)
@@ -28,11 +29,22 @@ func (b baseViewData) CreateEnrollmentCodePath(id int64) string {
 func (b baseViewData) DeleteConfigVersionPath(id int64) string {
 	return fmt.Sprintf("/ui/config-versions/%d/delete", id)
 }
-func (b baseViewData) UpdateDeploymentStatusPath(id int64) string {
-	return fmt.Sprintf("/ui/deployments/%d/update-status", id)
+func (b baseViewData) UpdateConfigDeploymentStatusPath(id int64) string {
+	return fmt.Sprintf("/ui/config-deployments/%d/update-status", id)
 }
-func (b baseViewData) DeleteDeploymentPath(id int64) string {
-	return fmt.Sprintf("/ui/deployments/%d/delete", id)
+func (b baseViewData) DeleteConfigDeploymentPath(id int64) string {
+	return fmt.Sprintf("/ui/config-deployments/%d/delete", id)
+}
+func (b baseViewData) BinaryArtefactsPath() string   { return "/ui/binary-artefacts" }
+func (b baseViewData) BinaryDeploymentsPath() string { return "/ui/binary-deployments" }
+func (b baseViewData) DeleteBinaryArtefactPath(id int64) string {
+	return fmt.Sprintf("/ui/binary-artefacts/%d/delete", id)
+}
+func (b baseViewData) UpdateBinaryDeploymentStatusPath(id int64) string {
+	return fmt.Sprintf("/ui/binary-deployments/%d/update-status", id)
+}
+func (b baseViewData) DeleteBinaryDeploymentPath(id int64) string {
+	return fmt.Sprintf("/ui/binary-deployments/%d/delete", id)
 }
 
 type indexViewData struct {
@@ -62,12 +74,12 @@ type configVersionsViewData struct {
 	Error          string
 }
 
-type deploymentsViewData struct {
+type configDeploymentsViewData struct {
 	baseViewData
-	Deployments   []queries.Deployment
-	NodeID        int64
-	NextPageToken string
-	Error         string
+	ConfigDeployments []queries.ConfigDeployment
+	NodeID            int64
+	NextPageToken     string
+	Error             string
 }
 
 type enrollmentCodeViewData struct {
@@ -82,4 +94,25 @@ type checkInsViewData struct {
 	Hostname      string
 	CheckIns      []queries.NodeCheckIn
 	NextPageToken string
+}
+
+type binaryArtefactsViewData struct {
+	baseViewData
+	BinaryArtefacts []store.BinaryArtefact
+	SiteID          int64
+	OS              string
+	Arch            string
+	// DefaultArch prepopulates the upload form's arch with the one cloudsim runs on (the OS default
+	// is always linux, hardcoded in the template).
+	DefaultArch   string
+	NextPageToken string
+	Error         string
+}
+
+type binaryDeploymentsViewData struct {
+	baseViewData
+	BinaryDeployments []queries.BinaryDeployment
+	NodeID            int64
+	NextPageToken     string
+	Error             string
 }

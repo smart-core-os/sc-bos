@@ -34,8 +34,8 @@ WHERE id = :id;
 -- Nodes
 
 -- name: CreateNode :one
-INSERT INTO nodes (hostname, site_id, create_time)
-VALUES (:hostname, :site_id, datetime('now', 'subsec'))
+INSERT INTO nodes (hostname, site_id, os, arch, create_time)
+VALUES (:hostname, :site_id, :os, :arch, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetNode :one
@@ -68,7 +68,13 @@ WHERE site_id = :site_id;
 
 -- name: UpdateNode :one
 UPDATE nodes
-SET hostname = :hostname, site_id = :site_id
+SET hostname = :hostname, site_id = :site_id, os = :os, arch = :arch
+WHERE id = :id
+RETURNING *;
+
+-- name: UpdateNodePlatform :one
+UPDATE nodes
+SET os = :os, arch = :arch
 WHERE id = :id
 RETURNING *;
 
@@ -79,8 +85,16 @@ WHERE id = :id;
 -- Node Check-Ins
 
 -- name: CreateNodeCheckIn :one
-INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts)
-VALUES (:node_id, datetime('now', 'subsec'), :current_deployment_id, :installing_deployment_id, :installing_deployment_error, :installing_deployment_attempts)
+INSERT INTO node_check_ins (
+    node_id, check_in_time,
+    current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts,
+    current_binary_deployment_id, installing_binary_deployment_id, installing_binary_error, installing_binary_attempts
+)
+VALUES (
+    :node_id, datetime('now', 'subsec'),
+    :current_deployment_id, :installing_deployment_id, :installing_deployment_error, :installing_deployment_attempts,
+    :current_binary_deployment_id, :installing_binary_deployment_id, :installing_binary_error, :installing_binary_attempts
+)
 RETURNING *;
 
 -- name: GetNodeCheckIn :one
@@ -102,8 +116,8 @@ WHERE id = :id;
 -- Config Versions
 
 -- name: CreateConfigVersion :one
-INSERT INTO config_versions (node_id, description, payload, create_time)
-VALUES (:node_id, :description, :payload, datetime('now', 'subsec'))
+INSERT INTO config_versions (node_id, description, payload, sha256, version, create_time)
+VALUES (:node_id, :description, :payload, :sha256, :version, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetConfigVersion :one
@@ -130,52 +144,62 @@ LIMIT :limit;
 DELETE FROM config_versions
 WHERE id = :id;
 
--- Deployments
+-- name: ListConfigVersionsWithoutChecksum :many
+SELECT id, payload
+FROM config_versions
+WHERE sha256 IS NULL OR length(sha256) = 0;
 
--- name: CreateDeployment :one
-INSERT INTO deployments (config_version_id, status, start_time, finished_time)
+-- name: SetConfigVersionChecksum :exec
+UPDATE config_versions
+SET sha256 = :sha256
+WHERE id = :id;
+
+-- Config Deployments
+
+-- name: CreateConfigDeployment :one
+INSERT INTO config_deployments (config_version_id, status, start_time, finished_time)
 VALUES (:config_version_id, :status, datetime('now', 'subsec'), NULL)
 RETURNING *;
 
--- name: GetDeployment :one
+-- name: GetConfigDeployment :one
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE id = :id;
 
--- name: GetDeploymentWithConfigVersion :one
+-- name: GetConfigDeploymentWithConfigVersion :one
 SELECT d.*, cv.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE d.id = :id;
 
--- name: ListDeployments :many
+-- name: ListConfigDeployments :many
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE id < :before_ID
 ORDER BY id DESC
 LIMIT :limit;
 
--- name: ListDeploymentsByConfigVersion :many
+-- name: ListConfigDeploymentsByConfigVersion :many
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE config_version_id = :config_version_id AND id < :before_id
 ORDER BY id DESC
 LIMIT :limit;
 
--- name: ListDeploymentsByNode :many
+-- name: ListConfigDeploymentsByNode :many
 SELECT d.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = :node_id AND d.id < :before_id
 ORDER BY d.id DESC
 LIMIT :limit;
 
--- name: CountDeployments :one
+-- name: CountConfigDeployments :one
 SELECT COUNT(*) AS count
-FROM deployments;
+FROM config_deployments;
 
--- name: UpdateDeploymentStatus :one
-UPDATE deployments
+-- name: UpdateConfigDeploymentStatus :one
+UPDATE config_deployments
 SET status = :status,
     reason = :reason,
     finished_time = CASE
@@ -185,21 +209,21 @@ SET status = :status,
 WHERE id = :id
 RETURNING *;
 
--- name: DeleteDeployment :execrows
-DELETE FROM deployments
+-- name: DeleteConfigDeployment :execrows
+DELETE FROM config_deployments
 WHERE id = :id;
 
--- name: CancelPendingDeploymentsByNode :execrows
-UPDATE deployments
+-- name: CancelPendingConfigDeploymentsByNode :execrows
+UPDATE config_deployments
 SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
     SELECT id FROM config_versions WHERE node_id = :node_id
 ) AND status = 'pending';
 
--- name: GetActiveDeploymentByNode :one
+-- name: GetActiveConfigDeploymentByNode :one
 SELECT d.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = :node_id AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
@@ -253,3 +277,88 @@ RETURNING *;
 -- name: DeleteCredential :execrows
 -- Retire a credential (clears its slot).
 DELETE FROM credentials WHERE credential_id = :credential_id;
+
+-- Binary Artefacts
+-- The payload itself is stored as an external file on disk (named by artefact id) and is never held
+-- in the database, so it is never selected here; its byte length is read from the file with stat.
+
+-- name: CreateBinaryArtefact :one
+INSERT INTO binary_artefacts (site_id, os, arch, version, sha256, description, create_time)
+VALUES (:site_id, :os, :arch, :version, :sha256, :description, datetime('now', 'subsec'))
+RETURNING *;
+
+-- name: GetBinaryArtefact :one
+SELECT id, site_id, os, arch, version, sha256, description, create_time
+FROM binary_artefacts
+WHERE id = :id;
+
+-- name: ListBinaryArtefacts :many
+SELECT id, site_id, os, arch, version, sha256, description, create_time
+FROM binary_artefacts
+WHERE id > :after_id
+  AND (sqlc.arg(os) = '' OR os = sqlc.arg(os))
+  AND (sqlc.arg(arch) = '' OR arch = sqlc.arg(arch))
+  AND (sqlc.arg(site_id) = 0 OR site_id = sqlc.arg(site_id) OR site_id IS NULL)
+ORDER BY id
+LIMIT :limit;
+
+-- name: ListBinaryArtefactIDs :many
+SELECT id FROM binary_artefacts ORDER BY id;
+
+-- name: DeleteBinaryArtefact :execrows
+DELETE FROM binary_artefacts
+WHERE id = :id;
+
+-- Binary Deployments
+
+-- name: CreateBinaryDeployment :one
+INSERT INTO binary_deployments (binary_artefact_id, node_id, status, start_time, finished_time)
+VALUES (:binary_artefact_id, :node_id, :status, datetime('now', 'subsec'), NULL)
+RETURNING *;
+
+-- name: GetBinaryDeployment :one
+SELECT *
+FROM binary_deployments
+WHERE id = :id;
+
+-- name: ListBinaryDeployments :many
+SELECT *
+FROM binary_deployments
+WHERE id < :before_id
+ORDER BY id DESC
+LIMIT :limit;
+
+-- name: ListBinaryDeploymentsByNode :many
+SELECT *
+FROM binary_deployments
+WHERE node_id = :node_id AND id < :before_id
+ORDER BY id DESC
+LIMIT :limit;
+
+-- name: SetBinaryDeploymentStatus :one
+UPDATE binary_deployments
+SET status = :status,
+    reason = :reason,
+    finished_time = CASE
+        WHEN :status = 'completed' OR :status = 'failed' OR :status = 'cancelled' THEN datetime('now', 'subsec')
+        ELSE finished_time
+    END
+WHERE id = :id
+RETURNING *;
+
+-- name: DeleteBinaryDeployment :execrows
+DELETE FROM binary_deployments
+WHERE id = :id;
+
+-- name: CancelPendingBinaryDeploymentsByNode :execrows
+UPDATE binary_deployments
+SET status = 'cancelled',
+    finished_time = datetime('now', 'subsec')
+WHERE node_id = :node_id AND status = 'pending';
+
+-- name: GetActiveBinaryDeploymentByNode :one
+SELECT *
+FROM binary_deployments
+WHERE node_id = :node_id AND status IN ('pending', 'in_progress')
+ORDER BY id DESC
+LIMIT 1;

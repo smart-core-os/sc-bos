@@ -11,8 +11,23 @@ import (
 	"time"
 )
 
-const cancelPendingDeploymentsByNode = `-- name: CancelPendingDeploymentsByNode :execrows
-UPDATE deployments
+const cancelPendingBinaryDeploymentsByNode = `-- name: CancelPendingBinaryDeploymentsByNode :execrows
+UPDATE binary_deployments
+SET status = 'cancelled',
+    finished_time = datetime('now', 'subsec')
+WHERE node_id = ?1 AND status = 'pending'
+`
+
+func (q *Queries) CancelPendingBinaryDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, cancelPendingBinaryDeploymentsByNode, nodeID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const cancelPendingConfigDeploymentsByNode = `-- name: CancelPendingConfigDeploymentsByNode :execrows
+UPDATE config_deployments
 SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
@@ -20,21 +35,21 @@ WHERE config_version_id IN (
 ) AND status = 'pending'
 `
 
-func (q *Queries) CancelPendingDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
-	result, err := q.db.ExecContext(ctx, cancelPendingDeploymentsByNode, nodeID)
+func (q *Queries) CancelPendingConfigDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, cancelPendingConfigDeploymentsByNode, nodeID)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected()
 }
 
-const countDeployments = `-- name: CountDeployments :one
+const countConfigDeployments = `-- name: CountConfigDeployments :one
 SELECT COUNT(*) AS count
-FROM deployments
+FROM config_deployments
 `
 
-func (q *Queries) CountDeployments(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countDeployments)
+func (q *Queries) CountConfigDeployments(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countConfigDeployments)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -77,49 +92,93 @@ func (q *Queries) CountSites(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const createConfigVersion = `-- name: CreateConfigVersion :one
+const createBinaryArtefact = `-- name: CreateBinaryArtefact :one
 
-INSERT INTO config_versions (node_id, description, payload, create_time)
-VALUES (?1, ?2, ?3, datetime('now', 'subsec'))
-RETURNING id, node_id, description, payload, create_time
+INSERT INTO binary_artefacts (site_id, os, arch, version, sha256, description, create_time)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now', 'subsec'))
+RETURNING id, site_id, os, arch, version, sha256, description, create_time
 `
 
-type CreateConfigVersionParams struct {
-	NodeID      int64
+type CreateBinaryArtefactParams struct {
+	SiteID      sql.NullInt64
+	Os          string
+	Arch        string
+	Version     string
+	Sha256      []byte
 	Description sql.NullString
-	Payload     []byte
 }
 
-// Config Versions
-func (q *Queries) CreateConfigVersion(ctx context.Context, arg CreateConfigVersionParams) (ConfigVersion, error) {
-	row := q.db.QueryRowContext(ctx, createConfigVersion, arg.NodeID, arg.Description, arg.Payload)
-	var i ConfigVersion
+// Binary Artefacts
+// The payload itself is stored as an external file on disk (named by artefact id) and is never held
+// in the database, so it is never selected here; its byte length is read from the file with stat.
+func (q *Queries) CreateBinaryArtefact(ctx context.Context, arg CreateBinaryArtefactParams) (BinaryArtefact, error) {
+	row := q.db.QueryRowContext(ctx, createBinaryArtefact,
+		arg.SiteID,
+		arg.Os,
+		arg.Arch,
+		arg.Version,
+		arg.Sha256,
+		arg.Description,
+	)
+	var i BinaryArtefact
 	err := row.Scan(
 		&i.ID,
-		&i.NodeID,
+		&i.SiteID,
+		&i.Os,
+		&i.Arch,
+		&i.Version,
+		&i.Sha256,
 		&i.Description,
-		&i.Payload,
 		&i.CreateTime,
 	)
 	return i, err
 }
 
-const createDeployment = `-- name: CreateDeployment :one
+const createBinaryDeployment = `-- name: CreateBinaryDeployment :one
 
-INSERT INTO deployments (config_version_id, status, start_time, finished_time)
+INSERT INTO binary_deployments (binary_artefact_id, node_id, status, start_time, finished_time)
+VALUES (?1, ?2, ?3, datetime('now', 'subsec'), NULL)
+RETURNING id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+`
+
+type CreateBinaryDeploymentParams struct {
+	BinaryArtefactID int64
+	NodeID           int64
+	Status           string
+}
+
+// Binary Deployments
+func (q *Queries) CreateBinaryDeployment(ctx context.Context, arg CreateBinaryDeploymentParams) (BinaryDeployment, error) {
+	row := q.db.QueryRowContext(ctx, createBinaryDeployment, arg.BinaryArtefactID, arg.NodeID, arg.Status)
+	var i BinaryDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.BinaryArtefactID,
+		&i.NodeID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const createConfigDeployment = `-- name: CreateConfigDeployment :one
+
+INSERT INTO config_deployments (config_version_id, status, start_time, finished_time)
 VALUES (?1, ?2, datetime('now', 'subsec'), NULL)
 RETURNING id, config_version_id, status, start_time, finished_time, reason
 `
 
-type CreateDeploymentParams struct {
+type CreateConfigDeploymentParams struct {
 	ConfigVersionID int64
 	Status          string
 }
 
-// Deployments
-func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentParams) (Deployment, error) {
-	row := q.db.QueryRowContext(ctx, createDeployment, arg.ConfigVersionID, arg.Status)
-	var i Deployment
+// Config Deployments
+func (q *Queries) CreateConfigDeployment(ctx context.Context, arg CreateConfigDeploymentParams) (ConfigDeployment, error) {
+	row := q.db.QueryRowContext(ctx, createConfigDeployment, arg.ConfigVersionID, arg.Status)
+	var i ConfigDeployment
 	err := row.Scan(
 		&i.ID,
 		&i.ConfigVersionID,
@@ -127,6 +186,43 @@ func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentPara
 		&i.StartTime,
 		&i.FinishedTime,
 		&i.Reason,
+	)
+	return i, err
+}
+
+const createConfigVersion = `-- name: CreateConfigVersion :one
+
+INSERT INTO config_versions (node_id, description, payload, sha256, version, create_time)
+VALUES (?1, ?2, ?3, ?4, ?5, datetime('now', 'subsec'))
+RETURNING id, node_id, description, payload, create_time, sha256, version
+`
+
+type CreateConfigVersionParams struct {
+	NodeID      int64
+	Description sql.NullString
+	Payload     []byte
+	Sha256      []byte
+	Version     sql.NullString
+}
+
+// Config Versions
+func (q *Queries) CreateConfigVersion(ctx context.Context, arg CreateConfigVersionParams) (ConfigVersion, error) {
+	row := q.db.QueryRowContext(ctx, createConfigVersion,
+		arg.NodeID,
+		arg.Description,
+		arg.Payload,
+		arg.Sha256,
+		arg.Version,
+	)
+	var i ConfigVersion
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.Description,
+		&i.Payload,
+		&i.CreateTime,
+		&i.Sha256,
+		&i.Version,
 	)
 	return i, err
 }
@@ -167,34 +263,51 @@ func (q *Queries) CreateEnrollmentCode(ctx context.Context, arg CreateEnrollment
 
 const createNode = `-- name: CreateNode :one
 
-INSERT INTO nodes (hostname, site_id, create_time)
-VALUES (?1, ?2, datetime('now', 'subsec'))
-RETURNING id, hostname, site_id, create_time
+INSERT INTO nodes (hostname, site_id, os, arch, create_time)
+VALUES (?1, ?2, ?3, ?4, datetime('now', 'subsec'))
+RETURNING id, hostname, site_id, create_time, os, arch
 `
 
 type CreateNodeParams struct {
 	Hostname string
 	SiteID   int64
+	Os       string
+	Arch     string
 }
 
 // Nodes
 func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, error) {
-	row := q.db.QueryRowContext(ctx, createNode, arg.Hostname, arg.SiteID)
+	row := q.db.QueryRowContext(ctx, createNode,
+		arg.Hostname,
+		arg.SiteID,
+		arg.Os,
+		arg.Arch,
+	)
 	var i Node
 	err := row.Scan(
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
 		&i.CreateTime,
+		&i.Os,
+		&i.Arch,
 	)
 	return i, err
 }
 
 const createNodeCheckIn = `-- name: CreateNodeCheckIn :one
 
-INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts)
-VALUES (?1, datetime('now', 'subsec'), ?2, ?3, ?4, ?5)
-RETURNING id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
+INSERT INTO node_check_ins (
+    node_id, check_in_time,
+    current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts,
+    current_binary_deployment_id, installing_binary_deployment_id, installing_binary_error, installing_binary_attempts
+)
+VALUES (
+    ?1, datetime('now', 'subsec'),
+    ?2, ?3, ?4, ?5,
+    ?6, ?7, ?8, ?9
+)
+RETURNING id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts, current_binary_deployment_id, installing_binary_deployment_id, installing_binary_error, installing_binary_attempts
 `
 
 type CreateNodeCheckInParams struct {
@@ -203,6 +316,10 @@ type CreateNodeCheckInParams struct {
 	InstallingDeploymentID       sql.NullInt64
 	InstallingDeploymentError    sql.NullString
 	InstallingDeploymentAttempts sql.NullInt64
+	CurrentBinaryDeploymentID    sql.NullInt64
+	InstallingBinaryDeploymentID sql.NullInt64
+	InstallingBinaryError        sql.NullString
+	InstallingBinaryAttempts     sql.NullInt64
 }
 
 // Node Check-Ins
@@ -213,6 +330,10 @@ func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInPa
 		arg.InstallingDeploymentID,
 		arg.InstallingDeploymentError,
 		arg.InstallingDeploymentAttempts,
+		arg.CurrentBinaryDeploymentID,
+		arg.InstallingBinaryDeploymentID,
+		arg.InstallingBinaryError,
+		arg.InstallingBinaryAttempts,
 	)
 	var i NodeCheckIn
 	err := row.Scan(
@@ -223,6 +344,10 @@ func (q *Queries) CreateNodeCheckIn(ctx context.Context, arg CreateNodeCheckInPa
 		&i.InstallingDeploymentID,
 		&i.InstallingDeploymentError,
 		&i.InstallingDeploymentAttempts,
+		&i.CurrentBinaryDeploymentID,
+		&i.InstallingBinaryDeploymentID,
+		&i.InstallingBinaryError,
+		&i.InstallingBinaryAttempts,
 	)
 	return i, err
 }
@@ -240,6 +365,45 @@ func (q *Queries) CreateSite(ctx context.Context, name string) (Site, error) {
 	var i Site
 	err := row.Scan(&i.ID, &i.Name, &i.CreateTime)
 	return i, err
+}
+
+const deleteBinaryArtefact = `-- name: DeleteBinaryArtefact :execrows
+DELETE FROM binary_artefacts
+WHERE id = ?1
+`
+
+func (q *Queries) DeleteBinaryArtefact(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteBinaryArtefact, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteBinaryDeployment = `-- name: DeleteBinaryDeployment :execrows
+DELETE FROM binary_deployments
+WHERE id = ?1
+`
+
+func (q *Queries) DeleteBinaryDeployment(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteBinaryDeployment, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteConfigDeployment = `-- name: DeleteConfigDeployment :execrows
+DELETE FROM config_deployments
+WHERE id = ?1
+`
+
+func (q *Queries) DeleteConfigDeployment(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteConfigDeployment, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const deleteConfigVersion = `-- name: DeleteConfigVersion :execrows
@@ -262,19 +426,6 @@ DELETE FROM credentials WHERE credential_id = ?1
 // Retire a credential (clears its slot).
 func (q *Queries) DeleteCredential(ctx context.Context, credentialID string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteCredential, credentialID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
-}
-
-const deleteDeployment = `-- name: DeleteDeployment :execrows
-DELETE FROM deployments
-WHERE id = ?1
-`
-
-func (q *Queries) DeleteDeployment(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteDeployment, id)
 	if err != nil {
 		return 0, err
 	}
@@ -320,18 +471,41 @@ func (q *Queries) DeleteSite(ctx context.Context, id int64) (int64, error) {
 	return result.RowsAffected()
 }
 
-const getActiveDeploymentByNode = `-- name: GetActiveDeploymentByNode :one
+const getActiveBinaryDeploymentByNode = `-- name: GetActiveBinaryDeploymentByNode :one
+SELECT id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+FROM binary_deployments
+WHERE node_id = ?1 AND status IN ('pending', 'in_progress')
+ORDER BY id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetActiveBinaryDeploymentByNode(ctx context.Context, nodeID int64) (BinaryDeployment, error) {
+	row := q.db.QueryRowContext(ctx, getActiveBinaryDeploymentByNode, nodeID)
+	var i BinaryDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.BinaryArtefactID,
+		&i.NodeID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const getActiveConfigDeploymentByNode = `-- name: GetActiveConfigDeploymentByNode :one
 SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = ?1 AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
 LIMIT 1
 `
 
-func (q *Queries) GetActiveDeploymentByNode(ctx context.Context, nodeID int64) (Deployment, error) {
-	row := q.db.QueryRowContext(ctx, getActiveDeploymentByNode, nodeID)
-	var i Deployment
+func (q *Queries) GetActiveConfigDeploymentByNode(ctx context.Context, nodeID int64) (ConfigDeployment, error) {
+	row := q.db.QueryRowContext(ctx, getActiveConfigDeploymentByNode, nodeID)
+	var i ConfigDeployment
 	err := row.Scan(
 		&i.ID,
 		&i.ConfigVersionID,
@@ -362,8 +536,115 @@ func (q *Queries) GetActiveEnrollmentCode(ctx context.Context, code string) (Enr
 	return i, err
 }
 
+const getBinaryArtefact = `-- name: GetBinaryArtefact :one
+SELECT id, site_id, os, arch, version, sha256, description, create_time
+FROM binary_artefacts
+WHERE id = ?1
+`
+
+func (q *Queries) GetBinaryArtefact(ctx context.Context, id int64) (BinaryArtefact, error) {
+	row := q.db.QueryRowContext(ctx, getBinaryArtefact, id)
+	var i BinaryArtefact
+	err := row.Scan(
+		&i.ID,
+		&i.SiteID,
+		&i.Os,
+		&i.Arch,
+		&i.Version,
+		&i.Sha256,
+		&i.Description,
+		&i.CreateTime,
+	)
+	return i, err
+}
+
+const getBinaryDeployment = `-- name: GetBinaryDeployment :one
+SELECT id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+FROM binary_deployments
+WHERE id = ?1
+`
+
+func (q *Queries) GetBinaryDeployment(ctx context.Context, id int64) (BinaryDeployment, error) {
+	row := q.db.QueryRowContext(ctx, getBinaryDeployment, id)
+	var i BinaryDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.BinaryArtefactID,
+		&i.NodeID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const getConfigDeployment = `-- name: GetConfigDeployment :one
+SELECT id, config_version_id, status, start_time, finished_time, reason
+FROM config_deployments
+WHERE id = ?1
+`
+
+func (q *Queries) GetConfigDeployment(ctx context.Context, id int64) (ConfigDeployment, error) {
+	row := q.db.QueryRowContext(ctx, getConfigDeployment, id)
+	var i ConfigDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.ConfigVersionID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const getConfigDeploymentWithConfigVersion = `-- name: GetConfigDeploymentWithConfigVersion :one
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason, cv.id, cv.node_id, cv.description, cv.payload, cv.create_time, cv.sha256, cv.version
+FROM config_deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE d.id = ?1
+`
+
+type GetConfigDeploymentWithConfigVersionRow struct {
+	ID              int64
+	ConfigVersionID int64
+	Status          string
+	StartTime       time.Time
+	FinishedTime    sql.NullTime
+	Reason          sql.NullString
+	ID_2            int64
+	NodeID          int64
+	Description     sql.NullString
+	Payload         []byte
+	CreateTime      time.Time
+	Sha256          []byte
+	Version         sql.NullString
+}
+
+func (q *Queries) GetConfigDeploymentWithConfigVersion(ctx context.Context, id int64) (GetConfigDeploymentWithConfigVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getConfigDeploymentWithConfigVersion, id)
+	var i GetConfigDeploymentWithConfigVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.ConfigVersionID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+		&i.ID_2,
+		&i.NodeID,
+		&i.Description,
+		&i.Payload,
+		&i.CreateTime,
+		&i.Sha256,
+		&i.Version,
+	)
+	return i, err
+}
+
 const getConfigVersion = `-- name: GetConfigVersion :one
-SELECT id, node_id, description, payload, create_time
+SELECT id, node_id, description, payload, create_time, sha256, version
 FROM config_versions
 WHERE id = ?1
 `
@@ -377,6 +658,8 @@ func (q *Queries) GetConfigVersion(ctx context.Context, id int64) (ConfigVersion
 		&i.Description,
 		&i.Payload,
 		&i.CreateTime,
+		&i.Sha256,
+		&i.Version,
 	)
 	return i, err
 }
@@ -439,68 +722,8 @@ func (q *Queries) GetCredentialsByNode(ctx context.Context, nodeID int64) ([]Cre
 	return items, nil
 }
 
-const getDeployment = `-- name: GetDeployment :one
-SELECT id, config_version_id, status, start_time, finished_time, reason
-FROM deployments
-WHERE id = ?1
-`
-
-func (q *Queries) GetDeployment(ctx context.Context, id int64) (Deployment, error) {
-	row := q.db.QueryRowContext(ctx, getDeployment, id)
-	var i Deployment
-	err := row.Scan(
-		&i.ID,
-		&i.ConfigVersionID,
-		&i.Status,
-		&i.StartTime,
-		&i.FinishedTime,
-		&i.Reason,
-	)
-	return i, err
-}
-
-const getDeploymentWithConfigVersion = `-- name: GetDeploymentWithConfigVersion :one
-SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason, cv.id, cv.node_id, cv.description, cv.payload, cv.create_time
-FROM deployments d
-JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE d.id = ?1
-`
-
-type GetDeploymentWithConfigVersionRow struct {
-	ID              int64
-	ConfigVersionID int64
-	Status          string
-	StartTime       time.Time
-	FinishedTime    sql.NullTime
-	Reason          sql.NullString
-	ID_2            int64
-	NodeID          int64
-	Description     sql.NullString
-	Payload         []byte
-	CreateTime      time.Time
-}
-
-func (q *Queries) GetDeploymentWithConfigVersion(ctx context.Context, id int64) (GetDeploymentWithConfigVersionRow, error) {
-	row := q.db.QueryRowContext(ctx, getDeploymentWithConfigVersion, id)
-	var i GetDeploymentWithConfigVersionRow
-	err := row.Scan(
-		&i.ID,
-		&i.ConfigVersionID,
-		&i.Status,
-		&i.StartTime,
-		&i.FinishedTime,
-		&i.Reason,
-		&i.ID_2,
-		&i.NodeID,
-		&i.Description,
-		&i.Payload,
-		&i.CreateTime,
-	)
-	return i, err
-}
-
 const getNode = `-- name: GetNode :one
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, create_time, os, arch
 FROM nodes
 WHERE id = ?1
 `
@@ -513,12 +736,14 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 		&i.Hostname,
 		&i.SiteID,
 		&i.CreateTime,
+		&i.Os,
+		&i.Arch,
 	)
 	return i, err
 }
 
 const getNodeCheckIn = `-- name: GetNodeCheckIn :one
-SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts, current_binary_deployment_id, installing_binary_deployment_id, installing_binary_error, installing_binary_attempts
 FROM node_check_ins
 WHERE id = ?1
 `
@@ -534,6 +759,10 @@ func (q *Queries) GetNodeCheckIn(ctx context.Context, id int64) (NodeCheckIn, er
 		&i.InstallingDeploymentID,
 		&i.InstallingDeploymentError,
 		&i.InstallingDeploymentAttempts,
+		&i.CurrentBinaryDeploymentID,
+		&i.InstallingBinaryDeploymentID,
+		&i.InstallingBinaryError,
+		&i.InstallingBinaryAttempts,
 	)
 	return i, err
 }
@@ -551,8 +780,313 @@ func (q *Queries) GetSite(ctx context.Context, id int64) (Site, error) {
 	return i, err
 }
 
+const listBinaryArtefactIDs = `-- name: ListBinaryArtefactIDs :many
+SELECT id FROM binary_artefacts ORDER BY id
+`
+
+func (q *Queries) ListBinaryArtefactIDs(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listBinaryArtefactIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBinaryArtefacts = `-- name: ListBinaryArtefacts :many
+SELECT id, site_id, os, arch, version, sha256, description, create_time
+FROM binary_artefacts
+WHERE id > ?1
+  AND (?2 = '' OR os = ?2)
+  AND (?3 = '' OR arch = ?3)
+  AND (?4 = 0 OR site_id = ?4 OR site_id IS NULL)
+ORDER BY id
+LIMIT ?5
+`
+
+type ListBinaryArtefactsParams struct {
+	AfterID int64
+	Os      interface{}
+	Arch    interface{}
+	SiteID  interface{}
+	Limit   int64
+}
+
+func (q *Queries) ListBinaryArtefacts(ctx context.Context, arg ListBinaryArtefactsParams) ([]BinaryArtefact, error) {
+	rows, err := q.db.QueryContext(ctx, listBinaryArtefacts,
+		arg.AfterID,
+		arg.Os,
+		arg.Arch,
+		arg.SiteID,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []BinaryArtefact
+	for rows.Next() {
+		var i BinaryArtefact
+		if err := rows.Scan(
+			&i.ID,
+			&i.SiteID,
+			&i.Os,
+			&i.Arch,
+			&i.Version,
+			&i.Sha256,
+			&i.Description,
+			&i.CreateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBinaryDeployments = `-- name: ListBinaryDeployments :many
+SELECT id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+FROM binary_deployments
+WHERE id < ?1
+ORDER BY id DESC
+LIMIT ?2
+`
+
+type ListBinaryDeploymentsParams struct {
+	BeforeID int64
+	Limit    int64
+}
+
+func (q *Queries) ListBinaryDeployments(ctx context.Context, arg ListBinaryDeploymentsParams) ([]BinaryDeployment, error) {
+	rows, err := q.db.QueryContext(ctx, listBinaryDeployments, arg.BeforeID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []BinaryDeployment
+	for rows.Next() {
+		var i BinaryDeployment
+		if err := rows.Scan(
+			&i.ID,
+			&i.BinaryArtefactID,
+			&i.NodeID,
+			&i.Status,
+			&i.StartTime,
+			&i.FinishedTime,
+			&i.Reason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBinaryDeploymentsByNode = `-- name: ListBinaryDeploymentsByNode :many
+SELECT id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+FROM binary_deployments
+WHERE node_id = ?1 AND id < ?2
+ORDER BY id DESC
+LIMIT ?3
+`
+
+type ListBinaryDeploymentsByNodeParams struct {
+	NodeID   int64
+	BeforeID int64
+	Limit    int64
+}
+
+func (q *Queries) ListBinaryDeploymentsByNode(ctx context.Context, arg ListBinaryDeploymentsByNodeParams) ([]BinaryDeployment, error) {
+	rows, err := q.db.QueryContext(ctx, listBinaryDeploymentsByNode, arg.NodeID, arg.BeforeID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []BinaryDeployment
+	for rows.Next() {
+		var i BinaryDeployment
+		if err := rows.Scan(
+			&i.ID,
+			&i.BinaryArtefactID,
+			&i.NodeID,
+			&i.Status,
+			&i.StartTime,
+			&i.FinishedTime,
+			&i.Reason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listConfigDeployments = `-- name: ListConfigDeployments :many
+SELECT id, config_version_id, status, start_time, finished_time, reason
+FROM config_deployments
+WHERE id < ?1
+ORDER BY id DESC
+LIMIT ?2
+`
+
+type ListConfigDeploymentsParams struct {
+	BeforeID int64
+	Limit    int64
+}
+
+func (q *Queries) ListConfigDeployments(ctx context.Context, arg ListConfigDeploymentsParams) ([]ConfigDeployment, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigDeployments, arg.BeforeID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ConfigDeployment
+	for rows.Next() {
+		var i ConfigDeployment
+		if err := rows.Scan(
+			&i.ID,
+			&i.ConfigVersionID,
+			&i.Status,
+			&i.StartTime,
+			&i.FinishedTime,
+			&i.Reason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listConfigDeploymentsByConfigVersion = `-- name: ListConfigDeploymentsByConfigVersion :many
+SELECT id, config_version_id, status, start_time, finished_time, reason
+FROM config_deployments
+WHERE config_version_id = ?1 AND id < ?2
+ORDER BY id DESC
+LIMIT ?3
+`
+
+type ListConfigDeploymentsByConfigVersionParams struct {
+	ConfigVersionID int64
+	BeforeID        int64
+	Limit           int64
+}
+
+func (q *Queries) ListConfigDeploymentsByConfigVersion(ctx context.Context, arg ListConfigDeploymentsByConfigVersionParams) ([]ConfigDeployment, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigDeploymentsByConfigVersion, arg.ConfigVersionID, arg.BeforeID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ConfigDeployment
+	for rows.Next() {
+		var i ConfigDeployment
+		if err := rows.Scan(
+			&i.ID,
+			&i.ConfigVersionID,
+			&i.Status,
+			&i.StartTime,
+			&i.FinishedTime,
+			&i.Reason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listConfigDeploymentsByNode = `-- name: ListConfigDeploymentsByNode :many
+SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
+FROM config_deployments d
+JOIN config_versions cv ON d.config_version_id = cv.id
+WHERE cv.node_id = ?1 AND d.id < ?2
+ORDER BY d.id DESC
+LIMIT ?3
+`
+
+type ListConfigDeploymentsByNodeParams struct {
+	NodeID   int64
+	BeforeID int64
+	Limit    int64
+}
+
+func (q *Queries) ListConfigDeploymentsByNode(ctx context.Context, arg ListConfigDeploymentsByNodeParams) ([]ConfigDeployment, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigDeploymentsByNode, arg.NodeID, arg.BeforeID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ConfigDeployment
+	for rows.Next() {
+		var i ConfigDeployment
+		if err := rows.Scan(
+			&i.ID,
+			&i.ConfigVersionID,
+			&i.Status,
+			&i.StartTime,
+			&i.FinishedTime,
+			&i.Reason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listConfigVersions = `-- name: ListConfigVersions :many
-SELECT id, node_id, description, payload, create_time
+SELECT id, node_id, description, payload, create_time, sha256, version
 FROM config_versions
 WHERE id > ?1
 ORDER BY id
@@ -579,6 +1113,8 @@ func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersions
 			&i.Description,
 			&i.Payload,
 			&i.CreateTime,
+			&i.Sha256,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -594,7 +1130,7 @@ func (q *Queries) ListConfigVersions(ctx context.Context, arg ListConfigVersions
 }
 
 const listConfigVersionsByNode = `-- name: ListConfigVersionsByNode :many
-SELECT id, node_id, description, payload, create_time
+SELECT id, node_id, description, payload, create_time, sha256, version
 FROM config_versions
 WHERE node_id = ?1 AND id > ?2
 ORDER BY id
@@ -622,6 +1158,8 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVe
 			&i.Description,
 			&i.Payload,
 			&i.CreateTime,
+			&i.Sha256,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -636,125 +1174,27 @@ func (q *Queries) ListConfigVersionsByNode(ctx context.Context, arg ListConfigVe
 	return items, nil
 }
 
-const listDeployments = `-- name: ListDeployments :many
-SELECT id, config_version_id, status, start_time, finished_time, reason
-FROM deployments
-WHERE id < ?1
-ORDER BY id DESC
-LIMIT ?2
+const listConfigVersionsWithoutChecksum = `-- name: ListConfigVersionsWithoutChecksum :many
+SELECT id, payload
+FROM config_versions
+WHERE sha256 IS NULL OR length(sha256) = 0
 `
 
-type ListDeploymentsParams struct {
-	BeforeID int64
-	Limit    int64
+type ListConfigVersionsWithoutChecksumRow struct {
+	ID      int64
+	Payload []byte
 }
 
-func (q *Queries) ListDeployments(ctx context.Context, arg ListDeploymentsParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeployments, arg.BeforeID, arg.Limit)
+func (q *Queries) ListConfigVersionsWithoutChecksum(ctx context.Context) ([]ListConfigVersionsWithoutChecksumRow, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigVersionsWithoutChecksum)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Deployment
+	var items []ListConfigVersionsWithoutChecksumRow
 	for rows.Next() {
-		var i Deployment
-		if err := rows.Scan(
-			&i.ID,
-			&i.ConfigVersionID,
-			&i.Status,
-			&i.StartTime,
-			&i.FinishedTime,
-			&i.Reason,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listDeploymentsByConfigVersion = `-- name: ListDeploymentsByConfigVersion :many
-SELECT id, config_version_id, status, start_time, finished_time, reason
-FROM deployments
-WHERE config_version_id = ?1 AND id < ?2
-ORDER BY id DESC
-LIMIT ?3
-`
-
-type ListDeploymentsByConfigVersionParams struct {
-	ConfigVersionID int64
-	BeforeID        int64
-	Limit           int64
-}
-
-func (q *Queries) ListDeploymentsByConfigVersion(ctx context.Context, arg ListDeploymentsByConfigVersionParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByConfigVersion, arg.ConfigVersionID, arg.BeforeID, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Deployment
-	for rows.Next() {
-		var i Deployment
-		if err := rows.Scan(
-			&i.ID,
-			&i.ConfigVersionID,
-			&i.Status,
-			&i.StartTime,
-			&i.FinishedTime,
-			&i.Reason,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listDeploymentsByNode = `-- name: ListDeploymentsByNode :many
-SELECT d.id, d.config_version_id, d.status, d.start_time, d.finished_time, d.reason
-FROM deployments d
-JOIN config_versions cv ON d.config_version_id = cv.id
-WHERE cv.node_id = ?1 AND d.id < ?2
-ORDER BY d.id DESC
-LIMIT ?3
-`
-
-type ListDeploymentsByNodeParams struct {
-	NodeID   int64
-	BeforeID int64
-	Limit    int64
-}
-
-func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeploymentsByNodeParams) ([]Deployment, error) {
-	rows, err := q.db.QueryContext(ctx, listDeploymentsByNode, arg.NodeID, arg.BeforeID, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Deployment
-	for rows.Next() {
-		var i Deployment
-		if err := rows.Scan(
-			&i.ID,
-			&i.ConfigVersionID,
-			&i.Status,
-			&i.StartTime,
-			&i.FinishedTime,
-			&i.Reason,
-		); err != nil {
+		var i ListConfigVersionsWithoutChecksumRow
+		if err := rows.Scan(&i.ID, &i.Payload); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -769,7 +1209,7 @@ func (q *Queries) ListDeploymentsByNode(ctx context.Context, arg ListDeployments
 }
 
 const listNodeCheckInsByNode = `-- name: ListNodeCheckInsByNode :many
-SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts
+SELECT id, node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts, current_binary_deployment_id, installing_binary_deployment_id, installing_binary_error, installing_binary_attempts
 FROM node_check_ins
 WHERE node_id = ?1 AND id < ?2
 ORDER BY id DESC
@@ -799,6 +1239,10 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 			&i.InstallingDeploymentID,
 			&i.InstallingDeploymentError,
 			&i.InstallingDeploymentAttempts,
+			&i.CurrentBinaryDeploymentID,
+			&i.InstallingBinaryDeploymentID,
+			&i.InstallingBinaryError,
+			&i.InstallingBinaryAttempts,
 		); err != nil {
 			return nil, err
 		}
@@ -814,7 +1258,7 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 }
 
 const listNodes = `-- name: ListNodes :many
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, create_time, os, arch
 FROM nodes
 WHERE id > ?1
 ORDER BY id
@@ -840,6 +1284,8 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 			&i.Hostname,
 			&i.SiteID,
 			&i.CreateTime,
+			&i.Os,
+			&i.Arch,
 		); err != nil {
 			return nil, err
 		}
@@ -855,7 +1301,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 }
 
 const listNodesBySite = `-- name: ListNodesBySite :many
-SELECT id, hostname, site_id, create_time
+SELECT id, hostname, site_id, create_time, os, arch
 FROM nodes
 WHERE site_id = ?1 AND id > ?2
 ORDER BY id
@@ -882,6 +1328,8 @@ func (q *Queries) ListNodesBySite(ctx context.Context, arg ListNodesBySiteParams
 			&i.Hostname,
 			&i.SiteID,
 			&i.CreateTime,
+			&i.Os,
+			&i.Arch,
 		); err != nil {
 			return nil, err
 		}
@@ -941,6 +1389,87 @@ func (q *Queries) MarkEnrollmentCodeUsed(ctx context.Context, id int64) error {
 	return err
 }
 
+const setBinaryDeploymentStatus = `-- name: SetBinaryDeploymentStatus :one
+UPDATE binary_deployments
+SET status = ?1,
+    reason = ?2,
+    finished_time = CASE
+        WHEN ?1 = 'completed' OR ?1 = 'failed' OR ?1 = 'cancelled' THEN datetime('now', 'subsec')
+        ELSE finished_time
+    END
+WHERE id = ?3
+RETURNING id, binary_artefact_id, node_id, status, start_time, finished_time, reason
+`
+
+type SetBinaryDeploymentStatusParams struct {
+	Status string
+	Reason sql.NullString
+	ID     int64
+}
+
+func (q *Queries) SetBinaryDeploymentStatus(ctx context.Context, arg SetBinaryDeploymentStatusParams) (BinaryDeployment, error) {
+	row := q.db.QueryRowContext(ctx, setBinaryDeploymentStatus, arg.Status, arg.Reason, arg.ID)
+	var i BinaryDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.BinaryArtefactID,
+		&i.NodeID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
+const setConfigVersionChecksum = `-- name: SetConfigVersionChecksum :exec
+UPDATE config_versions
+SET sha256 = ?1
+WHERE id = ?2
+`
+
+type SetConfigVersionChecksumParams struct {
+	Sha256 []byte
+	ID     int64
+}
+
+func (q *Queries) SetConfigVersionChecksum(ctx context.Context, arg SetConfigVersionChecksumParams) error {
+	_, err := q.db.ExecContext(ctx, setConfigVersionChecksum, arg.Sha256, arg.ID)
+	return err
+}
+
+const updateConfigDeploymentStatus = `-- name: UpdateConfigDeploymentStatus :one
+UPDATE config_deployments
+SET status = ?1,
+    reason = ?2,
+    finished_time = CASE
+        WHEN ?1 = 'completed' OR ?1 = 'failed' OR ?1 = 'cancelled' THEN datetime('now', 'subsec')
+        ELSE finished_time
+    END
+WHERE id = ?3
+RETURNING id, config_version_id, status, start_time, finished_time, reason
+`
+
+type UpdateConfigDeploymentStatusParams struct {
+	Status string
+	Reason sql.NullString
+	ID     int64
+}
+
+func (q *Queries) UpdateConfigDeploymentStatus(ctx context.Context, arg UpdateConfigDeploymentStatusParams) (ConfigDeployment, error) {
+	row := q.db.QueryRowContext(ctx, updateConfigDeploymentStatus, arg.Status, arg.Reason, arg.ID)
+	var i ConfigDeployment
+	err := row.Scan(
+		&i.ID,
+		&i.ConfigVersionID,
+		&i.Status,
+		&i.StartTime,
+		&i.FinishedTime,
+		&i.Reason,
+	)
+	return i, err
+}
+
 const updateCredentialCert = `-- name: UpdateCredentialCert :one
 UPDATE credentials
 SET serial = ?1, fingerprint = ?2, not_before = ?3, not_after = ?4
@@ -981,59 +1510,64 @@ func (q *Queries) UpdateCredentialCert(ctx context.Context, arg UpdateCredential
 	return i, err
 }
 
-const updateDeploymentStatus = `-- name: UpdateDeploymentStatus :one
-UPDATE deployments
-SET status = ?1,
-    reason = ?2,
-    finished_time = CASE
-        WHEN ?1 = 'completed' OR ?1 = 'failed' OR ?1 = 'cancelled' THEN datetime('now', 'subsec')
-        ELSE finished_time
-    END
-WHERE id = ?3
-RETURNING id, config_version_id, status, start_time, finished_time, reason
-`
-
-type UpdateDeploymentStatusParams struct {
-	Status string
-	Reason sql.NullString
-	ID     int64
-}
-
-func (q *Queries) UpdateDeploymentStatus(ctx context.Context, arg UpdateDeploymentStatusParams) (Deployment, error) {
-	row := q.db.QueryRowContext(ctx, updateDeploymentStatus, arg.Status, arg.Reason, arg.ID)
-	var i Deployment
-	err := row.Scan(
-		&i.ID,
-		&i.ConfigVersionID,
-		&i.Status,
-		&i.StartTime,
-		&i.FinishedTime,
-		&i.Reason,
-	)
-	return i, err
-}
-
 const updateNode = `-- name: UpdateNode :one
 UPDATE nodes
-SET hostname = ?1, site_id = ?2
-WHERE id = ?3
-RETURNING id, hostname, site_id, create_time
+SET hostname = ?1, site_id = ?2, os = ?3, arch = ?4
+WHERE id = ?5
+RETURNING id, hostname, site_id, create_time, os, arch
 `
 
 type UpdateNodeParams struct {
 	Hostname string
 	SiteID   int64
+	Os       string
+	Arch     string
 	ID       int64
 }
 
 func (q *Queries) UpdateNode(ctx context.Context, arg UpdateNodeParams) (Node, error) {
-	row := q.db.QueryRowContext(ctx, updateNode, arg.Hostname, arg.SiteID, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateNode,
+		arg.Hostname,
+		arg.SiteID,
+		arg.Os,
+		arg.Arch,
+		arg.ID,
+	)
 	var i Node
 	err := row.Scan(
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
 		&i.CreateTime,
+		&i.Os,
+		&i.Arch,
+	)
+	return i, err
+}
+
+const updateNodePlatform = `-- name: UpdateNodePlatform :one
+UPDATE nodes
+SET os = ?1, arch = ?2
+WHERE id = ?3
+RETURNING id, hostname, site_id, create_time, os, arch
+`
+
+type UpdateNodePlatformParams struct {
+	Os   string
+	Arch string
+	ID   int64
+}
+
+func (q *Queries) UpdateNodePlatform(ctx context.Context, arg UpdateNodePlatformParams) (Node, error) {
+	row := q.db.QueryRowContext(ctx, updateNodePlatform, arg.Os, arg.Arch, arg.ID)
+	var i Node
+	err := row.Scan(
+		&i.ID,
+		&i.Hostname,
+		&i.SiteID,
+		&i.CreateTime,
+		&i.Os,
+		&i.Arch,
 	)
 	return i, err
 }

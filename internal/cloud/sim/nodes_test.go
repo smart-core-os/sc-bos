@@ -37,6 +37,8 @@ func setupNodesEnv(t *testing.T) nodesEnv {
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
 		"siteId":   sid(site.ID),
+		"os":       "linux",
+		"arch":     "arm64",
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -63,11 +65,13 @@ func TestNodes_Create(t *testing.T) {
 				return map[string]any{
 					"hostname": "node-01",
 					"siteId":   sid(e.site.ID),
+					"os":       "linux",
+					"arch":     "arm64",
 				}
 			},
 			expectCode: http.StatusCreated,
 			expect: func(e nodesEnv) Node {
-				return Node{Hostname: "node-01", SiteID: e.site.ID}
+				return Node{Hostname: "node-01", SiteID: e.site.ID, OS: "linux", Arch: "arm64"}
 			},
 		},
 		{
@@ -129,7 +133,7 @@ func TestNodes_Get(t *testing.T) {
 		resp := doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &got)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := Node{ID: e.node.ID, Hostname: "test-node", SiteID: e.site.ID, CreateTime: e.node.CreateTime}
+		want := Node{ID: e.node.ID, Hostname: "test-node", SiteID: e.site.ID, OS: "linux", Arch: "arm64", CreateTime: e.node.CreateTime}
 		if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(Node{}, "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -170,11 +174,13 @@ func TestNodes_Update(t *testing.T) {
 				return map[string]any{
 					"hostname": "updated-node",
 					"siteId":   sid(e.site.ID),
+					"os":       "linux",
+					"arch":     "arm64",
 				}
 			},
 			expectCode: http.StatusOK,
 			expect: func(e nodesEnv) Node {
-				return Node{Hostname: "updated-node", SiteID: e.site.ID}
+				return Node{Hostname: "updated-node", SiteID: e.site.ID, OS: "linux", Arch: "arm64"}
 			},
 		},
 		{

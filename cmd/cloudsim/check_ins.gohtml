@@ -8,7 +8,7 @@
 <h1>Check-ins: node {{.NodeID}} ({{.Hostname}})</h1>
 
 <table border="1">
-<tr><th>ID</th><th>Time</th><th>Current Deployment</th><th>Installing Deployment</th><th>Install Error</th><th>Install Attempts</th></tr>
+<tr><th>ID</th><th>Time</th><th>Current Config Deployment</th><th>Installing Config Deployment</th><th>Config Install Error</th><th>Config Install Attempts</th><th>Current Binary Deployment</th><th>Installing Binary Deployment</th><th>Binary Install Error</th><th>Binary Install Attempts</th></tr>
 {{range .CheckIns}}
 <tr>
   <td>{{.ID}}</td>
@@ -17,9 +17,13 @@
   <td>{{if .InstallingDeploymentID.Valid}}{{.InstallingDeploymentID.Int64}}{{end}}</td>
   <td>{{if .InstallingDeploymentError.Valid}}{{.InstallingDeploymentError.String}}{{end}}</td>
   <td>{{if .InstallingDeploymentAttempts.Valid}}{{.InstallingDeploymentAttempts.Int64}}{{end}}</td>
+  <td>{{if .CurrentBinaryDeploymentID.Valid}}{{.CurrentBinaryDeploymentID.Int64}}{{end}}</td>
+  <td>{{if .InstallingBinaryDeploymentID.Valid}}{{.InstallingBinaryDeploymentID.Int64}}{{end}}</td>
+  <td>{{if .InstallingBinaryError.Valid}}{{.InstallingBinaryError.String}}{{end}}</td>
+  <td>{{if .InstallingBinaryAttempts.Valid}}{{.InstallingBinaryAttempts.Int64}}{{end}}</td>
 </tr>
 {{else}}
-<tr><td colspan="6">No check-ins.</td></tr>
+<tr><td colspan="10">No check-ins.</td></tr>
 {{end}}
 </table>
 {{if .NextPageToken}}

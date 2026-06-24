@@ -78,12 +78,26 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/management/config-versions/{id}/payload", s.getConfigVersionPayload)
 	mux.HandleFunc("DELETE /api/v1/management/config-versions/{id}", s.deleteConfigVersion)
 
-	// Deployments
-	mux.HandleFunc("GET /api/v1/management/deployments", s.listDeployments)
-	mux.HandleFunc("POST /api/v1/management/deployments", s.createDeployment)
-	mux.HandleFunc("GET /api/v1/management/deployments/{id}", s.getDeployment)
-	mux.HandleFunc("PATCH /api/v1/management/deployments/{id}", s.updateDeploymentStatus)
-	mux.HandleFunc("DELETE /api/v1/management/deployments/{id}", s.deleteDeployment)
+	// ConfigDeployments
+	mux.HandleFunc("GET /api/v1/management/config-deployments", s.listConfigDeployments)
+	mux.HandleFunc("POST /api/v1/management/config-deployments", s.createConfigDeployment)
+	mux.HandleFunc("GET /api/v1/management/config-deployments/{id}", s.getConfigDeployment)
+	mux.HandleFunc("PATCH /api/v1/management/config-deployments/{id}", s.updateConfigDeploymentStatus)
+	mux.HandleFunc("DELETE /api/v1/management/config-deployments/{id}", s.deleteConfigDeployment)
+
+	// Binary Artefacts
+	mux.HandleFunc("GET /api/v1/management/binary-artefacts", s.listBinaryArtefacts)
+	mux.HandleFunc("POST /api/v1/management/binary-artefacts", s.createBinaryArtefact)
+	mux.HandleFunc("GET /api/v1/management/binary-artefacts/{id}", s.getBinaryArtefact)
+	mux.HandleFunc("GET /api/v1/management/binary-artefacts/{id}/payload", s.getBinaryArtefactPayload)
+	mux.HandleFunc("DELETE /api/v1/management/binary-artefacts/{id}", s.deleteBinaryArtefact)
+
+	// Binary Deployments
+	mux.HandleFunc("GET /api/v1/management/binary-deployments", s.listBinaryDeployments)
+	mux.HandleFunc("POST /api/v1/management/binary-deployments", s.createBinaryDeployment)
+	mux.HandleFunc("GET /api/v1/management/binary-deployments/{id}", s.getBinaryDeployment)
+	mux.HandleFunc("PATCH /api/v1/management/binary-deployments/{id}", s.updateBinaryDeploymentStatus)
+	mux.HandleFunc("DELETE /api/v1/management/binary-deployments/{id}", s.deleteBinaryDeployment)
 
 	// Enrollment codes
 	mux.HandleFunc("POST /api/v1/management/nodes/{id}/enrollment-codes", s.createEnrollmentCode)

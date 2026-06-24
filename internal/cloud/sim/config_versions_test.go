@@ -2,6 +2,7 @@ package sim
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +11,15 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/smart-core-os/sc-bos/internal/util/checksum"
 )
+
+// wantChecksum returns the type-prefixed SHA-256 the sim emits for a config payload.
+func wantChecksum(payload []byte) string {
+	sum := sha256.Sum256(payload)
+	return checksum.Format(checksum.SHA256, sum[:])
+}
 
 // configVersionsEnv holds test fixtures for config version tests
 type configVersionsEnv struct {
@@ -73,6 +82,7 @@ func TestConfigVersions_Create(t *testing.T) {
 			reqBody: func(e configVersionsEnv) map[string]any {
 				return map[string]any{
 					"nodeId":      sid(e.node.ID),
+					"version":     "1.2.3",
 					"description": "v1.0.0",
 					"payload":     []byte{0xDE, 0xAD, 0xBE, 0xEF},
 				}
@@ -81,6 +91,7 @@ func TestConfigVersions_Create(t *testing.T) {
 			expect: func(e configVersionsEnv) ConfigVersion {
 				return ConfigVersion{
 					NodeID:      e.node.ID,
+					Version:     "1.2.3",
 					Description: "v1.0.0",
 				}
 			},
@@ -119,6 +130,9 @@ func TestConfigVersions_Create(t *testing.T) {
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				want := tc.expect(e)
 				want.PayloadURL = configVersionPayloadURL(e.testServer.URL, got.ID)
+				if payload, ok := tc.reqBody(e)["payload"].([]byte); ok {
+					want.Checksum = wantChecksum(payload)
+				}
 				if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(ConfigVersion{}, "ID", "CreateTime")); diff != "" {
 					t.Errorf("response mismatch (-want +got):\n%s", diff)
 				}
@@ -153,6 +167,7 @@ func TestConfigVersions_Get(t *testing.T) {
 			NodeID:      e.node.ID,
 			Description: "v1.0.0",
 			PayloadURL:  configVersionPayloadURL(e.testServer.URL, e.configVersion.ID),
+			Checksum:    wantChecksum([]byte("test-payload")),
 		}
 		if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(ConfigVersion{}, "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)

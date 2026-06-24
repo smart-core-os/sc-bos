@@ -14,14 +14,31 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 func checkInURL(base string) string { return base + "/v1/device/check-in" }
 
+// assertStreamDeployment checks a check-in response's LatestStream.Deployment against the expected
+// deployment id, artefact discriminator and status.
+func assertStreamDeployment(t *testing.T, got StreamDeployment, wantID int64, wantArtefact, wantStatus string) {
+	t.Helper()
+	if want := formatDeploymentID(wantArtefact, wantID); got.ID != want {
+		t.Errorf("deployment id = %q, want %q", got.ID, want)
+	}
+	if got.Artefact != wantArtefact {
+		t.Errorf("deployment artefact = %q, want %q", got.Artefact, wantArtefact)
+	}
+	if got.Status != wantStatus {
+		t.Errorf("deployment status = %q, want %q", got.Status, wantStatus)
+	}
+}
+
 // checkInEnv holds test fixtures for check-in tests.
 type checkInEnv struct {
 	testServer    *httptest.Server
+	store         *store.Store
 	client        *http.Client // management client (trusts server, no client cert)
 	deviceClient  *http.Client // presents the enrolled client certificate (mTLS)
 	site          Site
@@ -32,8 +49,15 @@ type checkInEnv struct {
 // setupCheckInEnv creates a test environment with a site, an enrolled node, and a config version.
 func setupCheckInEnv(t *testing.T) checkInEnv {
 	t.Helper()
+	return setupCheckInEnvWithPlatform(t, "linux", "arm64")
+}
 
-	ts, _, apiServer := newTestServerWithStore(t)
+// setupCheckInEnvWithPlatform is like setupCheckInEnv but creates the node with the given platform.
+// Empty os and arch create a node with no known platform (set on first check-in).
+func setupCheckInEnvWithPlatform(t *testing.T, os, arch string) checkInEnv {
+	t.Helper()
+
+	ts, dataStore, apiServer := newTestServerWithStore(t)
 	client := ts.Client()
 
 	// Create site
@@ -47,6 +71,8 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "checkin-node",
 		"siteId":   sid(site.ID),
+		"os":       os,
+		"arch":     arch,
 	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
@@ -67,6 +93,7 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 
 	return checkInEnv{
 		testServer:    ts,
+		store:         dataStore,
 		client:        client,
 		deviceClient:  deviceClient,
 		site:          site,
@@ -137,8 +164,8 @@ func TestCheckIn_PendingDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create PENDING deployment
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 		"status":          "pending",
 	}, &dep)
@@ -152,10 +179,8 @@ func TestCheckIn_PendingDeployment(t *testing.T) {
 	if got.LatestConfig == nil {
 		t.Fatal("expected active deployment, got nil")
 	}
-	if diff := cmp.Diff(dep, got.LatestConfig.Deployment); diff != "" {
-		t.Errorf("deployment mismatch (-want +got):\n%s", diff)
-	}
-	if got.LatestConfig.ConfigVersion.PayloadURL == "" {
+	assertStreamDeployment(t, got.LatestConfig.Deployment, dep.ID, "config", dep.Status)
+	if got.LatestConfig.Version.PayloadURL == "" {
 		t.Error("expected non-empty payloadUrl")
 	}
 }
@@ -164,13 +189,13 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create deployment and set to IN_PROGRESS
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep.ID), map[string]any{
 		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
@@ -183,24 +208,22 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 	if got.LatestConfig == nil {
 		t.Fatal("expected active deployment, got nil")
 	}
-	if diff := cmp.Diff(dep, got.LatestConfig.Deployment); diff != "" {
-		t.Errorf("deployment mismatch (-want +got):\n%s", diff)
-	}
+	assertStreamDeployment(t, got.LatestConfig.Deployment, dep.ID, "config", dep.Status)
 }
 
 func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create dep1, then dep2 — creating dep2 auto-cancels dep1, leaving only dep2 active
-	var dep1 Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep1 ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 		"status":          "pending",
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var dep2 Deployment
-	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep2 ConfigDeployment
+	resp = doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 		"status":          "pending",
 	}, &dep2)
@@ -214,32 +237,30 @@ func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 	if got.LatestConfig == nil {
 		t.Fatal("expected active deployment, got nil")
 	}
-	if diff := cmp.Diff(dep2, got.LatestConfig.Deployment); diff != "" {
-		t.Errorf("deployment mismatch (-want +got):\n%s", diff)
-	}
+	assertStreamDeployment(t, got.LatestConfig.Deployment, dep2.ID, "config", dep2.Status)
 }
 
 func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create COMPLETED deployment
-	var dep1 Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep1 ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep1)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep1.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep1.ID), map[string]any{
 		"status": "completed",
 	}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Create FAILED deployment
-	var dep2 Deployment
-	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep2 ConfigDeployment
+	resp = doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep2.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep2.ID), map[string]any{
 		"status": "failed",
 	}, nil)
 	assertStatus(t, resp, http.StatusOK)
@@ -250,7 +271,7 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig != nil {
-		t.Errorf("expected no active deployment, got ID %d", got.LatestConfig.Deployment.ID)
+		t.Errorf("expected no active deployment, got ID %s", got.LatestConfig.Deployment.ID)
 	}
 }
 
@@ -301,12 +322,12 @@ func TestCheckIn_WithCurrentDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create and advance a deployment to COMPLETED
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep.ID), map[string]any{
 		"status": "completed",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
@@ -314,7 +335,7 @@ func TestCheckIn_WithCurrentDeployment(t *testing.T) {
 	// Check in with currentDeployment
 	var got CheckInResponse
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, &got)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateApplied}}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify the check-in was recorded with the currentDeploymentId via management API
@@ -334,8 +355,8 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create a PENDING deployment
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
@@ -343,7 +364,7 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 	// Check in with installingDeployment
 	var got CheckInResponse
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, &got)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateInstalling}}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify the check-in was recorded with the installingDeploymentId via management API
@@ -363,12 +384,12 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create deployment and advance to IN_PROGRESS
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep.ID), map[string]any{
 		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
@@ -376,12 +397,12 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 	// Check in with failedDeployment
 	var got CheckInResponse
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep.ID, Reason: "disk full"}}, &got)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateFailed, Reason: "disk full"}}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment is now FAILED with the given reason
-	var updated Deployment
-	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	var updated ConfigDeployment
+	resp = doRequest(t, e.client, "GET", configDeploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
 	if updated.Status != "failed" {
 		t.Errorf("expected deployment status FAILED, got %s", updated.Status)
@@ -415,15 +436,15 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 	}, &cv2)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var dep2 Deployment
-	resp = doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep2 ConfigDeployment
+	resp = doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(cv2.ID),
 	}, &dep2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in as first node with failedDeployment pointing to second node's deployment
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep2.ID, Reason: "bad"}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep2.ID), State: stateFailed, Reason: "bad"}}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
 
@@ -431,7 +452,7 @@ func TestCheckIn_FailedDeploymentNotFound(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: 99999}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, 99999), State: stateFailed}}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
 
@@ -439,20 +460,20 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create PENDING deployment
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with installingDeployment
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateInstalling}}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment is now IN_PROGRESS
-	var updated Deployment
-	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	var updated ConfigDeployment
+	resp = doRequest(t, e.client, "GET", configDeploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
 	if updated.Status != "in_progress" {
 		t.Errorf("expected deployment status IN_PROGRESS, got %s", updated.Status)
@@ -463,24 +484,24 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create deployment and advance to FAILED
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep.ID), map[string]any{
 		"status": "failed",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with installingDeployment
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateInstalling}}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment status is still COMPLETED (no transition)
-	var updated Deployment
-	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	var updated ConfigDeployment
+	resp = doRequest(t, e.client, "GET", configDeploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
 	if updated.Status != "failed" {
 		t.Errorf("expected deployment status FAILED, got %s", updated.Status)
@@ -491,51 +512,52 @@ func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create deployment and advance to IN_PROGRESS
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
-	resp = doRequest(t, e.client, "PATCH", deploymentURL(e.testServer.URL, dep.ID), map[string]any{
+	resp = doRequest(t, e.client, "PATCH", configDeploymentURL(e.testServer.URL, dep.ID), map[string]any{
 		"status": "in_progress",
 	}, &dep)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with currentDeployment
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateApplied}}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
 	// Verify deployment is now COMPLETED
-	var updated Deployment
-	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	var updated ConfigDeployment
+	resp = doRequest(t, e.client, "GET", configDeploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
 	if updated.Status != "completed" {
 		t.Errorf("expected deployment status COMPLETED, got %s", updated.Status)
 	}
 }
 
-func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
+func TestCheckIn_AppliedCompletesPending(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// Create PENDING deployment (do not advance)
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	// Create PENDING deployment (never reported installing)
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
 
-	// Check in with currentDeployment
+	// Report the deployment applied. Reporting the node is running the target completes it on its own,
+	// even straight from pending.
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
+		CheckInRequest{Progress: []ProgressReport{{DeploymentID: formatDeploymentID(artefactConfig, dep.ID), State: stateApplied}}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
-	// Verify deployment status is still PENDING (no transition)
-	var updated Deployment
-	resp = doRequest(t, e.client, "GET", deploymentURL(e.testServer.URL, dep.ID), nil, &updated)
+	// Verify deployment is now COMPLETED.
+	var updated ConfigDeployment
+	resp = doRequest(t, e.client, "GET", configDeploymentURL(e.testServer.URL, dep.ID), nil, &updated)
 	assertStatus(t, resp, http.StatusOK)
-	if updated.Status != "pending" {
-		t.Errorf("expected deployment status PENDING, got %s", updated.Status)
+	if updated.Status != "completed" {
+		t.Errorf("expected deployment status COMPLETED, got %s", updated.Status)
 	}
 }
 
@@ -543,8 +565,8 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	// Create a PENDING deployment
-	var dep Deployment
-	resp := doRequest(t, e.client, "POST", listDeploymentsURL(e.testServer.URL), map[string]any{
+	var dep ConfigDeployment
+	resp := doRequest(t, e.client, "POST", listConfigDeploymentsURL(e.testServer.URL), map[string]any{
 		"configVersionId": sid(e.configVersion.ID),
 	}, &dep)
 	assertStatus(t, resp, http.StatusCreated)
@@ -552,11 +574,12 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 	// Check in with installingDeployment including error and attempts
 	var got CheckInResponse
 	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
-		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{
-			ID:       dep.ID,
-			Error:    "transient: timeout",
-			Attempts: 3,
-		}}, &got)
+		CheckInRequest{Progress: []ProgressReport{{
+			DeploymentID: formatDeploymentID(artefactConfig, dep.ID),
+			State:        stateInstalling,
+			Error:        "transient: timeout",
+			Attempts:     3,
+		}}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	// The check-in response only contains an ack — verify the details were stored via management API
@@ -577,5 +600,59 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 	}
 	if diff := cmp.Diff(wantCheckIn, stored, cmpopts.IgnoreFields(NodeCheckIn{}, "ID", "CheckInTime")); diff != "" {
 		t.Errorf("stored check-in mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCheckIn_UnknownDeploymentPrefixRejected(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// A progress entry whose deployment id carries neither the config (c-) nor binary (b-) prefix
+	// cannot be routed to a table and is an invalid request.
+	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), map[string]any{
+		"progress": []map[string]any{{"deploymentId": "x-1", "state": "installing"}},
+	}, nil)
+	assertStatus(t, resp, http.StatusBadRequest)
+}
+
+func TestCheckIn_ReconcilesPlatform(t *testing.T) {
+	// sets up the node with {linux,arm64}
+	e := setupCheckInEnv(t)
+
+	var node Node
+	resp := doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &node)
+	assertStatus(t, resp, http.StatusOK)
+	want := Platform{"linux", "arm64"}
+	if node.OS != want.OS || node.Arch != want.Arch {
+		t.Errorf("node platform = %s/%s, want %s/%s", node.OS, node.Arch, want.OS, want.Arch)
+	}
+}
+
+func TestCheckIn_BlockPlatformChange(t *testing.T) {
+	// sets up the node with {linux,arm64}
+	e := setupCheckInEnv(t)
+
+	// report a different one - should be blocked
+	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), map[string]any{
+		"running": map[string]any{"platform": map[string]any{"os": "linux", "arch": "amd64"}},
+	}, nil)
+	assertStatus(t, resp, http.StatusConflict)
+}
+
+func TestCheckIn_FirstReportSetsPlatform(t *testing.T) {
+	// node created with no known platform
+	e := setupCheckInEnvWithPlatform(t, "", "")
+
+	// the first report records the reported platform onto the node
+	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), map[string]any{
+		"running": map[string]any{"platform": map[string]any{"os": "linux", "arch": "arm64"}},
+	}, nil)
+	assertStatus(t, resp, http.StatusOK)
+
+	var node Node
+	resp = doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &node)
+	assertStatus(t, resp, http.StatusOK)
+	want := Platform{"linux", "arm64"}
+	if node.OS != want.OS || node.Arch != want.Arch {
+		t.Errorf("node platform = %s/%s, want %s/%s", node.OS, node.Arch, want.OS, want.Arch)
 	}
 }

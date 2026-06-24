@@ -1,0 +1,71 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.binaryArtefactsViewData*/ -}}
+{{define "binary_artefacts"}}
+<!DOCTYPE html>
+<html>
+<head><title>Binary Artefacts - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Binary Artefacts</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Upload Artefact</h2>
+<form method="post" action="/ui/binary-artefacts" enctype="multipart/form-data">
+  <label>Version: <input type="text" name="version" required></label><br>
+  <label>OS:
+    <select name="os">
+      <option value="linux" selected>linux</option>
+      <option value="freebsd">freebsd</option>
+    </select>
+  </label>
+  <label>Arch:
+    <select name="arch">
+      <option value="arm64"{{if eq .DefaultArch "arm64"}} selected{{end}}>arm64</option>
+      <option value="amd64"{{if eq .DefaultArch "amd64"}} selected{{end}}>amd64</option>
+    </select>
+  </label><br>
+  <label>Site ID (optional): <input type="number" name="siteId" value="{{.SiteID}}"></label><br>
+  <label>Description (optional): <input type="text" name="description"></label><br>
+  <label>Payload: <input type="file" name="payload" required></label><br>
+  <button type="submit">Upload</button>
+</form>
+
+<h2>Filter</h2>
+<form method="get" action="/ui/binary-artefacts">
+  <label>Site ID: <input type="number" name="siteId" value="{{.SiteID}}"></label>
+  <label>OS: <input type="text" name="os" value="{{.OS}}"></label>
+  <label>Arch: <input type="text" name="arch" value="{{.Arch}}"></label>
+  <button type="submit">Filter</button>
+  {{if or .SiteID .OS .Arch}}<a href="/ui/binary-artefacts">Clear filter</a>{{end}}
+</form>
+
+<h2>Artefacts{{if .SiteID}} (site {{.SiteID}}){{end}}{{if .OS}} (os {{.OS}}){{end}}{{if .Arch}} (arch {{.Arch}}){{end}}</h2>
+<table border="1">
+<tr><th>ID</th><th>Site ID</th><th>OS</th><th>Arch</th><th>Version</th><th>SHA-256</th><th>Size</th><th>Description</th><th>Created</th><th>Actions</th></tr>
+{{range .BinaryArtefacts}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{if .SiteID.Valid}}{{.SiteID.Int64}}{{end}}</td>
+  <td>{{.Os}}</td>
+  <td>{{.Arch}}</td>
+  <td>{{.Version}}</td>
+  <td><small>{{printf "%x" .Sha256}}</small></td>
+  <td>{{.Size}}</td>
+  <td>{{.Description.String}}</td>
+  <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>
+    <a href="/api/v1/management/binary-artefacts/{{.ID}}/payload">Download</a><br>
+    <form method="post" action="{{$.DeleteBinaryArtefactPath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="10">No artefacts.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/binary-artefacts?after={{.NextPageToken}}{{if .SiteID}}&amp;siteId={{.SiteID}}{{end}}{{if .OS}}&amp;os={{.OS}}{{end}}{{if .Arch}}&amp;arch={{.Arch}}{{end}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}

@@ -11,6 +11,7 @@
 <h2>Create Config Version</h2>
 <form method="post" action="/ui/config-versions" enctype="multipart/form-data">
   <label>Node ID: <input type="number" name="nodeId" value="{{.NodeID}}" required></label><br>
+  <label>Version: <input type="text" name="version"></label><br>
   <label>Description: <input type="text" name="description"></label><br>
   <label>Payload: <input type="file" name="payload"></label><br>
   <button type="submit">Create</button>
@@ -25,11 +26,12 @@
 
 <h2>Config Versions{{if .NodeID}} (node {{.NodeID}}){{end}}</h2>
 <table border="1">
-<tr><th>ID</th><th>Node ID</th><th>Description</th><th>Payload</th><th>Created</th><th>Actions</th></tr>
+<tr><th>ID</th><th>Node ID</th><th>Version</th><th>Description</th><th>Payload</th><th>Created</th><th>Actions</th></tr>
 {{range .ConfigVersions}}
 <tr>
   <td>{{.ID}}</td>
   <td>{{.NodeID}}</td>
+  <td>{{.Version.String}}</td>
   <td>{{.Description.String}}</td>
   <td>{{len .Payload}} bytes</td>
   <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
@@ -41,7 +43,7 @@
   </td>
 </tr>
 {{else}}
-<tr><td colspan="6">No config versions.</td></tr>
+<tr><td colspan="7">No config versions.</td></tr>
 {{end}}
 </table>
 {{if .NextPageToken}}

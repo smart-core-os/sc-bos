@@ -40,6 +40,8 @@ func Example_basic() {
 	var nodeID int64
 	err = s.Write(ctx, func(tx *store.Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Os:       "linux",
+			Arch:     "arm64",
 			Hostname: "LONDON-AC-01",
 			SiteID:   siteID,
 		})
@@ -187,6 +189,8 @@ func Example_deployments() {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Os:       "linux",
+			Arch:     "arm64",
 			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
@@ -212,7 +216,7 @@ func Example_deployments() {
 	// Create a deployment
 	var deploymentID int64
 	err = s.Write(ctx, func(tx *store.Tx) error {
-		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		deployment, err := tx.CreateConfigDeployment(ctx, queries.CreateConfigDeploymentParams{
 			ConfigVersionID: configVersionID,
 			Status:          "pending",
 		})
@@ -229,7 +233,7 @@ func Example_deployments() {
 
 	// Update deployment status to completed
 	err = s.Write(ctx, func(tx *store.Tx) error {
-		deployment, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
+		deployment, err := tx.UpdateConfigDeploymentStatus(ctx, queries.UpdateConfigDeploymentStatusParams{
 			ID:     deploymentID,
 			Status: "completed",
 		})
@@ -270,6 +274,8 @@ func Example_cascadeDeletes() {
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Os:       "linux",
+			Arch:     "arm64",
 			Hostname: "TEST-AC-01",
 			SiteID:   site.ID,
 		})
@@ -287,7 +293,7 @@ func Example_cascadeDeletes() {
 			return err
 		}
 
-		_, err = tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		_, err = tx.CreateConfigDeployment(ctx, queries.CreateConfigDeploymentParams{
 			ConfigVersionID: config.ID,
 			Status:          "pending",
 		})

@@ -9,12 +9,44 @@ import (
 	"time"
 )
 
+type BinaryArtefact struct {
+	ID          int64
+	SiteID      sql.NullInt64
+	Os          string
+	Arch        string
+	Version     string
+	Sha256      []byte
+	Description sql.NullString
+	CreateTime  time.Time
+}
+
+type BinaryDeployment struct {
+	ID               int64
+	BinaryArtefactID int64
+	NodeID           int64
+	Status           string
+	StartTime        time.Time
+	FinishedTime     sql.NullTime
+	Reason           sql.NullString
+}
+
+type ConfigDeployment struct {
+	ID              int64
+	ConfigVersionID int64
+	Status          string
+	StartTime       time.Time
+	FinishedTime    sql.NullTime
+	Reason          sql.NullString
+}
+
 type ConfigVersion struct {
 	ID          int64
 	NodeID      int64
 	Description sql.NullString
 	Payload     []byte
 	CreateTime  time.Time
+	Sha256      []byte
+	Version     sql.NullString
 }
 
 type Credential struct {
@@ -27,15 +59,6 @@ type Credential struct {
 	NotBefore    time.Time
 	NotAfter     time.Time
 	CreateTime   time.Time
-}
-
-type Deployment struct {
-	ID              int64
-	ConfigVersionID int64
-	Status          string
-	StartTime       time.Time
-	FinishedTime    sql.NullTime
-	Reason          sql.NullString
 }
 
 type EnrollmentCode struct {
@@ -52,6 +75,8 @@ type Node struct {
 	Hostname   string
 	SiteID     int64
 	CreateTime time.Time
+	Os         string
+	Arch       string
 }
 
 type NodeCheckIn struct {
@@ -62,6 +87,10 @@ type NodeCheckIn struct {
 	InstallingDeploymentID       sql.NullInt64
 	InstallingDeploymentError    sql.NullString
 	InstallingDeploymentAttempts sql.NullInt64
+	CurrentBinaryDeploymentID    sql.NullInt64
+	InstallingBinaryDeploymentID sql.NullInt64
+	InstallingBinaryError        sql.NullString
+	InstallingBinaryAttempts     sql.NullInt64
 }
 
 type Site struct {
