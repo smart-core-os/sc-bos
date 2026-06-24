@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 01-build.sh (run on the Mac) — build everything the test needs.
+# 01-build.sh — build everything the test needs (run on the Rocky host).
 #
-# Cross-compiles the Supervisor binary on the Mac (it runs as a host systemd service), then drives
-# podman in the machine to build the production-like BOS base image from the repo's main Dockerfile
-# (UI included), the v1/v2/v2bad images, and the v1/v2/v2bad artefact tarballs.
+# Builds the Supervisor binary (it runs as a host systemd service), then builds the production-like
+# BOS base image from the repo's main Dockerfile (UI included), the v1/v2/v2bad images, and the
+# v1/v2/v2bad artefact tarballs.
 #
 # Idempotent: existing outputs are reused unless FORCE=1 is set.
 #   ./01-build.sh          # build only what's missing
@@ -15,12 +15,12 @@ source ./config.sh
 FORCE="${FORCE:-0}"
 mkdir -p "$BUILD"
 
-# --- 1. cross-compile the Supervisor binary (host binary, runs as a systemd service) --------------
-# pre:  Go toolchain on the Mac; the supervisor package compiles.
-# post: $SUP_BIN is a linux/arm64 executable the machine can run at /usr/local/bin.
+# --- 1. build the Supervisor binary (host binary, runs as a systemd service) ----------------------
+# pre:  Go toolchain on the host; the supervisor package compiles.
+# post: $SUP_BIN is a static linux executable installed at /usr/local/bin by 03-install.sh.
 if [[ "$FORCE" == 1 || ! -x "$SUP_BIN" ]]; then
   echo "==> building supervisor -> $SUP_BIN"
-  ( cd "$REPO" && CGO_ENABLED=0 GOOS=linux GOARCH="$GOARCH" go build -o "$SUP_BIN" ./supervisor )
+  ( cd "$REPO" && CGO_ENABLED=0 GOOS=linux go build -o "$SUP_BIN" ./supervisor )
 else
   echo "==> supervisor binary present, skipping (FORCE=1 to rebuild)"
 fi
@@ -54,13 +54,69 @@ cp -R "$VANTI_UGS/assets" "$BOS_CTX/ui-config/assets"
 # assert: the context is self-contained.
 test -f "$BOS_CTX/app.conf.json" && test -f "$BOS_CTX/ui-config/ui-config.json"
 
-# --- 3. build images + save tarballs inside the machine -------------------------------------------
-# pre:  the supervisor binary is staged; podman is available in the machine; the repo (incl. the main
-#       Dockerfile) is visible at $REPO via the bind mount.
-# post: localhost/smartcore/bos:{base,v1,v2,v2bad} exist in the machine's root image store, and
-#       $BUILD/{v1,v2,v2bad}.tar are world-readable podman-save tarballs cloudsim can upload.
-# FORCE is passed as an argument because env vars do not survive `container machine run` + sudo.
-echo "==> building images + saving tarballs in $MACHINE"
-run_in_machine "$SCRIPTS/machine/build.sh" "$FORCE"
+# --- 3. base image: the repo's main Dockerfile, UI included ---------------------------------------
+# post: $IMAGE_REPO:base is the production-like image with the Ops UI baked in.
+#       --ignorefile augments the repo .dockerignore with this harness's bulky non-input dirs so the
+#       build context stays small (see conf/dockerignore).
+if [[ "$FORCE" == 1 ]] || ! sudo podman image exists "$IMAGE_REPO:base"; then
+  echo "==> podman build $IMAGE_REPO:base (main Dockerfile, UI included)"
+  sudo podman build --ignorefile "$CONF/dockerignore" \
+    -t "$IMAGE_REPO:base" -f "$REPO/Dockerfile" "$REPO"
+else
+  echo "==> $IMAGE_REPO:base exists, skipping (FORCE=1 to rebuild)"
+fi
+sudo podman image exists "$IMAGE_REPO:base"
+
+# --- 4. good images: the base, two version tags --------------------------------------------------
+# post: :v1 and :v2 extend the base, differing ONLY in the baked BOS_VERSION_OVERRIDE — so they get
+#       distinct image ids, which is what lets the Supervisor tell a successful update from a rollback.
+#       --no-cache is required: buildah keys the `ENV ...=$BOS_VERSION` layer without the build-arg
+#       value, so a cached build would silently give both tags the first version's id.
+test -f "$BOS_CTX/Containerfile"
+for v in "$V1" "$V2"; do
+  if [[ "$FORCE" == 1 ]] || ! sudo podman image exists "$IMAGE_REPO:$v"; then
+    echo "==> podman build $IMAGE_REPO:$v"
+    sudo podman build --no-cache --build-arg "BOS_VERSION=$v" -t "$IMAGE_REPO:$v" "$BOS_CTX"
+  else
+    echo "==> $IMAGE_REPO:$v exists, skipping"
+  fi
+done
+# assert: both good images resolve AND bake distinct versions (guards against the cache trap above).
+sudo podman image exists "$IMAGE_REPO:$V1"
+sudo podman image exists "$IMAGE_REPO:$V2"
+v1env=$(sudo podman image inspect --format '{{.Config.Env}}' "$IMAGE_REPO:$V1")
+v2env=$(sudo podman image inspect --format '{{.Config.Env}}' "$IMAGE_REPO:$V2")
+[[ "$v1env" == *"BOS_VERSION_OVERRIDE=$V1"* ]] || { echo "v1 image baked wrong version: $v1env" >&2; exit 1; }
+[[ "$v2env" == *"BOS_VERSION_OVERRIDE=$V2"* ]] || { echo "v2 image baked wrong version: $v2env" >&2; exit 1; }
+
+# --- 5. bad image: inert, never commits ----------------------------------------------------------
+# post: :v2bad exists; loading + running it will never call Commit, forcing rollback under test.
+if [[ "$FORCE" == 1 ]] || ! sudo podman image exists "$IMAGE_REPO:$V2BAD"; then
+  echo "==> podman build $IMAGE_REPO:$V2BAD"
+  sudo podman build -t "$IMAGE_REPO:$V2BAD" -f "$CONF/Containerfile.bad" "$CONF"
+else
+  echo "==> $IMAGE_REPO:$V2BAD exists, skipping"
+fi
+sudo podman image exists "$IMAGE_REPO:$V2BAD"
+
+# --- 6. save the update artefacts ----------------------------------------------------------------
+# post: $BUILD/{v1,v2,v2bad}.tar are podman-save tarballs (tags + metadata intact). `podman save` of a
+#       tagged image preserves the tag, so the Supervisor's `podman load` restores
+#       localhost/smartcore/bos:<version> exactly. Mode 0644 so cloudsim — which may run unprivileged —
+#       can read the root-owned podman output.
+# v1 is saved too so it can be deployed as an update target to reverse a v2 update (v1 is also the
+# image 03-install.sh seeds as the initial :current).
+for pair in "$V1:$BUILD/v1.tar" "$V2:$BUILD/v2.tar" "$V2BAD:$BUILD/v2bad.tar"; do
+  tag="${pair%%:*}"; out="${pair#*:}"
+  if [[ "$FORCE" == 1 || ! -s "$out" ]]; then
+    echo "==> podman save $IMAGE_REPO:$tag -> $out"
+    sudo rm -f "$out"   # podman save refuses to modify an existing docker-archive tar
+    sudo podman save -o "$out" "$IMAGE_REPO:$tag"
+    sudo chmod 0644 "$out"
+  else
+    echo "==> $out exists, skipping"
+  fi
+  test -s "$out"
+done
 
 echo "==> 01-build.sh done"

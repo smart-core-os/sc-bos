@@ -1,9 +1,9 @@
 # Test Quadlet unit for Smart Core BOS, installed to /etc/containers/systemd/sc-bos.container.
 #
 # Stripped-down variant of supervisor/deploy/sc-bos.container for the update end-to-end test: no
-# postgres/https secrets, no published ports (the test node only needs outbound check-in plus the
-# Supervisor socket), and no HealthCmd (the Supervisor decides success via the Commit RPC, not the
-# probe). The Supervisor swaps what :current resolves to and restarts this unit.
+# postgres/https secrets (the image self-generates a self-signed cert) and no HealthCmd (the
+# Supervisor decides success via the Commit RPC, not the probe). The Supervisor swaps what :current
+# resolves to and restarts this unit.
 [Unit]
 Description=Smart Core BOS (update test)
 
@@ -12,10 +12,11 @@ Description=Smart Core BOS (update test)
 Image=localhost/smartcore/bos:current
 ContainerName=sc-bos
 
-# Host networking: the nested podman bridge (netavark/nftables) is unavailable in this container
-# machine, and host networking lets BOS reach cloudsim via the host-redirect IP exactly as the
-# machine host does. The test node publishes no ports, so sharing the host netns is harmless.
-Network=host
+# Default (bridge) networking. BOS reaches cloudsim on the host at the Podman bridge gateway IP
+# (03-install.sh seeds it into registration.json); the host Supervisor, which performs the artefact
+# download, reaches cloudsim at that same gateway address.
+PublishPort=443:443        # Ops UI / HTTPS
+PublishPort=23557:23557    # gRPC API
 
 # /data is the BOS data dir; it holds cloud/registration.json (pre-seeded) and cloud/update.json.
 Volume=/root/data:/data:z

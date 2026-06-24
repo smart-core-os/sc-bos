@@ -1,16 +1,30 @@
 #!/usr/bin/env bash
-# 99-teardown.sh (run on the Mac) — undo everything 02/03 set up, on both the Mac and the machine.
+# 99-teardown.sh — undo everything 02/03 set up on this host. Idempotent.
 # Leaves the built binaries/images in place by default (re-runs are cheap); pass --all to wipe $BUILD.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./config.sh
 
-# --- machine side: stop services, remove units/state, drop test image tags ------------------------
-echo "==> tearing down inside $MACHINE"
-run_in_machine "$SCRIPTS/machine/teardown.sh"
+# --- services + units + state ---------------------------------------------------------------------
+# post: both services are stopped and disabled, the units we installed are gone, and systemd has
+#       forgotten the generated sc-bos.service.
+sudo systemctl disable --now sc-bos.service 2>/dev/null || true
+sudo systemctl disable --now sc-bos-supervisor.service 2>/dev/null || true
+sudo rm -f "$QUADLET_DIR/sc-bos.container" \
+           "$SYSTEMD_DIR/sc-bos-supervisor.service"
+sudo systemctl daemon-reload
 
-# --- Mac side: stop cloudsim ----------------------------------------------------------------------
-# post: no cloudsim process; the db + artefacts dir are removed.
+# post: installed binary/config + durable state + BOS data dir + demo users file are removed.
+sudo rm -rf "$SUP_INSTALL" "$SUP_CONF_DIR" "$SUP_STATE_DIR" "$BOS_DATA" "$BOS_USERS_FILE"
+
+# post: the test image tags are dropped (ignore errors if already gone). :base is the heavy
+#       production-like image; teardown removes it too, so a later run rebuilds it.
+for t in "$V1" "$V2" "$V2BAD" current previous base; do
+  sudo podman rmi -f "$IMAGE_REPO:$t" 2>/dev/null || true
+done
+
+# --- cloudsim ------------------------------------------------------------------------------------
+# post: no cloudsim process; the db + artefacts dir + captured state are removed.
 if [[ -f "$CLOUDSIM_PID" ]] && kill -0 "$(cat "$CLOUDSIM_PID")" 2>/dev/null; then
   echo "==> stopping cloudsim (pid $(cat "$CLOUDSIM_PID"))"
   kill "$(cat "$CLOUDSIM_PID")" 2>/dev/null || true

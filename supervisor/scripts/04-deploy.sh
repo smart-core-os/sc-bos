@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 04-deploy.sh <v1|v2|v2bad> (run on the Mac) — create an update deployment and watch it settle.
+# 04-deploy.sh <v1|v2|v2bad> — create an update deployment and watch it settle.
 #
 #   ./04-deploy.sh v2      # happy path: expect the deployment to reach COMPLETED
 #   ./04-deploy.sh v2bad   # rollback:   expect IN_PROGRESS then FAILED (node stays on the prior good version)
