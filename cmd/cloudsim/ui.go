@@ -43,10 +43,17 @@ func (s *uiServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /ui/config-versions", s.serveConfigVersions)
 	mux.HandleFunc("POST /ui/config-versions", s.createConfigVersion)
 	mux.HandleFunc("POST /ui/config-versions/{id}/delete", s.deleteConfigVersion)
-	mux.HandleFunc("GET /ui/deployments", s.serveDeployments)
-	mux.HandleFunc("POST /ui/deployments", s.createDeployment)
-	mux.HandleFunc("POST /ui/deployments/{id}/update-status", s.updateDeploymentStatus)
-	mux.HandleFunc("POST /ui/deployments/{id}/delete", s.deleteDeployment)
+	mux.HandleFunc("GET /ui/config-deployments", s.serveConfigDeployments)
+	mux.HandleFunc("POST /ui/config-deployments", s.createConfigDeployment)
+	mux.HandleFunc("POST /ui/config-deployments/{id}/update-status", s.updateConfigDeploymentStatus)
+	mux.HandleFunc("POST /ui/config-deployments/{id}/delete", s.deleteConfigDeployment)
+	mux.HandleFunc("GET /ui/update-artefacts", s.serveUpdateArtefacts)
+	mux.HandleFunc("POST /ui/update-artefacts", s.createUpdateArtefact)
+	mux.HandleFunc("POST /ui/update-artefacts/{id}/delete", s.deleteUpdateArtefact)
+	mux.HandleFunc("GET /ui/update-deployments", s.serveUpdateDeployments)
+	mux.HandleFunc("POST /ui/update-deployments", s.createUpdateDeployment)
+	mux.HandleFunc("POST /ui/update-deployments/{id}/update-status", s.updateUpdateDeploymentStatus)
+	mux.HandleFunc("POST /ui/update-deployments/{id}/delete", s.deleteUpdateDeployment)
 }
 
 func (s *uiServer) render(w http.ResponseWriter, name string, data any) {
@@ -396,22 +403,22 @@ func (s *uiServer) deleteConfigVersion(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ui/config-versions", http.StatusSeeOther)
 }
 
-func (s *uiServer) serveDeployments(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) serveConfigDeployments(w http.ResponseWriter, r *http.Request) {
 	beforeID := parseBeforeIDQuery(r, "before")
 	nodeID := parseIDQuery(r, "nodeId")
 	errMsg := r.URL.Query().Get("error")
 
-	var items []queries.Deployment
+	var items []queries.ConfigDeployment
 	err := s.store.Read(r.Context(), func(tx *store.Tx) error {
 		var e error
 		if nodeID != 0 {
-			items, e = tx.ListDeploymentsByNode(r.Context(), queries.ListDeploymentsByNodeParams{
+			items, e = tx.ListConfigDeploymentsByNode(r.Context(), queries.ListConfigDeploymentsByNodeParams{
 				NodeID:   nodeID,
 				BeforeID: beforeID,
 				Limit:    uiPageSize + 1,
 			})
 		} else {
-			items, e = tx.ListDeployments(r.Context(), queries.ListDeploymentsParams{
+			items, e = tx.ListConfigDeployments(r.Context(), queries.ListConfigDeploymentsParams{
 				BeforeID: beforeID,
 				Limit:    uiPageSize + 1,
 			})
@@ -429,22 +436,22 @@ func (s *uiServer) serveDeployments(w http.ResponseWriter, r *http.Request) {
 		items = items[:uiPageSize]
 	}
 
-	s.render(w, "deployments", deploymentsViewData{
-		Deployments:   items,
-		NodeID:        nodeID,
-		NextPageToken: nextToken,
-		Error:         errMsg,
+	s.render(w, "config_deployments", configDeploymentsViewData{
+		ConfigDeployments: items,
+		NodeID:            nodeID,
+		NextPageToken:     nextToken,
+		Error:             errMsg,
 	})
 }
 
-func (s *uiServer) createDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) createConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid form data")
+		errRedirect(w, r, "/ui/config-deployments", "invalid form data")
 		return
 	}
 	configVersionID, err := strconv.ParseInt(r.PostForm.Get("configVersionId"), 10, 64)
 	if err != nil || configVersionID == 0 {
-		errRedirect(w, r, "/ui/deployments", "valid configVersionId is required")
+		errRedirect(w, r, "/ui/config-deployments", "valid configVersionId is required")
 		return
 	}
 	status := r.PostForm.Get("status")
@@ -453,38 +460,38 @@ func (s *uiServer) createDeployment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.CreateDeployment(r.Context(), queries.CreateDeploymentParams{
+		_, e := tx.CreateConfigDeployment(r.Context(), queries.CreateConfigDeploymentParams{
 			ConfigVersionID: configVersionID,
 			Status:          status,
 		})
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
-func (s *uiServer) updateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) updateConfigDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	id, err := parseIDPath(r, "id")
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid id")
+		errRedirect(w, r, "/ui/config-deployments", "invalid id")
 		return
 	}
 	if err = r.ParseForm(); err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid form data")
+		errRedirect(w, r, "/ui/config-deployments", "invalid form data")
 		return
 	}
 	status := r.PostForm.Get("status")
 	if status == "" {
-		errRedirect(w, r, "/ui/deployments", "status is required")
+		errRedirect(w, r, "/ui/config-deployments", "status is required")
 		return
 	}
 	reason := r.PostForm.Get("reason")
 
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+		_, e := tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 			ID:     id,
 			Status: status,
 			Reason: sql.NullString{String: reason, Valid: reason != ""},
@@ -492,27 +499,27 @@ func (s *uiServer) updateDeploymentStatus(w http.ResponseWriter, r *http.Request
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
-func (s *uiServer) deleteDeployment(w http.ResponseWriter, r *http.Request) {
+func (s *uiServer) deleteConfigDeployment(w http.ResponseWriter, r *http.Request) {
 	id, err := parseIDPath(r, "id")
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", "invalid id")
+		errRedirect(w, r, "/ui/config-deployments", "invalid id")
 		return
 	}
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		_, e := tx.DeleteDeployment(r.Context(), id)
+		_, e := tx.DeleteConfigDeployment(r.Context(), id)
 		return e
 	})
 	if err != nil {
-		errRedirect(w, r, "/ui/deployments", err.Error())
+		errRedirect(w, r, "/ui/config-deployments", err.Error())
 		return
 	}
-	http.Redirect(w, r, "/ui/deployments", http.StatusSeeOther)
+	http.Redirect(w, r, "/ui/config-deployments", http.StatusSeeOther)
 }
 
 func (s *uiServer) createEnrollmentCode(w http.ResponseWriter, r *http.Request) {
@@ -591,4 +598,230 @@ func (s *uiServer) serveCheckIns(w http.ResponseWriter, r *http.Request) {
 		CheckIns:      items,
 		NextPageToken: nextToken,
 	})
+}
+
+func (s *uiServer) serveUpdateArtefacts(w http.ResponseWriter, r *http.Request) {
+	afterID := parseIDQuery(r, "after")
+	siteID := parseIDQuery(r, "siteId")
+	platform := r.URL.Query().Get("platform")
+	errMsg := r.URL.Query().Get("error")
+
+	var items []queries.UpdateArtefact
+	err := s.store.Read(r.Context(), func(tx *store.Tx) error {
+		var e error
+		items, e = tx.ListUpdateArtefacts(r.Context(), queries.ListUpdateArtefactsParams{
+			AfterID:  afterID,
+			Platform: platform,
+			SiteID:   siteID,
+			Limit:    uiPageSize + 1,
+		})
+		return e
+	})
+	if err != nil {
+		http.Error(w, "failed to load update artefacts: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var nextToken string
+	if len(items) > uiPageSize {
+		nextToken = strconv.FormatInt(items[uiPageSize-1].ID, 10)
+		items = items[:uiPageSize]
+	}
+
+	s.render(w, "update_artefacts", updateArtefactsViewData{
+		UpdateArtefacts: items,
+		SiteID:          siteID,
+		Platform:        platform,
+		NextPageToken:   nextToken,
+		Error:           errMsg,
+	})
+}
+
+func (s *uiServer) createUpdateArtefact(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		errRedirect(w, r, "/ui/update-artefacts", "invalid form data")
+		return
+	}
+	version := r.FormValue("version")
+	if version == "" {
+		errRedirect(w, r, "/ui/update-artefacts", "version is required")
+		return
+	}
+	platform := r.FormValue("platform")
+	if platform == "" {
+		platform = "podman"
+	}
+
+	var siteIDPtr *int64
+	if v := r.FormValue("siteId"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n != 0 {
+			siteIDPtr = &n
+		}
+	}
+	description := r.FormValue("description")
+	var descPtr *string
+	if description != "" {
+		descPtr = &description
+	}
+
+	f, _, ferr := r.FormFile("payload")
+	if ferr != nil {
+		errRedirect(w, r, "/ui/update-artefacts", "payload file is required: "+ferr.Error())
+		return
+	}
+	defer f.Close()
+
+	_, err := s.store.CreateUpdateArtefact(r.Context(), store.CreateUpdateArtefactParams{
+		SiteID:      siteIDPtr,
+		Platform:    platform,
+		Version:     version,
+		Description: descPtr,
+	}, f)
+	if err != nil {
+		errRedirect(w, r, "/ui/update-artefacts", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/update-artefacts", http.StatusSeeOther)
+}
+
+func (s *uiServer) deleteUpdateArtefact(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/update-artefacts", "invalid id")
+		return
+	}
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.DeleteUpdateArtefact(r.Context(), id)
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/update-artefacts", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/update-artefacts", http.StatusSeeOther)
+}
+
+func (s *uiServer) serveUpdateDeployments(w http.ResponseWriter, r *http.Request) {
+	beforeID := parseBeforeIDQuery(r, "before")
+	nodeID := parseIDQuery(r, "nodeId")
+	errMsg := r.URL.Query().Get("error")
+
+	var items []queries.UpdateDeployment
+	err := s.store.Read(r.Context(), func(tx *store.Tx) error {
+		var e error
+		if nodeID != 0 {
+			items, e = tx.ListUpdateDeploymentsByNode(r.Context(), queries.ListUpdateDeploymentsByNodeParams{
+				NodeID:   nodeID,
+				BeforeID: beforeID,
+				Limit:    uiPageSize + 1,
+			})
+		} else {
+			items, e = tx.ListUpdateDeployments(r.Context(), queries.ListUpdateDeploymentsParams{
+				BeforeID: beforeID,
+				Limit:    uiPageSize + 1,
+			})
+		}
+		return e
+	})
+	if err != nil {
+		http.Error(w, "failed to load update deployments: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var nextToken string
+	if len(items) > uiPageSize {
+		nextToken = strconv.FormatInt(items[uiPageSize-1].ID, 10)
+		items = items[:uiPageSize]
+	}
+
+	s.render(w, "update_deployments", updateDeploymentsViewData{
+		UpdateDeployments: items,
+		NodeID:            nodeID,
+		NextPageToken:     nextToken,
+		Error:             errMsg,
+	})
+}
+
+func (s *uiServer) createUpdateDeployment(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		errRedirect(w, r, "/ui/update-deployments", "invalid form data")
+		return
+	}
+	nodeID, err := strconv.ParseInt(r.PostForm.Get("nodeId"), 10, 64)
+	if err != nil || nodeID == 0 {
+		errRedirect(w, r, "/ui/update-deployments", "valid nodeId is required")
+		return
+	}
+	updateArtefactID, err := strconv.ParseInt(r.PostForm.Get("updateArtefactId"), 10, 64)
+	if err != nil || updateArtefactID == 0 {
+		errRedirect(w, r, "/ui/update-deployments", "valid updateArtefactId is required")
+		return
+	}
+	status := r.PostForm.Get("status")
+	if status == "" {
+		status = "pending"
+	}
+
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.CreateUpdateDeployment(r.Context(), queries.CreateUpdateDeploymentParams{
+			UpdateArtefactID: updateArtefactID,
+			NodeID:           nodeID,
+			Status:           status,
+		})
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/update-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/update-deployments", http.StatusSeeOther)
+}
+
+func (s *uiServer) updateUpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/update-deployments", "invalid id")
+		return
+	}
+	if err = r.ParseForm(); err != nil {
+		errRedirect(w, r, "/ui/update-deployments", "invalid form data")
+		return
+	}
+	status := r.PostForm.Get("status")
+	if status == "" {
+		errRedirect(w, r, "/ui/update-deployments", "status is required")
+		return
+	}
+	reason := r.PostForm.Get("reason")
+
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.SetUpdateDeploymentStatus(r.Context(), queries.SetUpdateDeploymentStatusParams{
+			ID:     id,
+			Status: status,
+			Reason: sql.NullString{String: reason, Valid: reason != ""},
+		})
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/update-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/update-deployments", http.StatusSeeOther)
+}
+
+func (s *uiServer) deleteUpdateDeployment(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDPath(r, "id")
+	if err != nil {
+		errRedirect(w, r, "/ui/update-deployments", "invalid id")
+		return
+	}
+	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.DeleteUpdateDeployment(r.Context(), id)
+		return e
+	})
+	if err != nil {
+		errRedirect(w, r, "/ui/update-deployments", err.Error())
+		return
+	}
+	http.Redirect(w, r, "/ui/update-deployments", http.StatusSeeOther)
 }

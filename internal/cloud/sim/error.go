@@ -30,14 +30,15 @@ func (e apiError) internal() bool {
 }
 
 var (
-	errInvalidRequest        = apiError{http.StatusBadRequest, "invalid_request", "invalid request"}
-	errNotFound              = apiError{http.StatusNotFound, "not_found", "resource not found"}
-	errForeignKey            = apiError{http.StatusBadRequest, "invalid_reference", "referenced resource does not exist"}
-	errUniqueConstraint      = apiError{http.StatusConflict, "conflict", "resource already exists"}
-	errUnauthorized          = apiError{http.StatusUnauthorized, "unauthorized", "invalid or missing authentication"}
-	errInternal              = apiError{http.StatusInternalServerError, "internal_error", "internal server error"}
-	errDeploymentInProgress  = apiError{http.StatusConflict, "deployment_in_progress", "a deployment is already in progress for this node"}
-	errInvalidEnrollmentCode = apiError{http.StatusUnauthorized, "invalid_enrollment_code", "enrollment code is invalid, expired, or already used"}
+	errInvalidRequest             = apiError{http.StatusBadRequest, "invalid_request", "invalid request"}
+	errNotFound                   = apiError{http.StatusNotFound, "not_found", "resource not found"}
+	errForeignKey                 = apiError{http.StatusBadRequest, "invalid_reference", "referenced resource does not exist"}
+	errUniqueConstraint           = apiError{http.StatusConflict, "conflict", "resource already exists"}
+	errUnauthorized               = apiError{http.StatusUnauthorized, "unauthorized", "invalid or missing authentication"}
+	errInternal                   = apiError{http.StatusInternalServerError, "internal_error", "internal server error"}
+	errConfigDeploymentInProgress = apiError{http.StatusConflict, "deployment_in_progress", "a deployment is already in progress for this node"}
+	errUpdateDeploymentInProgress = apiError{http.StatusConflict, "update_in_progress", "an update is already in progress for this node"}
+	errInvalidEnrollmentCode      = apiError{http.StatusUnauthorized, "invalid_enrollment_code", "enrollment code is invalid, expired, or already used"}
 )
 
 // translateDBError translates database errors to predefined API errors.

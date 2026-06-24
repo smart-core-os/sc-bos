@@ -42,8 +42,8 @@ func TestCascadeDelete(t *testing.T) {
 	}, &cv)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var deployment Deployment
-	resp = doRequest(t, client, "POST", listDeploymentsURL(ts.URL), map[string]any{
+	var deployment ConfigDeployment
+	resp = doRequest(t, client, "POST", listConfigDeploymentsURL(ts.URL), map[string]any{
 		"configVersionId": sid(cv.ID),
 		"status":          "pending",
 	}, &deployment)
@@ -61,8 +61,8 @@ func TestCascadeDelete(t *testing.T) {
 	resp = doRequest(t, client, "GET", configVersionURL(ts.URL, cv.ID), nil, nil)
 	assertStatus(t, resp, http.StatusNotFound)
 
-	// Deployment should be gone
-	resp = doRequest(t, client, "GET", deploymentURL(ts.URL, deployment.ID), nil, nil)
+	// ConfigDeployment should be gone
+	resp = doRequest(t, client, "GET", configDeploymentURL(ts.URL, deployment.ID), nil, nil)
 	assertStatus(t, resp, http.StatusNotFound)
 }
 
@@ -339,9 +339,11 @@ func listConfigVersionsURL(base string) string { return base + "/api/v1/manageme
 func configVersionURL(base string, id int64) string {
 	return fmt.Sprintf("%s/api/v1/management/config-versions/%d", base, id)
 }
-func listDeploymentsURL(base string) string { return base + "/api/v1/management/deployments" }
-func deploymentURL(base string, id int64) string {
-	return fmt.Sprintf("%s/api/v1/management/deployments/%d", base, id)
+func listConfigDeploymentsURL(base string) string {
+	return base + "/api/v1/management/config-deployments"
+}
+func configDeploymentURL(base string, id int64) string {
+	return fmt.Sprintf("%s/api/v1/management/config-deployments/%d", base, id)
 }
 func listNodeCheckInsURL(base string, nodeID int64) string {
 	return fmt.Sprintf("%s/api/v1/management/nodes/%d/check-ins", base, nodeID)

@@ -68,7 +68,7 @@ func TestNodes_Create(t *testing.T) {
 			},
 			expectCode: http.StatusCreated,
 			expect: func(e nodesEnv) Node {
-				return Node{Hostname: "node-01", SiteID: e.site.ID}
+				return Node{Hostname: "node-01", SiteID: e.site.ID, Platform: "podman"}
 			},
 		},
 		{
@@ -154,7 +154,7 @@ func TestNodes_Get(t *testing.T) {
 		resp := doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &got)
 		assertStatus(t, resp, http.StatusOK)
 
-		want := Node{ID: e.node.ID, Hostname: "test-node", SiteID: e.site.ID, CreateTime: e.node.CreateTime}
+		want := Node{ID: e.node.ID, Hostname: "test-node", SiteID: e.site.ID, Platform: "podman", CreateTime: e.node.CreateTime}
 		if diff := cmp.Diff(want, got, cmpopts.IgnoreFields(Node{}, "CreateTime")); diff != "" {
 			t.Errorf("response mismatch (-want +got):\n%s", diff)
 		}
@@ -199,7 +199,7 @@ func TestNodes_Update(t *testing.T) {
 			},
 			expectCode: http.StatusOK,
 			expect: func(e nodesEnv) Node {
-				return Node{Hostname: "updated-node", SiteID: e.site.ID}
+				return Node{Hostname: "updated-node", SiteID: e.site.ID, Platform: "podman"}
 			},
 		},
 		{

@@ -20,11 +20,13 @@ import (
 var (
 	flagListen   string
 	flagDataPath string
+	flagCleanup  bool
 )
 
 func init() {
 	flag.StringVar(&flagListen, "listen", "127.0.0.1:8080", "interface:port to listen on")
 	flag.StringVar(&flagDataPath, "data", "cloudsim.db", "path to SQLite database")
+	flag.BoolVar(&flagCleanup, "cleanup", false, "on startup, delete orphaned update-artefact payload files that have no matching database row")
 }
 
 func main() {
@@ -51,6 +53,14 @@ func run(ctx context.Context, logger *zap.Logger) (err error) {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
 	defer func() { err = errors.Join(err, dataStore.Close()) }()
+
+	if flagCleanup {
+		removed, err := dataStore.SweepOrphanArtefacts(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to sweep orphaned update artefacts: %w", err)
+		}
+		logger.Info("swept orphaned update-artefact payload files", zap.Int("removed", removed))
+	}
 
 	lis, err := net.Listen("tcp", flagListen)
 	if err != nil {
