@@ -262,5 +262,127 @@ proto.smartcore.bos.supervisor.v1.SupervisorApiPromiseClient.prototype.commit =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest,
+ *   !proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse>}
+ */
+const methodDescriptor_SupervisorApi_InstallSupervisorUpdate = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.supervisor.v1.SupervisorApi/InstallSupervisorUpdate',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest,
+  proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse,
+  /**
+   * @param {!proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.supervisor.v1.SupervisorApiClient.prototype.installSupervisorUpdate =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.supervisor.v1.SupervisorApi/InstallSupervisorUpdate',
+      request,
+      metadata || {},
+      methodDescriptor_SupervisorApi_InstallSupervisorUpdate,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.supervisor.v1.SupervisorApiPromiseClient.prototype.installSupervisorUpdate =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.supervisor.v1.SupervisorApi/InstallSupervisorUpdate',
+      request,
+      metadata || {},
+      methodDescriptor_SupervisorApi_InstallSupervisorUpdate);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest,
+ *   !proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse>}
+ */
+const methodDescriptor_SupervisorApi_GetSupervisorInfo = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.supervisor.v1.SupervisorApi/GetSupervisorInfo',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest,
+  proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse,
+  /**
+   * @param {!proto.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.supervisor.v1.SupervisorApiClient.prototype.getSupervisorInfo =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.supervisor.v1.SupervisorApi/GetSupervisorInfo',
+      request,
+      metadata || {},
+      methodDescriptor_SupervisorApi_GetSupervisorInfo,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.supervisor.v1.GetSupervisorInfoResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.supervisor.v1.SupervisorApiPromiseClient.prototype.getSupervisorInfo =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.supervisor.v1.SupervisorApi/GetSupervisorInfo',
+      request,
+      metadata || {},
+      methodDescriptor_SupervisorApi_GetSupervisorInfo);
+};
+
+
 module.exports = proto.smartcore.bos.supervisor.v1;
 

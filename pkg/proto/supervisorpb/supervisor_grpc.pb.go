@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SupervisorApi_InstallUpdate_FullMethodName   = "/smartcore.bos.supervisor.v1.SupervisorApi/InstallUpdate"
-	SupervisorApi_GetUpdateStatus_FullMethodName = "/smartcore.bos.supervisor.v1.SupervisorApi/GetUpdateStatus"
-	SupervisorApi_Commit_FullMethodName          = "/smartcore.bos.supervisor.v1.SupervisorApi/Commit"
+	SupervisorApi_InstallUpdate_FullMethodName           = "/smartcore.bos.supervisor.v1.SupervisorApi/InstallUpdate"
+	SupervisorApi_GetUpdateStatus_FullMethodName         = "/smartcore.bos.supervisor.v1.SupervisorApi/GetUpdateStatus"
+	SupervisorApi_Commit_FullMethodName                  = "/smartcore.bos.supervisor.v1.SupervisorApi/Commit"
+	SupervisorApi_InstallSupervisorUpdate_FullMethodName = "/smartcore.bos.supervisor.v1.SupervisorApi/InstallSupervisorUpdate"
+	SupervisorApi_GetSupervisorInfo_FullMethodName       = "/smartcore.bos.supervisor.v1.SupervisorApi/GetSupervisorInfo"
 )
 
 // SupervisorApiClient is the client API for SupervisorApi service.
@@ -45,6 +47,16 @@ type SupervisorApiClient interface {
 	// rollback), and to learn the running version on platforms with no container health concept. When no
 	// update is in flight it is a routine heartbeat that records the running version.
 	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*CommitResponse, error)
+	// InstallSupervisorUpdate asks the Supervisor to update ITSELF to the given version, packaged as an
+	// RPM. Like InstallUpdate it returns as soon as the request is accepted; the install runs
+	// out-of-process in a transient applier that survives the Supervisor restart the RPM triggers, and
+	// rolls back automatically if the new version does not come up healthy. Observe the outcome via
+	// GetSupervisorInfo once the Supervisor has restarted.
+	InstallSupervisorUpdate(ctx context.Context, in *InstallSupervisorUpdateRequest, opts ...grpc.CallOption) (*InstallSupervisorUpdateResponse, error)
+	// GetSupervisorInfo returns the running Supervisor's own version and the state of its most recent
+	// self-update. BOS reads it to relay the self-update outcome to Smart Core Connect, the same way it
+	// relays a BOS update's outcome.
+	GetSupervisorInfo(ctx context.Context, in *GetSupervisorInfoRequest, opts ...grpc.CallOption) (*GetSupervisorInfoResponse, error)
 }
 
 type supervisorApiClient struct {
@@ -85,6 +97,26 @@ func (c *supervisorApiClient) Commit(ctx context.Context, in *CommitRequest, opt
 	return out, nil
 }
 
+func (c *supervisorApiClient) InstallSupervisorUpdate(ctx context.Context, in *InstallSupervisorUpdateRequest, opts ...grpc.CallOption) (*InstallSupervisorUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InstallSupervisorUpdateResponse)
+	err := c.cc.Invoke(ctx, SupervisorApi_InstallSupervisorUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *supervisorApiClient) GetSupervisorInfo(ctx context.Context, in *GetSupervisorInfoRequest, opts ...grpc.CallOption) (*GetSupervisorInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSupervisorInfoResponse)
+	err := c.cc.Invoke(ctx, SupervisorApi_GetSupervisorInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SupervisorApiServer is the server API for SupervisorApi service.
 // All implementations must embed UnimplementedSupervisorApiServer
 // for forward compatibility.
@@ -106,6 +138,16 @@ type SupervisorApiServer interface {
 	// rollback), and to learn the running version on platforms with no container health concept. When no
 	// update is in flight it is a routine heartbeat that records the running version.
 	Commit(context.Context, *CommitRequest) (*CommitResponse, error)
+	// InstallSupervisorUpdate asks the Supervisor to update ITSELF to the given version, packaged as an
+	// RPM. Like InstallUpdate it returns as soon as the request is accepted; the install runs
+	// out-of-process in a transient applier that survives the Supervisor restart the RPM triggers, and
+	// rolls back automatically if the new version does not come up healthy. Observe the outcome via
+	// GetSupervisorInfo once the Supervisor has restarted.
+	InstallSupervisorUpdate(context.Context, *InstallSupervisorUpdateRequest) (*InstallSupervisorUpdateResponse, error)
+	// GetSupervisorInfo returns the running Supervisor's own version and the state of its most recent
+	// self-update. BOS reads it to relay the self-update outcome to Smart Core Connect, the same way it
+	// relays a BOS update's outcome.
+	GetSupervisorInfo(context.Context, *GetSupervisorInfoRequest) (*GetSupervisorInfoResponse, error)
 	mustEmbedUnimplementedSupervisorApiServer()
 }
 
@@ -124,6 +166,12 @@ func (UnimplementedSupervisorApiServer) GetUpdateStatus(context.Context, *GetUpd
 }
 func (UnimplementedSupervisorApiServer) Commit(context.Context, *CommitRequest) (*CommitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
+}
+func (UnimplementedSupervisorApiServer) InstallSupervisorUpdate(context.Context, *InstallSupervisorUpdateRequest) (*InstallSupervisorUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InstallSupervisorUpdate not implemented")
+}
+func (UnimplementedSupervisorApiServer) GetSupervisorInfo(context.Context, *GetSupervisorInfoRequest) (*GetSupervisorInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSupervisorInfo not implemented")
 }
 func (UnimplementedSupervisorApiServer) mustEmbedUnimplementedSupervisorApiServer() {}
 func (UnimplementedSupervisorApiServer) testEmbeddedByValue()                       {}
@@ -200,6 +248,42 @@ func _SupervisorApi_Commit_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SupervisorApi_InstallSupervisorUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InstallSupervisorUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SupervisorApiServer).InstallSupervisorUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SupervisorApi_InstallSupervisorUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SupervisorApiServer).InstallSupervisorUpdate(ctx, req.(*InstallSupervisorUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SupervisorApi_GetSupervisorInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSupervisorInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SupervisorApiServer).GetSupervisorInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SupervisorApi_GetSupervisorInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SupervisorApiServer).GetSupervisorInfo(ctx, req.(*GetSupervisorInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SupervisorApi_ServiceDesc is the grpc.ServiceDesc for SupervisorApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -218,6 +302,14 @@ var SupervisorApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Commit",
 			Handler:    _SupervisorApi_Commit_Handler,
+		},
+		{
+			MethodName: "InstallSupervisorUpdate",
+			Handler:    _SupervisorApi_InstallSupervisorUpdate_Handler,
+		},
+		{
+			MethodName: "GetSupervisorInfo",
+			Handler:    _SupervisorApi_GetSupervisorInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

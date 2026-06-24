@@ -439,6 +439,204 @@ func (*CommitResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP(), []int{6}
 }
 
+type InstallSupervisorUpdateRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target Supervisor version; also identifies the staged RPM (and the rollback baseline once good).
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// A pre-signed (capability) URL to download the Supervisor RPM from.
+	DownloadUrl string `protobuf:"bytes,2,opt,name=download_url,json=downloadUrl,proto3" json:"download_url,omitempty"`
+	// The hex-encoded SHA-256 of the RPM, verified before installing.
+	Sha256        string `protobuf:"bytes,3,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InstallSupervisorUpdateRequest) Reset() {
+	*x = InstallSupervisorUpdateRequest{}
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InstallSupervisorUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InstallSupervisorUpdateRequest) ProtoMessage() {}
+
+func (x *InstallSupervisorUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InstallSupervisorUpdateRequest.ProtoReflect.Descriptor instead.
+func (*InstallSupervisorUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *InstallSupervisorUpdateRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *InstallSupervisorUpdateRequest) GetDownloadUrl() string {
+	if x != nil {
+		return x.DownloadUrl
+	}
+	return ""
+}
+
+func (x *InstallSupervisorUpdateRequest) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+type InstallSupervisorUpdateResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The self-update status after the request was accepted.
+	Status        *UpdateStatus `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InstallSupervisorUpdateResponse) Reset() {
+	*x = InstallSupervisorUpdateResponse{}
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InstallSupervisorUpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InstallSupervisorUpdateResponse) ProtoMessage() {}
+
+func (x *InstallSupervisorUpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InstallSupervisorUpdateResponse.ProtoReflect.Descriptor instead.
+func (*InstallSupervisorUpdateResponse) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *InstallSupervisorUpdateResponse) GetStatus() *UpdateStatus {
+	if x != nil {
+		return x.Status
+	}
+	return nil
+}
+
+type GetSupervisorInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSupervisorInfoRequest) Reset() {
+	*x = GetSupervisorInfoRequest{}
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSupervisorInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSupervisorInfoRequest) ProtoMessage() {}
+
+func (x *GetSupervisorInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSupervisorInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetSupervisorInfoRequest) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP(), []int{9}
+}
+
+type GetSupervisorInfoResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The running Supervisor's own version. Empty when the build was not version-stamped.
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// The state of the most recent self-update (IDLE if none since the Supervisor started).
+	SelfUpdate    *UpdateStatus `protobuf:"bytes,2,opt,name=self_update,json=selfUpdate,proto3" json:"self_update,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSupervisorInfoResponse) Reset() {
+	*x = GetSupervisorInfoResponse{}
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSupervisorInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSupervisorInfoResponse) ProtoMessage() {}
+
+func (x *GetSupervisorInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSupervisorInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetSupervisorInfoResponse) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetSupervisorInfoResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *GetSupervisorInfoResponse) GetSelfUpdate() *UpdateStatus {
+	if x != nil {
+		return x.SelfUpdate
+	}
+	return nil
+}
+
 var File_smartcore_bos_supervisor_v1_supervisor_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_supervisor_v1_supervisor_proto_rawDesc = "" +
@@ -472,11 +670,24 @@ const file_smartcore_bos_supervisor_v1_supervisor_proto_rawDesc = "" +
 	"\x06status\x18\x01 \x01(\v2).smartcore.bos.supervisor.v1.UpdateStatusR\x06status\")\n" +
 	"\rCommitRequest\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\"\x10\n" +
-	"\x0eCommitResponse2\xe8\x02\n" +
+	"\x0eCommitResponse\"u\n" +
+	"\x1eInstallSupervisorUpdateRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12!\n" +
+	"\fdownload_url\x18\x02 \x01(\tR\vdownloadUrl\x12\x16\n" +
+	"\x06sha256\x18\x03 \x01(\tR\x06sha256\"d\n" +
+	"\x1fInstallSupervisorUpdateResponse\x12A\n" +
+	"\x06status\x18\x01 \x01(\v2).smartcore.bos.supervisor.v1.UpdateStatusR\x06status\"\x1a\n" +
+	"\x18GetSupervisorInfoRequest\"\x81\x01\n" +
+	"\x19GetSupervisorInfoResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12J\n" +
+	"\vself_update\x18\x02 \x01(\v2).smartcore.bos.supervisor.v1.UpdateStatusR\n" +
+	"selfUpdate2\x84\x05\n" +
 	"\rSupervisorApi\x12v\n" +
 	"\rInstallUpdate\x121.smartcore.bos.supervisor.v1.InstallUpdateRequest\x1a2.smartcore.bos.supervisor.v1.InstallUpdateResponse\x12|\n" +
 	"\x0fGetUpdateStatus\x123.smartcore.bos.supervisor.v1.GetUpdateStatusRequest\x1a4.smartcore.bos.supervisor.v1.GetUpdateStatusResponse\x12a\n" +
-	"\x06Commit\x12*.smartcore.bos.supervisor.v1.CommitRequest\x1a+.smartcore.bos.supervisor.v1.CommitResponseB8Z6github.com/smart-core-os/sc-bos/pkg/proto/supervisorpbb\x06proto3"
+	"\x06Commit\x12*.smartcore.bos.supervisor.v1.CommitRequest\x1a+.smartcore.bos.supervisor.v1.CommitResponse\x12\x94\x01\n" +
+	"\x17InstallSupervisorUpdate\x12;.smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest\x1a<.smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse\x12\x82\x01\n" +
+	"\x11GetSupervisorInfo\x125.smartcore.bos.supervisor.v1.GetSupervisorInfoRequest\x1a6.smartcore.bos.supervisor.v1.GetSupervisorInfoResponseB8Z6github.com/smart-core-os/sc-bos/pkg/proto/supervisorpbb\x06proto3"
 
 var (
 	file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescOnce sync.Once
@@ -491,35 +702,45 @@ func file_smartcore_bos_supervisor_v1_supervisor_proto_rawDescGZIP() []byte {
 }
 
 var file_smartcore_bos_supervisor_v1_supervisor_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_smartcore_bos_supervisor_v1_supervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_smartcore_bos_supervisor_v1_supervisor_proto_goTypes = []any{
-	(UpdateStatus_State)(0),         // 0: smartcore.bos.supervisor.v1.UpdateStatus.State
-	(*UpdateStatus)(nil),            // 1: smartcore.bos.supervisor.v1.UpdateStatus
-	(*InstallUpdateRequest)(nil),    // 2: smartcore.bos.supervisor.v1.InstallUpdateRequest
-	(*InstallUpdateResponse)(nil),   // 3: smartcore.bos.supervisor.v1.InstallUpdateResponse
-	(*GetUpdateStatusRequest)(nil),  // 4: smartcore.bos.supervisor.v1.GetUpdateStatusRequest
-	(*GetUpdateStatusResponse)(nil), // 5: smartcore.bos.supervisor.v1.GetUpdateStatusResponse
-	(*CommitRequest)(nil),           // 6: smartcore.bos.supervisor.v1.CommitRequest
-	(*CommitResponse)(nil),          // 7: smartcore.bos.supervisor.v1.CommitResponse
-	(*timestamppb.Timestamp)(nil),   // 8: google.protobuf.Timestamp
+	(UpdateStatus_State)(0),                 // 0: smartcore.bos.supervisor.v1.UpdateStatus.State
+	(*UpdateStatus)(nil),                    // 1: smartcore.bos.supervisor.v1.UpdateStatus
+	(*InstallUpdateRequest)(nil),            // 2: smartcore.bos.supervisor.v1.InstallUpdateRequest
+	(*InstallUpdateResponse)(nil),           // 3: smartcore.bos.supervisor.v1.InstallUpdateResponse
+	(*GetUpdateStatusRequest)(nil),          // 4: smartcore.bos.supervisor.v1.GetUpdateStatusRequest
+	(*GetUpdateStatusResponse)(nil),         // 5: smartcore.bos.supervisor.v1.GetUpdateStatusResponse
+	(*CommitRequest)(nil),                   // 6: smartcore.bos.supervisor.v1.CommitRequest
+	(*CommitResponse)(nil),                  // 7: smartcore.bos.supervisor.v1.CommitResponse
+	(*InstallSupervisorUpdateRequest)(nil),  // 8: smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest
+	(*InstallSupervisorUpdateResponse)(nil), // 9: smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse
+	(*GetSupervisorInfoRequest)(nil),        // 10: smartcore.bos.supervisor.v1.GetSupervisorInfoRequest
+	(*GetSupervisorInfoResponse)(nil),       // 11: smartcore.bos.supervisor.v1.GetSupervisorInfoResponse
+	(*timestamppb.Timestamp)(nil),           // 12: google.protobuf.Timestamp
 }
 var file_smartcore_bos_supervisor_v1_supervisor_proto_depIdxs = []int32{
-	0, // 0: smartcore.bos.supervisor.v1.UpdateStatus.state:type_name -> smartcore.bos.supervisor.v1.UpdateStatus.State
-	8, // 1: smartcore.bos.supervisor.v1.UpdateStatus.start_time:type_name -> google.protobuf.Timestamp
-	8, // 2: smartcore.bos.supervisor.v1.UpdateStatus.finish_time:type_name -> google.protobuf.Timestamp
-	1, // 3: smartcore.bos.supervisor.v1.InstallUpdateResponse.status:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
-	1, // 4: smartcore.bos.supervisor.v1.GetUpdateStatusResponse.status:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
-	2, // 5: smartcore.bos.supervisor.v1.SupervisorApi.InstallUpdate:input_type -> smartcore.bos.supervisor.v1.InstallUpdateRequest
-	4, // 6: smartcore.bos.supervisor.v1.SupervisorApi.GetUpdateStatus:input_type -> smartcore.bos.supervisor.v1.GetUpdateStatusRequest
-	6, // 7: smartcore.bos.supervisor.v1.SupervisorApi.Commit:input_type -> smartcore.bos.supervisor.v1.CommitRequest
-	3, // 8: smartcore.bos.supervisor.v1.SupervisorApi.InstallUpdate:output_type -> smartcore.bos.supervisor.v1.InstallUpdateResponse
-	5, // 9: smartcore.bos.supervisor.v1.SupervisorApi.GetUpdateStatus:output_type -> smartcore.bos.supervisor.v1.GetUpdateStatusResponse
-	7, // 10: smartcore.bos.supervisor.v1.SupervisorApi.Commit:output_type -> smartcore.bos.supervisor.v1.CommitResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	0,  // 0: smartcore.bos.supervisor.v1.UpdateStatus.state:type_name -> smartcore.bos.supervisor.v1.UpdateStatus.State
+	12, // 1: smartcore.bos.supervisor.v1.UpdateStatus.start_time:type_name -> google.protobuf.Timestamp
+	12, // 2: smartcore.bos.supervisor.v1.UpdateStatus.finish_time:type_name -> google.protobuf.Timestamp
+	1,  // 3: smartcore.bos.supervisor.v1.InstallUpdateResponse.status:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
+	1,  // 4: smartcore.bos.supervisor.v1.GetUpdateStatusResponse.status:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
+	1,  // 5: smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse.status:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
+	1,  // 6: smartcore.bos.supervisor.v1.GetSupervisorInfoResponse.self_update:type_name -> smartcore.bos.supervisor.v1.UpdateStatus
+	2,  // 7: smartcore.bos.supervisor.v1.SupervisorApi.InstallUpdate:input_type -> smartcore.bos.supervisor.v1.InstallUpdateRequest
+	4,  // 8: smartcore.bos.supervisor.v1.SupervisorApi.GetUpdateStatus:input_type -> smartcore.bos.supervisor.v1.GetUpdateStatusRequest
+	6,  // 9: smartcore.bos.supervisor.v1.SupervisorApi.Commit:input_type -> smartcore.bos.supervisor.v1.CommitRequest
+	8,  // 10: smartcore.bos.supervisor.v1.SupervisorApi.InstallSupervisorUpdate:input_type -> smartcore.bos.supervisor.v1.InstallSupervisorUpdateRequest
+	10, // 11: smartcore.bos.supervisor.v1.SupervisorApi.GetSupervisorInfo:input_type -> smartcore.bos.supervisor.v1.GetSupervisorInfoRequest
+	3,  // 12: smartcore.bos.supervisor.v1.SupervisorApi.InstallUpdate:output_type -> smartcore.bos.supervisor.v1.InstallUpdateResponse
+	5,  // 13: smartcore.bos.supervisor.v1.SupervisorApi.GetUpdateStatus:output_type -> smartcore.bos.supervisor.v1.GetUpdateStatusResponse
+	7,  // 14: smartcore.bos.supervisor.v1.SupervisorApi.Commit:output_type -> smartcore.bos.supervisor.v1.CommitResponse
+	9,  // 15: smartcore.bos.supervisor.v1.SupervisorApi.InstallSupervisorUpdate:output_type -> smartcore.bos.supervisor.v1.InstallSupervisorUpdateResponse
+	11, // 16: smartcore.bos.supervisor.v1.SupervisorApi.GetSupervisorInfo:output_type -> smartcore.bos.supervisor.v1.GetSupervisorInfoResponse
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_supervisor_v1_supervisor_proto_init() }
@@ -533,7 +754,7 @@ func file_smartcore_bos_supervisor_v1_supervisor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_supervisor_v1_supervisor_proto_rawDesc), len(file_smartcore_bos_supervisor_v1_supervisor_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

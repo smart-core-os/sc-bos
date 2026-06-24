@@ -29,6 +29,20 @@ export class SupervisorApiClient {
                response: smartcore_bos_supervisor_v1_supervisor_pb.CommitResponse) => void
   ): grpcWeb.ClientReadableStream<smartcore_bos_supervisor_v1_supervisor_pb.CommitResponse>;
 
+  installSupervisorUpdate(
+    request: smartcore_bos_supervisor_v1_supervisor_pb.InstallSupervisorUpdateRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: smartcore_bos_supervisor_v1_supervisor_pb.InstallSupervisorUpdateResponse) => void
+  ): grpcWeb.ClientReadableStream<smartcore_bos_supervisor_v1_supervisor_pb.InstallSupervisorUpdateResponse>;
+
+  getSupervisorInfo(
+    request: smartcore_bos_supervisor_v1_supervisor_pb.GetSupervisorInfoRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: smartcore_bos_supervisor_v1_supervisor_pb.GetSupervisorInfoResponse) => void
+  ): grpcWeb.ClientReadableStream<smartcore_bos_supervisor_v1_supervisor_pb.GetSupervisorInfoResponse>;
+
 }
 
 export class SupervisorApiPromiseClient {
@@ -50,6 +64,16 @@ export class SupervisorApiPromiseClient {
     request: smartcore_bos_supervisor_v1_supervisor_pb.CommitRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<smartcore_bos_supervisor_v1_supervisor_pb.CommitResponse>;
+
+  installSupervisorUpdate(
+    request: smartcore_bos_supervisor_v1_supervisor_pb.InstallSupervisorUpdateRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<smartcore_bos_supervisor_v1_supervisor_pb.InstallSupervisorUpdateResponse>;
+
+  getSupervisorInfo(
+    request: smartcore_bos_supervisor_v1_supervisor_pb.GetSupervisorInfoRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<smartcore_bos_supervisor_v1_supervisor_pb.GetSupervisorInfoResponse>;
 
 }
 

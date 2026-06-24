@@ -25,11 +25,21 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/config"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/install"
+	"github.com/smart-core-os/sc-bos/supervisor/internal/selfupdate"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/server"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/version"
 )
 
 func main() {
+	// self-update-apply is the out-of-process applier the Supervisor launches (via systemd-run) to
+	// install its own update; it must run detached from the Supervisor's unit so it survives the restart.
+	if len(os.Args) > 1 && os.Args[1] == "self-update-apply" {
+		if err := runSelfUpdateApply(os.Args[2:]); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, "fatal:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "fatal:", err)
 		os.Exit(1)
@@ -72,6 +82,23 @@ func run() error {
 
 	installer := install.NewPodmanInstaller(cfg.ImageRepo, cfg.Unit, logger.Named("installer"))
 	svc := server.New(installer, cfg.StateDir, http.DefaultClient, cfg.CommitDeadline, cfg.AllowInsecureDownloads, logger.Named("server"))
+
+	// Wire supervisor self-update: the Updater records intent and launches the applier (this same binary,
+	// run as a transient unit so it outlives the restart the RPM triggers).
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("resolve own path: %w", err)
+	}
+	selfUpdate := selfupdate.NewUpdater(
+		version.Version,
+		&selfupdate.Store{Path: filepath.Join(cfg.StateDir, "self-update.json")},
+		selfupdate.NewSystemdRunLauncher(exe, *configPath, logger.Named("self-update")),
+		filepath.Join(cfg.StateDir, "rpms"),
+		logger.Named("self-update"),
+	)
+	selfUpdate.ReconcileStartup() // settle a self-update the applier may have left non-terminal
+	svc.SetSelfUpdater(selfUpdate)
+
 	// Drive the persisted goal to completion before accepting new requests: an install interrupted by a
 	// previous crash is resumed (or rolled back) here, so the local auto-recovery fires even across a
 	// Supervisor crash. A fresh InstallUpdate runs the same reconcile.
@@ -115,4 +142,44 @@ func run() error {
 		logger.Warn("in-flight install did not finish before shutdown", zap.Error(err))
 	}
 	return nil
+}
+
+// runSelfUpdateApply is the out-of-process applier (the `self-update-apply` subcommand). It is launched
+// by the Supervisor as a transient systemd unit so it survives the restart installing the new RPM
+// triggers, then drives the self-update to a terminal state (rolling back if the new version is
+// unhealthy). It deliberately uses a background context: routine signals must not abort a transaction
+// mid-flight.
+func runSelfUpdateApply(args []string) error {
+	fs := flag.NewFlagSet("self-update-apply", flag.ContinueOnError)
+	configPath := fs.String("config", "/etc/sc-bos-supervisor/config.json", "path to the JSON config file")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		return err
+	}
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return fmt.Errorf("create logger: %w", err)
+	}
+	defer func() { _ = logger.Sync() }()
+	logger = logger.Named("self-update-apply")
+
+	stagingDir := filepath.Join(cfg.StateDir, "staging")
+	if err := os.MkdirAll(stagingDir, 0o700); err != nil {
+		return fmt.Errorf("create staging dir: %w", err)
+	}
+	applier := selfupdate.NewApplier(
+		&selfupdate.Store{Path: filepath.Join(cfg.StateDir, "self-update.json")},
+		stagingDir,
+		filepath.Join(cfg.StateDir, "rpms"),
+		cfg.CommitDeadline,
+		http.DefaultClient,
+		cfg.AllowInsecureDownloads,
+		selfupdate.NewDNF(logger.Named("dnf")),
+		selfupdate.NewSocketConfirmer(cfg.Socket, logger.Named("confirm")),
+		logger,
+	)
+	return applier.Apply(context.Background())
 }

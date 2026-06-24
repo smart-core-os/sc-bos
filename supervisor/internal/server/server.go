@@ -10,6 +10,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/install"
+	"github.com/smart-core-os/sc-bos/supervisor/internal/selfupdate"
 )
 
 // stateFileName holds the durable update record (the goal plus the last committed version) under the
@@ -76,6 +78,7 @@ type Service struct {
 	httpClient             *http.Client
 	commitDeadline         time.Duration
 	allowInsecureDownloads bool
+	selfUpdate             SelfUpdater // nil when supervisor self-update is not configured
 	logger                 *zap.Logger
 
 	wg sync.WaitGroup // tracks the in-flight reconcile goroutine for shutdown
@@ -335,6 +338,80 @@ func (s *Service) GetUpdateStatus(_ context.Context, _ *supervisorpb.GetUpdateSt
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return &supervisorpb.GetUpdateStatusResponse{Status: s.deriveStatusLocked()}, nil
+}
+
+// SelfUpdater is the supervisor self-update entry point the SupervisorApi delegates to. It is satisfied
+// by *selfupdate.Updater.
+type SelfUpdater interface {
+	// Install records the intent to self-update to version and launches the out-of-process applier.
+	Install(ctx context.Context, version, url, sha256 string) (selfupdate.State, error)
+	// Version is the running Supervisor's own version.
+	Version() string
+	// LastUpdate returns the most recent self-update state, or false if none.
+	LastUpdate() (selfupdate.State, bool)
+}
+
+// SetSelfUpdater wires the supervisor self-update entry point. Until set, the self-update RPCs report
+// the feature as unconfigured. Call before serving.
+func (s *Service) SetSelfUpdater(u SelfUpdater) { s.selfUpdate = u }
+
+func (s *Service) InstallSupervisorUpdate(ctx context.Context, req *supervisorpb.InstallSupervisorUpdateRequest) (*supervisorpb.InstallSupervisorUpdateResponse, error) {
+	if s.selfUpdate == nil {
+		return nil, status.Error(codes.Unimplemented, "supervisor self-update is not configured")
+	}
+	if req.GetVersion() == "" || req.GetDownloadUrl() == "" || req.GetSha256() == "" {
+		return nil, status.Error(codes.InvalidArgument, "version, download_url and sha256 are required")
+	}
+	// version names the RPM's last-known-good file; reject anything that isn't a safe tag/filename.
+	if !tagPattern.MatchString(req.GetVersion()) {
+		return nil, status.Error(codes.InvalidArgument, "version is not a valid version tag")
+	}
+	st, err := s.selfUpdate.Install(ctx, req.GetVersion(), req.GetDownloadUrl(), req.GetSha256())
+	if errors.Is(err, selfupdate.ErrInProgress) {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "begin self-update: %v", err)
+	}
+	return &supervisorpb.InstallSupervisorUpdateResponse{Status: selfUpdateStatus(st)}, nil
+}
+
+func (s *Service) GetSupervisorInfo(_ context.Context, _ *supervisorpb.GetSupervisorInfoRequest) (*supervisorpb.GetSupervisorInfoResponse, error) {
+	if s.selfUpdate == nil {
+		return &supervisorpb.GetSupervisorInfoResponse{
+			SelfUpdate: &supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_IDLE},
+		}, nil
+	}
+	resp := &supervisorpb.GetSupervisorInfoResponse{Version: s.selfUpdate.Version()}
+	if st, ok := s.selfUpdate.LastUpdate(); ok {
+		resp.SelfUpdate = selfUpdateStatus(st)
+	} else {
+		resp.SelfUpdate = &supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_IDLE}
+	}
+	return resp, nil
+}
+
+// selfUpdateStatus maps a selfupdate.State to the wire UpdateStatus BOS relays to Smart Core Connect.
+func selfUpdateStatus(st selfupdate.State) *supervisorpb.UpdateStatus {
+	out := &supervisorpb.UpdateStatus{Version: st.Target}
+	if !st.StartTime.IsZero() {
+		out.StartTime = timestamppb.New(st.StartTime)
+	}
+	if st.FinishTime != nil {
+		out.FinishTime = timestamppb.New(*st.FinishTime)
+	}
+	switch st.Phase {
+	case selfupdate.PhaseCompleted:
+		out.State = supervisorpb.UpdateStatus_COMPLETED
+	case selfupdate.PhaseFailed:
+		out.State = supervisorpb.UpdateStatus_FAILED
+		out.Error = st.Error
+	case selfupdate.PhaseInstalling, selfupdate.PhaseRollingBack:
+		out.State = supervisorpb.UpdateStatus_INSTALLING
+	default:
+		out.State = supervisorpb.UpdateStatus_IDLE
+	}
+	return out
 }
 
 // beginReconcileLocked marks a reconcile in flight (single-flight) and sets its initial phase. Caller

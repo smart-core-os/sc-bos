@@ -23,6 +23,16 @@ service SupervisorApi {
   // rollback), and to learn the running version on platforms with no container health concept. When no
   // update is in flight it is a routine heartbeat that records the running version.
   rpc Commit(CommitRequest) returns (CommitResponse);
+  // InstallSupervisorUpdate asks the Supervisor to update ITSELF to the given version, packaged as an
+  // RPM. Like InstallUpdate it returns as soon as the request is accepted; the install runs
+  // out-of-process in a transient applier that survives the Supervisor restart the RPM triggers, and
+  // rolls back automatically if the new version does not come up healthy. Observe the outcome via
+  // GetSupervisorInfo once the Supervisor has restarted.
+  rpc InstallSupervisorUpdate(InstallSupervisorUpdateRequest) returns (InstallSupervisorUpdateResponse);
+  // GetSupervisorInfo returns the running Supervisor's own version and the state of its most recent
+  // self-update. BOS reads it to relay the self-update outcome to Smart Core Connect, the same way it
+  // relays a BOS update's outcome.
+  rpc GetSupervisorInfo(GetSupervisorInfoRequest) returns (GetSupervisorInfoResponse);
 }
 
 // UpdateStatus describes the state of an update the Supervisor is handling or last handled.
@@ -82,3 +92,26 @@ message CommitRequest {
 }
 
 message CommitResponse {}
+
+message InstallSupervisorUpdateRequest {
+  // The target Supervisor version; also identifies the staged RPM (and the rollback baseline once good).
+  string version = 1;
+  // A pre-signed (capability) URL to download the Supervisor RPM from.
+  string download_url = 2;
+  // The hex-encoded SHA-256 of the RPM, verified before installing.
+  string sha256 = 3;
+}
+
+message InstallSupervisorUpdateResponse {
+  // The self-update status after the request was accepted.
+  UpdateStatus status = 1;
+}
+
+message GetSupervisorInfoRequest {}
+
+message GetSupervisorInfoResponse {
+  // The running Supervisor's own version. Empty when the build was not version-stamped.
+  string version = 1;
+  // The state of the most recent self-update (IDLE if none since the Supervisor started).
+  UpdateStatus self_update = 2;
+}
