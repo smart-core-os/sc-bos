@@ -26,6 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/supervisor/internal/config"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/install"
 	"github.com/smart-core-os/sc-bos/supervisor/internal/server"
+	"github.com/smart-core-os/sc-bos/supervisor/internal/version"
 )
 
 func main() {
@@ -49,6 +50,8 @@ func run() error {
 		return fmt.Errorf("create logger: %w", err)
 	}
 	defer func() { _ = logger.Sync() }()
+
+	logger.Info("supervisor starting", zap.String("version", version.Version))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

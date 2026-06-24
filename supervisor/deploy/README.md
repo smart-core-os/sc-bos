@@ -7,24 +7,16 @@ for the mechanism.
 
 Install
 -------
-1. Build and install the Supervisor binary at the stable path the service references:
+The Supervisor ships as the `sc-bos-supervisor` RPM (built by `supervisor/rpm/build.sh`), which
+installs the binary to `/usr/bin/sc-bos-supervisor`, this unit to `%{_unitdir}`, and the default
+config to `/etc/sc-bos-supervisor/config.json`. Installing the RPM also enables the service via the
+`%post` scriptlet; a later upgrade replaces the binary in place and restarts the unit (the basis for
+Supervisor self-update).
 
    ```sh
-   go build -o /usr/local/bin/sc-bos-supervisor ./supervisor
-   ```
-
-2. Copy the units into place (and optionally the config):
-
-   ```sh
-   cp sc-bos-supervisor.service /etc/systemd/system/
-   cp sc-bos.container          /etc/containers/systemd/   # Quadlet generates sc-bos.service
-   install -D config.json       /etc/sc-bos-supervisor/config.json   # optional; omit to use defaults
+   dnf install ./sc-bos-supervisor-*.rpm
+   cp sc-bos.container /etc/containers/systemd/   # Quadlet generates sc-bos.service (not in the RPM)
    systemctl daemon-reload
-   ```
-
-3. Enable and start:
-
-   ```sh
    systemctl enable --now sc-bos-supervisor.service
    systemctl start sc-bos.service
    ```
@@ -38,8 +30,9 @@ so BOS can reach the API at `/run/sc-bos-supervisor/supervisor.sock`.
 
 `sc-bos-supervisor.service`
 ---------------------------
-Runs the Supervisor binary as root. `ExecStart` points at `/usr/local/bin/sc-bos-supervisor`, a stable
-path that can later become a symlink into a versioned install to support Supervisor self-update.
+Runs the Supervisor binary as root. `ExecStart` points at `/usr/bin/sc-bos-supervisor`, the
+RPM-managed path, so a Supervisor self-update is an `rpm`/`dnf` upgrade that replaces the file in
+place; the package's `%systemd_postun_with_restart` restarts this unit onto the new binary.
 
 `config.json`
 -------------

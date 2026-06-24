@@ -51,7 +51,7 @@ ADMIN_USER="admin"
 ADMIN_PASSWORD="admin"
 
 # --- install locations (this host's filesystem) -----------------------------
-SUP_INSTALL="/usr/local/bin/sc-bos-supervisor"
+SUP_INSTALL="/usr/bin/sc-bos-supervisor"   # matches the RPM-managed path the systemd unit references
 SUP_CONF_DIR="/etc/sc-bos-supervisor"
 QUADLET_DIR="/etc/containers/systemd"
 SYSTEMD_DIR="/etc/systemd/system"

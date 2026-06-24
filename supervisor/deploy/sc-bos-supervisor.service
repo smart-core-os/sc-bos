@@ -1,16 +1,18 @@
-# systemd unit for the BOS Supervisor, installed to /etc/systemd/system/sc-bos-supervisor.service.
+# systemd unit for the BOS Supervisor. Shipped by the sc-bos-supervisor RPM to %{_unitdir}
+# (/usr/lib/systemd/system/sc-bos-supervisor.service).
 #
 # Runs as root: it shares the rootful Podman image store and drives `podman` / `systemctl` directly.
-# ExecStart references a stable path so a future self-update can swap the binary behind it (e.g. make
-# /usr/local/bin/sc-bos-supervisor a symlink into a versioned install) without editing this unit. Config
-# is read from /etc/sc-bos-supervisor/config.json (built-in defaults if absent); override with -config.
+# ExecStart is the RPM-managed binary path, so a Supervisor self-update is just an `rpm`/`dnf` upgrade
+# that replaces the file in place; the package's %systemd_postun_with_restart restarts this unit.
+# Config is read from /etc/sc-bos-supervisor/config.json (built-in defaults if absent); override with
+# -config.
 [Unit]
 Description=Smart Core BOS Supervisor
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/sc-bos-supervisor
+ExecStart=/usr/bin/sc-bos-supervisor
 Restart=always
 RestartSec=5
 # On shutdown the Supervisor waits for any in-flight install to reach a terminal, rolled-back-if-needed
