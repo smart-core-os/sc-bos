@@ -460,11 +460,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /deployments:
+  /config-deployments:
     get:
       summary: List deployments
-      operationId: listDeployments
-      tags: [Deployments]
+      operationId: listConfigDeployments
+      tags: [ConfigDeployments]
       parameters:
         - $ref: '#/components/parameters/pageToken'
         - $ref: '#/components/parameters/pageSize'
@@ -486,77 +486,293 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeploymentList'
+                $ref: '#/components/schemas/ConfigDeploymentList'
         '400':
           $ref: '#/components/responses/BadRequest'
     post:
       summary: Create deployment
-      operationId: createDeployment
-      tags: [Deployments]
+      operationId: createConfigDeployment
+      tags: [ConfigDeployments]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDeploymentRequest'
+              $ref: '#/components/schemas/CreateConfigDeploymentRequest'
       responses:
         '201':
           description: Deployment created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Deployment'
+                $ref: '#/components/schemas/ConfigDeployment'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /deployments/{id}:
+  /config-deployments/{id}:
     parameters:
       - $ref: '#/components/parameters/id'
     get:
       summary: Get deployment
-      operationId: getDeployment
-      tags: [Deployments]
+      operationId: getConfigDeployment
+      tags: [ConfigDeployments]
       responses:
         '200':
           description: Deployment details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Deployment'
+                $ref: '#/components/schemas/ConfigDeployment'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
       summary: Update deployment status
-      operationId: updateDeploymentStatus
-      tags: [Deployments]
+      operationId: updateConfigDeploymentStatus
+      tags: [ConfigDeployments]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateDeploymentStatusRequest'
+              $ref: '#/components/schemas/UpdateConfigDeploymentStatusRequest'
       responses:
         '200':
           description: Deployment updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Deployment'
+                $ref: '#/components/schemas/ConfigDeployment'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
       summary: Delete deployment
-      operationId: deleteDeployment
-      tags: [Deployments]
+      operationId: deleteConfigDeployment
+      tags: [ConfigDeployments]
       responses:
         '204':
           description: Deployment deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /update-artefacts:
+    get:
+      summary: List update artefacts
+      operationId: listUpdateArtefacts
+      tags: [UpdateArtefacts]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+        - name: platform
+          in: query
+          description: Filter by platform
+          schema:
+            type: string
+            enum: [podman, freebsd]
+        - name: siteId
+          in: query
+          description: Filter by site ID (also returns generic artefacts with no site)
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of update artefacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateArtefactList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Upload update artefact
+      operationId: createUpdateArtefact
+      tags: [UpdateArtefacts]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [version, platform, payload]
+              properties:
+                version:
+                  type: string
+                  description: Artefact version string
+                platform:
+                  type: string
+                  enum: [podman, freebsd]
+                  description: Target platform
+                siteId:
+                  type: integer
+                  format: int64
+                  description: Site ID; omit for a generic artefact available to all sites
+                description:
+                  type: string
+                  description: Optional human-readable description
+                payload:
+                  type: string
+                  format: binary
+                  description: Payload tarball (e.g. podman save output)
+      responses:
+        '201':
+          description: Artefact created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateArtefact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /update-artefacts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get update artefact
+      operationId: getUpdateArtefact
+      tags: [UpdateArtefacts]
+      responses:
+        '200':
+          description: Artefact details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateArtefact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete update artefact
+      operationId: deleteUpdateArtefact
+      tags: [UpdateArtefacts]
+      responses:
+        '204':
+          description: Artefact deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /update-artefacts/{id}/payload:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Download update artefact payload
+      operationId: getUpdateArtefactPayload
+      tags: [UpdateArtefacts]
+      description: >-
+        Downloads the raw payload tarball. This endpoint requires no authentication
+        and is suitable for direct linking.
+      responses:
+        '200':
+          description: Artefact payload binary data
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /update-deployments:
+    get:
+      summary: List update deployments
+      operationId: listUpdateDeployments
+      tags: [UpdateDeployments]
+      parameters:
+        - $ref: '#/components/parameters/pageToken'
+        - $ref: '#/components/parameters/pageSize'
+        - name: nodeId
+          in: query
+          description: Filter by node ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of update deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDeploymentList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Create update deployment
+      operationId: createUpdateDeployment
+      tags: [UpdateDeployments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUpdateDeploymentRequest'
+      responses:
+        '201':
+          description: Update deployment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /update-deployments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      summary: Get update deployment
+      operationId: getUpdateDeployment
+      tags: [UpdateDeployments]
+      responses:
+        '200':
+          description: Update deployment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update deployment status
+      operationId: updateUpdateDeploymentStatus
+      tags: [UpdateDeployments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUpdateDeploymentStatusRequest'
+      responses:
+        '200':
+          description: Deployment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete update deployment
+      operationId: deleteUpdateDeployment
+      tags: [UpdateDeployments]
+      responses:
+        '204':
+          description: Update deployment deleted
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -819,7 +1035,7 @@ components:
           format: byte
           description: Base64-encoded binary payload
 
-    Deployment:
+    ConfigDeployment:
       type: object
       required: [id, configVersionId, status, startTime]
       properties:
@@ -844,18 +1060,18 @@ components:
           nullable: true
           description: Optional reason for failure or cancellation
 
-    DeploymentList:
+    ConfigDeploymentList:
       type: object
       required: [items]
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Deployment'
+            $ref: '#/components/schemas/ConfigDeployment'
         nextPageToken:
           type: string
 
-    CreateDeploymentRequest:
+    CreateConfigDeploymentRequest:
       type: object
       required: [configVersionId]
       properties:
@@ -868,7 +1084,7 @@ components:
           default: pending
           description: Deployment status. Must be pending if provided. Defaults to pending if omitted.
 
-    UpdateDeploymentStatusRequest:
+    UpdateConfigDeploymentStatusRequest:
       type: object
       required: [status]
       properties:
@@ -940,6 +1156,21 @@ components:
           allOf:
             - $ref: '#/components/schemas/CheckInFailedDeployment'
           description: A deployment that just failed; triggers status update to FAILED
+        currentUpdate:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInUpdateRef'
+          description: The update deployment currently running on this node
+        installingUpdate:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInInstallingUpdate'
+          description: The update deployment currently being installed on this node
+        failedUpdate:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CheckInFailedUpdate'
+          description: An update deployment that just failed; triggers status update to FAILED
 
     CheckInDeploymentRef:
       type: object
@@ -997,6 +1228,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/LatestConfig'
+        latestUpdate:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/LatestUpdate'
 
     CheckInAck:
       type: object
@@ -1014,9 +1249,166 @@ components:
       required: [deployment, configVersion]
       properties:
         deployment:
-          $ref: '#/components/schemas/Deployment'
+          $ref: '#/components/schemas/ConfigDeployment'
         configVersion:
           $ref: '#/components/schemas/ConfigVersion'
+
+    UpdateArtefact:
+      type: object
+      required: [id, platform, version, createTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        siteId:
+          type: integer
+          format: int64
+          nullable: true
+        platform:
+          type: string
+          enum: [podman, freebsd]
+        version:
+          type: string
+        sha256:
+          type: string
+          nullable: true
+          description: Lowercase-hex SHA-256 of the payload
+        description:
+          type: string
+          nullable: true
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: Payload size in bytes
+        payloadUrl:
+          type: string
+          format: uri
+          description: URL to download the raw payload tarball
+          example: https://api.example.com/api/v1/management/update-artefacts/1/payload
+        createTime:
+          type: string
+          format: date-time
+
+    UpdateArtefactList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateArtefact'
+        nextPageToken:
+          type: string
+
+    UpdateDeployment:
+      type: object
+      required: [id, updateArtefactId, nodeId, status, startTime]
+      properties:
+        id:
+          type: integer
+          format: int64
+        updateArtefactId:
+          type: integer
+          format: int64
+        nodeId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        startTime:
+          type: string
+          format: date-time
+        finishedTime:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for failure or cancellation
+
+    UpdateDeploymentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateDeployment'
+        nextPageToken:
+          type: string
+
+    CreateUpdateDeploymentRequest:
+      type: object
+      required: [updateArtefactId, nodeId]
+      properties:
+        updateArtefactId:
+          type: integer
+          format: int64
+        nodeId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending]
+          default: pending
+          description: Deployment status. Must be pending if provided. Defaults to pending if omitted.
+
+    UpdateUpdateDeploymentStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        reason:
+          type: string
+          description: Optional reason, typically used for failed or cancelled status
+
+    CheckInUpdateRef:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+
+    CheckInInstallingUpdate:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        error:
+          type: string
+          description: Optional error message if installation encountered a non-fatal issue
+        attempts:
+          type: integer
+          description: Number of installation attempts for this update deployment
+
+    CheckInFailedUpdate:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        reason:
+          type: string
+          description: Reason the update deployment failed
+
+    LatestUpdate:
+      description: The newest active update deployment and its artefact, returned as part of a check-in response.
+      type: object
+      required: [updateDeployment, updateArtefact]
+      properties:
+        updateDeployment:
+          $ref: '#/components/schemas/UpdateDeployment'
+        updateArtefact:
+          $ref: '#/components/schemas/UpdateArtefact'
 
   securitySchemes:
     bearerToken:
@@ -1036,5 +1428,9 @@ tags:
     description: Node check-in tracking
   - name: ConfigVersions
     description: Versioned configuration management
-  - name: Deployments
+  - name: ConfigDeployments
     description: Configuration deployment tracking
+  - name: UpdateArtefacts
+    description: BOS software update artefact management
+  - name: UpdateDeployments
+    description: BOS software update deployment tracking

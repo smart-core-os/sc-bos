@@ -34,8 +34,8 @@ WHERE id = :id;
 -- Nodes
 
 -- name: CreateNode :one
-INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
-VALUES (:hostname, :site_id, :secret_hash, datetime('now', 'subsec'))
+INSERT INTO nodes (hostname, site_id, platform, secret_hash, create_time)
+VALUES (:hostname, :site_id, :platform, :secret_hash, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetNode :one
@@ -68,7 +68,7 @@ WHERE site_id = :site_id;
 
 -- name: UpdateNode :one
 UPDATE nodes
-SET hostname = :hostname, site_id = :site_id
+SET hostname = :hostname, site_id = :site_id, platform = :platform
 WHERE id = :id
 RETURNING *;
 
@@ -82,8 +82,16 @@ WHERE id = :id;
 -- Node Check-Ins
 
 -- name: CreateNodeCheckIn :one
-INSERT INTO node_check_ins (node_id, check_in_time, current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts)
-VALUES (:node_id, datetime('now', 'subsec'), :current_deployment_id, :installing_deployment_id, :installing_deployment_error, :installing_deployment_attempts)
+INSERT INTO node_check_ins (
+    node_id, check_in_time,
+    current_deployment_id, installing_deployment_id, installing_deployment_error, installing_deployment_attempts,
+    current_update_deployment_id, installing_update_deployment_id, installing_update_error, installing_update_attempts
+)
+VALUES (
+    :node_id, datetime('now', 'subsec'),
+    :current_deployment_id, :installing_deployment_id, :installing_deployment_error, :installing_deployment_attempts,
+    :current_update_deployment_id, :installing_update_deployment_id, :installing_update_error, :installing_update_attempts
+)
 RETURNING *;
 
 -- name: GetNodeCheckIn :one
@@ -133,52 +141,52 @@ LIMIT :limit;
 DELETE FROM config_versions
 WHERE id = :id;
 
--- Deployments
+-- Config Deployments
 
--- name: CreateDeployment :one
-INSERT INTO deployments (config_version_id, status, start_time, finished_time)
+-- name: CreateConfigDeployment :one
+INSERT INTO config_deployments (config_version_id, status, start_time, finished_time)
 VALUES (:config_version_id, :status, datetime('now', 'subsec'), NULL)
 RETURNING *;
 
--- name: GetDeployment :one
+-- name: GetConfigDeployment :one
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE id = :id;
 
--- name: GetDeploymentWithConfigVersion :one
+-- name: GetConfigDeploymentWithConfigVersion :one
 SELECT d.*, cv.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE d.id = :id;
 
--- name: ListDeployments :many
+-- name: ListConfigDeployments :many
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE id < :before_ID
 ORDER BY id DESC
 LIMIT :limit;
 
--- name: ListDeploymentsByConfigVersion :many
+-- name: ListConfigDeploymentsByConfigVersion :many
 SELECT *
-FROM deployments
+FROM config_deployments
 WHERE config_version_id = :config_version_id AND id < :before_id
 ORDER BY id DESC
 LIMIT :limit;
 
--- name: ListDeploymentsByNode :many
+-- name: ListConfigDeploymentsByNode :many
 SELECT d.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = :node_id AND d.id < :before_id
 ORDER BY d.id DESC
 LIMIT :limit;
 
--- name: CountDeployments :one
+-- name: CountConfigDeployments :one
 SELECT COUNT(*) AS count
-FROM deployments;
+FROM config_deployments;
 
--- name: UpdateDeploymentStatus :one
-UPDATE deployments
+-- name: UpdateConfigDeploymentStatus :one
+UPDATE config_deployments
 SET status = :status,
     reason = :reason,
     finished_time = CASE
@@ -188,12 +196,12 @@ SET status = :status,
 WHERE id = :id
 RETURNING *;
 
--- name: DeleteDeployment :execrows
-DELETE FROM deployments
+-- name: DeleteConfigDeployment :execrows
+DELETE FROM config_deployments
 WHERE id = :id;
 
--- name: CancelPendingDeploymentsByNode :execrows
-UPDATE deployments
+-- name: CancelPendingConfigDeploymentsByNode :execrows
+UPDATE config_deployments
 SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE config_version_id IN (
@@ -203,9 +211,9 @@ WHERE config_version_id IN (
 -- name: GetNodeBySecretHash :one
 SELECT * FROM nodes WHERE secret_hash = :secret_hash;
 
--- name: GetActiveDeploymentByNode :one
+-- name: GetActiveConfigDeploymentByNode :one
 SELECT d.*
-FROM deployments d
+FROM config_deployments d
 JOIN config_versions cv ON d.config_version_id = cv.id
 WHERE cv.node_id = :node_id AND d.status IN ('pending', 'in_progress')
 ORDER BY d.id DESC
@@ -224,3 +232,87 @@ WHERE code = :code AND used_at IS NULL AND expires_at > datetime('now', 'subsec'
 
 -- name: MarkEnrollmentCodeUsed :exec
 UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = :id;
+
+-- Update Artefacts
+-- The payload itself is stored as an external file on disk (named by artefact id) and is never held
+-- in the database, so it is never selected here; the size column records its byte length.
+
+-- name: CreateUpdateArtefact :one
+INSERT INTO update_artefacts (site_id, platform, version, sha256, description, size, create_time)
+VALUES (:site_id, :platform, :version, :sha256, :description, :size, datetime('now', 'subsec'))
+RETURNING *;
+
+-- name: GetUpdateArtefact :one
+SELECT id, site_id, platform, version, sha256, description, size, create_time
+FROM update_artefacts
+WHERE id = :id;
+
+-- name: ListUpdateArtefacts :many
+SELECT id, site_id, platform, version, sha256, description, size, create_time
+FROM update_artefacts
+WHERE id > :after_id
+  AND (sqlc.arg(platform) = '' OR platform = sqlc.arg(platform))
+  AND (sqlc.arg(site_id) = 0 OR site_id = sqlc.arg(site_id) OR site_id IS NULL)
+ORDER BY id
+LIMIT :limit;
+
+-- name: ListUpdateArtefactIDs :many
+SELECT id FROM update_artefacts ORDER BY id;
+
+-- name: DeleteUpdateArtefact :execrows
+DELETE FROM update_artefacts
+WHERE id = :id;
+
+-- Update Deployments
+
+-- name: CreateUpdateDeployment :one
+INSERT INTO update_deployments (update_artefact_id, node_id, status, start_time, finished_time)
+VALUES (:update_artefact_id, :node_id, :status, datetime('now', 'subsec'), NULL)
+RETURNING *;
+
+-- name: GetUpdateDeployment :one
+SELECT *
+FROM update_deployments
+WHERE id = :id;
+
+-- name: ListUpdateDeployments :many
+SELECT *
+FROM update_deployments
+WHERE id < :before_id
+ORDER BY id DESC
+LIMIT :limit;
+
+-- name: ListUpdateDeploymentsByNode :many
+SELECT *
+FROM update_deployments
+WHERE node_id = :node_id AND id < :before_id
+ORDER BY id DESC
+LIMIT :limit;
+
+-- name: SetUpdateDeploymentStatus :one
+UPDATE update_deployments
+SET status = :status,
+    reason = :reason,
+    finished_time = CASE
+        WHEN :status = 'completed' OR :status = 'failed' OR :status = 'cancelled' THEN datetime('now', 'subsec')
+        ELSE finished_time
+    END
+WHERE id = :id
+RETURNING *;
+
+-- name: DeleteUpdateDeployment :execrows
+DELETE FROM update_deployments
+WHERE id = :id;
+
+-- name: CancelPendingUpdateDeploymentsByNode :execrows
+UPDATE update_deployments
+SET status = 'cancelled',
+    finished_time = datetime('now', 'subsec')
+WHERE node_id = :node_id AND status = 'pending';
+
+-- name: GetActiveUpdateDeploymentByNode :one
+SELECT *
+FROM update_deployments
+WHERE node_id = :node_id AND status IN ('pending', 'in_progress')
+ORDER BY id DESC
+LIMIT 1;

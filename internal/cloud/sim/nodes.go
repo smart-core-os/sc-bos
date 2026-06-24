@@ -18,6 +18,7 @@ type Node struct {
 	ID         int64     `json:"id,string"`
 	Hostname   string    `json:"hostname"`
 	SiteID     int64     `json:"siteId,string"`
+	Platform   string    `json:"platform"`
 	CreateTime time.Time `json:"createTime"`
 }
 
@@ -26,8 +27,17 @@ func toNode(n queries.Node) Node {
 		ID:         n.ID,
 		Hostname:   n.Hostname,
 		SiteID:     n.SiteID,
+		Platform:   n.Platform,
 		CreateTime: n.CreateTime,
 	}
+}
+
+// defaultPlatform is used when a node is created without an explicit platform.
+const defaultPlatform = "podman"
+
+// validPlatform reports whether p is a platform the system supports.
+func validPlatform(p string) bool {
+	return p == "podman" || p == "freebsd"
 }
 
 func toNodes(nodes []queries.Node) []Node {
@@ -48,11 +58,13 @@ type CreateNodeResponse struct {
 type createNodeRequest struct {
 	Hostname string `json:"hostname"`
 	SiteID   int64  `json:"siteId,string"`
+	Platform string `json:"platform"`
 }
 
 type updateNodeRequest struct {
 	Hostname string `json:"hostname"`
 	SiteID   int64  `json:"siteId,string"`
+	Platform string `json:"platform"`
 }
 
 func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +145,15 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Platform == "" {
+		req.Platform = defaultPlatform
+	}
+	if !validPlatform(req.Platform) {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid platform", zap.String("platform", req.Platform))
+		return
+	}
+
 	secret, hash, err := generateSecret()
 	if err != nil {
 		writeError(w, errInternal)
@@ -146,6 +167,7 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		item, err = tx.CreateNode(r.Context(), queries.CreateNodeParams{
 			Hostname:   req.Hostname,
 			SiteID:     req.SiteID,
+			Platform:   req.Platform,
 			SecretHash: hash,
 		})
 		return err
@@ -220,6 +242,15 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Platform == "" {
+		req.Platform = defaultPlatform
+	}
+	if !validPlatform(req.Platform) {
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid platform", zap.String("platform", req.Platform))
+		return
+	}
+
 	var item queries.Node
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		var err error
@@ -227,6 +258,7 @@ func (s *Server) updateNode(w http.ResponseWriter, r *http.Request) {
 			ID:       id,
 			Hostname: req.Hostname,
 			SiteID:   req.SiteID,
+			Platform: req.Platform,
 		})
 		return err
 	})

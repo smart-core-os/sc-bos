@@ -1,45 +1,46 @@
-{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.deploymentsViewData*/ -}}
-{{define "deployments"}}
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.updateDeploymentsViewData*/ -}}
+{{define "update_deployments"}}
 <!DOCTYPE html>
 <html>
-<head><title>Deployments - CloudSim</title></head>
+<head><title>Update Deployments - CloudSim</title></head>
 <body>
 {{template "nav" .}}
-<h1>Deployments</h1>
+<h1>Update Deployments</h1>
 {{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
 
-<h2>Create Deployment</h2>
-<form method="post" action="/ui/deployments">
-  <label>Config Version ID: <input type="number" name="configVersionId" required></label><br>
+<h2>Create Update Deployment</h2>
+<form method="post" action="/ui/update-deployments">
+  <label>Node ID: <input type="number" name="nodeId" required></label><br>
+  <label>Update Artefact ID: <input type="number" name="updateArtefactId" required></label><br>
   <label>Status:
     <select name="status">
       <option value="pending">pending</option>
-      <option value="in_progress">in_progress</option>
     </select>
   </label><br>
   <button type="submit">Create</button>
 </form>
 
 <h2>Filter</h2>
-<form method="get" action="/ui/deployments">
+<form method="get" action="/ui/update-deployments">
   <label>Node ID: <input type="number" name="nodeId" value="{{.NodeID}}"></label>
   <button type="submit">Filter</button>
-  {{if .NodeID}}<a href="/ui/deployments">Clear filter</a>{{end}}
+  {{if .NodeID}}<a href="/ui/update-deployments">Clear filter</a>{{end}}
 </form>
 
-<h2>Deployments{{if .NodeID}} (node {{.NodeID}}){{end}}</h2>
+<h2>Update Deployments{{if .NodeID}} (node {{.NodeID}}){{end}}</h2>
 <table border="1">
-<tr><th>ID</th><th>Config Version</th><th>Status</th><th>Started</th><th>Finished</th><th>Reason</th><th>Actions</th></tr>
-{{range .Deployments}}
+<tr><th>ID</th><th>Artefact ID</th><th>Node ID</th><th>Status</th><th>Started</th><th>Finished</th><th>Reason</th><th>Actions</th></tr>
+{{range .UpdateDeployments}}
 <tr>
   <td>{{.ID}}</td>
-  <td>{{.ConfigVersionID}}</td>
+  <td>{{.UpdateArtefactID}}</td>
+  <td>{{.NodeID}}</td>
   <td>{{.Status}}</td>
   <td>{{.StartTime.Format "2006-01-02 15:04:05"}}</td>
   <td>{{if .FinishedTime.Valid}}{{.FinishedTime.Time.Format "2006-01-02 15:04:05"}}{{end}}</td>
   <td>{{.Reason.String}}</td>
   <td>
-    <form method="post" action="{{$.UpdateDeploymentStatusPath .ID}}">
+    <form method="post" action="{{$.UpdateUpdateDeploymentStatusPath .ID}}">
       <select name="status">
         <option value="pending">pending</option>
         <option value="in_progress">in_progress</option>
@@ -50,17 +51,17 @@
       <input type="text" name="reason" placeholder="reason (optional)" size="20">
       <button type="submit">Update status</button>
     </form>
-    <form method="post" action="{{$.DeleteDeploymentPath .ID}}">
+    <form method="post" action="{{$.DeleteUpdateDeploymentPath .ID}}">
       <button type="submit">Delete</button>
     </form>
   </td>
 </tr>
 {{else}}
-<tr><td colspan="7">No deployments.</td></tr>
+<tr><td colspan="8">No update deployments.</td></tr>
 {{end}}
 </table>
 {{if .NextPageToken}}
-<p><a href="/ui/deployments?before={{.NextPageToken}}{{if .NodeID}}&amp;nodeId={{.NodeID}}{{end}}">Next page &raquo;</a></p>
+<p><a href="/ui/update-deployments?before={{.NextPageToken}}{{if .NodeID}}&amp;nodeId={{.NodeID}}{{end}}">Next page &raquo;</a></p>
 {{end}}
 </body>
 </html>

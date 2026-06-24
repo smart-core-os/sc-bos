@@ -4,9 +4,19 @@
 //
 // Sites represent physical locations. Nodes are BOS controllers associated with a site.
 // ConfigVersions store versioned binary configurations, associated with a node.
-// Deployments track the status of deploying a config version (PENDING, IN_PROGRESS, COMPLETED, FAILED).
+// ConfigDeployments track the status of deploying a config version to a node
+// (pending -> in_progress -> completed/failed/cancelled).
+// UpdateArtefacts store versioned BOS software payloads (podman save tarballs), scoped to a
+// platform and optionally a site. Because the payloads are large, they are stored as external files
+// on disk (named by artefact id, in a directory beside the database file) rather than as BLOBs; the
+// row holds only metadata. CreateUpdateArtefact streams a payload to disk and ReadUpdateArtefactPayload
+// streams it back, so neither buffers it in full.
+// UpdateDeployments roll out an artefact to a specific node, sharing the same state machine as
+// config deployments.
 //
-// Deleting a site cascades to all associated nodes, config versions, and deployments.
+// Deleting a site cascades to all associated nodes, config versions, and deployments. Artefact rows
+// also cascade, but their files are removed only by SweepOrphanArtefacts (run at startup behind a
+// flag), since SQLite cascade deletes cannot touch the filesystem.
 //
 // # Usage
 //
@@ -20,6 +30,10 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -39,10 +53,26 @@ var schema = sqlite.MustLoadVersionedSchema(migrationsFS, "migrations")
 // All operations must be performed within Read or Write transactions.
 type Store struct {
 	db *sqlite.Database
+	// artefactsDir holds update-artefact payload files, named by artefact id. It lives next to the
+	// database file (see artefactsDirForDBPath) for persistent stores, or in a temp dir for memory
+	// stores.
+	artefactsDir string
+	// ownsArtefactsDir is true when artefactsDir is a temp dir created by NewMemoryStore, which Close
+	// should remove. Persistent stores leave their directory in place.
+	ownsArtefactsDir bool
+}
+
+// artefactsDirForDBPath derives the update-artefact directory that sits next to the database file,
+// named from its basename: foo/bar.db -> foo/bar-artefacts.
+func artefactsDirForDBPath(dbPath string) string {
+	base := filepath.Base(dbPath)
+	name := strings.TrimSuffix(base, filepath.Ext(base))
+	return filepath.Join(filepath.Dir(dbPath), name+"-artefacts")
 }
 
 // OpenStore opens a SQLite database at the given path and applies migrations to update to the latest schema version.
-// The database file will be created if it doesn't exist.
+// The database file will be created if it doesn't exist, as will the sibling directory holding update
+// artefact payload files.
 // Returns an error if the database cannot be opened or migrations fail.
 func OpenStore(ctx context.Context, path string, logger *zap.Logger) (*Store, error) {
 	db, err := sqlite.Open(ctx, path,
@@ -58,14 +88,21 @@ func OpenStore(ctx context.Context, path string, logger *zap.Logger) (*Store, er
 		return nil, err
 	}
 
+	artefactsDir := artefactsDirForDBPath(path)
+	if err := os.MkdirAll(artefactsDir, 0o755); err != nil {
+		return nil, err
+	}
+
 	return &Store{
-		db: db,
+		db:           db,
+		artefactsDir: artefactsDir,
 	}, nil
 }
 
 // NewMemoryStore creates an in-memory SQLite database for testing.
 // The database is fully functional but exists only in memory and will be
-// lost when the store is closed. Panics if migrations fail (indicates broken schema).
+// lost when the store is closed. Update artefact payloads are written to a temporary directory that
+// Close removes. Panics if migrations or temp-dir creation fail.
 func NewMemoryStore(logger *zap.Logger) *Store {
 	db := sqlite.OpenMemory(
 		sqlite.WithLogger(logger),
@@ -78,12 +115,22 @@ func NewMemoryStore(logger *zap.Logger) *Store {
 		panic(err)
 	}
 
-	return &Store{db: db}
+	artefactsDir, err := os.MkdirTemp("", "cloudsim-artefacts-")
+	if err != nil {
+		panic(err)
+	}
+
+	return &Store{db: db, artefactsDir: artefactsDir, ownsArtefactsDir: true}
 }
 
-// Close closes the database connection.
+// Close closes the database connection, and removes the artefacts directory if it is a temporary one
+// owned by the store (memory stores only).
 func (s *Store) Close() error {
-	return s.db.Close()
+	err := s.db.Close()
+	if s.ownsArtefactsDir && s.artefactsDir != "" {
+		err = errors.Join(err, os.RemoveAll(s.artefactsDir))
+	}
+	return err
 }
 
 // Read executes a read-only transaction.
