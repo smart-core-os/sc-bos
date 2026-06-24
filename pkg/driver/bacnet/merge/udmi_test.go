@@ -29,14 +29,14 @@ func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
 		t.Fatalf("failed to unmarshal payload: %v", err)
 	}
 
-	if out["nan"].PresentValue != nil {
-		t.Errorf("expected nan to be nil, got %v", out["nan"].PresentValue)
+	if out["nan"].PresentValue != "NaN" {
+		t.Errorf("expected nan to be \"NaN\", got %v", out["nan"].PresentValue)
 	}
-	if out["posInf"].PresentValue != nil {
-		t.Errorf("expected posInf to be nil, got %v", out["posInf"].PresentValue)
+	if out["posInf"].PresentValue != "Infinity" {
+		t.Errorf("expected posInf to be \"Infinity\", got %v", out["posInf"].PresentValue)
 	}
-	if out["negInf"].PresentValue != nil {
-		t.Errorf("expected negInf to be nil, got %v", out["negInf"].PresentValue)
+	if out["negInf"].PresentValue != "-Infinity" {
+		t.Errorf("expected negInf to be \"-Infinity\", got %v", out["negInf"].PresentValue)
 	}
 	if out["ok"].PresentValue != 42.0 {
 		t.Errorf("expected ok to be 42.0, got %v", out["ok"].PresentValue)
