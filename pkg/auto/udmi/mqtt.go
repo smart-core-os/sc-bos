@@ -2,6 +2,7 @@ package udmi
 
 import (
 	"context"
+	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
@@ -17,9 +18,18 @@ func newMqttClient(cfg config.Root) (mqtt.Client, error) {
 	return mqtt.NewClient(options), nil
 }
 
-// mqttPublisher is a Publisher backed by MQTT
-func mqttPublisher(client mqtt.Client, qos byte, retained bool) Publisher {
+// mqttPublisher is a Publisher backed by MQTT.
+//
+// Retention is decided per topic: UDMI pointset/event topics carry ephemeral
+// telemetry and are published unretained so a (re)connecting subscriber doesn't
+// replay a stale value as if it were live; state and metadata describe
+// last-known device status and model and are retained so subscribers see them
+// immediately on connect. retainAll (the auto's "retained" config) forces the
+// retained flag on for every topic, preserving the legacy retain-everything
+// behaviour.
+func mqttPublisher(client mqtt.Client, qos byte, retainAll bool) Publisher {
 	return PublisherFunc(func(ctx context.Context, topic string, payload any) error {
+		retained := retainAll || !isEventTopic(topic)
 		token := client.Publish(topic, qos, retained, payload)
 		select {
 		case <-ctx.Done():
@@ -28,6 +38,14 @@ func mqttPublisher(client mqtt.Client, qos byte, retained bool) Publisher {
 			return token.Error()
 		}
 	})
+}
+
+// isEventTopic reports whether an MQTT topic is a UDMI event topic. Event topics
+// use an "/event" or "/events" segment (e.g. ".../event/pointset/points",
+// ".../events/pointset"); state ("/state") and metadata ("/metadata.json")
+// topics do not.
+func isEventTopic(topic string) bool {
+	return strings.Contains(topic, "/event")
 }
 
 // mqttPublisher is a Subscriber backed by MQTT

@@ -246,3 +246,5 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*electricpb.ElectricDeman
 
 	return t.model.UpdateDemand(dst)
 }
+
+func (t *electricTrait) PollTask() *task.Intermittent { return t.pollTask }

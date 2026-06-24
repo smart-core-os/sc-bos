@@ -2,6 +2,7 @@ package logpb
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -76,20 +77,29 @@ func (m *Model) AppendMessage(msg *LogMessage) {
 // TailMessages returns the most recent n messages in chronological order.
 // If n exceeds the number of buffered messages, all buffered messages are returned.
 func (m *Model) TailMessages(n int) []*LogMessage {
+	return m.TailMatching(n, nil)
+}
+
+// TailMatching returns up to the n most recent messages for which match
+// returns true, in chronological order, scanning back through the whole
+// buffer as needed. A nil match behaves like TailMessages(n).
+func (m *Model) TailMatching(n int, match func(*LogMessage) bool) []*LogMessage {
 	if n <= 0 {
 		return nil
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if n > m.bufSize {
-		n = m.bufSize
-	}
-	result := make([]*LogMessage, n)
 	cap := len(m.buf)
-	start := (m.bufHead - n + cap) % cap
-	for i := range n {
-		result[i] = m.buf[(start+i)%cap]
+	// Walk newest -> oldest collecting matches, then reverse into
+	// chronological order.
+	var result []*LogMessage
+	for i := 0; i < m.bufSize && len(result) < n; i++ {
+		msg := m.buf[(m.bufHead-1-i+cap)%cap]
+		if match == nil || match(msg) {
+			result = append(result, msg)
+		}
 	}
+	slices.Reverse(result)
 	return result
 }
 

@@ -50,7 +50,10 @@ func (p *poller) startPoll(ctx context.Context) {
 
 func (p *poller) process(ctx context.Context) {
 	response := SensorResponse{}
-	if err := doGetRequest(p.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, p.client, &response, "sensor"); err != nil {
+		if ctx.Err() != nil {
+			return // we're stopping, not a device fault
+		}
 		h := noResponse
 		var unsupportedTypeErr *json.UnmarshalTypeError
 		if errors.Is(err, unsupportedTypeErr) {

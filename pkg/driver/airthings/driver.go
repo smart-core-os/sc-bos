@@ -26,6 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/airthings/local"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -84,7 +85,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		for _, device := range location.Devices {
 			n := device.Name
-			announcer.Announce(n, node.HasMetadata(device.Metadata))
+			announcer.Announce(n, node.HasMetadata(device.Metadata), node.HasDeviceType(metadatapb.Metadata_DEVICE))
 			_, hErr := d.Health.NewFaultCheck(n, &healthpb.HealthCheck{
 				Id:          "setup",
 				DisplayName: "Device Setup",

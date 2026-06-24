@@ -87,6 +87,97 @@ func TestRouter(t *testing.T) {
 
 }
 
+// TestRouter_KnownDeviceUnknownService verifies that calling a registered-but-unrouted service on a
+// known device key returns Unimplemented, not NotFound.
+// This matters for local devices that have HasTrait+WithClients for one service but not another —
+// the router knows the service (it's registered) and knows the device (it has another route),
+// so NotFound would be misleading.
+func TestRouter_KnownDeviceUnknownService(t *testing.T) {
+	r := New()
+
+	// Both services are registered (as allServices() does for multi-aspect traits).
+	check(t, r.AddService(routedRegistryService(t, onoffpb.OnOffApi_ServiceDesc.ServiceName, "name")))
+	check(t, r.AddService(routedRegistryService(t, onoffpb.OnOffInfo_ServiceDesc.ServiceName, "name")))
+
+	// Only OnOffApi has a route for "foo"; OnOffInfo has none (no WithClients for that aspect).
+	fooModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
+	check(t, r.AddRoute(onoffpb.OnOffApi_ServiceDesc.ServiceName, "foo",
+		wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, onoffpb.NewModelServer(fooModel))))
+
+	conn := NewLoopback(r)
+	infoClient := onoffpb.NewOnOffInfoClient(conn)
+
+	// "foo" is known (OnOffApi route exists) but doesn't implement OnOffInfo → Unimplemented
+	_, err := infoClient.DescribeOnOff(context.Background(), &onoffpb.DescribeOnOffRequest{Name: "foo"})
+	if code := status.Code(err); code != codes.Unimplemented {
+		t.Errorf("known device, unimplemented service: want Unimplemented, got %v", code)
+	}
+
+	// "bar" is completely unknown → NotFound
+	_, err = infoClient.DescribeOnOff(context.Background(), &onoffpb.DescribeOnOffRequest{Name: "bar"})
+	if code := status.Code(err); code != codes.NotFound {
+		t.Errorf("unknown device: want NotFound, got %v", code)
+	}
+}
+
+// TestRouter_ServiceOnlyRouteBeatsUnimplemented verifies that a service-only
+// route ({Service, ""}) is matched ahead of the known-device Unimplemented
+// check, so a known device still routes to the catch-all rather than being
+// reported as unimplemented.
+func TestRouter_ServiceOnlyRouteBeatsUnimplemented(t *testing.T) {
+	r := New()
+	check(t, r.AddService(routedRegistryService(t, onoffpb.OnOffApi_ServiceDesc.ServiceName, "name")))
+	check(t, r.AddService(routedRegistryService(t, onoffpb.OnOffInfo_ServiceDesc.ServiceName, "name")))
+
+	// "foo" is a known device (has an OnOffApi route).
+	fooModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
+	check(t, r.AddRoute(onoffpb.OnOffApi_ServiceDesc.ServiceName, "foo",
+		wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, onoffpb.NewModelServer(fooModel))))
+	// OnOffInfo has a service-only catch-all route (any device name).
+	check(t, r.AddRoute(onoffpb.OnOffInfo_ServiceDesc.ServiceName, "",
+		wrap.ServerToClient(onoffpb.OnOffInfo_ServiceDesc, stubOnOffInfo{})))
+
+	infoClient := onoffpb.NewOnOffInfoClient(NewLoopback(r))
+
+	// The service-only route must win over the known-device Unimplemented check.
+	if _, err := infoClient.DescribeOnOff(context.Background(), &onoffpb.DescribeOnOffRequest{Name: "foo"}); err != nil {
+		t.Errorf("known device with service-only route: want success, got %v", err)
+	}
+}
+
+// TestRouter_UnroutedServiceNotFound verifies that a non-key-routable service
+// (one not registered with NewRoutedService) is never reported as Unimplemented
+// for a known device: with no extracted key, the known-device check is skipped
+// and an unmatched request falls through to NotFound.
+func TestRouter_UnroutedServiceNotFound(t *testing.T) {
+	r := New()
+	check(t, r.AddService(routedRegistryService(t, onoffpb.OnOffApi_ServiceDesc.ServiceName, "name")))
+	check(t, r.AddService(unroutedRegistryService(t, onoffpb.OnOffInfo_ServiceDesc.ServiceName)))
+
+	// "foo" is a known device (has an OnOffApi route) but OnOffInfo is unrouted.
+	fooModel := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
+	check(t, r.AddRoute(onoffpb.OnOffApi_ServiceDesc.ServiceName, "foo",
+		wrap.ServerToClient(onoffpb.OnOffApi_ServiceDesc, onoffpb.NewModelServer(fooModel))))
+
+	infoClient := onoffpb.NewOnOffInfoClient(NewLoopback(r))
+
+	// No key is extracted for an unrouted service, so even a known device name
+	// yields NotFound, not Unimplemented.
+	_, err := infoClient.DescribeOnOff(context.Background(), &onoffpb.DescribeOnOffRequest{Name: "foo"})
+	if code := status.Code(err); code != codes.NotFound {
+		t.Errorf("unrouted service for known device: want NotFound, got %v", code)
+	}
+}
+
+// stubOnOffInfo is a minimal OnOffInfo implementation used to back a route in tests.
+type stubOnOffInfo struct {
+	onoffpb.UnimplementedOnOffInfoServer
+}
+
+func (stubOnOffInfo) DescribeOnOff(context.Context, *onoffpb.DescribeOnOffRequest) (*onoffpb.OnOffSupport, error) {
+	return &onoffpb.OnOffSupport{}, nil
+}
+
 func TestRouter_AddService(t *testing.T) {
 	r := New()
 	model := onoffpb.NewModel(resource.WithInitialValue(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
@@ -157,6 +248,19 @@ func routedRegistryService(t *testing.T, serviceName, keyName string) *Service {
 		t.Fatalf("failed to create routed service: %v", err)
 	}
 	return s
+}
+
+func unroutedRegistryService(t *testing.T, serviceName string) *Service {
+	t.Helper()
+	desc, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(serviceName))
+	if err != nil {
+		t.Fatalf("descriptor for service %q not in registry: %v", serviceName, err)
+	}
+	servDesc, ok := desc.(protoreflect.ServiceDescriptor)
+	if !ok {
+		t.Fatalf("%q is not a service", serviceName)
+	}
+	return NewUnroutedService(servDesc)
 }
 
 func TestWithKeyInterceptor(t *testing.T) {

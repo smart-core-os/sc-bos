@@ -30,7 +30,7 @@ const newestNormalCheck = computed(() => {
 const oldestAbnormalCheck = computed(() => {
   const checks = props.modelValue?.healthChecksList ?? [];
   return checks
-    .filter(check => check.normality !== HealthCheck.Normality.NORMAL)
+    .filter(check => check.normality > HealthCheck.Normality.NORMAL)
     .reduce((oldest, check) => {
       if (!oldest) return check;
       const checkTime = timestampToDate(check.abnormalTime);

@@ -12,9 +12,8 @@ Run the UI in dev mode (hot reloading, etc) with `yarn run dev` - assuming you h
 dependencies ready. You will likely also need to `yarn install` in [../ui-gen](../ui-gen) as this package depends on
 that file-based package.
 
-We don't really know what the final scope of this app is, it started as the admin page for controllers but has evolved
-into a unified operations and commissioning interface. The app allows you to manage API access, see what devices you
-have, control the lights and see alerts.
+The OPS UI is currently used for both commissioning and management tasks, viewing device information and dashboards.
+The plan is to migrate the operation and dashboard elements to Smart Core Connect.
 
 The design
 follows [this Figma design](https://www.figma.com/proto/5wfaoD7k13k1g0XTbdoc3q/SmartCore-Design-System-v1.0?page-id=420%3A2128&node-id=495%3A2440&viewport=202%2C130%2C0.32&scaling=min-zoom&starting-point-node-id=420%3A5995).
@@ -30,14 +29,39 @@ The different features of the UI require different capabilities from the server,
   in [config/samples](../../config/samples). For detailed config options see the `internal/driver` sub-packages, each of
   which should provide a readme and config structure.
 
-To connect the UI to a local area controller, create a `.env.local` file in this directory with the following:
-```properties
-VITE_GRPC_ENDPOINT=https://localhost:23557
-```
+## Development Setup (Recommended)
 
-When testing device or system pages it can be easier to point the UI at
-the [Smart Core Playground](https://github.com/smart-core-os/sc-playground), updating the above config to:
+The easiest way to get a full development environment with mock devices is:
 
+1. **Start the backend** using the JetBrains run configuration `.run/BOS [23557,8443] (UGS).run.xml`
+   
+   Or run directly from the command line:
+   ```bash
+   go run ./cmd/bos --policy-mode check --data .data/vanti-ugs --appconf example/config/vanti-ugs/app.conf.json --sysconf example/config/vanti-ugs/system.conf.json
+   ```
+   
+   - This runs SC-BOS with the Vanti UGS example config from `example/config/vanti-ugs/`
+   - Includes mock devices for lighting, HVAC, sensors, meters, and shades across multiple floors
+   - Listens on ports 23557 and 8443
+
+2. **Start the UI** in dev mode with the Vanti UGS environment:
+   ```bash
+   cd ui/ops
+   yarn run dev --mode vanti-ugs
+   ```
+   - This uses the `.env.vanti-ugs` configuration which points to `https://localhost:8443`
+   - Provides hot module reloading for rapid development
+
+3. **Add more devices** as needed:
+   - Use the Ops UI's device management features to add mock devices interactively
+   - Or edit `example/config/vanti-ugs/app.conf.json` to add more driver configurations
+
+This setup gives you a complete, working environment with realistic mock data for testing all UI features.
+
+## Alternative Setup
+
+If you need to connect to a different local area controller, create a `.env.local` file in this directory with:
 ```properties
 VITE_GRPC_ENDPOINT=https://localhost:8443
 ```
+

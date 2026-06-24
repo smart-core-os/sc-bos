@@ -16,6 +16,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencylightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -125,7 +126,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(lightingGroup)),
 			node.HasServer(lightpb.RegisterLightInfoServer, lightpb.LightInfoServer(lightingGroup)),
 			node.HasTrait(trait.Light),
-			node.HasMetadata(l.Meta))
+			node.HasMetadata(l.Meta),
+			node.HasDeviceType(metadatapb.Metadata_GROUP))
 	}
 
 	for _, l := range cfg.Lights {
@@ -137,7 +139,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			d.clients[l.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
 
-		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false)
+		lum := newLight(d.clients[l.IpAddress], d.logger, l, d.database, false, cfg.Location)
 
 		faultCheck := createFaultCheck(l.Name)
 		ctrlHealth := getOrCreateControllerCheck(l.IpAddress)
@@ -150,7 +152,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.Light),
 			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(lum)),
 			node.HasTrait(udmipb.TraitName),
-			node.HasMetadata(l.Meta))
+			node.HasMetadata(l.Meta),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE))
 		grp.Go(func() error {
 			return lum.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck, ctrlHealth)
 		})
@@ -171,7 +174,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(trait.OccupancySensor),
 			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(p)),
 			node.HasTrait(udmipb.TraitName),
-			node.HasMetadata(pir.Meta))
+			node.HasMetadata(pir.Meta),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE))
 		grp.Go(func() error {
 			return p.runUpdateState(ctx, cfg.RefreshOccupancy.Duration)
 		})
@@ -185,7 +189,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 			d.clients[em.IpAddress] = newTcpClient(tcpAddr, d.logger, &cfg)
 		}
-		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em, d.database, true)
+		emergencyLight := newLight(d.clients[em.IpAddress], d.logger, em, d.database, true, cfg.Location)
 		err := emergencyLight.loadTestResults()
 		if err != nil {
 			d.logger.Error("loadTestResults error", zap.Error(err))
@@ -204,7 +208,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			node.HasTrait(emergencylightpb.TraitName),
 			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(emergencyLight)),
 			node.HasTrait(udmipb.TraitName),
-			node.HasMetadata(em.Meta))
+			node.HasMetadata(em.Meta),
+			node.HasDeviceType(metadatapb.Metadata_DEVICE))
 		grp.Go(func() error {
 			return emergencyLight.queryDevice(ctx, cfg.RefreshStatus.Duration, faultCheck, ctrlHealth)
 		})

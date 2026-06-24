@@ -494,3 +494,5 @@ func (t *transport) PullTransport(request *transportpb.PullTransportRequest, ser
 	}
 	return t.ModelServer.PullTransport(request, server)
 }
+
+func (t *transport) PollTask() *task.Intermittent { return t.pollTask }

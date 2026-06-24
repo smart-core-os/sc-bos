@@ -26,6 +26,7 @@ import (
 	driverhealth "github.com/smart-core-os/sc-bos/pkg/driver/health"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
@@ -86,9 +87,7 @@ func NewDriver(services driver.Services) *Driver {
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// AnnounceContext only makes sense if using MonoApply, which we are in NewDriver
 	rootAnnouncer := d.announcer.Replace(ctx)
-	if cfg.Metadata != nil {
-		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(cfg.Metadata))
-	}
+	rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(cfg.Metadata))
 	// we start fresh each time config is updated
 	d.Clear()
 
@@ -114,9 +113,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		scDeviceName := cfg.DeviceNamePrefix + deviceName
 
 		// even if devices are offline, they still have metadata
-		if device.Metadata != nil {
-			rootAnnouncer.Announce(device.Name, node.HasMetadata(device.Metadata))
-		}
+		rootAnnouncer.Announce(device.Name, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(device.Metadata))
 
 		faultCheck, err := d.health.NewFaultCheck(scDeviceName, createDeviceHealthCheck(device.Health.OccupantImpact.ToProto(), device.Health.EquipmentImpact.ToProto()))
 		if errors.Is(err, healthpb.ErrAlreadyExists) {
@@ -257,11 +254,11 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 			continue
 		}
 
-		announcer := rootAnnouncer
-		if trait.Metadata != nil {
-			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(trait.Metadata))
-		}
+		announcer := node.AnnounceFeatures(rootAnnouncer, node.HasDeviceType(metadatapb.Metadata_DEVICE), node.HasMetadata(trait.Metadata))
 		impl.AnnounceSelf(announcer)
+		if p, ok := impl.(merge.PollTaskProvider); ok {
+			p.PollTask().IdleKeepAlive(ctx, trait.PollKeepAliveDuration(), time.Minute)
+		}
 
 		d.checks = append(d.checks, faultCheck)
 	}
@@ -316,6 +313,10 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 		return fmt.Errorf("device comm handshake: %w", ctxerr.Cause(ctx, err))
 	}
 
+	if deviceHealth != nil {
+		deviceHealth.MarkRunning()
+	}
+
 	// For WhoIs-discovered devices the controller IP is only known after findDevice succeeds.
 	if ctrlHealth == nil {
 		if udpAddr, addrErr := bacDevice.Addr.UDPAddr(); addrErr == nil {
@@ -334,9 +335,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 
 	d.storeDevice(deviceName, bacDevice, device.DefaultWritePriority)
 
-	if device.Metadata != nil {
-		rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(device.Metadata))
-	}
+	rootAnnouncer = node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(device.Metadata))
 
 	// Wrap the per-request error callback to also update controller-level health.
 	updateFn := func(rCtx context.Context, dh *healthpb.FaultCheck, name, request string, reqErr error) {
@@ -393,10 +392,7 @@ func (d *Driver) configureDevice(ctx context.Context, rootAnnouncer node.Announc
 			continue
 		}
 
-		announcer := rootAnnouncer
-		if object.co.Metadata != nil {
-			announcer = node.AnnounceFeatures(announcer, node.HasMetadata(object.co.Metadata))
-		}
+		announcer := node.AnnounceFeatures(rootAnnouncer, node.HasMetadata(object.co.Metadata))
 		impl.AnnounceSelf(announcer)
 	}
 

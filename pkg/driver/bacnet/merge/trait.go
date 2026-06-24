@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -69,7 +70,7 @@ func IntoTrait(client *gobacnet.Client, devices known.Context, faultCheck *healt
 	return nil, ErrTraitNotSupported
 }
 
-func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
+func updateTraitFaultCheck(_ context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
 	if faultCheck == nil {
 		return
 	}
@@ -84,15 +85,12 @@ func updateTraitFaultCheck(ctx context.Context, faultCheck *healthpb.FaultCheck,
 		descriptions = append(descriptions, err.Error())
 
 	}
-	faultCheck.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
-		State: healthpb.HealthCheck_Reliability_UNRELIABLE,
-		LastError: &healthpb.HealthCheck_Error{
-			SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
-			DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
-			Code: &healthpb.HealthCheck_Error_Code{
-				Code:   BacNetCommsError,
-				System: SystemName,
-			},
+	faultCheck.SetFault(&healthpb.HealthCheck_Error{
+		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
+		DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
+		Code: &healthpb.HealthCheck_Error_Code{
+			Code:   BacNetCommsError,
+			System: SystemName,
 		},
 	})
 }
@@ -114,4 +112,10 @@ func removePointAlarm(code string, fc *healthpb.FaultCheck) {
 			Code: code,
 		},
 	})
+}
+
+// PollTaskProvider is implemented by traits that expose their background poll task,
+// allowing the driver to attach keepalive behaviour independently of client subscriptions.
+type PollTaskProvider interface {
+	PollTask() *task.Intermittent
 }

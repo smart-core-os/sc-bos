@@ -3,6 +3,21 @@ import {isNullOrUndef} from '@/util/types.js';
 export const MAX_INT32 = 2147483647; // 2^31 - 1
 
 /**
+ * Format a byte count as a human-readable string (B / KB / MB / GB).
+ * Returns '—' for null/undefined values.
+ *
+ * @param {number|null|undefined} n
+ * @return {string}
+ */
+export function formatBytes(n) {
+  if (n == null) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`;
+  return `${(n / 1024 ** 3).toFixed(2)} GB`;
+}
+
+/**
  * Cap a number between min and max.
  *
  * @param {number} value

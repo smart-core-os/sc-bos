@@ -138,6 +138,9 @@ export class PullLogMessagesRequest extends jspb.Message {
   hasReadMask(): boolean;
   clearReadMask(): PullLogMessagesRequest;
 
+  getFieldFilterMap(): jspb.Map<string, string>;
+  clearFieldFilterMap(): PullLogMessagesRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PullLogMessagesRequest.AsObject;
   static toObject(includeInstance: boolean, msg: PullLogMessagesRequest): PullLogMessagesRequest.AsObject;
@@ -154,6 +157,7 @@ export namespace PullLogMessagesRequest {
     minLevel: Level;
     loggerFilter: string;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
+    fieldFilterMap: Array<[string, string]>;
   };
 }
 

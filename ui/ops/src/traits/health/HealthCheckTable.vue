@@ -22,7 +22,15 @@
         show-expand
         no-data-text="No health checks">
       <template #item.device="{ item }">
-        <md-text :value="item.metadata"/>
+        <div class="d-flex align-center gap-2">
+          <md-text :value="item.metadata"/>
+          <v-btn
+              icon="mdi-information-outline"
+              size="x-small"
+              variant="text"
+              v-tooltip:bottom="'View UDMI points'"
+              @click.stop="openUdmiDialog(item)"/>
+        </div>
       </template>
       <template #item.normality="{ item }">
         <normality-last-change-cell :model-value="item"/>
@@ -71,6 +79,9 @@
         </tr>
       </template>
     </v-data-table-server>
+    <v-dialog v-model="udmiDialog.open" max-width="600">
+      <udmi-card :name="udmiDialog.device"/>
+    </v-dialog>
   </div>
 </template>
 
@@ -85,6 +96,7 @@ import {countChecks, useHealthCheckFilters} from '@/traits/health/health';
 import HealthCheckEnrichedRows from '@/traits/health/HealthCheckEnrichedRows.vue';
 import NormalityLastChangeCell from '@/traits/health/NormalityLastChangeCell.vue';
 import ReliabilityLastChangeCell from '@/traits/health/ReliabilityLastChangeCell.vue';
+import UdmiCard from '@/traits/udmi/UdmiCard.vue';
 import {computed, ref} from 'vue';
 
 const props = defineProps({
@@ -111,6 +123,13 @@ const expanded = computed({
     expandedRow.value = value.length > 0 ? value[value.length - 1] : null;
   }
 });
+
+const udmiDialog = ref({open: false, device: ''});
+
+function openUdmiDialog(item) {
+  udmiDialog.value.device = item.name;
+  udmiDialog.value.open = true;
+}
 
 const wantCount = ref(20);
 const _useDevicesOpts = computed(() => {

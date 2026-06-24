@@ -301,8 +301,10 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 	})
 	t.Run("has health check", func(t *testing.T) {
 		client := healthpb.NewHealthApiClient(conn)
+		devicesClient := devicespb.NewDevicesApiClient(conn)
 		for _, name := range onOffDevices {
 			testHealthApi(t, ctx, addr, name, client)
+			testHealthCheckIdsMatch(t, ctx, addr, name, client, devicesClient)
 		}
 	})
 	t.Run("devices api has health checks", func(t *testing.T) {
@@ -478,11 +480,84 @@ func testHealthApi(t *testing.T, ctx context.Context, addr, name string, client 
 	for _, check := range res.HealthChecks {
 		if want := check.GetBounds().GetNormalValue().GetStringValue(); want == "ON" {
 			foundOnOffCheck = true
+			// the measured value (current_value) is set by the healthbounds auto on the AC.
+			// it must survive proxying through the gateway, otherwise the ops UI can't show it.
+			if cv := check.GetBounds().GetCurrentValue(); cv == nil {
+				t.Errorf("[%s] list health checks %s: OnOff check has no current_value (measured value lost through gateway)", addr, name)
+			}
 			break
 		}
 	}
 	if !foundOnOffCheck {
 		t.Fatalf("[%s] list health checks %s: no OnOff=ON health check found", addr, name)
+	}
+
+	// The ops UI uses PullHealthChecks (streaming), not ListHealthChecks, to read the
+	// measured value. Verify the current_value also survives the streaming proxy.
+	pullCtx, stopPull := context.WithTimeout(ctx, 10*time.Second)
+	defer stopPull()
+	stream, err := client.PullHealthChecks(pullCtx, &healthpb.PullHealthChecksRequest{Name: name})
+	if err != nil {
+		t.Fatalf("[%s] pull health checks %s: %v", addr, name, err)
+	}
+	pullFoundOnOff, pullHasCurrentValue := false, false
+	for !pullFoundOnOff {
+		msg, err := stream.Recv()
+		if err != nil {
+			break
+		}
+		for _, change := range msg.GetChanges() {
+			check := change.GetNewValue()
+			if check.GetBounds().GetNormalValue().GetStringValue() != "ON" {
+				continue
+			}
+			pullFoundOnOff = true
+			pullHasCurrentValue = check.GetBounds().GetCurrentValue() != nil
+			break
+		}
+	}
+	if !pullFoundOnOff {
+		t.Errorf("[%s] pull health checks %s: no OnOff=ON health check found via pull", addr, name)
+	} else if !pullHasCurrentValue {
+		t.Errorf("[%s] pull health checks %s: OnOff check has no current_value via pull (measured value lost through gateway)", addr, name)
+	}
+}
+
+// testHealthCheckIdsMatch verifies that the check ids reported by the DevicesApi (the device list,
+// which has measured values stripped) match the ids reported by the HealthApi (which carries the
+// measured values). The ops UI merges the two by id to display measured values in the expanded row,
+// so a mismatch through the gateway would mean the measured value never shows.
+func testHealthCheckIdsMatch(t *testing.T, ctx context.Context, addr, name string, healthClient healthpb.HealthApiClient, devicesClient devicespb.DevicesApiClient) {
+	t.Helper()
+
+	healthRes, err := healthClient.ListHealthChecks(ctx, &healthpb.ListHealthChecksRequest{Name: name})
+	if err != nil {
+		t.Fatalf("[%s] list health checks %s: %v", addr, name, err)
+	}
+	healthIds := make(map[string]struct{})
+	for _, c := range healthRes.GetHealthChecks() {
+		healthIds[c.GetId()] = struct{}{}
+	}
+
+	devRes, err := devicesClient.ListDevices(ctx, &devicespb.ListDevicesRequest{
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+			{Field: "name", Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: name}},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("[%s] list devices %s: %v", addr, name, err)
+	}
+	if len(devRes.GetDevices()) != 1 {
+		t.Fatalf("[%s] list devices %s: expected 1 device, got %d", addr, name, len(devRes.GetDevices()))
+	}
+	for _, c := range devRes.GetDevices()[0].GetHealthChecks() {
+		if c.GetId() == "" {
+			t.Errorf("[%s] device %s: DevicesApi health check has empty id (ops UI can't merge in measured value)", addr, name)
+			continue
+		}
+		if _, ok := healthIds[c.GetId()]; !ok {
+			t.Errorf("[%s] device %s: DevicesApi check id %q not found in HealthApi ids %v (id mismatch through gateway)", addr, name, c.GetId(), healthIds)
+		}
 	}
 }
 
@@ -509,6 +584,7 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.health.v1.HealthHistory"},
 		{Name: "smartcore.bos.hub.v1.HubApi"},
 		{Name: "smartcore.bos.metadata.v1.MetadataApi"},
+		{Name: "smartcore.bos.mock.v1.MockDeviceApi"},
 		{Name: "smartcore.bos.onoff.v1.OnOffApi"},
 		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
 		{Name: "smartcore.bos.parent.v1.ParentApi"},

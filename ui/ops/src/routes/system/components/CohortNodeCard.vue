@@ -78,6 +78,9 @@
                          @click="onForgetNode(node.grpcAddress)">
               <v-list-item-title class="text-error">Forget Node</v-list-item-title>
             </v-list-item>
+            <v-list-item v-if="canReboot" link @click="showRebootDialog = true">
+              <v-list-item-title class="text-warning">Reboot Node</v-list-item-title>
+            </v-list-item>
           </v-list>
         </v-menu>
       </div>
@@ -90,21 +93,29 @@
 
       <!-- Service stats -->
       <div v-if="!connectedViaHub" class="stat-grid">
-        <div
+        <v-tooltip
             v-for="(response, service) in nodeDetails"
             :key="service"
-            class="stat-box"
-            :class="{'stat-box--error': response.streamError}">
-          <div class="stat-value">
-            <template v-if="response.streamError">
-              <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
-            </template>
-            <template v-else>
-              {{ response.value?.totalActiveCount ?? '—' }}
-            </template>
-          </div>
-          <div class="stat-label">{{ service }}</div>
-        </div>
+            :disabled="!response.streamError"
+            :text="serviceErrorMessage(response.streamError)"
+            location="bottom">
+          <template #activator="{ props: _props }">
+            <div
+                v-bind="_props"
+                class="stat-box"
+                :class="{'stat-box--error': response.streamError}">
+              <div class="stat-value">
+                <template v-if="response.streamError">
+                  <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
+                </template>
+                <template v-else>
+                  {{ response.value?.totalActiveCount ?? '—' }}
+                </template>
+              </div>
+              <div class="stat-label">{{ service }}</div>
+            </div>
+          </template>
+        </v-tooltip>
       </div>
 
       <!-- Resource usage -->
@@ -238,22 +249,99 @@
           </div>
         </template>
       </with-resource-use>
+
+      <!-- Boot info -->
+      <template v-if="bootState">
+        <v-divider class="mt-2 mb-3"/>
+        <div class="resource-use">
+          <div class="resource-section-label">Last boot</div>
+          <div v-if="uptime" class="resource-row">
+            <span class="resource-label">Uptime</span>
+            <span class="resource-value" style="width: auto">{{ uptime }}</span>
+          </div>
+          <div v-if="bootState.lastRebootReason" class="resource-row">
+            <span class="resource-label">Reboot reason</span>
+            <span class="resource-value text-truncate" style="width: auto" :title="bootState.lastRebootReason">
+              {{ bootState.lastRebootReason }}
+            </span>
+          </div>
+          <div v-if="bootState.lastRebootActor?.displayName" class="resource-row">
+            <span class="resource-label">Rebooted by</span>
+            <span class="resource-value text-truncate" style="width: auto"
+                  :title="bootState.lastRebootActor.displayName">
+              {{ bootState.lastRebootActor.displayName }}
+            </span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Data Retention -->
+      <with-data-retention :name="node.name + '/stores/history'" v-slot="{ resource: historyRetention }">
+        <template v-if="!historyRetention.streamError && historyRetention.value">
+          <v-divider class="my-3"/>
+          <div class="resource-section-label">History Store</div>
+          <retention-rows :retention="historyRetention.value" item-label="record"/>
+        </template>
+      </with-data-retention>
     </v-card-text>
   </v-card>
+
+  <v-dialog v-model="showRebootDialog" max-width="400px">
+    <v-card>
+      <v-card-title>Reboot {{ node.name }}?</v-card-title>
+      <v-card-text>
+        <p class="mb-2 text-body-2">
+          The node will now be restarted.
+          You may lose connection briefly.
+        </p>
+        <v-text-field v-model="rebootReason" label="Reason (optional)" density="compact"/>
+        <v-checkbox
+            v-model="forceReboot"
+            label="Force reboot"
+            density="compact"
+            color="error"
+            hide-details
+            class="mt-1"/>
+        <v-alert v-if="forceReboot" type="warning" density="compact" class="mt-2" variant="tonal">
+          Force reboot skips graceful shutdown. In-flight requests will be dropped and buffers may not be flushed.
+          Only use this if the node is unresponsive to a normal reboot.
+        </v-alert>
+        <v-alert v-if="rebootTracker.error" type="error" density="compact" class="mt-2">
+          {{ rebootTracker.error }}
+        </v-alert>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer/>
+        <v-btn @click="showRebootDialog = false; forceReboot = false">Cancel</v-btn>
+        <v-btn color="warning" :loading="rebootTracker.loading" @click="confirmReboot">
+          Reboot
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
 import {pullCloudConnection, CloudErrMessage} from '@/api/ui/cloud-connection.js';
 import {getDownloadLogUrl} from '@/api/ui/log.js';
-import {newResourceValue} from '@/api/resource.js';
+import {closeResource, newResourceValue} from '@/api/resource.js';
+import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
+import {timestampToDate} from '@/api/convpb.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
+import useAuthSetup from '@/composables/useAuthSetup.js';
+import {useAccountStore} from '@/stores/account.js';
 import {NodeRole, useCohortStore} from '@/stores/cohort.js';
+import {decomposeDuration, SECOND} from '@/util/date.js';
+import {useNow} from '@/components/now.js';
+import {watchResource} from '@/util/traits.js';
 import WithResourceUse from '@/traits/resourceUse/WithResourceUse.vue';
 import {CloudConnection} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
 import {computed, onScopeDispose, reactive, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import LinkCloudDialog from './LinkCloudDialog.vue';
+import RetentionRows from './RetentionRows.vue';
+import WithDataRetention from '@/traits/dataRetention/WithDataRetention.vue';
 
 const props = defineProps({
   node: {
@@ -280,6 +368,10 @@ const cohortStore = useCohortStore();
 const connectedViaHub = computed(() =>
   cohortStore.cohortNodes.find(n => n.isServer)?.role === NodeRole.HUB
 );
+
+const {blockSystemEdit} = useAuthSetup();
+const canReboot = computed(() => !blockSystemEdit.value);
+const accountStore = useAccountStore();
 
 const nodeDetails = reactive({
   automations: usePullServiceMetadata(
@@ -372,6 +464,56 @@ const utilizationColor = (value) => {
   if (value >= 80) return 'error';
   if (value >= 60) return 'warning';
   return 'success';
+};
+
+// Boot state stream
+const bootResource = reactive(newResourceValue());
+onScopeDispose(() => closeResource(bootResource));
+watchResource(
+    () => ({name: props.node.name}),
+    () => false,
+    (req) => {
+      pullBootState(req, bootResource);
+      return () => closeResource(bootResource);
+    }
+);
+const bootState = computed(() => bootResource.value);
+
+const {now} = useNow(SECOND);
+
+const uptime = computed(() => {
+  const bt = bootState.value?.bootTime;
+  if (!bt) return null;
+  const {days, hours, minutes, seconds} = decomposeDuration(now.value - timestampToDate(bt));
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+});
+
+// Reboot dialog
+const showRebootDialog = ref(false);
+const rebootReason = ref('');
+const forceReboot = ref(false);
+const rebootTracker = reactive({loading: false, response: null, error: null});
+
+/** Sends the reboot request and closes the dialog on success. */
+function confirmReboot() {
+  const actor = (accountStore.email || accountStore.fullName)
+      ? {displayName: accountStore.fullName, email: accountStore.email}
+      : undefined;
+  reboot({name: props.node.name, reason: rebootReason.value, force: forceReboot.value, actor}, rebootTracker)
+      .then(() => {
+        showRebootDialog.value = false;
+        rebootReason.value = '';
+        forceReboot.value = false;
+      })
+      .catch(() => { /* error shown in dialog via rebootTracker.error */ });
+}
+
+const serviceErrorMessage = (streamError) => {
+  if (!streamError) return '';
+  return streamError.error?.message || streamError.message || 'Failed to load service metadata';
 };
 </script>
 

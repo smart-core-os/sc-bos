@@ -1,0 +1,248 @@
+{
+  "features": {
+    "auth": {
+      "third-party": false,
+      "users": false
+    },
+    "device": true,
+    "devices": true,
+    "ops": true,
+    "automations": true,
+    "system": true
+  },
+  "config": {
+    "home": "/ops",
+    "auth": {"disabled": true},
+    "theme": {
+      "appBranding": {"brandName": "Simulated Building"}
+    },
+    "ops": {
+      "airQuality": false,
+      "emergencyLighting": false,
+      "security": false,
+      "pages": [
+        {
+          "title": "Building Overview",
+          "icon": "mdi-domain",
+          "layout": "builtin:LayoutMainSide",
+          "path": "building",
+          "main": [
+            {
+              "component": "builtin:power-history/PowerHistoryCard",
+              "props": {
+                "demand": "sim/demo/zones/building",
+                "occupancy": "sim/demo/zones/building"
+              }
+            },
+            {
+              "component": "builtin:occupancy/PeopleCountHistoryCard",
+              "props": {
+                "totalOccupancyName": "sim/demo/zones/building"
+              }
+            },
+            {
+              "component": "builtin:environmental/AirTemperatureHistoryCard",
+              "props": {
+                "title": "Average Air Temperature",
+                "source": "sim/demo/zones/building",
+                "metric": "ambientTemperature"
+              }
+            },
+            {
+              "component": "builtin:environmental/AirQualityHistoryCard",
+              "props": {
+                "title": "Air Quality",
+                "source": "sim/demo/zones/building",
+                "metric": "score"
+              }
+            },
+            {
+              "component": "builtin:health/HealthCheckTable",
+              "props": {
+                "conditions": [
+                  {"field": "name", "stringEqual": "sim/demo/driver"}
+                ]
+              }
+            }
+          ],
+          "after": [
+            {
+              "component": "builtin:occupancy/OccupancyCard",
+              "props": {
+                "source": "sim/demo/zones/building"
+              }
+            },
+            {
+              "component": "builtin:environmental/EnvironmentalCard",
+              "props": {
+                "title": "Building Environment",
+                "internal": "sim/demo/zones/building"
+              }
+            }
+          ],
+          "children": [
+            {
+              "title": "Ground Floor",
+              "shortTitle": "GF",
+              "icon": "mdi-layers-triple-outline",
+              "layout": "builtin:LayoutMainSide",
+              "main": [
+                {
+                  "component": "builtin:devices/DeviceTable",
+                  "props": {
+                    "forceQuery": {"metadata.location.floor": "Ground Floor"}
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "sim/demo/zones/ground",
+                    "metric": "ambientTemperature"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirQualityHistoryCard",
+                  "props": {
+                    "title": "Air Quality",
+                    "source": "sim/demo/zones/ground",
+                    "metric": "score"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:occupancy/PresenceCard",
+                  "props": {
+                    "source": "sim/demo/zones/ground"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Floor Environment",
+                    "internal": "sim/demo/zones/ground"
+                  }
+                }
+              ]
+            },
+            {
+              "title": "First Floor",
+              "shortTitle": "L1",
+              "icon": "mdi-layers-triple-outline",
+              "layout": "builtin:LayoutMainSide",
+              "main": [
+                {
+                  "component": "builtin:devices/DeviceTable",
+                  "props": {
+                    "forceQuery": {"metadata.location.floor": "First Floor"}
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirTemperatureHistoryCard",
+                  "props": {
+                    "title": "Air Temperature",
+                    "source": "sim/demo/zones/first",
+                    "metric": "ambientTemperature"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/AirQualityHistoryCard",
+                  "props": {
+                    "title": "Air Quality",
+                    "source": "sim/demo/zones/first",
+                    "metric": "score"
+                  }
+                }
+              ],
+              "after": [
+                {
+                  "component": "builtin:occupancy/PresenceCard",
+                  "props": {
+                    "source": "sim/demo/zones/first"
+                  }
+                },
+                {
+                  "component": "builtin:environmental/EnvironmentalCard",
+                  "props": {
+                    "title": "Floor Environment",
+                    "internal": "sim/demo/zones/first"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Energy",
+          "icon": "mdi-flash",
+          "path": "energy",
+          "layout": "builtin:LayoutMainSide",
+          "mainWidgetMinHeight": 0,
+          "sideWidth": 420,
+          "main": [
+            {
+              "component": "builtin:meter/MeterHistoryCard",
+              "props": {
+                "title": "Electricity Usage",
+                "totalConsumptionName": "sim/demo/zones/building"
+              }
+            },
+            {
+              "component": "builtin:energy/DemandHistoryCard",
+              "props": {
+                "title": "Average Power Demand",
+                "metric": "realPower",
+                "demandNames": ["sim/demo/building/electric-01"],
+                "minChartHeight": "300px"
+              }
+            },
+            {
+              "component": "builtin:power-history/PowerHistoryCard",
+              "props": {
+                "demand": "sim/demo/zones/building",
+                "occupancy": "sim/demo/zones/building"
+              }
+            }
+          ],
+          "after": [
+            {
+              "component": "builtin:container/FlexRow",
+              "props": {
+                "itemMinWidth": "14em",
+                "title": "Total Today",
+                "items": [
+                  {
+                    "component": "builtin:meter/ConsumptionCard",
+                    "props": {
+                      "name": "sim/demo/zones/building",
+                      "period": "day",
+                      "title": "Consumed"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "component": "builtin:container/FlexRow",
+              "props": {
+                "itemMinWidth": "14em",
+                "title": "Total Month",
+                "items": [
+                  {
+                    "component": "builtin:meter/ConsumptionCard",
+                    "props": {
+                      "name": "sim/demo/zones/building",
+                      "period": "month",
+                      "title": "Consumed"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

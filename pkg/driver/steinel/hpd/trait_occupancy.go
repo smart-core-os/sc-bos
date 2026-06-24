@@ -32,9 +32,9 @@ func newOccupancySensor(client *Client, logger *zap.Logger) *Occupancy {
 	}
 }
 
-func (o *Occupancy) GetOccupancy(_ context.Context, _ *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+func (o *Occupancy) GetOccupancy(ctx context.Context, _ *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
 	response := SensorResponse{}
-	if err := doGetRequest(o.client, &response, "sensor"); err != nil {
+	if err := doGetRequest(ctx, o.client, &response, "sensor"); err != nil {
 		return nil, err
 	}
 	if err := o.GetUpdate(&response); err != nil {

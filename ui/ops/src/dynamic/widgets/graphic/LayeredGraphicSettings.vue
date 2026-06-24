@@ -4,7 +4,7 @@
     <v-list :items="layerList" v-model:selected="visibleLayers" selectable select-strategy="independent">
       <template #append="{isSelected}">
         <v-list-item-action>
-          <v-switch :model-value="isSelected" readonly hide-details density="compact"/>
+          <v-switch :model-value="isSelected" readonly hide-details density="compact" style="pointer-events: none"/>
         </v-list-item-action>
       </template>
     </v-list>

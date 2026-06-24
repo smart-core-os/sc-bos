@@ -55,7 +55,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	pubSub := &PubSub{
-		Publisher:  mqttPublisher(client, 0, false),
+		Publisher:  mqttPublisher(client, 0, cfg.Retained),
 		Subscriber: mqttSubscriber(client, 0),
 	}
 

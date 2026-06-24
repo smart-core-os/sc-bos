@@ -133,3 +133,5 @@ func (o *occupancy) pollPeer(ctx context.Context) (*occupancysensorpb.Occupancy,
 
 	return o.model.SetOccupancy(data)
 }
+
+func (o *occupancy) PollTask() *task.Intermittent { return o.pollTask }

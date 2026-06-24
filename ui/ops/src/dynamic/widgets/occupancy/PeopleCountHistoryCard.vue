@@ -12,6 +12,10 @@
         <v-icon start :icon="summaryPct > 0 ? 'mdi-trending-up' : 'mdi-trending-down'"/>
         {{ Math.abs(summaryPct).toFixed(1) }}% vs prior period
       </v-chip>
+      <v-btn-toggle v-model="_chartType" mandatory density="compact" variant="text" class="mr-1">
+        <v-btn value="bar" icon="mdi-chart-bar" size="small"/>
+        <v-btn value="line" icon="mdi-chart-line" size="small"/>
+      </v-btn-toggle>
       <v-btn
           icon="mdi-dots-vertical"
           size="small"
@@ -33,14 +37,15 @@
     <v-card-text class="flex-grow-1 d-flex pt-0">
       <people-count-history-chart class="flex-grow-1 ma-n2" v-bind="$attrs" :total-occupancy-name="totalOccupancyName"
                                   :start="_start" :end="_end" :offset="_offset"
-                                  :show-baseline="props.showBaseline" :baseline-shift="baselineShift"/>
+                                  :show-baseline="props.showBaseline" :baseline-shift="baselineShift"
+                                  :chart-type="_chartType"/>
     </v-card-text>
     <div v-if="props.showBaseline" class="d-flex ga-8 justify-center pb-3 text-caption opacity-70">
       <span class="d-flex align-center ga-3">
         <span class="legend-dot" :style="{background: currentColor}"/>
-        Current
+        People
       </span>
-      <span class="d-flex align-center ga-3">
+      <span class="d-flex align-center ga-3" v-tooltip:top="priorPeriodTooltip" style="cursor: default">
         <span class="legend-line"/>
         Prior period
       </span>
@@ -98,9 +103,15 @@ const props = defineProps({
   downloadEnterLeave: {
     type: Boolean,
     default: false,
-  }
+  },
+  // 'bar' | 'line'
+  chartType: {
+    type: String,
+    default: 'bar',
+  },
 });
 
+const _chartType = useLocalProp(toRef(props, 'chartType'));
 const _start = useLocalProp(toRef(props, 'start'));
 const _end = useLocalProp(toRef(props, 'end'));
 const _offset = useLocalProp(toRef(props, 'offset'));
@@ -116,6 +127,12 @@ const {summaryPct} = useOccupancyNormalized(
 );
 
 const currentColor = vColors.blue.base;
+
+const priorPeriodTooltip = computed(() => {
+  const labels = {day: 'yesterday', week: 'last week', month: 'last month'};
+  const label = labels[props.baselineShift] ?? 'the prior period';
+  return `Compared to ${label}`;
+});
 
 const onDownloadClick = async () => {
   if (!props.downloadEnterLeave) {

@@ -8,6 +8,20 @@
           <template #activator="{ props }">
             <v-btn
                 class="mt-2"
+                icon="mdi-download"
+                size="small"
+                :loading="exporting"
+                v-bind="props"
+                @click="onExportReport">
+              <v-icon size="24"/>
+            </v-btn>
+          </template>
+          Export Report
+        </v-tooltip>
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+                class="mt-2"
                 color="primary"
                 icon="mdi-plus"
                 size="small"
@@ -19,6 +33,7 @@
           Enroll Node
         </v-tooltip>
         <keycloak-card v-if="keycloakHealth.isConfigured" class="flex-shrink-0"/>
+        <database-card class="flex-shrink-0"/>
       </div>
     </div>
 
@@ -45,6 +60,8 @@
 import CohortNodeCard from '@/routes/system/components/CohortNodeCard.vue';
 import EnrollHubNodeModal from '@/routes/system/components/EnrollHubNodeModal.vue';
 import KeycloakCard from '@/routes/system/components/KeycloakCard.vue';
+import DatabaseCard from '@/routes/system/components/DatabaseCard.vue';
+import {downloadComponentsReport} from './export.js';
 import {useCohortStore} from '@/stores/cohort.js';
 import {useKeycloakHealthStore} from '@/stores/keycloakHealth.js';
 import {storeToRefs} from 'pinia';
@@ -54,6 +71,16 @@ const cpuExpanded = ref(false);
 const diskExpanded = ref(false);
 
 const showModal = ref(false);
+const exporting = ref(false);
+
+const onExportReport = async () => {
+  exporting.value = true;
+  try {
+    await downloadComponentsReport(cohortNodes.value);
+  } finally {
+    exporting.value = false;
+  }
+};
 
 const {cohortNodes} = storeToRefs(useCohortStore());
 const keycloakHealth = useKeycloakHealthStore();
