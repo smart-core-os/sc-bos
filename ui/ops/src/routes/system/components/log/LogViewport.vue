@@ -5,6 +5,7 @@
         :key="line.msg._key"
         class="log-line">
       <span class="log-time">{{ line.time }}</span>
+      <span v-if="line.msg.source" class="log-source" :title="line.msg.source">{{ line.msg.source }}</span>
       <span :class="['log-level', `text-${levelColor[line.msg.level] ?? 'white'}`]">{{ levelName[line.msg.level] ?? '?' }}</span>
       <!-- eslint-disable-next-line max-len -->
       <span class="log-logger"><template v-for="(p, i) in line.loggerParts" :key="i"><mark v-if="p.matchIndex != null" :class="{'log-match-active': p.matchIndex === activeMatch}">{{ p.text }}</mark><template v-else>{{ p.text }}</template></template>:</span>
@@ -146,6 +147,17 @@ watch([() => props.activeMatch, () => props.search], () => {
 .log-time {
   color: #888;
   flex-shrink: 0;
+}
+
+/* source node, only shown for aggregated (e.g. gateway) log streams */
+.log-source {
+  color: #4ec9b0;
+  flex-shrink: 0;
+  font-weight: bold;
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .log-level {

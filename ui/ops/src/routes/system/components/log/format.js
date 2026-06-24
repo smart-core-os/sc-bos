@@ -61,6 +61,7 @@ export function splitHighlight(text, query, startIndex = 0) {
 export function messagesToText(messages) {
   return messages.map(m => {
     const time = timestampToDate(m.timestamp)?.toISOString() ?? '';
-    return `${time} ${levelName[m.level] ?? '?'} ${m.logger}: ${m.message}${formatFields(m.fieldsMap)}`;
+    const source = m.source ? `${m.source} ` : '';
+    return `${time} ${source}${levelName[m.level] ?? '?'} ${m.logger}: ${m.message}${formatFields(m.fieldsMap)}`;
   }).join('\n') + '\n';
 }

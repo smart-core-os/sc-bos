@@ -8,6 +8,7 @@
     "corsOrigins": ["*"]
   },
   "systems": {
+    "log": {},
     "hub": {
       "storage": {
         "type": "proxy"

@@ -10,6 +10,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock"
+	"github.com/smart-core-os/sc-bos/pkg/system"
+	syslog "github.com/smart-core-os/sc-bos/pkg/system/log"
 	"github.com/smart-core-os/sc-bos/pkg/zone/allzones"
 )
 
@@ -39,6 +41,9 @@ func loadSystemConfig() (sysconf.Config, error) {
 	}
 	systemConfig.AutoFactories = map[string]auto.Factory{
 		healthbounds.AutoName: healthbounds.Factory,
+	}
+	systemConfig.SystemFactories = map[string]system.Factory{
+		"log": syslog.Factory,
 	}
 	systemConfig.ZoneFactories = allzones.Factories()
 

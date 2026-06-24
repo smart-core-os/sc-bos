@@ -48,6 +48,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/system"
 	"github.com/smart-core-os/sc-bos/pkg/system/gateway/config"
@@ -113,6 +114,32 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	c := newCohort(ignore...)
+
+	// Expose a single aggregated Log trait covering the whole cohort.
+	// PullLogMessages(name="logs") merges the logs of every cohort node, tagging
+	// each message with its source node.
+	//
+	// This gateway node isn't part of the cohort (the cohort lists only remote
+	// nodes), so represent it as an extra source so the aggregate truly covers
+	// every node — including the one an operator is connected to. Its Log devices
+	// are discovered over its loopback connection exactly like a remote node's; the
+	// native-name filter in streamNode keeps us to this node's own devices (not the
+	// remote devices it proxies) and skips the aggregate endpoint itself.
+	var selfNode *remoteNode
+	if name := s.self.Name(); name != "" {
+		selfNode = newRemoteNode(name, s.self.ClientConn())
+		selfNode.Self.Set(remoteDesc{name: name})
+		go s.retry(ctx, "pull self devices", func(ctx context.Context) (task.Next, error) {
+			return s.pullDevices(ctx, selfNode)
+		}, zap.String("remoteAddr", name))
+	}
+
+	logAgg := newLogAggregator(c, selfNode, s.logger.Named("logs"))
+	undoLog := s.self.Announce(aggregateLogName,
+		node.HasServer(logpb.RegisterLogApiServer, logpb.LogApiServer(logAgg)),
+		node.HasTrait(logpb.TraitName),
+	)
+	context.AfterFunc(ctx, undoLog)
 
 	switch cfg.HubMode {
 	case config.HubModeRemote:

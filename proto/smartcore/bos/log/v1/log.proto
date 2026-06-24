@@ -65,6 +65,9 @@ message LogMessage {
   SourceLocation source_location = 6;
   // Stack trace at the point of logging. Omitted when unavailable.
   string stack_trace = 7;
+  // Name of the node this entry originated from. Set by aggregators (e.g. the
+  // gateway) that merge logs from multiple nodes; empty for single-node streams.
+  string source = 8;
 }
 
 // LogLevel represents the current minimum log level that will be emitted.
