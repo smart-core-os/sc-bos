@@ -8,37 +8,31 @@ import (
 	"go.uber.org/zap"
 )
 
-// UpdaterOption configures a DeploymentUpdater.
-type UpdaterOption func(*DeploymentUpdater)
+// UpdaterOption configures a ConfigUpdater.
+type UpdaterOption func(*ConfigUpdater)
 
-// WithLogger sets the logger for a DeploymentUpdater.
+// WithLogger sets the logger for a ConfigUpdater.
 func WithLogger(logger *zap.Logger) UpdaterOption {
-	return func(u *DeploymentUpdater) { u.logger = logger }
+	return func(u *ConfigUpdater) { u.logger = logger }
 }
 
-// DeploymentUpdater checks for updates deployments from a Client and installs
-// them into a store when Update is called.
-// It delegates all filesystem operations to a DeploymentStore and all cloud
-// communication to a Client.
+// ConfigUpdater installs config deployments on this BOS node when the cloud supplies a new version to install.
+// It checks in with the cloud (reporting what is installed), and when a newer deployment is specified, it downloads the
+// payload and stages it in the local store ready to install on next boot.
+// Cloud calls go through a Client, store mutations through a DeploymentStore.
 //
-// Methods are safe to call concurrently, though Update does not hold the
-// store lock across HTTP calls — it is intended to be driven by a single loop
-// (see AutoPoll).
-//
-// Newly installed deployments are marked as installing - it is the callers
-// responsibility to retrieve the installing deployment from the store,
-// verify it, and call CommitInstall or FailInstall accordingly. This can
-// be done on a separate DeploymentUpdater sharing the same store e.g. after
-// a process restart.
-type DeploymentUpdater struct {
+// A staged deployment is not activated automatically: it is left marked installing for the caller to
+// verify and then either CommitInstall or FailInstall. You can verify the staged deployment from a different
+// ConfigUpdater sharing the same store, e.g. after a reboot into the new deployment.
+type ConfigUpdater struct {
 	store  *DeploymentStore
 	client Client
 	logger *zap.Logger
 }
 
-// NewDeploymentUpdater creates a new DeploymentUpdater.
-func NewDeploymentUpdater(store *DeploymentStore, client Client, opts ...UpdaterOption) *DeploymentUpdater {
-	u := &DeploymentUpdater{
+// NewConfigUpdater creates a new ConfigUpdater.
+func NewConfigUpdater(store *DeploymentStore, client Client, opts ...UpdaterOption) *ConfigUpdater {
+	u := &ConfigUpdater{
 		store:  store,
 		client: client,
 	}
@@ -51,23 +45,23 @@ func NewDeploymentUpdater(store *DeploymentStore, client Client, opts ...Updater
 	return u
 }
 
-// Update performs a check-in with the server and updates local deployment state accordingly.
-// If a new deployment is available it is downloaded, extracted, and marked as installing;
-// needReboot is true whenever an installing deployment is pending (either pre-existing or just staged).
-func (u *DeploymentUpdater) Update(ctx context.Context) (needReboot bool, err error) {
+// CheckInRequest builds a CheckInRequest carrying the config channel's current state (active and
+// installing deployment ids) from the local store. It performs corrupted-store recovery (clearing
+// the installing mark when it equals the active mark) as a side effect, so it is not a pure read.
+func (u *ConfigUpdater) CheckInRequest(ctx context.Context) (CheckInRequest, error) {
 	active, err := u.store.ActiveID()
 	if err != nil {
-		return false, fmt.Errorf("get active deployment id: %w", err)
+		return CheckInRequest{}, fmt.Errorf("get active deployment id: %w", err)
 	}
 	installing, err := u.store.InstallingID()
 	if err != nil {
-		return false, fmt.Errorf("get installing deployment id: %w", err)
+		return CheckInRequest{}, fmt.Errorf("get installing deployment id: %w", err)
 	}
 
 	if active != "" && active == installing {
 		u.logger.Warn("corrupted store - active and installing deployment are the same", zap.String("deploymentId", active))
 		if err := u.store.ClearInstalling(ctx); err != nil {
-			return false, fmt.Errorf("clear installing mark: %w", err)
+			return CheckInRequest{}, fmt.Errorf("clear installing mark: %w", err)
 		}
 		installing = ""
 	}
@@ -79,18 +73,20 @@ func (u *DeploymentUpdater) Update(ctx context.Context) (needReboot bool, err er
 	if installing != "" {
 		req.InstallingDeployment = &CheckInInstallingDeployment{ID: installing}
 	}
+	return req, nil
+}
 
-	u.logger.Debug("checking in with deployment server",
-		zap.String("activeDeploymentId", active),
-		zap.String("installingDeploymentId", installing),
-	)
-	resp, err := u.client.CheckIn(ctx, req)
-	if err != nil {
-		return false, fmt.Errorf("check-in: %w", err)
+// HandleConfig detects necessary updates and installs them, based on a check-in exchange. When a new
+// deployment is identified, it is 1) reported installing, 2) downloaded, and 3) staged; needReboot is true whenever
+// an installing deployment is pending (either pre-existing or newly staged).
+func (u *ConfigUpdater) HandleConfig(ctx context.Context, req CheckInRequest, resp CheckInResponse) (needReboot bool, err error) {
+	if req.InstallingDeployment != nil {
+		return true, nil
 	}
 
-	if installing != "" {
-		return true, nil
+	var active string
+	if req.CurrentDeployment != nil {
+		active = req.CurrentDeployment.ID
 	}
 
 	latest := resp.LatestConfig
@@ -134,7 +130,7 @@ func (u *DeploymentUpdater) Update(ctx context.Context) (needReboot bool, err er
 // CheckIn performs a single check-in with the server using the current store
 // state but does not act on the response. Use this to verify connectivity and
 // credentials without triggering a deployment.
-func (u *DeploymentUpdater) CheckIn(ctx context.Context) error {
+func (u *ConfigUpdater) CheckIn(ctx context.Context) error {
 	active, err := u.store.ActiveID()
 	if err != nil {
 		return fmt.Errorf("get active deployment id: %w", err)
@@ -157,7 +153,7 @@ func (u *DeploymentUpdater) CheckIn(ctx context.Context) error {
 // CommitInstall marks the installing deployment as active (filesystem) and reports
 // the successful install to the server. A server-reporting failure is logged but not
 // returned — it will be corrected on the next AutoPoll check-in.
-func (u *DeploymentUpdater) CommitInstall(ctx context.Context) error {
+func (u *ConfigUpdater) CommitInstall(ctx context.Context) error {
 	installingID, err := u.store.InstallingID()
 	if err != nil {
 		return fmt.Errorf("get installing deployment id: %w", err)
@@ -175,8 +171,9 @@ func (u *DeploymentUpdater) CommitInstall(ctx context.Context) error {
 }
 
 // FailInstall clears the installing mark (filesystem) and reports the failure to the server.
-// A server-reporting failure is logged but not returned.
-func (u *DeploymentUpdater) FailInstall(ctx context.Context, message string) error {
+// Logs a warning.
+// May return a store error.
+func (u *ConfigUpdater) FailInstall(ctx context.Context, message string) error {
 	installingID, _ := u.store.InstallingID()
 	activeID, _ := u.store.ActiveID()
 

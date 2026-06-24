@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/google/renameio/v2/maybe"
 )
 
 // RegistrationStore persists and retrieves a Registration.
@@ -46,36 +48,10 @@ func (s *fileRegistrationStore) Save(_ context.Context, reg Registration) error 
 	if err != nil {
 		return fmt.Errorf("encode registration: %w", err)
 	}
-
-	dir := filepath.Dir(s.path)
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
 		return fmt.Errorf("create registration dir: %w", err)
 	}
-
-	tmp, err := os.CreateTemp(dir, ".reg-*.tmp")
-	if err != nil {
-		return fmt.Errorf("create temp file: %w", err)
-	}
-	tmpPath := tmp.Name()
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("write registration: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("close temp file: %w", err)
-	}
-	if err := os.Chmod(tmpPath, 0600); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("set permissions: %w", err)
-	}
-	if err := os.Rename(tmpPath, s.path); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("rename temp file: %w", err)
-	}
-	return nil
+	return maybe.WriteFile(s.path, data, 0600)
 }
 
 func (s *fileRegistrationStore) Clear(_ context.Context) error {
