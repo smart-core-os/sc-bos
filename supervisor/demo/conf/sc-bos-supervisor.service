@@ -1,0 +1,19 @@
+# systemd unit for the BOS Supervisor, installed to /etc/systemd/system/sc-bos-supervisor.service.
+#
+# Runs as root: it shares the rootful Podman image store and drives `podman` / `systemctl` directly.
+# Config is read from /etc/sc-bos-supervisor/config.json (built-in defaults if absent); -config overrides.
+[Unit]
+Description=Smart Core BOS Supervisor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sc-bos-supervisor
+Restart=always
+RestartSec=5
+# Give a stop mid-install time to finish rolling back before SIGKILL; a cut-off is re-driven by
+# reconcile on the next start anyway.
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

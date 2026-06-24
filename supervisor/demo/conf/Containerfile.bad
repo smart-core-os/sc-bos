@@ -1,0 +1,5 @@
+# Deliberately broken BOS update target for the auto-rollback test. It loads and runs but never calls
+# the Supervisor's Commit RPC, so after commitDeadline elapses the Supervisor rolls back to :previous.
+# Any image that does not Commit triggers rollback; an inert sleeper is the simplest such image.
+FROM alpine:3.23
+ENTRYPOINT ["/bin/sh", "-c", "echo 'bad-bos: deliberately not calling Commit'; sleep 3600"]
