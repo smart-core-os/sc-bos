@@ -52,7 +52,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		}),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", logger)
-		})),
+		}), service.RetryWithMinDelay(30*time.Second)),
 	)
 	d.logger = logger
 	return d
