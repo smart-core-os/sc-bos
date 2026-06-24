@@ -16,14 +16,14 @@ func WithLogger(logger *zap.Logger) UpdaterOption {
 	return func(u *DeploymentUpdater) { u.logger = logger }
 }
 
-// DeploymentUpdater checks for updates deployments from a Client and installs
-// them into a store when Update is called.
-// It delegates all filesystem operations to a DeploymentStore and all cloud
-// communication to a Client.
+// DeploymentUpdater applies the config channel of a check-in to a local DeploymentStore. It builds
+// the check-in request (CheckInRequest), acts on a response (HandleConfig), and commits or fails an
+// install (CommitInstall/FailInstall). The shared poll coordinator (Conn.Update) drives these.
+// It delegates all filesystem operations to a DeploymentStore and all cloud communication to a
+// Client.
 //
-// Methods are safe to call concurrently, though Update does not hold the
-// store lock across HTTP calls — it is intended to be driven by a single loop
-// (see AutoPoll).
+// Methods are safe to call concurrently, though they do not hold the store lock across HTTP calls —
+// they are intended to be driven by a single loop (see Conn.Update).
 //
 // Newly installed deployments are marked as installing - it is the callers
 // responsibility to retrieve the installing deployment from the store,
@@ -51,23 +51,23 @@ func NewDeploymentUpdater(store *DeploymentStore, client Client, opts ...Updater
 	return u
 }
 
-// Update performs a check-in with the server and updates local deployment state accordingly.
-// If a new deployment is available it is downloaded, extracted, and marked as installing;
-// needReboot is true whenever an installing deployment is pending (either pre-existing or just staged).
-func (u *DeploymentUpdater) Update(ctx context.Context) (needReboot bool, err error) {
+// CheckInRequest builds a CheckInRequest carrying the config channel's current state (active and
+// installing deployment ids) from the local store. It performs corrupted-store recovery (clearing
+// the installing mark when it equals the active mark) as a side effect, so it is not a pure read.
+func (u *DeploymentUpdater) CheckInRequest(ctx context.Context) (CheckInRequest, error) {
 	active, err := u.store.ActiveID()
 	if err != nil {
-		return false, fmt.Errorf("get active deployment id: %w", err)
+		return CheckInRequest{}, fmt.Errorf("get active deployment id: %w", err)
 	}
 	installing, err := u.store.InstallingID()
 	if err != nil {
-		return false, fmt.Errorf("get installing deployment id: %w", err)
+		return CheckInRequest{}, fmt.Errorf("get installing deployment id: %w", err)
 	}
 
 	if active != "" && active == installing {
 		u.logger.Warn("corrupted store - active and installing deployment are the same", zap.String("deploymentId", active))
 		if err := u.store.ClearInstalling(ctx); err != nil {
-			return false, fmt.Errorf("clear installing mark: %w", err)
+			return CheckInRequest{}, fmt.Errorf("clear installing mark: %w", err)
 		}
 		installing = ""
 	}
@@ -79,18 +79,21 @@ func (u *DeploymentUpdater) Update(ctx context.Context) (needReboot bool, err er
 	if installing != "" {
 		req.InstallingDeployment = &CheckInInstallingDeployment{ID: installing}
 	}
+	return req, nil
+}
 
-	u.logger.Debug("checking in with deployment server",
-		zap.String("activeDeploymentId", active),
-		zap.String("installingDeploymentId", installing),
-	)
-	resp, err := u.client.CheckIn(ctx, req)
-	if err != nil {
-		return false, fmt.Errorf("check-in: %w", err)
+// HandleConfig applies the config channel of a check-in response. req is the request that produced
+// resp (so its current/installing deployment fields are reused for follow-up check-ins). When a new
+// deployment is named it is reported installing, downloaded, and staged; needReboot is true whenever
+// an installing deployment is pending (either pre-existing or just staged).
+func (u *DeploymentUpdater) HandleConfig(ctx context.Context, req CheckInRequest, resp CheckInResponse) (needReboot bool, err error) {
+	if req.InstallingDeployment != nil {
+		return true, nil
 	}
 
-	if installing != "" {
-		return true, nil
+	var active string
+	if req.CurrentDeployment != nil {
+		active = req.CurrentDeployment.ID
 	}
 
 	latest := resp.LatestConfig

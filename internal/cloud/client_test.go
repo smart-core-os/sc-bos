@@ -29,13 +29,16 @@ import (
 
 // clientEnv holds test fixtures for DeploymentUpdater tests.
 type clientEnv struct {
-	testServer *httptest.Server
-	httpClient *http.Client
-	storeDir   *os.Root
-	store      *DeploymentStore
-	storePath  string // temp dir absolute path for filesystem assertions
-	updater    *DeploymentUpdater
-	nodeID     int64
+	testServer   *httptest.Server
+	httpClient   *http.Client
+	storeDir     *os.Root
+	store        *DeploymentStore
+	storePath    string // temp dir absolute path for filesystem assertions
+	updater      *DeploymentUpdater
+	conn         *Conn        // drives the config flow over the production Conn.Update path
+	client       Client       // the same Client backing updater
+	registration Registration // registration backing client
+	nodeID       int64
 }
 
 // setupClientEnv creates a test environment with an httptest server and DeploymentClient.
@@ -86,23 +89,46 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 	t.Cleanup(func() { _ = storeDir.Close() })
 
-	httpClient := NewHTTPClient(Registration{
+	registration := Registration{
 		ClientID:     strconv.FormatInt(created.ID, 10),
 		ClientSecret: encodedSecret,
 		BosapiRoot:   ts.URL,
-	}, WithHTTPClient(ts.Client()))
+	}
+	httpClient := NewHTTPClient(registration, WithHTTPClient(ts.Client()))
 	store := NewDeploymentStore(storeDir)
 	updater := NewDeploymentUpdater(store, httpClient)
 
-	return &clientEnv{
-		testServer: ts,
-		httpClient: client,
-		storeDir:   storeDir,
-		store:      store,
-		storePath:  storePath,
-		updater:    updater,
-		nodeID:     created.ID,
+	env := &clientEnv{
+		testServer:   ts,
+		httpClient:   client,
+		storeDir:     storeDir,
+		store:        store,
+		storePath:    storePath,
+		updater:      updater,
+		client:       httpClient,
+		registration: registration,
+		nodeID:       created.ID,
 	}
+	env.conn = connForClient(t, env, httpClient)
+	return env
+}
+
+// connForClient opens a Conn over env's deployment store that checks in using client. The config
+// flow is exercised through the production Conn.Update path (no software updater configured, so the
+// update channel is a no-op).
+func connForClient(t *testing.T, env *clientEnv, client Client) *Conn {
+	t.Helper()
+	regStore := NewFileRegistrationStore(filepath.Join(t.TempDir(), "registration.json"))
+	if err := regStore.Save(context.Background(), env.registration); err != nil {
+		t.Fatalf("save registration: %v", err)
+	}
+	conn, err := OpenConn(context.Background(), regStore, env.store,
+		WithClientFactory(func(Registration) Client { return client }),
+	)
+	if err != nil {
+		t.Fatalf("OpenConn: %v", err)
+	}
+	return conn
 }
 
 //go:embed testdata
@@ -214,8 +240,8 @@ func createConfigVersion(t *testing.T, client *http.Client, baseURL string, node
 // createPendingDeployment creates a PENDING deployment for the given config version ID and returns the deployment ID.
 func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, configVersionID int64) int64 {
 	t.Helper()
-	var dep sim.Deployment
-	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/deployments", map[string]any{
+	var dep sim.ConfigDeployment
+	resp := doSimRequest(t, client, "POST", baseURL+"/api/v1/management/config-deployments", map[string]any{
 		"configVersionId": strconv.FormatInt(configVersionID, 10),
 		"status":          "pending",
 	}, &dep)
@@ -226,11 +252,11 @@ func createPendingDeployment(t *testing.T, client *http.Client, baseURL string, 
 }
 
 // getDeployment fetches a deployment by ID.
-func getDeployment(t *testing.T, client *http.Client, baseURL string, deploymentID int64) sim.Deployment {
+func getDeployment(t *testing.T, client *http.Client, baseURL string, deploymentID int64) sim.ConfigDeployment {
 	t.Helper()
-	var dep sim.Deployment
+	var dep sim.ConfigDeployment
 	resp := doSimRequest(t, client, "GET",
-		fmt.Sprintf("%s/api/v1/management/deployments/%d", baseURL, deploymentID),
+		fmt.Sprintf("%s/api/v1/management/config-deployments/%d", baseURL, deploymentID),
 		nil, &dep)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("get deployment: expected 200, got %d", resp.StatusCode)
@@ -404,7 +430,7 @@ func TestPoll(t *testing.T) {
 	t.Run("no deployment available", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
@@ -420,7 +446,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
@@ -449,7 +475,7 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll: installs deployment
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("first PollOnce: %v", err)
 		}
 
@@ -459,7 +485,7 @@ func TestPoll(t *testing.T) {
 		}
 
 		// Second poll: no new deployment (completed one is gone from active list)
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("second PollOnce: %v", err)
 		}
@@ -476,7 +502,7 @@ func TestPoll(t *testing.T) {
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// First poll marks installing
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("first PollOnce: %v", err)
 		}
@@ -485,7 +511,7 @@ func TestPoll(t *testing.T) {
 		}
 
 		// Second poll without commit — already installing, should return needReboot=true
-		needReboot, err = env.updater.Update(ctx)
+		needReboot, err = env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("second PollOnce: %v", err)
 		}
@@ -500,7 +526,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, []byte("not a tarball"))
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err == nil {
 			t.Error("expected error for invalid tarball payload, got nil")
 		}
@@ -526,7 +552,7 @@ func TestPoll(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -542,7 +568,7 @@ func TestPoll(t *testing.T) {
 		}
 
 		// PollOnce should detect and recover from the corruption.
-		needReboot, err := env.updater.Update(ctx)
+		needReboot, err := env.conn.Update(ctx)
 		if err != nil {
 			t.Fatalf("PollOnce with corrupted store: %v", err)
 		}
@@ -565,9 +591,9 @@ func TestPoll(t *testing.T) {
 			ClientSecret: "wrong-secret",
 			BosapiRoot:   env.testServer.URL,
 		}, WithHTTPClient(env.httpClient))
-		badUpdater := NewDeploymentUpdater(env.store, badHTTPClient)
+		badConn := connForClient(t, env, badHTTPClient)
 
-		_, err := badUpdater.Update(ctx)
+		_, err := badConn.Update(ctx)
 		if err == nil {
 			t.Error("expected error with wrong secret, got nil")
 		}
@@ -584,7 +610,7 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -620,7 +646,7 @@ func TestCommit(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -638,7 +664,7 @@ func TestCommit(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		depID1 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -655,7 +681,7 @@ func TestCommit(t *testing.T) {
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v2: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -680,7 +706,7 @@ func TestRollback(t *testing.T) {
 		depID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
 		// starts installing
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -711,7 +737,7 @@ func TestRollback(t *testing.T) {
 		cvID1 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload1)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID1)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v1: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {
@@ -723,7 +749,7 @@ func TestRollback(t *testing.T) {
 		cvID2 := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload2)
 		depID2 := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID2)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce v2: %v", err)
 		}
 
@@ -756,7 +782,7 @@ func TestRollback(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -792,7 +818,7 @@ func TestInstallingConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 
@@ -913,7 +939,7 @@ func TestActiveConfig(t *testing.T) {
 		cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, payload)
 		createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
 
-		if _, err := env.updater.Update(ctx); err != nil {
+		if _, err := env.conn.Update(ctx); err != nil {
 			t.Fatalf("PollOnce: %v", err)
 		}
 		if err := env.updater.CommitInstall(ctx); err != nil {

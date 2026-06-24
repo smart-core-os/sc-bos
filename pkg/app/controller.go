@@ -28,6 +28,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/audit"
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/download"
+	"github.com/smart-core-os/sc-bos/internal/supervisor"
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
@@ -52,6 +53,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system/boot"
@@ -74,7 +76,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 
-	ci, err := initCloud(ctx, config, logger)
+	supClient := initSupervisor(config, logger)
+
+	ci, err := initCloud(ctx, config, logger, supClient)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +182,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		ControllerConfig: confStore,
 		Enrollment:       pi.EnrollServer,
 		Cloud:            ci.Conn,
+		Supervisor:       supClient,
 		Logger:           logger,
 		LogCapture:       capture,
 		LogLevel:         &logLevel,
@@ -211,6 +216,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		c.Defer(ai.AuditSetup.Close)
 	}
 	c.Defer(ci.Store.Close)
+	if supClient != nil {
+		c.Defer(supClient.Close)
+	}
 	return c, nil
 }
 
@@ -241,7 +249,7 @@ type authInfo struct {
 }
 
 // initCloud sets up the cloud connection. The Conn is always created; it is a no-op when unconfigured.
-func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (cloudInfo, error) {
+func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger, supClient *supervisor.Client) (cloudInfo, error) {
 	cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
 	if err := os.MkdirAll(cloudDataDir, 0750); err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to create cloud data directory: %w", err)
@@ -273,6 +281,20 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (
 	regStorePath := filepath.Join(cloudDataDir, "registration.json")
 	regStore := cloud.NewFileRegistrationStore(regStorePath)
 
+	updateStorePath := filepath.Join(cloudDataDir, "update.json")
+	updateStore := cloud.NewFileUpdateStore(updateStorePath)
+	updaterOpts := []cloud.SoftwareUpdaterOption{
+		cloud.WithSoftwareUpdaterLogger(logger.Named("cloud.update")),
+		cloud.WithSoftwareUpdaterVersion(EffectiveVersion()),
+	}
+	// Guard against wrapping a typed-nil *supervisor.Client in the interface: a nil client means the
+	// Supervisor integration is disabled, which the SoftwareUpdater detects via a nil installer.
+	if supClient != nil {
+		updaterOpts = append(updaterOpts, cloud.WithUpdateInstaller(supClient))
+	}
+	softwareUpdater := cloud.NewSoftwareUpdater(updateStore, updaterOpts...)
+	connOptions = append(connOptions, cloud.WithSoftwareUpdater(softwareUpdater))
+
 	cloudConn, err := cloud.OpenConn(ctx, regStore, cloudStore, connOptions...)
 	if err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to start cloud connection: %w", err)
@@ -284,6 +306,23 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (
 		DataRoot:    cloudDataRoot,
 		RegisterURL: registerURL,
 	}, nil
+}
+
+// initSupervisor dials the supervisor client when the supervisor integration is enabled.
+// Returns nil when supervisor is disabled, absent, or fails to dial — all non-fatal in dev.
+func initSupervisor(config sysconf.Config, logger *zap.Logger) *supervisor.Client {
+	sup := config.Supervisor
+	if sup == nil || !sup.Enabled {
+		return nil
+	}
+	timeout := sup.Timeout.Duration
+	client, err := supervisor.Dial(sup.SocketPath, timeout)
+	if err != nil {
+		logger.Warn("failed to dial supervisor — update integration disabled", zap.String("socketPath", sup.SocketPath), zap.Error(err))
+		return nil
+	}
+	logger.Info("supervisor client ready", zap.String("socketPath", sup.SocketPath))
+	return client
 }
 
 func loadAppConfig(ctx context.Context, config sysconf.Config, ci cloudInfo, logger *zap.Logger) (ConfigStore, error) {
@@ -631,6 +670,7 @@ type Controller struct {
 	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
 	Cloud            *cloud.Conn
+	Supervisor       *supervisor.Client // nil when supervisor integration is disabled or failed to dial
 
 	// services for drivers/automations
 	Logger          *zap.Logger
@@ -683,7 +723,17 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
-	c.Node.Announce(c.Node.Name(), node.HasMetadata(initialConfig.Metadata))
+	features := []node.Feature{node.HasMetadata(initialConfig.Metadata)}
+	// Report the running build version as the node's software version, unless an operator
+	// pinned one in config. The nil-safe getters handle an absent Metadata or Product.
+	if initialConfig.Metadata.GetProduct().GetSoftwareVersion() == "" {
+		if v := EffectiveVersion(); v != "" {
+			features = append(features, node.HasMetadata(&metadatapb.Metadata{
+				Product: &metadatapb.Metadata_Product{SoftwareVersion: v},
+			}))
+		}
+	}
+	c.Node.Announce(c.Node.Name(), features...)
 
 	storeUndo := dataretention.Start(ctx, c.Node, c.SystemConfig.Name, c.Stores, c.SystemConfig.Stores, c.Logger)
 	defer storeUndo()
@@ -715,6 +765,31 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 				return restartNowError{reason: "automatic restart to install deployment"}
 			}
 			return nil
+		})
+	}
+	if c.Supervisor != nil {
+		// After the Commit settles the running version with the Supervisor, reconcile any in-flight
+		// update outcome with SCC (report currentUpdate on success, failedUpdate on a rollback, then
+		// clear the intent). A missing registration is benign — the intent is kept and resolved once
+		// cloud is registered, mirroring the config flow.
+		reconcile := func(ctx context.Context) error {
+			if c.Cloud == nil {
+				return nil
+			}
+			if err := c.Cloud.ReconcileUpdate(ctx); err != nil && !errors.Is(err, cloud.ErrNotRegistered) {
+				return err
+			}
+			return nil
+		}
+		// A cloud-managed node (one with an active registration) confirms its running version to the
+		// Supervisor only after its first successful SCC check-in, so a version that cannot reach SCC is
+		// left for the Supervisor to roll back. An un-enrolled node commits immediately on startup.
+		var waitForCheckIn func(context.Context) error
+		if c.Cloud != nil && c.Cloud.State().Connectivity != cloud.Unconfigured {
+			waitForCheckIn = c.Cloud.WaitConnected
+		}
+		group.Go(func() error {
+			return supervisor.RunStartupCommit(ctx, c.Supervisor, EffectiveVersion(), waitForCheckIn, reconcile, c.Logger.Named("supervisor"))
 		})
 	}
 	if c.SystemConfig.ListenGRPC != "" {

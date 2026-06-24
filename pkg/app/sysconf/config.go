@@ -93,7 +93,8 @@ type Config struct {
 
 	Experimental *Experimental `json:"experimental,omitempty"`
 
-	Cloud *Cloud `json:"cloud,omitempty"`
+	Cloud      *Cloud      `json:"cloud,omitempty"`
+	Supervisor *Supervisor `json:"supervisor,omitempty"`
 
 	DriverFactories map[string]driver.Factory `json:"-"` // keyed by driver name
 	AutoFactories   map[string]auto.Factory   `json:"-"` // keyed by automation type
@@ -325,6 +326,9 @@ func (c *Config) Normalize() {
 	if c.Cloud != nil {
 		c.Cloud = c.Cloud.FillDefaults()
 	}
+	if c.Supervisor != nil {
+		c.Supervisor = c.Supervisor.FillDefaults()
+	}
 }
 
 func (c *Certs) FillDefaults() *Certs {
@@ -369,6 +373,38 @@ func (c *Cloud) FillDefaults() *Cloud {
 		c.MaxDeploymentSizeMiB = DefaultMaxDeploymentSizeMiB
 	}
 	return c
+}
+
+// defaultSupervisorSocketPath is the Unix socket path the Supervisor listens on by default.
+// It matches the default in supervisor/internal/config.
+const defaultSupervisorSocketPath = "/run/sc-bos-supervisor/supervisor.sock"
+
+// defaultSupervisorTimeout is the per-RPC timeout applied when calling the Supervisor.
+const defaultSupervisorTimeout = 10 * time.Second
+
+// Supervisor configures the optional integration with the local Supervisor process.
+// When Enabled is false (the default), all Supervisor calls are skipped and BOS runs normally
+// without update management — suitable for development environments with no Supervisor present.
+type Supervisor struct {
+	// Enabled controls whether BOS attempts to contact the Supervisor. Defaults to false.
+	Enabled bool `json:"enabled,omitempty"`
+	// SocketPath is the Unix socket path on which the Supervisor's gRPC API listens.
+	// Defaults to /run/sc-bos-supervisor/supervisor.sock.
+	SocketPath string `json:"socketPath,omitempty"`
+	// Timeout is the per-RPC deadline applied to each Supervisor call.
+	// Defaults to 10s.
+	Timeout *jsontypes.Duration `json:"timeout,omitempty"`
+}
+
+// FillDefaults sets any unset Supervisor fields to their built-in defaults.
+func (s *Supervisor) FillDefaults() *Supervisor {
+	if s.SocketPath == "" {
+		s.SocketPath = defaultSupervisorSocketPath
+	}
+	if s.Timeout == nil || s.Timeout.Duration <= 0 {
+		s.Timeout = &jsontypes.Duration{Duration: defaultSupervisorTimeout}
+	}
+	return s
 }
 
 // BlockSource is an interface that can be implemented by a factory to provide a list of blocks that describe the config

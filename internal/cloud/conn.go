@@ -49,16 +49,23 @@ func WithClientFactory(f func(Registration) Client) ConnOption {
 	return func(c *Conn) { c.newClient = f }
 }
 
+// WithSoftwareUpdater enables the update channel on the shared poll check-in, dispatching the
+// latestUpdate block to u. When unset the update channel is not reported and latestUpdate is ignored.
+func WithSoftwareUpdater(u *SoftwareUpdater) ConnOption {
+	return func(c *Conn) { c.softwareUpdater = u }
+}
+
 // Conn manages the lifecycle of a cloud connection.
 // It tracks the current Registration, broadcasts ConnState changes, and owns a
 // DeploymentUpdater that is rebuilt whenever the Registration changes.
 // Methods are safe to call concurrently.
 type Conn struct {
 	// Immutable after construction — no locking required.
-	regStore    RegistrationStore
-	depStore    *DeploymentStore
-	newClient   func(Registration) Client
-	updaterOpts []UpdaterOption
+	regStore        RegistrationStore
+	depStore        *DeploymentStore
+	newClient       func(Registration) Client
+	updaterOpts     []UpdaterOption
+	softwareUpdater *SoftwareUpdater // nil when the update channel is disabled
 
 	// serial is a binary semaphore (buffered channel of size 1, pre-filled).
 	// Acquire with lockSerial; release with unlockSerial.
@@ -199,9 +206,41 @@ func (c *Conn) PullState(ctx context.Context) (ConnState, <-chan ConnState) {
 	return initial, changes
 }
 
-// Update performs a deployment check-in using the current registration.
+// WaitConnected blocks until the connection has had a successful check-in (Connectivity == Connected),
+// or ctx is done. It returns nil once connected, otherwise ctx.Err(). If the connection is already
+// Connected it returns immediately.
+func (c *Conn) WaitConnected(ctx context.Context) error {
+	// Scope the subscription to a child ctx we cancel on return, so the bus drops our listener.
+	// Otherwise, with a long-lived ctx, the leaked undrained listener blocks later check-in broadcasts.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	state, changes := c.PullState(ctx)
+	if state.Connectivity == Connected {
+		return nil
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case st, ok := <-changes:
+			if !ok {
+				return ctx.Err()
+			}
+			if st.Connectivity == Connected {
+				return nil
+			}
+		}
+	}
+}
+
+// Update performs a single shared check-in using the current registration and dispatches the
+// response to both channels: the config channel (DeploymentUpdater) and, when enabled, the update
+// channel (SoftwareUpdater). One check-in carries both channels' current state.
 // Returns ErrNotRegistered when no registration is active.
 // The check-in outcome is recorded internally so that State/PullState reflect it.
+//
+// needReboot reflects the config channel only; an update channel that records an install intent does
+// not itself trigger a reboot here (the Supervisor restarts BOS in a later phase).
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	if !c.lockSerial(ctx) {
 		return false, ctx.Err()
@@ -216,9 +255,39 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	reg := c.state.Registration
 	c.mu.Unlock()
 
-	needReboot, err = u.Update(ctx)
-	c.recordCheckIn(reg, time.Now(), err)
-	return needReboot, err
+	// Build one request carrying both channels' current state, perform a single check-in, and
+	// dispatch the response to each handler.
+	req, err := u.CheckInRequest(ctx)
+	if err != nil {
+		return false, err
+	}
+	if c.softwareUpdater != nil {
+		if err := c.softwareUpdater.CheckInState(ctx, &req); err != nil {
+			return false, err
+		}
+	}
+
+	// Record the whole poll's outcome (transport plus handler errors) so State and WaitConnected
+	// reflect a config/update that reached the server but then failed to download or stage, not just
+	// the transport check-in.
+	defer func() { c.recordCheckIn(reg, time.Now(), err) }()
+
+	resp, err := u.client.CheckIn(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("check-in: %w", err)
+	}
+
+	needReboot, err = u.HandleConfig(ctx, req, resp)
+	if err != nil {
+		return needReboot, err
+	}
+	if c.softwareUpdater != nil {
+		if err = c.softwareUpdater.HandleUpdate(ctx, u.client, resp); err != nil {
+			err = fmt.Errorf("handle update: %w", err)
+			return needReboot, err
+		}
+	}
+	return needReboot, nil
 }
 
 // CommitInstall marks the installing deployment as active and reports the result.
@@ -247,6 +316,27 @@ func (c *Conn) FailInstall(ctx context.Context, message string) error {
 		return ErrNotRegistered
 	}
 	return c.updater.FailInstall(ctx, message)
+}
+
+// ReconcileUpdate resolves an in-flight software update after the Supervisor has restarted BOS,
+// reporting the outcome (currentUpdate or failedUpdate) to SCC and clearing the persisted intent.
+// It is a no-op when the update channel is disabled (no SoftwareUpdater) or there is no in-flight
+// update. Returns ErrNotRegistered when no registration is active, mirroring CommitInstall/FailInstall;
+// the caller should keep the intent in that case (it self-corrects once cloud is registered).
+func (c *Conn) ReconcileUpdate(ctx context.Context) error {
+	if c.softwareUpdater == nil {
+		return nil
+	}
+	if !c.lockSerial(ctx) {
+		return ctx.Err()
+	}
+	defer c.unlockSerial()
+
+	u := c.updater
+	if u == nil {
+		return ErrNotRegistered
+	}
+	return c.softwareUpdater.ReconcileStartup(ctx, u.client)
 }
 
 // recordCheckIn reports the outcome of a check-in made using reg.
