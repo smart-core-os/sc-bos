@@ -1,0 +1,7 @@
+{
+  "socket": "/run/sc-bos-supervisor/supervisor.sock",
+  "stateDir": "/var/lib/sc-bos-supervisor",
+  "imageRepo": "localhost/smartcore/bos",
+  "unit": "sc-bos",
+  "commitDeadline": "2m"
+}

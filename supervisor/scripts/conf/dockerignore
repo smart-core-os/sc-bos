@@ -1,0 +1,12 @@
+# Ignore file passed to `podman build --ignorefile` when building the main repo Dockerfile from the
+# machine. It augments the repo's .dockerignore with this dev environment's bulky, non-input dirs
+# (git history, PR/agent worktrees, and this harness's own build scratch) so the build context stays
+# small. Kept separate so the repo's committed .dockerignore is untouched.
+**/node_modules/
+**/*.local
+**/dist/
+**/.data/
+.git/
+.tree/
+.claude/
+supervisor/scripts/.build/

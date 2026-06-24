@@ -1,0 +1,37 @@
+FROM rockylinux/rockylinux:10
+
+ENV container=container
+
+# Install extra packages to run as a full system instead of an application container.
+RUN dnf -y install --allowerasing \
+      dbus \
+      systemd \
+      openssh-server \
+      net-tools \
+      iproute \
+      iputils \
+      curl \
+      wget \
+      vim-minimal \
+      man-db \
+      sudo \
+      passwd && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
+
+# Clear the machine-id so a fresh one is generated on first boot.
+RUN >/etc/machine-id
+
+# Boot to a multi-user system (no graphical target).
+RUN systemctl set-default multi-user.target
+
+# Mask units that are unnecessary or problematic inside a container machine.
+RUN systemctl mask \
+      dev-hugepages.mount \
+      sys-fs-fuse-connections.mount \
+      systemd-update-utmp.service \
+      systemd-tmpfiles-setup.service \
+      console-getty.service
+
+# Don't let sshd reject the LANG/LC_* environment variables forwarded by the host.
+RUN sed -i -e 's/^AcceptEnv LANG LC_\*$/#AcceptEnv LANG LC_*/' /etc/ssh/sshd_config

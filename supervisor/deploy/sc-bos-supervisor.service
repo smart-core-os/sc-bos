@@ -1,0 +1,24 @@
+# systemd unit for the BOS Supervisor, installed to /etc/systemd/system/sc-bos-supervisor.service.
+#
+# Runs as root: it shares the rootful Podman image store and drives `podman` / `systemctl` directly.
+# ExecStart references a stable path so a future self-update can swap the binary behind it (e.g. make
+# /usr/local/bin/sc-bos-supervisor a symlink into a versioned install) without editing this unit. Config
+# is read from /etc/sc-bos-supervisor/config.json (built-in defaults if absent); override with -config.
+[Unit]
+Description=Smart Core BOS Supervisor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sc-bos-supervisor
+Restart=always
+RestartSec=5
+# On shutdown the Supervisor waits for any in-flight install to reach a terminal, rolled-back-if-needed
+# state. The worst case is the rollback path - await the new version then the previous one - so the wait
+# is bounded by twice the commit deadline (config commitDeadline, default 2m, so 4m). Allow longer than
+# that before SIGKILL so a stop mid-install isn't cut short. (A cut-off is re-driven by reconcile on the
+# next start regardless.)
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

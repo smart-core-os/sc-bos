@@ -1,0 +1,42 @@
+# Quadlet unit for Smart Core BOS, installed to /etc/containers/systemd/sc-bos.container.
+#
+# The Supervisor installs updates by swapping what localhost/smartcore/bos:current resolves to and
+# restarting this unit (systemctl restart sc-bos), which recreates the container from the new image. It
+# never runs `podman auto-update`, so this unit deliberately has no AutoUpdate= directive. The Supervisor
+# decides success vs. rollback from whether BOS calls its Commit RPC, not from the health check below.
+[Unit]
+Description=Smart Core BOS
+
+[Container]
+# Image tag the Supervisor swaps — never a version.
+Image=localhost/smartcore/bos:current
+ContainerName=sc-bos
+
+Exec=--policy-mode=off
+PublishPort=443:443
+PublishPort=23557:23557
+Volume=/root/data:/data:z
+Volume=/root/static:/static:ro,z
+
+# Supervisor API socket. Mount the containing directory, not the socket file: bind-mounting the
+# socket path before the socket exists makes Podman create a directory there, and the directory mount
+# survives the Supervisor recreating its socket across restarts. :z relabels for SELinux.
+Volume=/run/sc-bos-supervisor:/run/sc-bos-supervisor:z
+
+Secret=postgres_pass
+Secret=https_cert
+Secret=https_key
+Environment=GRPC_ENFORCE_ALPN_ENABLED=false
+
+# Health check drives systemd's own Restart= and observability. The Supervisor does not read it: BOS
+# confirms an update by calling the Commit RPC, not via this probe.
+HealthCmd=/bos healthz
+HealthStartPeriod=30s
+HealthInterval=10s
+HealthRetries=3
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
