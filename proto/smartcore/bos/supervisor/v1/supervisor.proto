@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package smartcore.bos.supervisor.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb";
+
+import "google/protobuf/timestamp.proto";
+
+// SupervisorApi is the local API the BOS Supervisor exposes over a Unix socket.
+service SupervisorApi {
+  // InstallUpdate begins the installation of an update artefact by the Supervisor on the local machine.
+  // It returns immediately instead of waiting for the update to complete, as the update process may involve updating
+  // BOS which will sever the gRPC connection.
+  rpc InstallUpdate(InstallUpdateRequest) returns (InstallUpdateResponse);
+  // GetUpdateStatus returns the state of the most recent (or in-progress) update.
+  rpc GetUpdateStatus(GetUpdateStatusRequest) returns (GetUpdateStatusResponse);
+  // Commit informs the supervisor that BOS is running healthily. If a new BOS update has just been installed, Commit
+  // marks the update as successful. If BOS has not just been updated, then Commit doesn't affect the supervisor.
+  rpc Commit(CommitRequest) returns (CommitResponse);
+}
+
+// UpdateStatus describes the state of an update the Supervisor is handling or last handled.
+message UpdateStatus {
+  // The lifecycle state of the update.
+  State state = 1;
+  // The version being installed or last installed.
+  string version = 2;
+  // A human-readable failure reason, set when state is FAILED.
+  string error = 3;
+  // When the Supervisor accepted the update.
+  google.protobuf.Timestamp start_time = 4;
+  // When the update reached a terminal state (COMPLETED or FAILED).
+  google.protobuf.Timestamp finish_time = 5;
+  // An opaque identifier the caller supplied on InstallUpdate, echoed unchanged. The Supervisor does
+  // not interpret it; it lets the caller correlate this status with its own record of the update.
+  string deployment_id = 6;
+
+  // State mirrors the deployment lifecycle BOS relays to Smart Core Connect.
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    // No update has been requested since the Supervisor started.
+    IDLE = 1;
+    // Downloading and verifying the artefact.
+    DOWNLOADING = 2;
+    // Applying the artefact: loading the image, swapping tags, restarting BOS.
+    INSTALLING = 3;
+    // The new version is installed and healthy.
+    COMPLETED = 4;
+    // The update failed; the node was rolled back to the previous version.
+    FAILED = 5;
+  }
+}
+
+message InstallUpdateRequest {
+  // The version identifier of the update, used as the loaded image tag.
+  string version = 1;
+  // A pre-signed (capability) URL to download the update artefact from.
+  string download_url = 2;
+  // The type-prefixed checksum of the artefact ("<algo>:<base64>", e.g. md5 or sha256), verified
+  // before installing.
+  string checksum = 3;
+  // An opaque identifier for this update, stored and echoed back in UpdateStatus. The Supervisor does
+  // not interpret it; it lets the caller correlate the version-keyed status with its own record. May
+  // be empty.
+  string deployment_id = 4;
+}
+
+message InstallUpdateResponse {
+  // The status of the update after it was accepted.
+  UpdateStatus status = 1;
+}
+
+message GetUpdateStatusRequest {}
+
+message GetUpdateStatusResponse {
+  // The current update status.
+  UpdateStatus status = 1;
+}
+
+message CommitRequest {
+  // The version of BOS making the call. The Supervisor confirms an in-progress update only if this
+  // matches the version it is awaiting.
+  string version = 1;
+}
+
+message CommitResponse {}
