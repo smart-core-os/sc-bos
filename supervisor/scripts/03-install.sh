@@ -6,9 +6,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./config.sh
 
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
-# pre: build outputs, the good v1 image, and captured cloud state exist (01 + 02 have run).
-test -s "$SUP_BIN"   || { echo "missing $SUP_BIN — run 01-build.sh" >&2; exit 1; }
+# pre: build outputs, the good v1 image, the sup1 RPM, and captured cloud state exist (01 + 02 ran).
 test -s "$STATE_ENV" || { echo "missing $STATE_ENV — run 02-cloudsim.sh" >&2; exit 1; }
+compgen -G "$SUP_RPM_DIR/$SUP_V1/*.rpm" >/dev/null || { echo "missing supervisor rpm $SUP_V1 — run 01-build.sh" >&2; exit 1; }
 sudo podman image exists "$IMAGE_REPO:$V1" || { echo "missing $IMAGE_REPO:$V1 — run 01-build.sh" >&2; exit 1; }
 
 # 02-cloudsim.sh wrote the cloud credentials we seed into registration.json.
@@ -24,17 +24,22 @@ jq -n --arg id "$ADMIN_USER" --arg h "$HASH" \
   '[{id:$id, roles:["superAdmin","admin"], title:"Demo admin", secrets:[{hash:$h}]}]' > "$USERS_JSON"
 
 # --- 0. stop any prior run + clear durable state for a clean baseline ------------------------------
-# post: neither service is running; no stale Supervisor state.json or BOS update.json survives.
+# post: neither service is running; no stale Supervisor state survives; any prior supervisor RPM
+#       (possibly a self-updated sup2) is removed so we reinstall the sup1 baseline cleanly.
 sudo systemctl stop sc-bos.service 2>/dev/null || true
 sudo systemctl stop sc-bos-supervisor.service 2>/dev/null || true
+sudo dnf -y remove sc-bos-supervisor 2>/dev/null || true
 sudo rm -rf "$SUP_STATE_DIR" "$BOS_DATA"
 
-# --- 1. install the Supervisor binary, config, and unit -------------------------------------------
-# post: the binary is at the stable ExecStart path; config enables HTTP downloads + a 60s deadline.
-sudo install -m 0755 "$SUP_BIN" "$SUP_INSTALL"
-sudo install -d "$SUP_CONF_DIR"
+# --- 1. install the Supervisor from its RPM (sup1), then apply the demo config --------------------
+# Installing via dnf is what makes self-update work: a later upgrade replaces the binary in place and
+# the package's scriptlet restarts the unit. The RPM ships the unit and a default config; overwrite the
+# config with the demo one (60s deadline, plain-HTTP downloads allowed). Seed the last-known-good RPM
+# store with sup1 so the first self-update can roll back to it offline.
+SUP1_RPM=$(sup_rpm_path "$SUP_V1")
+sudo dnf -y install "$SUP1_RPM"
 sudo install -m 0644 "$CONF/supervisor-config.json" "$SUP_CONF_DIR/config.json"
-sudo install -m 0644 "$REPO/supervisor/deploy/sc-bos-supervisor.service" "$SYSTEMD_DIR/sc-bos-supervisor.service"
+sudo install -D -m 0644 "$SUP1_RPM" "$SUP_RPM_STORE/${SUP_V1}.rpm"
 
 # --- 2. install the BOS Quadlet unit + demo login account -----------------------------------------
 # post: Quadlet will generate sc-bos.service from this unit on the next daemon-reload.

@@ -40,19 +40,28 @@ API are published to the host (ports 443, 23557).
 
 ```sh
 cd supervisor/scripts
-./01-build.sh            # build the supervisor binary, the v1/v2/v2bad images, and artefact tarballs
+./01-build.sh            # build supervisor RPMs (sup1/sup2/sup2bad), v1/v2/v2bad images + tarballs
 ./02-cloudsim.sh         # start cloudsim, create site+node, enroll, upload artefacts -> .build/state.env
-./03-install.sh          # install Supervisor + BOS v1, seed :current=v1, start both
-./04-deploy.sh v2        # happy path  — expect COMPLETED (:current -> v2, :previous -> v1)
-./05-verify.sh           # dump tag indirection, Supervisor state.json, and logs
-./04-deploy.sh v2bad     # rollback    — expect FAILED   (:current back to v2 after the deadline)
-./05-verify.sh
+./03-install.sh          # dnf-install Supervisor sup1 + BOS v1, seed :current=v1, start both
+./04-deploy.sh v2        # BOS happy path  — expect COMPLETED (:current -> v2, :previous -> v1)
+./05-verify.sh           # dump tag indirection, installed rpm, self-update state, and logs
+./04-deploy.sh v2bad     # BOS rollback    — expect FAILED   (:current back to v2 after the deadline)
 ./04-deploy.sh v1        # reverse back to v1 so you can run the cycle again (v2 -> v1 -> v2 -> ...)
+./04-deploy.sh sup2      # supervisor self-update — expect COMPLETED (rpm sup1 -> sup2)
+./05-verify.sh
+./04-deploy.sh sup2bad   # supervisor self-update rollback — expect FAILED (applier reverts to sup1)
 ./99-teardown.sh         # stop + remove everything (add --all to also wipe .build/)
 ```
 
+The supervisor self-update is RPM-based: `03-install.sh` `dnf install`s the `sup1` RPM (and keeps a
+copy as the offline rollback baseline). Deploying a `supervisor-rpm` artefact makes BOS call the
+Supervisor, which launches a transient applier (via `systemd-run`) that `dnf install`s the new RPM,
+waits for the new Supervisor to come up healthy, and `dnf downgrade`s back to the previous RPM if it
+does not (`sup2bad` never serves its socket, so it rolls back). The BOS-image and supervisor-rpm
+channels are independent, so a `v2` and a `sup2` deployment can be in flight at once.
+
 Re-running is safe: `01` skips outputs that exist (`FORCE=1` to rebuild), `03` clears prior durable
-state for a clean baseline, and `99` is idempotent.
+state for a clean baseline (removing any self-updated RPM), and `99` is idempotent.
 
 ## Loading the Ops UI
 

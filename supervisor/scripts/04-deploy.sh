@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# 04-deploy.sh <v1|v2|v2bad> — create an update deployment and watch it settle.
+# 04-deploy.sh <v1|v2|v2bad|sup2|sup2bad> — create an update deployment and watch it settle.
 #
-#   ./04-deploy.sh v2      # happy path: expect the deployment to reach COMPLETED
-#   ./04-deploy.sh v2bad   # rollback:   expect IN_PROGRESS then FAILED (node stays on the prior good version)
-#   ./04-deploy.sh v1      # reverse a v2 update back to v1, so you can run the cycle again
+#   ./04-deploy.sh v2       # BOS happy path: expect COMPLETED
+#   ./04-deploy.sh v2bad    # BOS rollback:   expect FAILED (node stays on the prior good version)
+#   ./04-deploy.sh v1       # reverse a v2 update back to v1, so you can run the cycle again
+#   ./04-deploy.sh sup2     # supervisor self-update happy path: expect COMPLETED (supervisor -> sup2)
+#   ./04-deploy.sh sup2bad  # supervisor self-update rollback: expect FAILED (applier reverts to sup1)
 #
-# Deploy the version the node is NOT currently running (deploying the running version is a no-op the
-# Supervisor can't confirm, so it would roll back). The normal cycle is: v2 -> v1 -> v2 -> ...
+# Deploy a version the node is NOT currently running (deploying the running version is a no-op the
+# Supervisor can't confirm, so it would roll back). BOS-image and supervisor-rpm are independent
+# channels, so a BOS update and a supervisor update can be deployed concurrently.
 #
 # Polls the deployment status until it reaches a terminal state or the timeout elapses. The actual
 # install runs device-side: BOS picks up latestUpdate on its next ~30s check-in, calls the Supervisor,
@@ -21,10 +24,12 @@ source "$STATE_ENV"
 
 # --- resolve the requested artefact ---------------------------------------------------------------
 case "${1:-}" in
-  v1)    ART_ID="$ART_V1_ID";    EXPECT="completed" ;;
-  v2)    ART_ID="$ART_V2_ID";    EXPECT="completed" ;;
-  v2bad) ART_ID="$ART_V2BAD_ID"; EXPECT="failed" ;;
-  *) echo "usage: $0 <v1|v2|v2bad>" >&2; exit 2 ;;
+  v1)      ART_ID="$ART_V1_ID";     EXPECT="completed" ;;
+  v2)      ART_ID="$ART_V2_ID";     EXPECT="completed" ;;
+  v2bad)   ART_ID="$ART_V2BAD_ID";  EXPECT="failed" ;;
+  sup2)    ART_ID="$ART_SUP2_ID";   EXPECT="completed" ;;
+  sup2bad) ART_ID="$ART_SUP2BAD_ID"; EXPECT="failed" ;;
+  *) echo "usage: $0 <v1|v2|v2bad|sup2|sup2bad>" >&2; exit 2 ;;
 esac
 test -n "${ART_ID:-}" && [[ "$ART_ID" != null ]] || { echo "no artefact id for '$1' in $STATE_ENV — re-run 02-cloudsim.sh" >&2; exit 1; }
 echo "==> deploying artefact $1 (id=$ART_ID) to node $NODE_ID; expecting '$EXPECT'"

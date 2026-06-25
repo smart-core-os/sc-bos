@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # 01-build.sh — build everything the test needs (run on the Rocky host).
 #
-# Builds the Supervisor binary (it runs as a host systemd service), then builds the production-like
-# BOS base image from the repo's main Dockerfile (UI included), the v1/v2/v2bad images, and the
-# v1/v2/v2bad artefact tarballs.
+# Builds the Supervisor RPMs (sup1/sup2/sup2bad), then the production-like BOS base image from the
+# repo's main Dockerfile (UI included), the v1/v2/v2bad images, and the v1/v2/v2bad artefact tarballs.
 #
 # Idempotent: existing outputs are reused unless FORCE=1 is set.
 #   ./01-build.sh          # build only what's missing
@@ -15,17 +14,39 @@ source ./config.sh
 FORCE="${FORCE:-0}"
 mkdir -p "$BUILD"
 
-# --- 1. build the Supervisor binary (host binary, runs as a systemd service) ----------------------
-# pre:  Go toolchain on the host; the supervisor package compiles.
-# post: $SUP_BIN is a static linux executable installed at /usr/local/bin by 03-install.sh.
-if [[ "$FORCE" == 1 || ! -x "$SUP_BIN" ]]; then
-  echo "==> building supervisor -> $SUP_BIN"
-  ( cd "$REPO" && CGO_ENABLED=0 GOOS=linux go build -o "$SUP_BIN" ./supervisor )
-else
-  echo "==> supervisor binary present, skipping (FORCE=1 to rebuild)"
-fi
-# assert: the binary exists and is non-empty.
-test -s "$SUP_BIN"
+# --- 1. build the Supervisor RPMs (sup1 initial, sup2 good update, sup2bad broken) ----------------
+# pre:  Go toolchain + rpmbuild on the host; the supervisor package compiles.
+# post: one RPM per version under $SUP_RPM_DIR/<version>/. sup1 is installed by 03-install.sh; sup2 and
+#       sup2bad are uploaded as supervisor-rpm artefacts by 02-cloudsim.sh.
+mkdir -p "$SUP_RPM_DIR"
+build_sup_rpm() {  # build_sup_rpm VERSION [BROKEN_BINARY]
+  local v="$1" bin="${2:-}"
+  if [[ "$FORCE" != 1 ]] && compgen -G "$SUP_RPM_DIR/$v/*.rpm" >/dev/null; then
+    echo "==> supervisor rpm $v present, skipping (FORCE=1 to rebuild)"
+    return
+  fi
+  rm -rf "${SUP_RPM_DIR:?}/$v"
+  echo "==> building supervisor rpm $v"
+  if [[ -n "$bin" ]]; then
+    VERSION="$v" OUT="$SUP_RPM_DIR/$v" BINARY="$bin" bash "$REPO/supervisor/rpm/build.sh"
+  else
+    VERSION="$v" OUT="$SUP_RPM_DIR/$v" bash "$REPO/supervisor/rpm/build.sh"
+  fi
+}
+build_sup_rpm "$SUP_V1"
+build_sup_rpm "$SUP_V2"
+# The broken supervisor never opens its API socket, so a self-update to it fails the applier's health
+# confirm and is rolled back to sup1.
+BROKEN_SUP="$BUILD/broken-supervisor.sh"
+cat > "$BROKEN_SUP" <<'EOF'
+#!/bin/sh
+# Deliberately broken sc-bos-supervisor for the rollback demo: it never serves the API socket.
+exec sleep infinity
+EOF
+chmod +x "$BROKEN_SUP"
+build_sup_rpm "$SUP_V2BAD" "$BROKEN_SUP"
+# assert: all three RPMs exist.
+for v in "$SUP_V1" "$SUP_V2" "$SUP_V2BAD"; do compgen -G "$SUP_RPM_DIR/$v/*.rpm" >/dev/null || { echo "missing rpm $v" >&2; exit 1; }; done
 
 # --- 2. stage the demo node config (vanti-ugs, adapted to run DB-less) ----------------------------
 # The deployed images ship the vanti-ugs example (mock devices + ops/cohort Ops UI), adapted so the

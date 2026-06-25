@@ -26,6 +26,20 @@ echo "===== running BOS container ====="
 sudo podman ps --filter name=sc-bos --format 'table {{.Names}} {{.Image}} {{.Status}}' || true
 
 echo
+echo "===== installed Supervisor RPM (self-update result) ====="
+# post: the installed version is sup2 after a successful self-update, or back to sup1 after a rollback.
+rpm -q sc-bos-supervisor || echo "  (sc-bos-supervisor rpm not installed)"
+
+echo
+echo "===== Supervisor self-update state ====="
+# post: self-update.json shows the most recent self-update's phase (completed/failed) and any reason.
+if sudo test -f "$SUP_STATE_DIR/self-update.json"; then
+  sudo cat "$SUP_STATE_DIR/self-update.json"; echo
+else
+  echo "  (no self-update.json yet)"
+fi
+
+echo
 echo "===== Supervisor durable state (committed version / last error) ====="
 # post: state.json shows the committed (running, healthy) version and any failure reason.
 if sudo test -f "$SUP_STATE_DIR/state.json"; then

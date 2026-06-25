@@ -12,10 +12,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./config.sh
 
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
-# pre: the artefact tarballs exist (01-build.sh must have run).
+# pre: the artefact tarballs and supervisor RPMs exist (01-build.sh must have run).
 test -s "$BUILD/v1.tar"
 test -s "$BUILD/v2.tar"
 test -s "$BUILD/v2bad.tar"
+for v in "$SUP_V2" "$SUP_V2BAD"; do
+  compgen -G "$SUP_RPM_DIR/$v/*.rpm" >/dev/null || { echo "missing supervisor rpm $v — run 01-build.sh" >&2; exit 1; }
+done
 
 # --- 1. build + start cloudsim --------------------------------------------------------------------
 # post: $CLOUDSIM_BIN is current.
@@ -77,18 +80,21 @@ test -n "$CLIENT_SECRET" && [[ "$CLIENT_SECRET" != null ]]
 # --- 4. upload the two update artefacts -----------------------------------------------------------
 # post: ART_V2_ID / ART_V2BAD_ID name artefacts scoped to this site+platform; cloudsim computed and
 #       stored each tarball's sha256 (returned to BOS on check-in; the Supervisor verifies against it).
-upload() {  # upload VERSION TARBALL -> prints artefact id
+upload() {  # upload VERSION KIND PAYLOAD -> prints artefact id
   curl -fsS -X POST "$MGMT/update-artefacts" \
-    -F "version=$1" -F "platform=$PLATFORM" -F "siteId=$SITE_ID" -F "payload=@$2" | jq -r '.id'
+    -F "version=$1" -F "platform=$PLATFORM" -F "kind=$2" -F "siteId=$SITE_ID" -F "payload=@$3" | jq -r '.id'
 }
-# v1 is uploaded too so it can be deployed as an update target to reverse a v2 update.
-ART_V1_ID=$(upload "$V1" "$BUILD/v1.tar")
-ART_V2_ID=$(upload "$V2" "$BUILD/v2.tar")
-ART_V2BAD_ID=$(upload "$V2BAD" "$BUILD/v2bad.tar")
-echo "==> artefacts: v1=$ART_V1_ID v2=$ART_V2_ID v2bad=$ART_V2BAD_ID"
-test -n "$ART_V1_ID" && [[ "$ART_V1_ID" != null ]]
-test -n "$ART_V2_ID" && [[ "$ART_V2_ID" != null ]]
-test -n "$ART_V2BAD_ID" && [[ "$ART_V2BAD_ID" != null ]]
+# BOS images (kind defaults to bos-image). v1 is uploaded too so it can reverse a v2 update.
+ART_V1_ID=$(upload "$V1" "bos-image" "$BUILD/v1.tar")
+ART_V2_ID=$(upload "$V2" "bos-image" "$BUILD/v2.tar")
+ART_V2BAD_ID=$(upload "$V2BAD" "bos-image" "$BUILD/v2bad.tar")
+# Supervisor RPMs (kind=supervisor-rpm): the good self-update target and the broken one (-> rollback).
+ART_SUP2_ID=$(upload "$SUP_V2" "supervisor-rpm" "$(sup_rpm_path "$SUP_V2")")
+ART_SUP2BAD_ID=$(upload "$SUP_V2BAD" "supervisor-rpm" "$(sup_rpm_path "$SUP_V2BAD")")
+echo "==> artefacts: v1=$ART_V1_ID v2=$ART_V2_ID v2bad=$ART_V2BAD_ID sup2=$ART_SUP2_ID sup2bad=$ART_SUP2BAD_ID"
+for id in "$ART_V1_ID" "$ART_V2_ID" "$ART_V2BAD_ID" "$ART_SUP2_ID" "$ART_SUP2BAD_ID"; do
+  test -n "$id" && [[ "$id" != null ]]
+done
 
 # --- 5. persist captured state for the later scripts ----------------------------------------------
 # post: $STATE_ENV is a sourceable file with all ids/credentials.
@@ -101,6 +107,8 @@ CLIENT_SECRET="$CLIENT_SECRET"
 ART_V1_ID="$ART_V1_ID"
 ART_V2_ID="$ART_V2_ID"
 ART_V2BAD_ID="$ART_V2BAD_ID"
+ART_SUP2_ID="$ART_SUP2_ID"
+ART_SUP2BAD_ID="$ART_SUP2BAD_ID"
 EOF
 echo "==> wrote $STATE_ENV"
 echo "==> 02-cloudsim.sh done"

@@ -6,16 +6,17 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./config.sh
 
 # --- services + units + state ---------------------------------------------------------------------
-# post: both services are stopped and disabled, the units we installed are gone, and systemd has
-#       forgotten the generated sc-bos.service.
+# post: both services are stopped and disabled, the Quadlet unit is gone, the Supervisor RPM (which
+#       owns its binary/unit/config) is removed, and systemd has forgotten the generated units.
 sudo systemctl disable --now sc-bos.service 2>/dev/null || true
 sudo systemctl disable --now sc-bos-supervisor.service 2>/dev/null || true
-sudo rm -f "$QUADLET_DIR/sc-bos.container" \
-           "$SYSTEMD_DIR/sc-bos-supervisor.service"
+sudo rm -f "$QUADLET_DIR/sc-bos.container"
+sudo dnf -y remove sc-bos-supervisor 2>/dev/null || true
 sudo systemctl daemon-reload
 
-# post: installed binary/config + durable state + BOS data dir + demo users file are removed.
-sudo rm -rf "$SUP_INSTALL" "$SUP_CONF_DIR" "$SUP_STATE_DIR" "$BOS_DATA" "$BOS_USERS_FILE"
+# post: any config left by the RPM, durable state (incl. the rpm store), BOS data dir, and the demo
+#       users file are removed.
+sudo rm -rf "$SUP_CONF_DIR" "$SUP_STATE_DIR" "$BOS_DATA" "$BOS_USERS_FILE"
 
 # post: the test image tags are dropped (ignore errors if already gone). :base is the heavy
 #       production-like image; teardown removes it too, so a later run rebuilds it.
