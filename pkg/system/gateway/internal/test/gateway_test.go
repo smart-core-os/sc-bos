@@ -374,11 +374,11 @@ func testLogAggregation(t *testing.T, ctx context.Context, conn *grpc.ClientConn
 			}
 			for _, change := range resp.Changes {
 				for _, m := range change.Messages {
-					if m.Source == "" {
-						t.Errorf("aggregated log message has empty source: %q", m.Message)
+					if m.SourceNode == "" {
+						t.Errorf("aggregated log message has empty source node: %q", m.Message)
 					}
-					if _, ok := want[m.Source]; ok {
-						want[m.Source] = true
+					if _, ok := want[m.SourceNode]; ok {
+						want[m.SourceNode] = true
 					}
 				}
 			}

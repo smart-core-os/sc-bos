@@ -57,8 +57,8 @@ export class LogMessage extends jspb.Message {
   getStackTrace(): string;
   setStackTrace(value: string): LogMessage;
 
-  getSource(): string;
-  setSource(value: string): LogMessage;
+  getSourceNode(): string;
+  setSourceNode(value: string): LogMessage;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): LogMessage.AsObject;
@@ -77,7 +77,7 @@ export namespace LogMessage {
     fieldsMap: Array<[string, string]>;
     sourceLocation?: SourceLocation.AsObject;
     stackTrace: string;
-    source: string;
+    sourceNode: string;
   };
 }
 

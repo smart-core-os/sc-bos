@@ -669,7 +669,7 @@ message: jspb.Message.getFieldWithDefault(msg, 4, ""),
 fieldsMap: (f = msg.getFieldsMap()) ? f.toObject(includeInstance, undefined) : [],
 sourceLocation: (f = msg.getSourceLocation()) && proto.smartcore.bos.log.v1.SourceLocation.toObject(includeInstance, f),
 stackTrace: jspb.Message.getFieldWithDefault(msg, 7, ""),
-source: jspb.Message.getFieldWithDefault(msg, 8, "")
+sourceNode: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -740,7 +740,7 @@ proto.smartcore.bos.log.v1.LogMessage.deserializeBinaryFromReader = function(msg
       break;
     case 8:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
-      msg.setSource(value);
+      msg.setSourceNode(value);
       break;
     default:
       reader.skipField();
@@ -824,7 +824,7 @@ jspb.internal.public_for_gencode.serializeMapToBinary(
       f
     );
   }
-  f = message.getSource();
+  f = message.getSourceNode();
   if (f.length > 0) {
     writer.writeString(
       8,
@@ -1004,10 +1004,10 @@ proto.smartcore.bos.log.v1.LogMessage.prototype.setStackTrace = function(value) 
 
 
 /**
- * optional string source = 8;
+ * optional string source_node = 8;
  * @return {string}
  */
-proto.smartcore.bos.log.v1.LogMessage.prototype.getSource = function() {
+proto.smartcore.bos.log.v1.LogMessage.prototype.getSourceNode = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
 };
 
@@ -1016,7 +1016,7 @@ proto.smartcore.bos.log.v1.LogMessage.prototype.getSource = function() {
  * @param {string} value
  * @return {!proto.smartcore.bos.log.v1.LogMessage} returns this
  */
-proto.smartcore.bos.log.v1.LogMessage.prototype.setSource = function(value) {
+proto.smartcore.bos.log.v1.LogMessage.prototype.setSourceNode = function(value) {
   return jspb.Message.setProto3StringField(this, 8, value);
 };
 

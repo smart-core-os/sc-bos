@@ -251,7 +251,7 @@ func (f *fakeLogServer) bySource() map[string][]string {
 	for _, resp := range f.sent {
 		for _, ch := range resp.Changes {
 			for _, m := range ch.Messages {
-				out[m.Source] = append(out[m.Source], m.Message)
+				out[m.SourceNode] = append(out[m.SourceNode], m.Message)
 			}
 		}
 	}

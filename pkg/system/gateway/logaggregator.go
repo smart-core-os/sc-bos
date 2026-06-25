@@ -333,7 +333,7 @@ func streamLogsOnce(ctx context.Context, client logpb.LogApiClient, name string,
 func stampLogSource(resp *logpb.PullLogMessagesResponse, name string) {
 	for _, change := range resp.Changes {
 		for _, msg := range change.Messages {
-			msg.Source = name
+			msg.SourceNode = name
 		}
 	}
 }
