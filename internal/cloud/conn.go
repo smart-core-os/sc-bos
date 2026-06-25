@@ -55,6 +55,12 @@ func WithSoftwareUpdater(u *SoftwareUpdater) ConnOption {
 	return func(c *Conn) { c.softwareUpdater = u }
 }
 
+// WithSupervisorUpdater enables the supervisor-update channel on the shared poll check-in, dispatching
+// the latestSupervisorUpdate block to u. When unset that channel is ignored.
+func WithSupervisorUpdater(u *SupervisorUpdater) ConnOption {
+	return func(c *Conn) { c.supervisorUpdater = u }
+}
+
 // Conn manages the lifecycle of a cloud connection.
 // It tracks the current Registration, broadcasts ConnState changes, and owns a
 // DeploymentUpdater that is rebuilt whenever the Registration changes.
@@ -63,9 +69,10 @@ type Conn struct {
 	// Immutable after construction — no locking required.
 	regStore        RegistrationStore
 	depStore        *DeploymentStore
-	newClient       func(Registration) Client
-	updaterOpts     []UpdaterOption
-	softwareUpdater *SoftwareUpdater // nil when the update channel is disabled
+	newClient         func(Registration) Client
+	updaterOpts       []UpdaterOption
+	softwareUpdater   *SoftwareUpdater   // nil when the update channel is disabled
+	supervisorUpdater *SupervisorUpdater // nil when the supervisor-update channel is disabled
 
 	// serial is a binary semaphore (buffered channel of size 1, pre-filled).
 	// Acquire with lockSerial; release with unlockSerial.
@@ -284,6 +291,12 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	if c.softwareUpdater != nil {
 		if err = c.softwareUpdater.HandleUpdate(ctx, u.client, resp); err != nil {
 			err = fmt.Errorf("handle update: %w", err)
+			return needReboot, err
+		}
+	}
+	if c.supervisorUpdater != nil {
+		if err = c.supervisorUpdater.HandleSupervisorUpdate(ctx, u.client, resp); err != nil {
+			err = fmt.Errorf("handle supervisor update: %w", err)
 			return needReboot, err
 		}
 	}

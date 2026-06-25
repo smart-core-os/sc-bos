@@ -48,6 +48,9 @@ type CheckInResponse struct {
 	CheckIn      NodeCheckIn   `json:"checkIn"`
 	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
 	LatestUpdate *LatestUpdate `json:"latestUpdate,omitempty"`
+	// LatestSupervisorUpdate is the active Supervisor self-update (a supervisor-rpm artefact), a channel
+	// parallel to LatestUpdate (BOS images).
+	LatestSupervisorUpdate *LatestUpdate `json:"latestSupervisorUpdate,omitempty"`
 }
 
 // LatestUpdate bundles the active update deployment with its artefact. It is the software-update

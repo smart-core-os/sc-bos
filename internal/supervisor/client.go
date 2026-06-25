@@ -79,6 +79,33 @@ func (c *Client) GetUpdateStatus(ctx context.Context) (*supervisorpb.UpdateStatu
 	return resp.GetStatus(), nil
 }
 
+// InstallSupervisorUpdate asks the Supervisor to update ITSELF to version, packaged as an RPM at
+// downloadURL. Like InstallUpdate it returns once accepted; the install runs out-of-process and the
+// Supervisor restarts onto the new binary (or rolls back). It returns a codes.FailedPrecondition status
+// error if a self-update is already in progress.
+func (c *Client) InstallSupervisorUpdate(ctx context.Context, version, downloadURL, sha256 string) error {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	_, err := c.api.InstallSupervisorUpdate(ctx, &supervisorpb.InstallSupervisorUpdateRequest{
+		Version:     version,
+		DownloadUrl: downloadURL,
+		Sha256:      sha256,
+	})
+	return err
+}
+
+// SupervisorInfo returns the running Supervisor's own version and the state of its most recent
+// self-update (used to relay the self-update outcome to Smart Core Connect).
+func (c *Client) SupervisorInfo(ctx context.Context) (version string, selfUpdate *supervisorpb.UpdateStatus, err error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	resp, err := c.api.GetSupervisorInfo(ctx, &supervisorpb.GetSupervisorInfoRequest{})
+	if err != nil {
+		return "", nil, err
+	}
+	return resp.GetVersion(), resp.GetSelfUpdate(), nil
+}
+
 // Close closes the underlying gRPC connection.
 func (c *Client) Close() error {
 	return c.conn.Close()

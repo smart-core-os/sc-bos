@@ -43,9 +43,41 @@ type fakeSupervisor struct {
 
 	status *supervisorpb.UpdateStatus // returned by GetUpdateStatus; nil yields an empty status
 
-	mu             sync.Mutex
-	installCalls   int
-	lastInstallReq *supervisorpb.InstallUpdateRequest
+	// Supervisor self-update side (GetSupervisorInfo / InstallSupervisorUpdate).
+	supervisorVersion    string                     // returned by GetSupervisorInfo
+	supervisorSelfUpdate *supervisorpb.UpdateStatus // returned by GetSupervisorInfo
+	supLocked            bool                       // if true, InstallSupervisorUpdate returns FailedPrecondition
+
+	mu                sync.Mutex
+	installCalls      int
+	lastInstallReq    *supervisorpb.InstallUpdateRequest
+	supInstallCalls   int
+	lastSupInstallReq *supervisorpb.InstallSupervisorUpdateRequest
+}
+
+func (f *fakeSupervisor) GetSupervisorInfo(_ context.Context, _ *supervisorpb.GetSupervisorInfoRequest) (*supervisorpb.GetSupervisorInfoResponse, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return &supervisorpb.GetSupervisorInfoResponse{Version: f.supervisorVersion, SelfUpdate: f.supervisorSelfUpdate}, nil
+}
+
+func (f *fakeSupervisor) InstallSupervisorUpdate(_ context.Context, req *supervisorpb.InstallSupervisorUpdateRequest) (*supervisorpb.InstallSupervisorUpdateResponse, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.supLocked {
+		return nil, status.Error(codes.FailedPrecondition, "a self-update is already in progress")
+	}
+	f.supInstallCalls++
+	f.lastSupInstallReq = req
+	return &supervisorpb.InstallSupervisorUpdateResponse{
+		Status: &supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_INSTALLING, Version: req.GetVersion()},
+	}, nil
+}
+
+func (f *fakeSupervisor) supInstall() (int, *supervisorpb.InstallSupervisorUpdateRequest) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.supInstallCalls, f.lastSupInstallReq
 }
 
 func (f *fakeSupervisor) GetUpdateStatus(_ context.Context, _ *supervisorpb.GetUpdateStatusRequest) (*supervisorpb.GetUpdateStatusResponse, error) {

@@ -295,6 +295,16 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger, s
 	softwareUpdater := cloud.NewSoftwareUpdater(updateStore, updaterOpts...)
 	connOptions = append(connOptions, cloud.WithSoftwareUpdater(softwareUpdater))
 
+	// Supervisor self-update channel, parallel to the BOS-image channel above, with its own intent file.
+	supervisorUpdateStore := cloud.NewFileUpdateStore(filepath.Join(cloudDataDir, "supervisor-update.json"))
+	supUpdaterOpts := []cloud.SupervisorUpdaterOption{
+		cloud.WithSupervisorUpdaterLogger(logger.Named("cloud.supervisor-update")),
+	}
+	if supClient != nil {
+		supUpdaterOpts = append(supUpdaterOpts, cloud.WithSupervisorInstaller(supClient))
+	}
+	connOptions = append(connOptions, cloud.WithSupervisorUpdater(cloud.NewSupervisorUpdater(supervisorUpdateStore, supUpdaterOpts...)))
+
 	cloudConn, err := cloud.OpenConn(ctx, regStore, cloudStore, connOptions...)
 	if err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to start cloud connection: %w", err)
