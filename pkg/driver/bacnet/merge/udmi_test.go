@@ -11,11 +11,14 @@ import (
 func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
 	um := &udmiMerge{}
 	points := udmi.PointsEvent{
-		"nan":    udmi.PointValue{PresentValue: math.NaN()},
-		"posInf": udmi.PointValue{PresentValue: math.Inf(1)},
-		"negInf": udmi.PointValue{PresentValue: math.Inf(-1)},
-		"ok":     udmi.PointValue{PresentValue: 42.0},
-		"str":    udmi.PointValue{PresentValue: "hello"},
+		"nan":      udmi.PointValue{PresentValue: math.NaN()},
+		"posInf":   udmi.PointValue{PresentValue: math.Inf(1)},
+		"negInf":   udmi.PointValue{PresentValue: math.Inf(-1)},
+		"nan32":    udmi.PointValue{PresentValue: float32(math.NaN())},
+		"posInf32": udmi.PointValue{PresentValue: float32(math.Inf(1))},
+		"negInf32": udmi.PointValue{PresentValue: float32(math.Inf(-1))},
+		"ok":       udmi.PointValue{PresentValue: 42.0},
+		"str":      udmi.PointValue{PresentValue: "hello"},
 	}
 
 	um.config.TopicPrefix = "topic"
@@ -37,6 +40,15 @@ func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
 	}
 	if out["negInf"].PresentValue != "-Infinity" {
 		t.Errorf("expected negInf to be \"-Infinity\", got %v", out["negInf"].PresentValue)
+	}
+	if out["nan32"].PresentValue != "NaN" {
+		t.Errorf("expected nan32 to be \"NaN\", got %v", out["nan32"].PresentValue)
+	}
+	if out["posInf32"].PresentValue != "Infinity" {
+		t.Errorf("expected posInf32 to be \"Infinity\", got %v", out["posInf32"].PresentValue)
+	}
+	if out["negInf32"].PresentValue != "-Infinity" {
+		t.Errorf("expected negInf32 to be \"-Infinity\", got %v", out["negInf32"].PresentValue)
 	}
 	if out["ok"].PresentValue != 42.0 {
 		t.Errorf("expected ok to be 42.0, got %v", out["ok"].PresentValue)
