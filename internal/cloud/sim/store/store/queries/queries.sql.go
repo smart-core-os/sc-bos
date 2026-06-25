@@ -28,15 +28,23 @@ func (q *Queries) CancelPendingConfigDeploymentsByNode(ctx context.Context, node
 	return result.RowsAffected()
 }
 
-const cancelPendingUpdateDeploymentsByNode = `-- name: CancelPendingUpdateDeploymentsByNode :execrows
+const cancelPendingUpdateDeploymentsByNodeAndKind = `-- name: CancelPendingUpdateDeploymentsByNodeAndKind :execrows
 UPDATE update_deployments
 SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
 WHERE node_id = ?1 AND status = 'pending'
+  AND update_artefact_id IN (SELECT id FROM update_artefacts WHERE kind = ?2)
 `
 
-func (q *Queries) CancelPendingUpdateDeploymentsByNode(ctx context.Context, nodeID int64) (int64, error) {
-	result, err := q.db.ExecContext(ctx, cancelPendingUpdateDeploymentsByNode, nodeID)
+type CancelPendingUpdateDeploymentsByNodeAndKindParams struct {
+	NodeID int64
+	Kind   string
+}
+
+// Scoped to one artefact kind so cancelling a pending BOS-image deployment leaves a pending
+// supervisor-rpm deployment (and vice versa) untouched: the channels are independent.
+func (q *Queries) CancelPendingUpdateDeploymentsByNodeAndKind(ctx context.Context, arg CancelPendingUpdateDeploymentsByNodeAndKindParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, cancelPendingUpdateDeploymentsByNodeAndKind, arg.NodeID, arg.Kind)
 	if err != nil {
 		return 0, err
 	}
@@ -281,14 +289,15 @@ func (q *Queries) CreateSite(ctx context.Context, name string) (Site, error) {
 
 const createUpdateArtefact = `-- name: CreateUpdateArtefact :one
 
-INSERT INTO update_artefacts (site_id, platform, version, sha256, description, size, create_time)
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now', 'subsec'))
-RETURNING id, site_id, platform, version, sha256, description, size, create_time
+INSERT INTO update_artefacts (site_id, platform, kind, version, sha256, description, size, create_time)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now', 'subsec'))
+RETURNING id, site_id, platform, kind, version, sha256, description, size, create_time
 `
 
 type CreateUpdateArtefactParams struct {
 	SiteID      sql.NullInt64
 	Platform    string
+	Kind        string
 	Version     string
 	Sha256      sql.NullString
 	Description sql.NullString
@@ -302,6 +311,7 @@ func (q *Queries) CreateUpdateArtefact(ctx context.Context, arg CreateUpdateArte
 	row := q.db.QueryRowContext(ctx, createUpdateArtefact,
 		arg.SiteID,
 		arg.Platform,
+		arg.Kind,
 		arg.Version,
 		arg.Sha256,
 		arg.Description,
@@ -312,6 +322,7 @@ func (q *Queries) CreateUpdateArtefact(ctx context.Context, arg CreateUpdateArte
 		&i.ID,
 		&i.SiteID,
 		&i.Platform,
+		&i.Kind,
 		&i.Version,
 		&i.Sha256,
 		&i.Description,
@@ -482,16 +493,24 @@ func (q *Queries) GetActiveEnrollmentCode(ctx context.Context, code string) (Enr
 	return i, err
 }
 
-const getActiveUpdateDeploymentByNode = `-- name: GetActiveUpdateDeploymentByNode :one
-SELECT id, update_artefact_id, node_id, status, start_time, finished_time, reason
-FROM update_deployments
-WHERE node_id = ?1 AND status IN ('pending', 'in_progress')
-ORDER BY id DESC
+const getActiveUpdateDeploymentByNodeAndKind = `-- name: GetActiveUpdateDeploymentByNodeAndKind :one
+SELECT d.id, d.update_artefact_id, d.node_id, d.status, d.start_time, d.finished_time, d.reason
+FROM update_deployments d
+JOIN update_artefacts a ON a.id = d.update_artefact_id
+WHERE d.node_id = ?1 AND a.kind = ?2 AND d.status IN ('pending', 'in_progress')
+ORDER BY d.id DESC
 LIMIT 1
 `
 
-func (q *Queries) GetActiveUpdateDeploymentByNode(ctx context.Context, nodeID int64) (UpdateDeployment, error) {
-	row := q.db.QueryRowContext(ctx, getActiveUpdateDeploymentByNode, nodeID)
+type GetActiveUpdateDeploymentByNodeAndKindParams struct {
+	NodeID int64
+	Kind   string
+}
+
+// The active deployment for one channel (artefact kind), so a node can have a BOS-image update and a
+// supervisor-rpm update in flight at the same time.
+func (q *Queries) GetActiveUpdateDeploymentByNodeAndKind(ctx context.Context, arg GetActiveUpdateDeploymentByNodeAndKindParams) (UpdateDeployment, error) {
+	row := q.db.QueryRowContext(ctx, getActiveUpdateDeploymentByNodeAndKind, arg.NodeID, arg.Kind)
 	var i UpdateDeployment
 	err := row.Scan(
 		&i.ID,
@@ -661,7 +680,7 @@ func (q *Queries) GetSite(ctx context.Context, id int64) (Site, error) {
 }
 
 const getUpdateArtefact = `-- name: GetUpdateArtefact :one
-SELECT id, site_id, platform, version, sha256, description, size, create_time
+SELECT id, site_id, platform, kind, version, sha256, description, size, create_time
 FROM update_artefacts
 WHERE id = ?1
 `
@@ -673,6 +692,7 @@ func (q *Queries) GetUpdateArtefact(ctx context.Context, id int64) (UpdateArtefa
 		&i.ID,
 		&i.SiteID,
 		&i.Platform,
+		&i.Kind,
 		&i.Version,
 		&i.Sha256,
 		&i.Description,
@@ -1120,7 +1140,7 @@ func (q *Queries) ListUpdateArtefactIDs(ctx context.Context) ([]int64, error) {
 }
 
 const listUpdateArtefacts = `-- name: ListUpdateArtefacts :many
-SELECT id, site_id, platform, version, sha256, description, size, create_time
+SELECT id, site_id, platform, kind, version, sha256, description, size, create_time
 FROM update_artefacts
 WHERE id > ?1
   AND (?2 = '' OR platform = ?2)
@@ -1154,6 +1174,7 @@ func (q *Queries) ListUpdateArtefacts(ctx context.Context, arg ListUpdateArtefac
 			&i.ID,
 			&i.SiteID,
 			&i.Platform,
+			&i.Kind,
 			&i.Version,
 			&i.Sha256,
 			&i.Description,

@@ -238,17 +238,17 @@ UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = :id;
 -- in the database, so it is never selected here; the size column records its byte length.
 
 -- name: CreateUpdateArtefact :one
-INSERT INTO update_artefacts (site_id, platform, version, sha256, description, size, create_time)
-VALUES (:site_id, :platform, :version, :sha256, :description, :size, datetime('now', 'subsec'))
+INSERT INTO update_artefacts (site_id, platform, kind, version, sha256, description, size, create_time)
+VALUES (:site_id, :platform, :kind, :version, :sha256, :description, :size, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetUpdateArtefact :one
-SELECT id, site_id, platform, version, sha256, description, size, create_time
+SELECT id, site_id, platform, kind, version, sha256, description, size, create_time
 FROM update_artefacts
 WHERE id = :id;
 
 -- name: ListUpdateArtefacts :many
-SELECT id, site_id, platform, version, sha256, description, size, create_time
+SELECT id, site_id, platform, kind, version, sha256, description, size, create_time
 FROM update_artefacts
 WHERE id > :after_id
   AND (sqlc.arg(platform) = '' OR platform = sqlc.arg(platform))
@@ -304,15 +304,21 @@ RETURNING *;
 DELETE FROM update_deployments
 WHERE id = :id;
 
--- name: CancelPendingUpdateDeploymentsByNode :execrows
+-- name: CancelPendingUpdateDeploymentsByNodeAndKind :execrows
+-- Scoped to one artefact kind so cancelling a pending BOS-image deployment leaves a pending
+-- supervisor-rpm deployment (and vice versa) untouched: the channels are independent.
 UPDATE update_deployments
 SET status = 'cancelled',
     finished_time = datetime('now', 'subsec')
-WHERE node_id = :node_id AND status = 'pending';
+WHERE node_id = :node_id AND status = 'pending'
+  AND update_artefact_id IN (SELECT id FROM update_artefacts WHERE kind = :kind);
 
--- name: GetActiveUpdateDeploymentByNode :one
-SELECT *
-FROM update_deployments
-WHERE node_id = :node_id AND status IN ('pending', 'in_progress')
-ORDER BY id DESC
+-- name: GetActiveUpdateDeploymentByNodeAndKind :one
+-- The active deployment for one channel (artefact kind), so a node can have a BOS-image update and a
+-- supervisor-rpm update in flight at the same time.
+SELECT d.*
+FROM update_deployments d
+JOIN update_artefacts a ON a.id = d.update_artefact_id
+WHERE d.node_id = :node_id AND a.kind = :kind AND d.status IN ('pending', 'in_progress')
+ORDER BY d.id DESC
 LIMIT 1;

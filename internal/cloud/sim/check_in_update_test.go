@@ -28,6 +28,50 @@ func deployUpdateToCheckInNode(t *testing.T, e checkInEnv, payload []byte) (Upda
 	return artefact, dep
 }
 
+// deployKindToCheckInNode uploads an artefact of the given kind/version for the env's site and creates a
+// pending deployment targeting the env's node.
+func deployKindToCheckInNode(t *testing.T, e checkInEnv, kind, version string, payload []byte) (UpdateArtefact, UpdateDeployment) {
+	t.Helper()
+	var artefact UpdateArtefact
+	resp := uploadArtefact(t, e.client, e.testServer.URL, map[string]string{
+		"version":  version,
+		"platform": "podman",
+		"kind":     kind,
+		"siteId":   sid(e.site.ID),
+	}, payload, &artefact)
+	assertStatus(t, resp, http.StatusCreated)
+
+	var dep UpdateDeployment
+	resp = doRequest(t, e.client, "POST", listUpdateDeploymentsURL(e.testServer.URL), map[string]any{
+		"updateArtefactId": sid(artefact.ID),
+		"nodeId":           sid(e.node.ID),
+	}, &dep)
+	assertStatus(t, resp, http.StatusCreated)
+	return artefact, dep
+}
+
+// TestCheckIn_BothUpdateChannels: a node may have a BOS-image deployment and a supervisor-rpm
+// deployment in flight at once (they do not conflict), and a check-in returns both channels.
+func TestCheckIn_BothUpdateChannels(t *testing.T) {
+	e := setupCheckInEnv(t)
+	_, bosDep := deployKindToCheckInNode(t, e, ArtefactKindBOSImage, "2.0.0", []byte("bos tarball"))
+	_, supDep := deployKindToCheckInNode(t, e, ArtefactKindSupervisorRPM, "9.9.9", []byte("supervisor rpm"))
+
+	var got CheckInResponse
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	assertStatus(t, resp, http.StatusOK)
+
+	if got.LatestUpdate == nil || got.LatestUpdate.UpdateDeployment.ID != bosDep.ID {
+		t.Errorf("latestUpdate = %+v, want bos deployment %d", got.LatestUpdate, bosDep.ID)
+	}
+	if got.LatestSupervisorUpdate == nil || got.LatestSupervisorUpdate.UpdateDeployment.ID != supDep.ID {
+		t.Errorf("latestSupervisorUpdate = %+v, want supervisor deployment %d", got.LatestSupervisorUpdate, supDep.ID)
+	}
+	if got.LatestSupervisorUpdate != nil && got.LatestSupervisorUpdate.UpdateArtefact.Kind != ArtefactKindSupervisorRPM {
+		t.Errorf("supervisor artefact kind = %q, want %q", got.LatestSupervisorUpdate.UpdateArtefact.Kind, ArtefactKindSupervisorRPM)
+	}
+}
+
 func TestCheckIn_LatestUpdate(t *testing.T) {
 	e := setupCheckInEnv(t)
 	payload := []byte("update tarball bytes")

@@ -166,7 +166,12 @@ func (s *Server) createUpdateDeployment(w http.ResponseWriter, r *http.Request) 
 			return errInvalidRequest
 		}
 
-		active, err := tx.GetActiveUpdateDeploymentByNode(r.Context(), node.ID)
+		// Conflicts are per channel (artefact kind): a BOS-image deployment and a supervisor-rpm
+		// deployment may be in flight on the same node at once.
+		active, err := tx.GetActiveUpdateDeploymentByNodeAndKind(r.Context(), queries.GetActiveUpdateDeploymentByNodeAndKindParams{
+			NodeID: node.ID,
+			Kind:   artefact.Kind,
+		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
@@ -175,8 +180,11 @@ func (s *Server) createUpdateDeployment(w http.ResponseWriter, r *http.Request) 
 				conflicted = true
 				return errUpdateDeploymentInProgress
 			}
-			// active is PENDING — cancel it
-			_, err = tx.CancelPendingUpdateDeploymentsByNode(r.Context(), node.ID)
+			// active is PENDING — cancel it (same kind only)
+			_, err = tx.CancelPendingUpdateDeploymentsByNodeAndKind(r.Context(), queries.CancelPendingUpdateDeploymentsByNodeAndKindParams{
+				NodeID: node.ID,
+				Kind:   artefact.Kind,
+			})
 			if err != nil {
 				return err
 			}

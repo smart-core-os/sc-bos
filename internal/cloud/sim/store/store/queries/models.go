@@ -67,6 +67,7 @@ type UpdateArtefact struct {
 	ID          int64
 	SiteID      sql.NullInt64
 	Platform    string
+	Kind        string
 	Version     string
 	Sha256      sql.NullString
 	Description sql.NullString

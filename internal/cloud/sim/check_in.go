@@ -20,10 +20,13 @@ type CheckInResponse struct {
 	CheckIn      CheckInAck    `json:"checkIn"`
 	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
 	LatestUpdate *LatestUpdate `json:"latestUpdate,omitempty"`
+	// LatestSupervisorUpdate is the active supervisor-rpm update, a channel parallel to LatestUpdate
+	// (BOS images). Added additively: existing fields are unchanged.
+	LatestSupervisorUpdate *LatestUpdate `json:"latestSupervisorUpdate,omitempty"`
 }
 
 // LatestUpdate is the active update deployment and its artefact, returned on check-in. It is the
-// software-update analogue of LatestConfig.
+// software-update analogue of LatestConfig, used for both the BOS-image and supervisor-rpm channels.
 type LatestUpdate struct {
 	UpdateDeployment UpdateDeployment `json:"updateDeployment"`
 	UpdateArtefact   UpdateArtefact   `json:"updateArtefact"`
@@ -113,6 +116,10 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		updateDep      queries.UpdateDeployment
 		updateArtefact queries.UpdateArtefact
 		hasUpdate      bool
+
+		supUpdateDep      queries.UpdateDeployment
+		supUpdateArtefact queries.UpdateArtefact
+		hasSupUpdate      bool
 	)
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		node, err := tx.GetNode(r.Context(), nodeID)
@@ -312,18 +319,33 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		updateDep, err = tx.GetActiveUpdateDeploymentByNode(r.Context(), node.ID)
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			hasUpdate = false
-		case err != nil:
-			return err
-		default:
-			hasUpdate = true
-			updateArtefact, err = tx.GetUpdateArtefact(r.Context(), updateDep.UpdateArtefactID)
-			if err != nil {
-				return err
+		// The active deployment is looked up per channel (artefact kind): BOS images and supervisor RPMs
+		// are independent and may both be in flight.
+		activeUpdate := func(kind string) (queries.UpdateDeployment, queries.UpdateArtefact, bool, error) {
+			dep, err := tx.GetActiveUpdateDeploymentByNodeAndKind(r.Context(), queries.GetActiveUpdateDeploymentByNodeAndKindParams{
+				NodeID: node.ID,
+				Kind:   kind,
+			})
+			if errors.Is(err, sql.ErrNoRows) {
+				return queries.UpdateDeployment{}, queries.UpdateArtefact{}, false, nil
 			}
+			if err != nil {
+				return queries.UpdateDeployment{}, queries.UpdateArtefact{}, false, err
+			}
+			art, err := tx.GetUpdateArtefact(r.Context(), dep.UpdateArtefactID)
+			if err != nil {
+				return queries.UpdateDeployment{}, queries.UpdateArtefact{}, false, err
+			}
+			return dep, art, true, nil
+		}
+
+		updateDep, updateArtefact, hasUpdate, err = activeUpdate(ArtefactKindBOSImage)
+		if err != nil {
+			return err
+		}
+		supUpdateDep, supUpdateArtefact, hasSupUpdate, err = activeUpdate(ArtefactKindSupervisorRPM)
+		if err != nil {
+			return err
 		}
 		return nil
 	})
@@ -359,6 +381,12 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		resp.LatestUpdate = &LatestUpdate{
 			UpdateDeployment: toUpdateDeployment(updateDep),
 			UpdateArtefact:   toUpdateArtefact(r, updateArtefact),
+		}
+	}
+	if hasSupUpdate {
+		resp.LatestSupervisorUpdate = &LatestUpdate{
+			UpdateDeployment: toUpdateDeployment(supUpdateDep),
+			UpdateArtefact:   toUpdateArtefact(r, supUpdateArtefact),
 		}
 	}
 

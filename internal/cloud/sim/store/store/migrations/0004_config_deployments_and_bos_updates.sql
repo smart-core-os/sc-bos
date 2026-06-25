@@ -9,14 +9,16 @@ ALTER TABLE deployments RENAME TO config_deployments;
 -- (hundreds of MB), so they are stored as external files on disk (named by artefact id) rather than
 -- as BLOBs in the database; the row only records metadata, including the payload size.
 
--- Nodes gain a platform so a deployment can only target an artefact of the matching platform.
-ALTER TABLE nodes ADD COLUMN platform TEXT NOT NULL DEFAULT 'podman'
-    CHECK ( platform IN ('podman', 'freebsd') );
+-- Nodes gain a platform so a deployment can only target an artefact of the matching platform. No CHECK
+-- on the value: this is a simulator, and validating an enum in the DB just makes adding new
+-- platforms/kinds harder for no benefit (any validation lives in Go).
+ALTER TABLE nodes ADD COLUMN platform TEXT NOT NULL DEFAULT 'podman';
 
 CREATE TABLE update_artefacts (
     id              INTEGER PRIMARY KEY,
     site_id         INTEGER,            -- NULL = generic artefact, available to all sites
     platform        TEXT NOT NULL,
+    kind            TEXT NOT NULL DEFAULT 'bos-image', -- 'bos-image' (podman tarball) or 'supervisor-rpm'
     version         TEXT NOT NULL,
     sha256          TEXT,               -- hex, computed server-side while streaming to the file
     description     TEXT,
@@ -24,7 +26,6 @@ CREATE TABLE update_artefacts (
     create_time     DATETIME NOT NULL,
 
     FOREIGN KEY (site_id) REFERENCES sites (id) ON DELETE CASCADE,
-    CONSTRAINT platform_valid CHECK ( platform IN ('podman', 'freebsd') ),
     CONSTRAINT create_time_format CHECK ( create_time IS datetime(create_time, 'subsec') )
 );
 

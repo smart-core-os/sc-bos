@@ -14,12 +14,22 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
+// Artefact kinds distinguish what a payload is, so the supervisor's own RPM can be distributed
+// alongside BOS podman-image tarballs to the same (podman) node.
+const (
+	// ArtefactKindBOSImage is a BOS container image (podman-save tarball). The default kind.
+	ArtefactKindBOSImage = "bos-image"
+	// ArtefactKindSupervisorRPM is a Supervisor self-update RPM.
+	ArtefactKindSupervisorRPM = "supervisor-rpm"
+)
+
 // UpdateArtefact is the JSON representation of a BOS update artefact's metadata. The payload itself is
 // never included here; it is downloaded separately from PayloadURL.
 type UpdateArtefact struct {
 	ID          int64     `json:"id,string"`
 	SiteID      *int64    `json:"siteId,string,omitempty"` // nil = generic, available to all sites
 	Platform    string    `json:"platform"`
+	Kind        string    `json:"kind"`
 	Version     string    `json:"version"`
 	SHA256      string    `json:"sha256,omitempty"` // hex; empty until computed
 	Description string    `json:"description"`
@@ -40,6 +50,7 @@ func toUpdateArtefact(r *http.Request, a queries.UpdateArtefact) UpdateArtefact 
 	out := UpdateArtefact{
 		ID:         a.ID,
 		Platform:   a.Platform,
+		Kind:       a.Kind,
 		Version:    a.Version,
 		Size:       a.Size,
 		PayloadURL: updateArtefactPayloadUrl(r, a.ID),
@@ -139,6 +150,19 @@ func (s *Server) createUpdateArtefact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// kind is optional; empty defaults to a BOS image. Validate in Go (not the DB) against the known
+	// kinds so a typo is caught.
+	kind := r.FormValue("kind")
+	switch kind {
+	case "":
+		kind = ArtefactKindBOSImage
+	case ArtefactKindBOSImage, ArtefactKindSupervisorRPM:
+	default:
+		writeError(w, errInvalidRequest)
+		logger.Info("invalid kind", zap.String("kind", kind))
+		return
+	}
+
 	// siteId is optional; empty means a generic artefact (available to all sites).
 	var siteID *int64
 	if v := r.FormValue("siteId"); v != "" {
@@ -173,6 +197,7 @@ func (s *Server) createUpdateArtefact(w http.ResponseWriter, r *http.Request) {
 	artefact, err := s.store.CreateUpdateArtefact(r.Context(), store.CreateUpdateArtefactParams{
 		SiteID:      siteID,
 		Platform:    platform,
+		Kind:        kind,
 		Version:     version,
 		Description: description,
 	}, file)

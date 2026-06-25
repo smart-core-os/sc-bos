@@ -421,7 +421,10 @@ func TestStore_UpdateDeployments_Lifecycle(t *testing.T) {
 	var active queries.UpdateDeployment
 	err = s.Read(ctx, func(tx *Tx) error {
 		var e error
-		active, e = tx.GetActiveUpdateDeploymentByNode(ctx, nodeID)
+		active, e = tx.GetActiveUpdateDeploymentByNodeAndKind(ctx, queries.GetActiveUpdateDeploymentByNodeAndKindParams{
+			NodeID: nodeID,
+			Kind:   DefaultArtefactKind,
+		})
 		return e
 	})
 	if err != nil || active.ID != dep.ID {
@@ -447,7 +450,10 @@ func TestStore_UpdateDeployments_Lifecycle(t *testing.T) {
 
 	// No active deployment remains.
 	err = s.Read(ctx, func(tx *Tx) error {
-		_, e := tx.GetActiveUpdateDeploymentByNode(ctx, nodeID)
+		_, e := tx.GetActiveUpdateDeploymentByNodeAndKind(ctx, queries.GetActiveUpdateDeploymentByNodeAndKindParams{
+			NodeID: nodeID,
+			Kind:   DefaultArtefactKind,
+		})
 		return e
 	})
 	if err == nil {

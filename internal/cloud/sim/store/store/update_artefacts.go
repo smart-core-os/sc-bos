@@ -15,11 +15,16 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store/queries"
 )
 
+// DefaultArtefactKind is the kind assumed when a create request omits one: a BOS podman-image tarball,
+// the original (and only prior) artefact type.
+const DefaultArtefactKind = "bos-image"
+
 // CreateUpdateArtefactParams carries the metadata for a new update artefact. The payload itself is
 // streamed separately so it is never held in memory in full.
 type CreateUpdateArtefactParams struct {
 	SiteID      *int64 // nil = generic artefact, available to all sites
 	Platform    string
+	Kind        string // "" defaults to DefaultArtefactKind
 	Version     string
 	Description *string
 }
@@ -72,8 +77,13 @@ func (s *Store) CreateUpdateArtefact(ctx context.Context, p CreateUpdateArtefact
 		return queries.UpdateArtefact{}, err
 	}
 
+	kind := p.Kind
+	if kind == "" {
+		kind = DefaultArtefactKind
+	}
 	qp := queries.CreateUpdateArtefactParams{
 		Platform: p.Platform,
+		Kind:     kind,
 		Version:  p.Version,
 		Sha256:   sql.NullString{String: hex.EncodeToString(h.Sum(nil)), Valid: true},
 		Size:     size,
