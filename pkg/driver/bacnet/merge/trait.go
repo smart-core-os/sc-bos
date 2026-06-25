@@ -74,19 +74,21 @@ func updateTraitFaultCheck(_ context.Context, faultCheck *healthpb.FaultCheck, n
 	if faultCheck == nil {
 		return
 	}
-	if len(errs) == 0 {
-		// Clear any existing fault for this trait.
-		faultCheck.ClearFaults()
-		return
-	}
 
 	var descriptions []string
 	for _, err := range errs {
+		if err == nil {
+			continue
+		}
 		descriptions = append(descriptions, err.Error())
-
+	}
+	if len(descriptions) == 0 {
+		// No (non-nil) errors, clear any existing fault for this trait.
+		faultCheck.ClearFaults()
+		return
 	}
 	faultCheck.SetFault(&healthpb.HealthCheck_Error{
-		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(errs)),
+		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(descriptions)),
 		DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
 		Code: &healthpb.HealthCheck_Error_Code{
 			Code:   BacNetCommsError,
