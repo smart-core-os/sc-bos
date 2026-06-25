@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/gobacnet"
@@ -128,9 +129,13 @@ func (t *fanSpeed) speedToPreset(speed float32) string {
 // pollPeer fetches data from the peer device and saves the data locally.
 func (t *fanSpeed) pollPeer(ctx context.Context) (*fanspeedpb.FanSpeed, error) {
 	speed, err := readPropertyFloat32(ctx, t.client, t.known, *t.config.Speed)
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.FanSpeed, []error{err})
+	var errs []error
 	if err != nil {
-		return nil, comm.ErrReadProperty{Prop: "speed", Cause: err}
+		errs = append(errs, comm.ErrReadProperty{Prop: "speed", Cause: err})
+	}
+	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.FanSpeed, errs)
+	if len(errs) > 0 {
+		return nil, multierr.Combine(errs...)
 	}
 	data := &fanspeedpb.FanSpeed{
 		Percentage: speed,
