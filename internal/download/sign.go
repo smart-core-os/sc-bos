@@ -33,19 +33,28 @@ type Signer interface {
 	Verify(data, signature []byte) error
 }
 
+// keySize is the length of keys produced by GenerateHMACKey.
 const keySize = sha256.Size
+
+// minKeySize is the minimum accepted HMAC key length. HMAC-SHA256 accepts keys
+// of any length (RFC 2104) — longer keys are reduced internally, shorter ones
+// zero-padded — so we only enforce a lower bound for entropy: at least the hash
+// output size (32 bytes / 256 bits). This admits previously valid keys, such as
+// 64-byte (block-sized) keys, that an exact-length check would wrongly reject.
+const minKeySize = keySize
 
 // HMACSigner is a Signer using HMAC-SHA256.
 type HMACSigner struct {
 	key []byte
 }
 
-// NewHMACSigner returns an HMACSigner with the given key. The key must be
-// exactly 32 bytes of cryptographically random data (e.g. from crypto/rand).
+// NewHMACSigner returns an HMACSigner with the given key. The key must be at
+// least 32 bytes of cryptographically random data (e.g. from crypto/rand);
+// longer keys are accepted.
 //
-// Panics if key has incorrect length.
+// Panics if key is too short.
 func NewHMACSigner(key []byte) *HMACSigner {
-	if len(key) != keySize {
+	if len(key) < minKeySize {
 		panic(errInvalidHMACKey)
 	}
 	return &HMACSigner{key: key}
@@ -74,16 +83,18 @@ func GenerateHMACKey() []byte {
 	return key
 }
 
-// LoadHMACKey loads a 32-byte hexadecimal-encoded HMAC key from a buffer.
+// LoadHMACKey loads a hexadecimal-encoded HMAC key from a buffer.
 //
-// The buffer must be exactly the right length, except for whitespace, which is ignored.
+// The decoded key must be at least 32 bytes; longer keys are accepted, matching
+// HMAC-SHA256's support for keys of any length. Whitespace surrounding the hex
+// string is ignored.
 func LoadHMACKey(buf []byte) ([]byte, error) {
 	str := strings.TrimSpace(string(buf))
 	key, err := hex.DecodeString(str)
 	if err != nil {
 		return nil, err
 	}
-	if len(key) != keySize {
+	if len(key) < minKeySize {
 		return nil, errInvalidHMACKey
 	}
 	return key, nil
