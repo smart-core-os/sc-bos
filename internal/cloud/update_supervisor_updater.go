@@ -60,10 +60,10 @@ func NewSupervisorUpdater(store UpdateStore, opts ...SupervisorUpdaterOption) *S
 	return u
 }
 
-// HandleSupervisorUpdate, called once per poll, does two things in order: it reconciles any in-flight
-// self-update against the Supervisor's reported version/status (reporting current or failed to SCC and
-// clearing the intent once settled), then, if a new supervisor-rpm deployment is offered for a version
-// the Supervisor is not already running, it installs it.
+// HandleSupervisorUpdate is called once per poll and does two things in order: it reconciles any
+// in-flight self-update against the Supervisor's reported version/status (reporting current or failed
+// to SCC and clearing the intent once settled), then, if a new supervisor-rpm deployment is offered for
+// a version the Supervisor is not already running, it installs it.
 //
 // client is used for the follow-up outcome/installing check-ins, mirroring the config flow. Reading the
 // Supervisor's info can fail transiently (e.g. mid-restart); that is logged and the poll skipped rather
