@@ -3,7 +3,7 @@ package hpd
 import (
 	"encoding/json"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -17,47 +17,18 @@ import (
 )
 
 func Test_PullExportMessages(t *testing.T) {
-
-	co2 := float32(0)
-	voc := float32(0)
-	humidity := float32(0)
-	aq := resource.NewValue(
-		resource.WithInitialValue(
-			&airqualitysensorpb.AirQuality{
-				CarbonDioxideLevel: &co2, VolatileOrganicCompounds: &voc,
-			},
-		), resource.WithNoDuplicates(),
-	)
-	o := resource.NewValue(
-		resource.WithInitialValue(
-			&occupancysensorpb.Occupancy{
-				PeopleCount: 0, State: occupancysensorpb.Occupancy_OCCUPIED,
-			},
-		), resource.WithNoDuplicates(),
-	)
-	temp := resource.NewValue(
-		resource.WithInitialValue(
-			&airtemperaturepb.AirTemperature{
-				AmbientTemperature: &typespb.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity,
-			},
-		), resource.WithNoDuplicates(),
-	)
-
-	server := newUdmiServiceServer(nil, aq, o, temp, "prefix")
-	client := udmipb.NewUdmiServiceClient(wrap.ServerToClient(udmipb.UdmiService_ServiceDesc, server))
-
 	req := &udmipb.PullExportMessagesRequest{
 		Name: "test",
 	}
 
 	tests := []struct {
 		name string
-		set  func()
+		set  func(aq, o, temp *resource.Value)
 		want EventPoints
 	}{
 		{
 			name: "occupancy",
-			set: func() {
+			set: func(_, o, _ *resource.Value) {
 				o.Set(
 					&occupancysensorpb.Occupancy{
 						PeopleCount: 459,
@@ -73,7 +44,7 @@ func Test_PullExportMessages(t *testing.T) {
 		},
 		{
 			name: "temp humidity",
-			set: func() {
+			set: func(_, _, temp *resource.Value) {
 				humidity := float32(98.7)
 				temp.Set(
 					&airtemperaturepb.AirTemperature{
@@ -93,7 +64,7 @@ func Test_PullExportMessages(t *testing.T) {
 		},
 		{
 			name: "air quality",
-			set: func() {
+			set: func(aq, _, _ *resource.Value) {
 				co2 := float32(123.4)
 				voc := float32(345.6)
 				aq.Set(
@@ -114,31 +85,81 @@ func Test_PullExportMessages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(
 			tt.name, func(t *testing.T) {
-				ctx := t.Context()
+				synctest.Test(t, func(t *testing.T) {
+					ctx := t.Context()
 
-				messages, _ := client.PullExportMessages(ctx, req)
-				tt.set()
-				time.Sleep(1 * time.Millisecond)
-				tt.set()
+					co2 := float32(0)
+					voc := float32(0)
+					humidity := float32(0)
+					aq := resource.NewValue(
+						resource.WithInitialValue(
+							&airqualitysensorpb.AirQuality{
+								CarbonDioxideLevel: &co2, VolatileOrganicCompounds: &voc,
+							},
+						), resource.WithNoDuplicates(),
+					)
+					o := resource.NewValue(
+						resource.WithInitialValue(
+							&occupancysensorpb.Occupancy{
+								PeopleCount: 0, State: occupancysensorpb.Occupancy_OCCUPIED,
+							},
+						), resource.WithNoDuplicates(),
+					)
+					temp := resource.NewValue(
+						resource.WithInitialValue(
+							&airtemperaturepb.AirTemperature{
+								AmbientTemperature: &typespb.Temperature{ValueCelsius: 0}, AmbientHumidity: &humidity,
+							},
+						), resource.WithNoDuplicates(),
+					)
 
-				m, err := messages.Recv()
+					server := newUdmiServiceServer(nil, aq, o, temp, "prefix")
+					client := udmipb.NewUdmiServiceClient(wrap.ServerToClient(udmipb.UdmiService_ServiceDesc, server))
 
-				if err != nil {
-					t.Fatal("messages.RecvMsg(&pointSetMessage) is nil")
-				}
+					messages, err := client.PullExportMessages(ctx, req)
+					if err != nil {
+						t.Fatalf("PullExportMessages: %v", err)
+					}
 
-				// take the response payload which should be a valid PointsetEventMessage
-				var pointSetMessage PointsetEventMessage
-				err = json.Unmarshal([]byte(m.Message.Payload), &pointSetMessage)
+					// Receive on a goroutine so the bubble isn't held on a blocking Recv.
+					type recvResult struct {
+						msg *udmipb.PullExportMessagesResponse
+						err error
+					}
+					results := make(chan recvResult, 1)
+					go func() {
+						msg, err := messages.Recv()
+						results <- recvResult{msg, err}
+					}()
 
-				if err != nil {
-					t.Fatal("json.Unmarshal failed")
-				}
+					// Wait for the server handler to register its Pull subscriptions before
+					// changing the value. The handler pulls with WithUpdatesOnly, so a change
+					// emitted before the subscription exists is lost and Recv blocks forever.
+					synctest.Wait()
+					tt.set(aq, o, temp)
+					// Let the change propagate through the server and back to Recv.
+					synctest.Wait()
 
-				if res := cmp.Diff(pointSetMessage.Points, tt.want); res != "" {
-					t.Fatal("trait does not match " + res)
-				}
+					var r recvResult
+					select {
+					case r = <-results:
+					default:
+						t.Fatal("no message received")
+					}
+					if r.err != nil {
+						t.Fatalf("messages.Recv: %v", r.err)
+					}
 
+					// take the response payload which should be a valid PointsetEventMessage
+					var pointSetMessage PointsetEventMessage
+					if err := json.Unmarshal([]byte(r.msg.Message.Payload), &pointSetMessage); err != nil {
+						t.Fatal("json.Unmarshal failed")
+					}
+
+					if res := cmp.Diff(pointSetMessage.Points, tt.want); res != "" {
+						t.Fatal("trait does not match " + res)
+					}
+				})
 			},
 		)
 	}
