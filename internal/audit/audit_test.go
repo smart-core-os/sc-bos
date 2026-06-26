@@ -159,7 +159,20 @@ func TestAuditDownload_TamperedURL(t *testing.T) {
 		t.Fatalf("GetDownloadLogUrl: %v", err)
 	}
 	good := resp.Files[0].Url
-	tampered := good[:len(good)-1] + altChar(good[len(good)-1])
+
+	// Flip the first character of the signature segment. The token is
+	// "<b64-envelope>.<b64-signature>"; the first signature character always
+	// carries significant bits, so the flip is guaranteed to change the decoded
+	// signature. Flipping the *last* character is unreliable: a 32-byte HMAC
+	// RawURLEncodes to 43 chars whose final char has non-significant trailing
+	// bits, so ~1/16 of keys produce a flip that decodes to the same bytes and
+	// still verifies.
+	dot := strings.LastIndex(good, ".")
+	if dot < 0 || dot+1 >= len(good) {
+		t.Fatalf("unexpected download URL form: %q", good)
+	}
+	sigStart := dot + 1
+	tampered := good[:sigStart] + altChar(good[sigStart]) + good[sigStart+1:]
 
 	httpResp := h.fetch(t, tampered)
 	defer httpResp.Body.Close()
