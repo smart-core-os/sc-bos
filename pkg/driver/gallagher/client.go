@@ -7,8 +7,20 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
+)
+
+// All controllers share a single Client (and therefore a single Transport)
+// and poll the same Gallagher host, often bursting on the same schedule
+// boundary. The stdlib default of MaxIdleConnsPerHost == 2 closes the excess
+// idle connections after each burst, so subsequent requests open a fresh
+// TCP+TLS session every time. These limits keep connections pooled and reused.
+const (
+	maxIdleConns        = 100
+	maxIdleConnsPerHost = 100
+	idleConnTimeout     = 90 * time.Second
 )
 
 type Client struct {
@@ -37,6 +49,9 @@ func newHttpClient(baseURL string, apiKey string, caPath string, certPath string
 					RootCAs:      caCertPool,
 					Certificates: []tls.Certificate{clientCert},
 				},
+				MaxIdleConns:        maxIdleConns,
+				MaxIdleConnsPerHost: maxIdleConnsPerHost,
+				IdleConnTimeout:     idleConnTimeout,
 			},
 		},
 		ApiKey:      apiKey,
