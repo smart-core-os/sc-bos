@@ -8,7 +8,6 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protopath"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -19,7 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/config"
-	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds/internal/anytrait"
+	"github.com/smart-core-os/sc-bos/pkg/auto/internal/anytrait"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -157,10 +156,10 @@ func (a *impl) newCheck(ctx context.Context, device *devicespb.Device, checkCfg 
 	g, ctx := errgroup.WithContext(ctx)
 	// set up the value watcher
 	changes := make(chan anytrait.Value)
-	fetcher := resourceFetcher(a.Node.ClientConn(), anytrait.ReadRequest{
+	fetcher := r.Fetcher(a.Node.ClientConn(), anytrait.ReadRequest{
 		Name:     device.Name,
 		ReadMask: fieldMask,
-	}, r)
+	})
 	g.Go(func() error {
 		defer close(changes)
 		return pull.Changes(ctx, fetcher, changes, pull.WithLogger(a.Logger.With(zap.String("device", device.Name))))
@@ -182,7 +181,7 @@ func (a *impl) newCheck(ctx context.Context, device *devicespb.Device, checkCfg 
 			// value when the actual field path doesn't exist in the message. We need to explicitly
 			// check that all message fields along the path are actually set to distinguish between
 			// "field is set to zero value" vs "field is not set at all (nil pointer)".
-			if !pathFieldsAreSet(values) {
+			if !protopath2.FieldsAreSet(values) {
 				logger.Debug("value path has unset fields (nil message)")
 				err := fmt.Errorf("field %s.%s[%q] from %q is not set (nil message field)", source.Trait, r.Name(), source.Value, device.GetName())
 				check.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
@@ -204,65 +203,6 @@ func (a *impl) newCheck(ctx context.Context, device *devicespb.Device, checkCfg 
 		cancel()
 		check.Dispose()
 	}, nil
-}
-
-func resourceFetcher(conn grpc.ClientConnInterface, req anytrait.ReadRequest, r anytrait.Resource) pull.Fetcher[anytrait.Value] {
-	return pull.NewFetcher(
-		func(ctx context.Context, changes chan<- anytrait.Value) error {
-			stream, err := r.Pull(ctx, conn, anytrait.PullRequest{
-				ReadRequest: req,
-			})
-			if err != nil {
-				return err
-			}
-			for {
-				res, err := stream.Recv()
-				if err != nil {
-					return err
-				}
-				for _, change := range res.Changes {
-					changes <- change.Value
-				}
-			}
-		},
-		func(ctx context.Context, changes chan<- anytrait.Value) error {
-			value, err := r.Get(ctx, conn, anytrait.GetRequest{
-				ReadRequest: req,
-			})
-			if err != nil {
-				return err
-			}
-			changes <- value
-			return nil
-		},
-	)
-}
-
-// pathFieldsAreSet checks if all message fields along the path are actually set (not nil/default).
-// This distinguishes between "field is set to zero value" and "field is not set at all".
-func pathFieldsAreSet(path protopath.Values) bool {
-	for i := 1; i < len(path.Path); i++ {
-		step := path.Path[i]
-
-		switch step.Kind() {
-		case protopath.FieldAccessStep:
-			fd := step.FieldDescriptor()
-			parentMsg := path.Index(i - 1).Value.Message()
-
-			if fd.HasPresence() {
-				if !parentMsg.Has(fd) {
-					return false
-				}
-			}
-
-		case protopath.ListIndexStep, protopath.MapIndexStep, protopath.AnyExpandStep:
-			continue
-		default:
-			return false
-		}
-	}
-
-	return true
 }
 
 func healthValueFromReflectValue(path protopath.Values) (*healthpb.HealthCheck_Value, error) {
