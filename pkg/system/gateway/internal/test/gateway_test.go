@@ -30,6 +30,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/servicespb"
@@ -339,7 +340,64 @@ func testGW(t *testing.T, ctx context.Context, addr string) {
 		testZoneServicesApi(t, ctx, addr, "ac2/zones", "ac2/zone1", client)
 	})
 
+	t.Run("aggregated logs", func(t *testing.T) {
+		testLogAggregation(t, ctx, conn)
+	})
+
 	testHubApis(t, ctx, conn)
+}
+
+// testLogAggregation checks that PullLogMessages against the gateway's aggregate
+// "logs" name merges logs from more than one cohort node, each tagged with its
+// source. ac1 and ac2 run the log system; their startup logs are captured and
+// should surface here.
+func testLogAggregation(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
+	t.Helper()
+
+	client := logpb.NewLogApiClient(conn)
+	want := map[string]bool{"ac1": false, "ac2": false}
+
+	// The gateway may still be discovering the ACs' log devices, so retry until
+	// both sources appear (or ctx is done). Each attempt reads the initial replay,
+	// which is bounded, then stops.
+	err := backoff.Retry(func() error {
+		attemptCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		stream, err := client.PullLogMessages(attemptCtx, &logpb.PullLogMessagesRequest{Name: "logs", InitialCount: 200})
+		if err != nil {
+			return err
+		}
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				break // attempt timed out or stream ended; assess what we collected
+			}
+			for _, change := range resp.Changes {
+				for _, m := range change.Messages {
+					if m.SourceNode == "" {
+						t.Errorf("aggregated log message has empty source node: %q", m.Message)
+					}
+					if _, ok := want[m.SourceNode]; ok {
+						want[m.SourceNode] = true
+					}
+				}
+			}
+			if want["ac1"] && want["ac2"] {
+				return nil
+			}
+		}
+		var missing []string
+		for src, seen := range want {
+			if !seen {
+				missing = append(missing, src)
+			}
+		}
+		slices.Sort(missing)
+		return fmt.Errorf("no aggregated logs yet from sources: %v", missing)
+	}, backoff.WithContext(backoff.NewExponentialBackOff(backoff.WithMaxInterval(2*time.Second)), ctx))
+	if err != nil {
+		t.Fatalf("aggregated logs: %v", err)
+	}
 }
 
 func waitForDevice(t *testing.T, ctx context.Context, conn *grpc.ClientConn, name string) {
@@ -583,6 +641,7 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.health.v1.HealthApi"},
 		{Name: "smartcore.bos.health.v1.HealthHistory"},
 		{Name: "smartcore.bos.hub.v1.HubApi"},
+		{Name: "smartcore.bos.log.v1.LogApi"},
 		{Name: "smartcore.bos.metadata.v1.MetadataApi"},
 		{Name: "smartcore.bos.mock.v1.MockDeviceApi"},
 		{Name: "smartcore.bos.onoff.v1.OnOffApi"},

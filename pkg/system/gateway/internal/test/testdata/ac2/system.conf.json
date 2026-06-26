@@ -1,4 +1,7 @@
 {
   "name": "ac2",
-  "logger": {"initialFields": {"proc": "ac2"}}
+  "logger": {"initialFields": {"proc": "ac2"}},
+  "systems": {
+    "log": {}
+  }
 }

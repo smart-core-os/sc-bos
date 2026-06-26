@@ -157,7 +157,10 @@ type LogMessage struct {
 	// Source code location that emitted this entry. Omitted when unavailable.
 	SourceLocation *SourceLocation `protobuf:"bytes,6,opt,name=source_location,json=sourceLocation,proto3" json:"source_location,omitempty"`
 	// Stack trace at the point of logging. Omitted when unavailable.
-	StackTrace    string `protobuf:"bytes,7,opt,name=stack_trace,json=stackTrace,proto3" json:"stack_trace,omitempty"`
+	StackTrace string `protobuf:"bytes,7,opt,name=stack_trace,json=stackTrace,proto3" json:"stack_trace,omitempty"`
+	// Name of the node this entry originated from. Set by aggregators (e.g. the
+	// gateway) that merge logs from multiple nodes; empty for single-node streams.
+	SourceNode    string `protobuf:"bytes,8,opt,name=source_node,json=sourceNode,proto3" json:"source_node,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -237,6 +240,13 @@ func (x *LogMessage) GetSourceLocation() *SourceLocation {
 func (x *LogMessage) GetStackTrace() string {
 	if x != nil {
 		return x.StackTrace
+	}
+	return ""
+}
+
+func (x *LogMessage) GetSourceNode() string {
+	if x != nil {
+		return x.SourceNode
 	}
 	return ""
 }
@@ -1227,7 +1237,7 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\x0eSourceLocation\x12\x12\n" +
 	"\x04file\x18\x01 \x01(\tR\x04file\x12\x12\n" +
 	"\x04line\x18\x02 \x01(\x05R\x04line\x12\x1a\n" +
-	"\bfunction\x18\x03 \x01(\tR\bfunction\"\x9c\x03\n" +
+	"\bfunction\x18\x03 \x01(\tR\bfunction\"\xbd\x03\n" +
 	"\n" +
 	"LogMessage\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x121\n" +
@@ -1237,7 +1247,9 @@ const file_smartcore_bos_log_v1_log_proto_rawDesc = "" +
 	"\x06fields\x18\x05 \x03(\v2,.smartcore.bos.log.v1.LogMessage.FieldsEntryR\x06fields\x12M\n" +
 	"\x0fsource_location\x18\x06 \x01(\v2$.smartcore.bos.log.v1.SourceLocationR\x0esourceLocation\x12\x1f\n" +
 	"\vstack_trace\x18\a \x01(\tR\n" +
-	"stackTrace\x1a9\n" +
+	"stackTrace\x12\x1f\n" +
+	"\vsource_node\x18\b \x01(\tR\n" +
+	"sourceNode\x1a9\n" +
 	"\vFieldsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"=\n" +
