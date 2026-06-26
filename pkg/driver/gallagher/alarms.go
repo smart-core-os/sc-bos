@@ -211,50 +211,61 @@ func (sc *SecurityEventController) run(ctx context.Context, schedule *jsontypes.
 	}
 }
 
+// maxSecurityEventPageSize caps how many events a single ListSecurityEvents
+// page may return, regardless of the requested page size.
+const maxSecurityEventPageSize = 1000
+
 func (sc *SecurityEventController) ListSecurityEvents(_ context.Context, req *securityeventpb.ListSecurityEventsRequest) (*securityeventpb.ListSecurityEventsResponse, error) {
+	if req.PageSize < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid page size")
+	}
+	pageSize := int(req.PageSize)
+	if pageSize == 0 || pageSize > maxSecurityEventPageSize {
+		pageSize = maxSecurityEventPageSize
+	}
 
-	nextPageToken := ""
-	start := sc.securityEvents.Len() - 1
-
+	// start is the index, counting from the newest event, of the first event to
+	// return. The page token is just this offset.
+	start := 0
 	if req.PageToken != "" {
-		s, err := strconv.ParseInt(req.PageToken, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		start = int(s)
-		if start < 0 || start >= sc.securityEvents.Len() {
+		s, err := strconv.Atoi(req.PageToken)
+		if err != nil || s < 0 {
 			return nil, status.Error(codes.InvalidArgument, "invalid page token")
 		}
-	}
-
-	if req.PageSize <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid page size")
-	} else if req.PageSize > int32(sc.securityEvents.Len()) {
-		req.PageSize = int32(sc.securityEvents.Len())
-	}
-
-	if req.PageSize > 1000 {
-		req.PageSize = 1000
+		start = s
 	}
 
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
-	var response securityeventpb.ListSecurityEventsResponse
-	// get the most recent ones first as that is what the UI expects
-	for i := start; i >= 0; i-- {
-		se := sc.securityEvents.Move(i)
-		if se.Value != nil {
-			response.SecurityEvents = append(response.SecurityEvents, se.Value.(*securityeventpb.SecurityEvent))
-		}
-		if len(response.SecurityEvents) >= int(req.PageSize) {
-			nextPageToken = strconv.FormatInt(int64(i-1), 10)
+
+	response := &securityeventpb.ListSecurityEventsResponse{}
+	// The ring head points at the oldest slot (the next write position), so the
+	// newest event is one step back from it. Walk backwards so the most recent
+	// events come first, as the UI expects. When the buffer isn't full yet the
+	// unwritten slots are nil and sit past the oldest event, so the first nil
+	// marks the end of the events.
+	node := sc.securityEvents
+	for n := 0; n < sc.securityEvents.Len(); n++ {
+		node = node.Prev()
+		se, ok := node.Value.(*securityeventpb.SecurityEvent)
+		if !ok {
 			break
+		}
+		// TotalSize counts every event, not just those on this page.
+		response.TotalSize++
+		if int(response.TotalSize) <= start {
+			continue // before the requested page
+		}
+		if len(response.SecurityEvents) < pageSize {
+			response.SecurityEvents = append(response.SecurityEvents, se)
 		}
 	}
 
-	response.NextPageToken = nextPageToken
-	response.TotalSize = int32(sc.securityEvents.Len())
-	return &response, nil
+	// Only hand out a token when there are more events past this page.
+	if next := start + len(response.SecurityEvents); next < int(response.TotalSize) {
+		response.NextPageToken = strconv.Itoa(next)
+	}
+	return response, nil
 }
 
 func (sc *SecurityEventController) PullSecurityEvents(_ *securityeventpb.PullSecurityEventsRequest, server grpc.ServerStreamingServer[securityeventpb.PullSecurityEventsResponse]) error {
