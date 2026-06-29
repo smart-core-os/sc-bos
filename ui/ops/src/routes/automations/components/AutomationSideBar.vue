@@ -5,6 +5,8 @@
     </template>
     <lights-config-card v-if="automationType === 'lights'"/>
     <edit-config-card/>
+    <v-divider/>
+    <logs-card/>
     <v-card-actions class="justify-end px-4 pt-0" v-if="false">
       <v-btn color="primary" variant="flat" :disabled="blockActions" @click="saveConfig">Save</v-btn>
     </v-card-actions>
@@ -23,6 +25,7 @@ import useAuthSetup from '@/composables/useAuthSetup';
 import {useSidebarServiceRouterLink} from '@/dynamic/route.js';
 import LightsConfigCard from '@/routes/automations/components/config-cards/LightsConfigCard.vue';
 import EditConfigCard from '@/routes/system/components/service-cards/EditConfigCard.vue';
+import LogsCard from '@/routes/system/components/service-cards/LogsCard.vue';
 import {useSidebarStore} from '@/stores/sidebar';
 import {useUserConfig} from '@/stores/userConfig.js';
 import {serviceName} from '@/util/gateway';
