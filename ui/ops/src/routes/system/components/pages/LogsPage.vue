@@ -5,7 +5,7 @@
       <v-spacer/>
       <v-select
           v-model="selectedNode"
-          :items="nodeNames"
+          :items="nodeItems"
           density="compact"
           hide-details
           label="Node"
@@ -17,7 +17,7 @@
       <v-select
           v-model="selectedLevel"
           :items="levelOptions"
-          :disabled="!selectedNode || blockSystemEdit"
+          :disabled="!selectedNode || blockSystemEdit || isAggregate"
           density="compact"
           hide-details
           item-title="label"
@@ -32,7 +32,7 @@
       </span>
       <v-chip v-if="downloadError" class="mr-2" color="error" size="small">{{ downloadError }}</v-chip>
       <v-btn
-          :disabled="!selectedNode || blockSystemEdit"
+          :disabled="!selectedNode || blockSystemEdit || isAggregate"
           class="mr-2"
           prepend-icon="mdi-download"
           size="small"
@@ -41,7 +41,7 @@
         Download Current
       </v-btn>
       <v-btn
-          :disabled="!selectedNode || blockSystemEdit"
+          :disabled="!selectedNode || blockSystemEdit || isAggregate"
           prepend-icon="mdi-download-multiple"
           size="small"
           variant="tonal"
@@ -76,7 +76,7 @@ import useAuthSetup from '@/composables/useAuthSetup.js';
 import LogViewport from '@/routes/system/components/log/LogViewport.vue';
 import {levelName} from '@/routes/system/components/log/format.js';
 import {useLogBuffer} from '@/routes/system/components/log/useLogBuffer.js';
-import {useCohortStore} from '@/stores/cohort.js';
+import {NodeRole, useCohortStore} from '@/stores/cohort.js';
 import {storeToRefs} from 'pinia';
 import {computed, onUnmounted, reactive, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
@@ -85,7 +85,11 @@ const route = useRoute();
 const router = useRouter();
 const {blockSystemEdit} = useAuthSetup();
 
-const {cohortNodes} = storeToRefs(useCohortStore());
+const {cohortNodes, serverRole} = storeToRefs(useCohortStore());
+
+// The gateway exposes a single aggregated Log trait under this name, merging the
+// logs of every cohort node (each message tagged with its source).
+const AGGREGATE_NAME = 'logs';
 
 // Only show nodes that have the log system service configured.
 const nodesWithLog = ref(new Set());
@@ -103,7 +107,18 @@ const nodeNames = computed(() =>
     cohortNodes.value.map(n => n.name).filter(n => n && nodesWithLog.value.has(n))
 );
 
+// Node selector options. When the connected server is a gateway it can serve the
+// whole cohort's logs at once, so offer an "All nodes" aggregate option.
+const nodeItems = computed(() => {
+  const items = nodeNames.value.map(n => ({title: n, value: n}));
+  if (serverRole.value === NodeRole.GATEWAY) {
+    items.unshift({title: 'All nodes', value: AGGREGATE_NAME});
+  }
+  return items;
+});
+
 const selectedNode = ref(route.query.node ?? null);
+const isAggregate = computed(() => selectedNode.value === AGGREGATE_NAME);
 
 const search = ref('');
 const streamError = ref(null);
@@ -130,6 +145,7 @@ const filteredMessages = computed(() => {
   return messages.value.filter(m =>
       m.message?.toLowerCase().includes(q) ||
       m.logger?.toLowerCase().includes(q) ||
+      m.source?.toLowerCase().includes(q) ||
       levelName[m.level]?.toLowerCase().includes(q)
   );
 });
@@ -158,6 +174,11 @@ async function startStreams(name) {
   levelError.value = null;
 
   pullLogMessages({name, initialCount: 200}, messagesResource);
+
+  // The aggregate endpoint only streams messages; log level and metadata are
+  // managed per node, so skip those streams for it.
+  if (name === AGGREGATE_NAME) return;
+
   pullLogLevel({name}, levelResource);
   pullLogMetadata({name}, metadataResource);
 
@@ -187,6 +208,18 @@ watch(() => levelResource.value, lvl => { if (lvl != null) selectedLevel.value =
 watch(() => levelResource.streamError, err => { levelError.value = err?.error?.message ?? null; });
 
 watch(() => metadataResource.value, md => { if (md) metadata.value = md; });
+
+// The aggregate ("All nodes") option only exists when the connected server is a
+// gateway. If the selection lands on it otherwise — e.g. a shared/bookmarked
+// ?node=logs link against a non-gateway — clear it so we don't stream against a
+// non-existent "logs" device and leave the page stuck. serverRole starts UNKNOWN,
+// so wait until it resolves before deciding.
+watch([isAggregate, serverRole], ([aggregate, role]) => {
+  if (aggregate && role !== NodeRole.UNKNOWN && role !== NodeRole.GATEWAY) {
+    selectedNode.value = null;
+    onNodeChange(null); // drop ?node=logs from the URL
+  }
+}, {immediate: true});
 
 watch(selectedNode, (name) => {
   if (name) {

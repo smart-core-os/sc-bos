@@ -354,12 +354,32 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 	return nil
 }
 
+// sanitise rewrites non-finite float values into JSON-encodable string tokens.
+// json.Marshal cannot encode NaN or ±Inf, so without this the whole pointset
+// message fails to marshal and every point (and its topic) is lost. We emit the
+// IEEE token as a string rather than null so the point still carries a value and
+// downstream consumers generate a topic name for it.
+//
+// BACnet Real present values arrive as float32 (see config.ValueSource.Scaled),
+// while scaled or float64-typed points arrive as float64, so both must be checked.
 func sanitise(points udmi.PointsEvent) {
 	for k, v := range points {
-		if pv, ok := v.PresentValue.(float64); ok {
-			if math.IsNaN(pv) || math.IsInf(pv, 0) {
-				points[k] = udmi.PointValue{PresentValue: nil}
-			}
+		var f float64
+		switch pv := v.PresentValue.(type) {
+		case float32:
+			f = float64(pv)
+		case float64:
+			f = pv
+		default:
+			continue
+		}
+		switch {
+		case math.IsNaN(f):
+			points[k] = udmi.PointValue{PresentValue: "NaN"}
+		case math.IsInf(f, 1):
+			points[k] = udmi.PointValue{PresentValue: "Infinity"}
+		case math.IsInf(f, -1):
+			points[k] = udmi.PointValue{PresentValue: "-Infinity"}
 		}
 	}
 }

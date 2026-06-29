@@ -26,7 +26,7 @@ const (
 
 type Driver struct {
 	*service.Service[config.Root]
-	announcer   node.Announcer
+	announcer   *node.ReplaceAnnouncer
 	logger      *zap.Logger
 	ticker      *time.Ticker
 	systemCheck service.SystemCheck
@@ -39,7 +39,8 @@ type factory struct{}
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 	d := &Driver{
-		announcer:   services.Node,
+		announcer:   node.NewReplaceAnnouncer(services.Node),
+		logger:      logger,
 		systemCheck: services.SystemCheck,
 	}
 	d.Service = service.New(
@@ -52,15 +53,14 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 		}),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", logger)
-		})),
+		}), service.RetryWithMinDelay(30*time.Second)),
 	)
-	d.logger = logger
 	return d
 }
 
 func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
-	announcer, undo := node.AnnounceScope(d.announcer)
+	announcer := d.announcer.Replace(ctx)
 	grp, ctx := errgroup.WithContext(ctx)
 
 	if d.ticker != nil {
@@ -122,7 +122,6 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	go func() {
 		err := grp.Wait()
 		d.logger.Error("run error", zap.String("error", err.Error()))
-		undo()
 	}()
 	return nil
 }

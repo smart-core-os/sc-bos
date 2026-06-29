@@ -668,7 +668,8 @@ logger: jspb.Message.getFieldWithDefault(msg, 3, ""),
 message: jspb.Message.getFieldWithDefault(msg, 4, ""),
 fieldsMap: (f = msg.getFieldsMap()) ? f.toObject(includeInstance, undefined) : [],
 sourceLocation: (f = msg.getSourceLocation()) && proto.smartcore.bos.log.v1.SourceLocation.toObject(includeInstance, f),
-stackTrace: jspb.Message.getFieldWithDefault(msg, 7, "")
+stackTrace: jspb.Message.getFieldWithDefault(msg, 7, ""),
+sourceNode: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -736,6 +737,10 @@ proto.smartcore.bos.log.v1.LogMessage.deserializeBinaryFromReader = function(msg
     case 7:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setStackTrace(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setSourceNode(value);
       break;
     default:
       reader.skipField();
@@ -816,6 +821,13 @@ jspb.internal.public_for_gencode.serializeMapToBinary(
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getSourceNode();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -988,6 +1000,24 @@ proto.smartcore.bos.log.v1.LogMessage.prototype.getStackTrace = function() {
  */
 proto.smartcore.bos.log.v1.LogMessage.prototype.setStackTrace = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string source_node = 8;
+ * @return {string}
+ */
+proto.smartcore.bos.log.v1.LogMessage.prototype.getSourceNode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.log.v1.LogMessage} returns this
+ */
+proto.smartcore.bos.log.v1.LogMessage.prototype.setSourceNode = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 

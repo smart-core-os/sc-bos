@@ -62,7 +62,13 @@ func (sc *SecurityEventController) getEvents() ([]*EventPayload, error) {
 			result = append(result, &ep)
 		}
 
-		if eventList.Next == nil || eventList.Next.Href == "" {
+		// The Gallagher events feed is a "following" API: it keeps returning a
+		// next link (a pos cursor) even once we've caught up. When a page comes
+		// back empty that link points at the same position, so following it
+		// again just re-requests the identical URL in a tight loop. Stop once a
+		// page returns no events or the next link doesn't advance.
+		if len(eventList.Events) == 0 ||
+			eventList.Next == nil || eventList.Next.Href == "" || eventList.Next.Href == url {
 			break
 		}
 		url = eventList.Next.Href

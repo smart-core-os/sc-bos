@@ -34,7 +34,10 @@ func (c *cohort) ShouldIgnore(addr string) bool {
 
 // remoteNode describes a remote node enrolled in the cohort.
 type remoteNode struct {
-	conn  *grpc.ClientConn
+	// conn talks to the node. It's usually a *grpc.ClientConn, but may be an
+	// in-process loopback (grpc.ClientConnInterface) when the node is this gateway
+	// itself — see the self node built by the log aggregator.
+	conn  grpc.ClientConnInterface
 	addr  string // the network address for the node, used to identify the node. Will not change after creation.
 	isHub bool   // true if the node is the hub
 
@@ -44,7 +47,7 @@ type remoteNode struct {
 	Devices  *rx.Set[remoteDesc]
 }
 
-func newRemoteNode(addr string, conn *grpc.ClientConn) *remoteNode {
+func newRemoteNode(addr string, conn grpc.ClientConnInterface) *remoteNode {
 	return &remoteNode{
 		conn:    conn,
 		addr:    addr,

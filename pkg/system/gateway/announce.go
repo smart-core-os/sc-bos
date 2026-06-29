@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	reflectionv1alphapb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/protobuf/proto"
@@ -194,11 +195,17 @@ func (a *announcer) announceRemoteNode(ctx context.Context) {
 
 	// The types and services we return via reflection depends on whether the remote node is a gateway or not.
 	// These update the reflection server when the gateway status changes.
+	// Reflection needs a real *grpc.ClientConn; cohort nodes always have one (only
+	// the log aggregator's self node uses a loopback, and it isn't reflected here).
 	setupReflection := func() {
-		a.reflection.Add(a.node.conn)
+		if cc, ok := a.node.conn.(*grpc.ClientConn); ok {
+			a.reflection.Add(cc)
+		}
 	}
 	closeReflection := func() {
-		a.reflection.Remove(a.node.conn)
+		if cc, ok := a.node.conn.(*grpc.ClientConn); ok {
+			a.reflection.Remove(cc)
+		}
 	}
 	defer closeReflection()
 

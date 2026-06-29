@@ -10,6 +10,7 @@
     {"path": "/__/vanti-ugs-cohort/", "filePath": "./example/config/vanti-ugs-cohort"}
   ],
   "systems": {
+    "log": {},
     "authn": {
       "user": {
         "fileAccounts": true,
