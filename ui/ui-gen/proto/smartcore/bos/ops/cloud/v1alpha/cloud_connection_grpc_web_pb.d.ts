@@ -34,6 +34,13 @@ export class CloudConnectionApiClient {
                response: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.UnlinkCloudConnectionResponse) => void
   ): grpcWeb.ClientReadableStream<smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.UnlinkCloudConnectionResponse>;
 
+  renewCloudConnection(
+    request: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.RenewCloudConnectionRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.RenewCloudConnectionResponse) => void
+  ): grpcWeb.ClientReadableStream<smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.RenewCloudConnectionResponse>;
+
   getCloudConnectionDefaults(
     request: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.GetCloudConnectionDefaultsRequest,
     metadata: grpcWeb.Metadata | undefined,
@@ -74,6 +81,11 @@ export class CloudConnectionApiPromiseClient {
     request: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.UnlinkCloudConnectionRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.UnlinkCloudConnectionResponse>;
+
+  renewCloudConnection(
+    request: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.RenewCloudConnectionRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.RenewCloudConnectionResponse>;
 
   getCloudConnectionDefaults(
     request: smartcore_bos_ops_cloud_v1alpha_cloud_connection_pb.GetCloudConnectionDefaultsRequest,

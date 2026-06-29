@@ -2,16 +2,19 @@ package sim
 
 import (
 	"bytes"
-	"encoding/base64"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 func checkInURL(base string) string { return base + "/v1/device/check-in" }
@@ -19,19 +22,18 @@ func checkInURL(base string) string { return base + "/v1/device/check-in" }
 // checkInEnv holds test fixtures for check-in tests.
 type checkInEnv struct {
 	testServer    *httptest.Server
-	client        *http.Client
+	client        *http.Client // management client (trusts server, no client cert)
+	deviceClient  *http.Client // presents the enrolled client certificate (mTLS)
 	site          Site
 	node          Node
-	secret        []byte // raw secret returned from create node
-	accessToken   string // JWT access token obtained from /v1/device/token
 	configVersion ConfigVersion
 }
 
-// setupCheckInEnv creates a test environment with a site, node, and config version.
+// setupCheckInEnv creates a test environment with a site, an enrolled node, and a config version.
 func setupCheckInEnv(t *testing.T) checkInEnv {
 	t.Helper()
 
-	ts := newTestServer(t)
+	ts, _, apiServer := newTestServerWithStore(t)
 	client := ts.Client()
 
 	// Create site
@@ -40,21 +42,24 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 		map[string]string{"name": "Test Site"}, &site)
 	assertStatus(t, resp, http.StatusCreated)
 
-	// Create node (capture secret)
-	var created CreateNodeResponse
+	// Create node
+	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "checkin-node",
 		"siteId":   sid(site.ID),
-	}, &created)
+	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
 
-	// Obtain an access token via the token endpoint
-	accessToken := obtainAccessToken(t, client, ts.URL, created.ID, created.Secret)
+	// Enroll the node and build a client that presents the issued certificate.
+	var ec EnrollmentCode
+	resp = doRequest(t, client, "POST", listNodeEnrollmentCodesURL(ts.URL, node.ID), nil, &ec)
+	assertStatus(t, resp, http.StatusCreated)
+	deviceClient := mtlsClientFor(apiServer, enrollCert(t, ts, ec.Code))
 
 	// Create config version
 	var cv ConfigVersion
 	resp = doRequest(t, client, "POST", listConfigVersionsURL(ts.URL), map[string]any{
-		"nodeId":      sid(created.ID),
+		"nodeId":      sid(node.ID),
 		"description": "v1.0.0",
 		"payload":     []byte("config-data"),
 	}, &cv)
@@ -63,39 +68,16 @@ func setupCheckInEnv(t *testing.T) checkInEnv {
 	return checkInEnv{
 		testServer:    ts,
 		client:        client,
+		deviceClient:  deviceClient,
 		site:          site,
-		node:          created.Node,
-		secret:        created.Secret,
-		accessToken:   accessToken,
+		node:          node,
 		configVersion: cv,
 	}
 }
 
-// obtainAccessToken exchanges client credentials for a JWT access token via the token endpoint.
-func obtainAccessToken(t *testing.T, client *http.Client, baseURL string, nodeID int64, secret []byte) string {
-	t.Helper()
-	encodedSecret := base64.StdEncoding.EncodeToString(secret)
-	resp, err := client.PostForm(baseURL+"/v1/device/token", url.Values{
-		"grant_type":    {"client_credentials"},
-		"client_id":     {sid(nodeID)},
-		"client_secret": {encodedSecret},
-	})
-	if err != nil {
-		t.Fatalf("token request failed: %v", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("token endpoint returned %d", resp.StatusCode)
-	}
-	var tokenResp tokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		t.Fatalf("failed to decode token response: %v", err)
-	}
-	return tokenResp.AccessToken
-}
-
-// doCheckIn performs a check-in request with a JWT access token and optional request body.
-func doCheckIn(t *testing.T, client *http.Client, url string, accessToken string, reqBody any, res any) *http.Response {
+// doCheckIn performs a check-in request over the given client (which presents the
+// client certificate for mTLS-authenticated endpoints) with an optional body.
+func doCheckIn(t *testing.T, client *http.Client, url string, reqBody any, res any) *http.Response {
 	t.Helper()
 	var body io.Reader
 	if reqBody != nil {
@@ -108,9 +90,6 @@ func doCheckIn(t *testing.T, client *http.Client, url string, accessToken string
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
-	}
-	if accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -132,7 +111,7 @@ func TestCheckIn_NoDeployment(t *testing.T) {
 	e := setupCheckInEnv(t)
 
 	var got CheckInResponse
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.CheckIn.NodeID != e.node.ID {
@@ -167,7 +146,7 @@ func TestCheckIn_PendingDeployment(t *testing.T) {
 
 	// Check in
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -198,7 +177,7 @@ func TestCheckIn_InProgressDeployment(t *testing.T) {
 
 	// Check in
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -229,7 +208,7 @@ func TestCheckIn_ReturnsNewestActive(t *testing.T) {
 
 	// Check in — should return the one with higher ID
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig == nil {
@@ -267,7 +246,7 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 
 	// Check in — should have no active deployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken, nil, &got)
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), nil, &got)
 	assertStatus(t, resp, http.StatusOK)
 
 	if got.LatestConfig != nil {
@@ -275,40 +254,42 @@ func TestCheckIn_CompletedAndFailedExcluded(t *testing.T) {
 	}
 }
 
-func TestCheckIn_MissingAuthHeader(t *testing.T) {
+func TestCheckIn_NoClientCertificate(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// POST with no Authorization header — empty access token
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), "", nil, nil)
+	// The management client presents no client certificate, so the per-endpoint
+	// guard rejects the request.
+	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), nil, nil)
 	assertStatus(t, resp, http.StatusUnauthorized)
 }
 
-func TestCheckIn_InvalidBearerToken(t *testing.T) {
+func TestCheckIn_UnrecognisedClientCertificate(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	// Issue a valid-looking JWT signed with a different key
-	otherIssuer, err := newTokenIssuer()
+	// A self-signed certificate that does not chain to the sim's dev CA.
+	key, err := pki.GenerateECP256Key()
 	if err != nil {
-		t.Fatalf("newTokenIssuer: %v", err)
+		t.Fatalf("generate key: %v", err)
 	}
-	token, _, err := otherIssuer.issue(e.node.ID)
+	der, err := pki.CreateSelfSignedCertificate(&x509.Certificate{
+		Subject: pkix.Name{CommonName: sid(e.node.ID)},
+	}, key)
 	if err != nil {
-		t.Fatalf("issue: %v", err)
+		t.Fatalf("self-signed cert: %v", err)
 	}
-
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), token, nil, nil)
-	assertStatus(t, resp, http.StatusUnauthorized)
-}
-
-func TestCheckIn_MalformedBase64(t *testing.T) {
-	e := setupCheckInEnv(t)
+	bogus := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{
+		Certificates:       []tls.Certificate{{Certificate: [][]byte{der}, PrivateKey: key}},
+		InsecureSkipVerify: true, // we are testing server-side client-cert rejection, not server verification
+	}}}
 
 	req, err := http.NewRequest("POST", checkInURL(e.testServer.URL), nil)
 	if err != nil {
-		t.Fatalf("failed to create request: %v", err)
+		t.Fatalf("create request: %v", err)
 	}
-	req.Header.Set("Authorization", "Bearer !!!not-a-valid-token!!!")
-	resp, err := e.client.Do(req)
+	// The self-signed certificate doesn't match the server's advertised client
+	// CAs, so the TLS stack omits it; the server sees no client certificate and
+	// the guard returns 401 (not a handshake rejection).
+	resp, err := bogus.Do(req)
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
@@ -332,7 +313,7 @@ func TestCheckIn_WithCurrentDeployment(t *testing.T) {
 
 	// Check in with currentDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -361,7 +342,7 @@ func TestCheckIn_WithInstallingDeployment(t *testing.T) {
 
 	// Check in with installingDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -394,7 +375,7 @@ func TestCheckIn_WithFailedDeployment(t *testing.T) {
 
 	// Check in with failedDeployment
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep.ID, Reason: "disk full"}}, &got)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -419,16 +400,16 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 		map[string]string{"name": "Site 2"}, &site2)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var created2 CreateNodeResponse
+	var node2 Node
 	resp = doRequest(t, e.client, "POST", listNodesURL(e.testServer.URL), map[string]any{
 		"hostname": "other-node",
 		"siteId":   sid(site2.ID),
-	}, &created2)
+	}, &node2)
 	assertStatus(t, resp, http.StatusCreated)
 
 	var cv2 ConfigVersion
 	resp = doRequest(t, e.client, "POST", listConfigVersionsURL(e.testServer.URL), map[string]any{
-		"nodeId":      sid(created2.ID),
+		"nodeId":      sid(node2.ID),
 		"description": "v1",
 		"payload":     []byte("data"),
 	}, &cv2)
@@ -441,7 +422,7 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in as first node with failedDeployment pointing to second node's deployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: dep2.ID, Reason: "bad"}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
@@ -449,7 +430,7 @@ func TestCheckIn_FailedDeploymentWrongNode(t *testing.T) {
 func TestCheckIn_FailedDeploymentNotFound(t *testing.T) {
 	e := setupCheckInEnv(t)
 
-	resp := doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{FailedDeployment: &CheckInFailedDeployment{ID: 99999}}, nil)
 	assertStatus(t, resp, http.StatusBadRequest)
 }
@@ -465,7 +446,7 @@ func TestCheckIn_InstallingAdvancesPendingToInProgress(t *testing.T) {
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with installingDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -493,7 +474,7 @@ func TestCheckIn_InstallingDoesNotAdvanceNonPending(t *testing.T) {
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with installingDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -521,7 +502,7 @@ func TestCheckIn_CurrentAdvancesInProgressToCompleted(t *testing.T) {
 	assertStatus(t, resp, http.StatusOK)
 
 	// Check in with currentDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -545,7 +526,7 @@ func TestCheckIn_CurrentDoesNotAdvanceNonInProgress(t *testing.T) {
 	assertStatus(t, resp, http.StatusCreated)
 
 	// Check in with currentDeployment
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{CurrentDeployment: &CheckInDeploymentRef{ID: dep.ID}}, nil)
 	assertStatus(t, resp, http.StatusOK)
 
@@ -570,7 +551,7 @@ func TestCheckIn_InstallingWithErrorAndAttempts(t *testing.T) {
 
 	// Check in with installingDeployment including error and attempts
 	var got CheckInResponse
-	resp = doCheckIn(t, e.client, checkInURL(e.testServer.URL), e.accessToken,
+	resp = doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL),
 		CheckInRequest{InstallingDeployment: &CheckInInstallingDeployment{
 			ID:       dep.ID,
 			Error:    "transient: timeout",

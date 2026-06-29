@@ -17,6 +17,18 @@ type ConfigVersion struct {
 	CreateTime  time.Time
 }
 
+type Credential struct {
+	ID           int64
+	NodeID       int64
+	CredentialID string
+	Slot         string
+	Serial       string
+	Fingerprint  []byte
+	NotBefore    time.Time
+	NotAfter     time.Time
+	CreateTime   time.Time
+}
+
 type Deployment struct {
 	ID              int64
 	ConfigVersionID int64
@@ -27,18 +39,18 @@ type Deployment struct {
 }
 
 type EnrollmentCode struct {
-	ID        int64
-	NodeID    int64
-	Code      string
-	ExpiresAt time.Time
-	UsedAt    sql.NullTime
+	ID         int64
+	NodeID     int64
+	Code       string
+	ExpiresAt  time.Time
+	UsedAt     sql.NullTime
+	TargetSlot string
 }
 
 type Node struct {
 	ID         int64
 	Hostname   string
 	SiteID     int64
-	SecretHash []byte
 	CreateTime time.Time
 }
 

@@ -348,8 +348,15 @@ func (c *Certs) FillDefaults() *Certs {
 type Cloud struct {
 	// RegisterURL is the default URL for the device-registration POST endpoint
 	// (e.g. "https://scc.example.com/v1/device/register"). Used when an operator
-	// enrolls via the Ops UI without supplying an explicit register URL.
+	// enrolls via the Ops UI without supplying an explicit register URL. Its
+	// origin (scheme+host) is also where the check-in and renewal endpoints live.
 	RegisterURL string `json:"registerUrl,omitempty"`
+
+	// InsecureSkipVerify disables verification of the SCC server certificate on
+	// the enrollment, check-in, and renewal connections. DEV ONLY — for talking
+	// to a local cloudsim whose dev CA is not in the system trust store. Never
+	// set this against a real SCC.
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	PollInterval *jsontypes.Duration `json:"pollInterval,omitempty"`
 	// Preserve old or incomplete downloads instead of deleting them on startup or when they expire.

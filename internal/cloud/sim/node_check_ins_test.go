@@ -27,7 +27,7 @@ type nodeCheckInsEnv struct {
 func setupNodeCheckInsEnv(t *testing.T) nodeCheckInsEnv {
 	t.Helper()
 
-	ts, s := newTestServerWithStore(t)
+	ts, s, _ := newTestServerWithStore(t)
 	client := ts.Client()
 
 	// Create site and node via HTTP
@@ -115,7 +115,7 @@ func TestNodeCheckIns_Get(t *testing.T) {
 
 func TestNodeCheckIns_List(t *testing.T) {
 	t.Run("empty list", func(t *testing.T) {
-		ts, _ := newTestServerWithStore(t)
+		ts, _, _ := newTestServerWithStore(t)
 		client := ts.Client()
 
 		// Create site and node but no check-ins
@@ -184,7 +184,7 @@ func TestNodeCheckIns_List(t *testing.T) {
 }
 
 func TestNodeCheckIns_Pagination(t *testing.T) {
-	ts, s := newTestServerWithStore(t)
+	ts, s, _ := newTestServerWithStore(t)
 	defer ts.Close()
 	client := ts.Client()
 

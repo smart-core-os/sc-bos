@@ -23,9 +23,8 @@ func GenerateECP256Key() (*ecdsa.PrivateKey, error) {
 // alternative names.
 //
 // The result is raw DER (the wire format for application/pkcs10); callers
-// transferring it over HTTP base64-encode it themselves
-// (Content-Transfer-Encoding: base64). The signature algorithm is derived from
-// key (ECDSA P-256 keys sign with ECDSA-SHA256).
+// transferring it over HTTP base64-encode it themselves. The signature algorithm
+// is derived from key (ECDSA P-256 keys sign with ECDSA-SHA256).
 func CreateCSRDER(key crypto.Signer, commonName string, dnsSANs ...string) ([]byte, error) {
 	tmpl := &x509.CertificateRequest{
 		Subject:  pkix.Name{CommonName: commonName},

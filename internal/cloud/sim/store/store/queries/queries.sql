@@ -34,8 +34,8 @@ WHERE id = :id;
 -- Nodes
 
 -- name: CreateNode :one
-INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
-VALUES (:hostname, :site_id, :secret_hash, datetime('now', 'subsec'))
+INSERT INTO nodes (hostname, site_id, create_time)
+VALUES (:hostname, :site_id, datetime('now', 'subsec'))
 RETURNING *;
 
 -- name: GetNode :one
@@ -71,9 +71,6 @@ UPDATE nodes
 SET hostname = :hostname, site_id = :site_id
 WHERE id = :id
 RETURNING *;
-
--- name: UpdateNodeSecretHash :exec
-UPDATE nodes SET secret_hash = :secret_hash WHERE id = :id;
 
 -- name: DeleteNode :execrows
 DELETE FROM nodes
@@ -200,9 +197,6 @@ WHERE config_version_id IN (
     SELECT id FROM config_versions WHERE node_id = :node_id
 ) AND status = 'pending';
 
--- name: GetNodeBySecretHash :one
-SELECT * FROM nodes WHERE secret_hash = :secret_hash;
-
 -- name: GetActiveDeploymentByNode :one
 SELECT d.*
 FROM deployments d
@@ -214,8 +208,8 @@ LIMIT 1;
 -- Enrollment Codes
 
 -- name: CreateEnrollmentCode :one
-INSERT INTO enrollment_codes (node_id, code, expires_at)
-VALUES (:node_id, :code, :expires_at)
+INSERT INTO enrollment_codes (node_id, code, expires_at, target_slot)
+VALUES (:node_id, :code, :expires_at, :target_slot)
 RETURNING *;
 
 -- name: GetActiveEnrollmentCode :one
@@ -224,3 +218,38 @@ WHERE code = :code AND used_at IS NULL AND expires_at > datetime('now', 'subsec'
 
 -- name: MarkEnrollmentCodeUsed :exec
 UPDATE enrollment_codes SET used_at = datetime('now', 'subsec') WHERE id = :id;
+
+-- Credentials
+
+-- name: UpsertCredential :one
+-- Fills (or replaces) the given node's credential slot at registration. A fresh
+-- credential_id is minted per code exchange, so a re-enrollment of the same slot
+-- replaces the marker and all cert metadata.
+INSERT INTO credentials (node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time)
+VALUES (:node_id, :credential_id, :slot, :serial, :fingerprint, :not_before, :not_after, datetime('now', 'subsec'))
+ON CONFLICT (node_id, slot) DO UPDATE SET
+    credential_id = excluded.credential_id,
+    serial = excluded.serial,
+    fingerprint = excluded.fingerprint,
+    not_before = excluded.not_before,
+    not_after = excluded.not_after,
+    create_time = excluded.create_time
+RETURNING *;
+
+-- name: GetCredentialByCredentialID :one
+SELECT * FROM credentials WHERE credential_id = :credential_id;
+
+-- name: GetCredentialsByNode :many
+SELECT * FROM credentials WHERE node_id = :node_id ORDER BY slot;
+
+-- name: UpdateCredentialCert :one
+-- Renewal: replace the cert metadata for an existing credential, keeping the same
+-- credential_id and slot.
+UPDATE credentials
+SET serial = :serial, fingerprint = :fingerprint, not_before = :not_before, not_after = :not_after
+WHERE credential_id = :credential_id
+RETURNING *;
+
+-- name: DeleteCredential :execrows
+-- Retire a credential (clears its slot).
+DELETE FROM credentials WHERE credential_id = :credential_id;

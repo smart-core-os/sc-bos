@@ -39,7 +39,7 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 				return false
 			}
 			if sameRegistration(cur, snap.Registration) {
-				continue // health-only update, not a registration change
+				continue // health-only update (or renewal), not a (re-)enrollment change
 			}
 			cur = snap.Registration
 			if cur == nil {
@@ -58,8 +58,7 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 			continue
 		}
 		logger.Debug("checking for deployment updates",
-			zap.String("bosapi", cur.BosapiRoot),
-			zap.String("clientId", cur.ClientID))
+			zap.String("nodeId", cur.NodeID()))
 		needReboot, err := conn.Update(ctx)
 		if errors.Is(err, ErrNotRegistered) {
 			continue
@@ -72,9 +71,12 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 	}
 }
 
+// sameRegistration reports whether a and b represent the same enrolled identity.
+// It compares node id (stable across renewals), so a routine certificate renewal
+// is not treated as a re-enrollment that would reset the poll phase.
 func sameRegistration(a, b *Registration) bool {
 	if a == nil || b == nil {
 		return a == nil && b == nil
 	}
-	return *a == *b
+	return a.NodeID() == b.NodeID()
 }

@@ -2,25 +2,27 @@ package opsapi_test
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
 	"errors"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/internal/opsapi"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
@@ -29,8 +31,8 @@ const nodeName = "test-node"
 
 func newTestEnv(t *testing.T, opts ...cloud.ConnOption) (*cloud.Conn, cloudpb.CloudConnectionApiClient) {
 	t.Helper()
-	regDir := t.TempDir()
-	regStore := cloud.NewFileRegistrationStore(regDir + "/registration.json")
+	credDir := t.TempDir()
+	regStore := cloud.NewFileRegistrationStore(filepath.Join(credDir, "registration.json"))
 
 	depRoot, err := os.OpenRoot(t.TempDir())
 	if err != nil {
@@ -39,7 +41,7 @@ func newTestEnv(t *testing.T, opts ...cloud.ConnOption) (*cloud.Conn, cloudpb.Cl
 	t.Cleanup(func() { _ = depRoot.Close() })
 	depStore := cloud.NewDeploymentStore(depRoot)
 
-	conn, err := cloud.OpenConn(t.Context(), regStore, depStore, opts...)
+	conn, err := cloud.OpenConn(t.Context(), regStore, depStore, "", opts...)
 	if err != nil {
 		t.Fatalf("OpenConn: %v", err)
 	}
@@ -50,25 +52,77 @@ func newTestEnv(t *testing.T, opts ...cloud.ConnOption) (*cloud.Conn, cloudpb.Cl
 	return conn, client
 }
 
-// fakeRegisterServer returns an httptest.Server that accepts any POST and responds
-// with a Registration JSON payload.
-func fakeRegisterServer(t *testing.T) (*httptest.Server, cloud.Registration) {
+// fakeRegisterServer returns an httptest.Server that signs a submitted CSR with a
+// throwaway CA, issuing a leaf whose CN is nodeID — mimicking the SCC registration
+// endpoint. It returns the server.
+func fakeRegisterServer(t *testing.T, nodeID string) *httptest.Server {
 	t.Helper()
-	reg := cloud.Registration{
-		ClientID:     "client-id-test",
-		ClientSecret: "c2VjcmV0", // base64("secret")
-		BosapiRoot:   "http://127.0.0.1:9999",
+	caKey, err := pki.GenerateECP256Key()
+	if err != nil {
+		t.Fatalf("ca key: %v", err)
 	}
+	caDER, err := pki.CreateSelfSignedCertificate(&x509.Certificate{
+		Subject:               pkix.Name{CommonName: "test CA"},
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}, caKey)
+	if err != nil {
+		t.Fatalf("ca cert: %v", err)
+	}
+	caTLS := &tls.Certificate{Certificate: [][]byte{caDER}, PrivateKey: caKey}
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(reg)
+		body, _ := io.ReadAll(io.LimitReader(r.Body, 16*1024))
+		der, err := base64.StdEncoding.DecodeString(string(body))
+		if err != nil {
+			http.Error(w, "bad base64", http.StatusBadRequest)
+			return
+		}
+		csr, err := pki.ParseCSRDER(der)
+		if err != nil {
+			http.Error(w, "bad csr", http.StatusBadRequest)
+			return
+		}
+		chainPEM, err := pki.CreateCertificateChain(caTLS, &x509.Certificate{
+			Subject:     pkix.Name{CommonName: nodeID},
+			KeyUsage:    x509.KeyUsageDigitalSignature,
+			ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		}, csr.PublicKey)
+		if err != nil {
+			http.Error(w, "sign failed", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/pem-certificate-chain")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write(chainPEM)
 	}))
 	t.Cleanup(srv.Close)
-	return srv, reg
+	return srv
+}
+
+// newTestRegistration builds a self-signed credential whose leaf CN is nodeID,
+// for driving conn.Register directly without an HTTP round-trip.
+func newTestRegistration(t *testing.T, nodeID string) *cloud.Registration {
+	t.Helper()
+	key, err := pki.GenerateECP256Key()
+	if err != nil {
+		t.Fatalf("key: %v", err)
+	}
+	der, err := pki.CreateSelfSignedCertificate(&x509.Certificate{
+		Subject: pkix.Name{CommonName: nodeID},
+	}, key)
+	if err != nil {
+		t.Fatalf("cert: %v", err)
+	}
+	leaf, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	return &cloud.Registration{Key: key, Chain: []*x509.Certificate{leaf}}
 }
 
 // fakeCloudClient is a cloud.Client whose CheckIn error can be changed at runtime.
-// Start with err = nil to simulate a healthy connection, then set err to inject failures.
 type fakeCloudClient struct {
 	mu  sync.Mutex
 	err error
@@ -91,11 +145,16 @@ func (f *fakeCloudClient) DownloadPayload(_ context.Context, _ string) (io.ReadC
 	return nil, errors.New("not used in tests")
 }
 
-// withSucceedingClient returns a ConnOption that replaces the real HTTP client with a
-// fake that always returns success from CheckIn. Use in tests that need registration to
-// succeed but do not care about real server interaction.
+func (f *fakeCloudClient) Renew(_ context.Context) (*cloud.Registration, error) {
+	return nil, errors.New("not used in tests")
+}
+
+func (f *fakeCloudClient) SetRegistration(_ *cloud.Registration) {}
+
+// withSucceedingClient replaces the real HTTP client with a fake that always
+// succeeds at CheckIn. Use in tests that need registration to succeed.
 func withSucceedingClient() cloud.ConnOption {
-	return cloud.WithClientFactory(func(_ cloud.Registration) cloud.Client {
+	return cloud.WithClientFactory(func(_ *cloud.Registration) cloud.Client {
 		return &fakeCloudClient{}
 	})
 }
@@ -138,15 +197,13 @@ func TestGetCloudConnection_WrongName(t *testing.T) {
 
 func TestRegisterCloudConnection_EnrollmentCode(t *testing.T) {
 	_, client := newTestEnv(t, withSucceedingClient())
-	fakeSrv, wantReg := fakeRegisterServer(t)
+	fakeSrv := fakeRegisterServer(t, "node-123")
 
 	resp, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
 		Name: nodeName,
-		Method: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode_{
-			EnrollmentCode: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode{
-				Code:        "ABC123",
-				RegisterUrl: fakeSrv.URL,
-			},
+		EnrollmentCode: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode{
+			Code:        "ABC123",
+			RegisterUrl: fakeSrv.URL,
 		},
 	})
 	if err != nil {
@@ -156,113 +213,61 @@ func TestRegisterCloudConnection_EnrollmentCode(t *testing.T) {
 	if got.State == cloudpb.CloudConnection_UNCONFIGURED {
 		t.Error("state should not be UNCONFIGURED after registration")
 	}
-	if got.ClientId != wantReg.ClientID {
-		t.Errorf("ClientId = %q, want %q", got.ClientId, wantReg.ClientID)
-	}
-	if got.BosapiRoot != wantReg.BosapiRoot {
-		t.Errorf("BosapiRoot = %q, want %q", got.BosapiRoot, wantReg.BosapiRoot)
+	// The issued cert's CN (node id) is surfaced as NodeId.
+	if got.NodeId != "node-123" {
+		t.Errorf("NodeId = %q, want node-123", got.NodeId)
 	}
 }
 
-func TestRegisterCloudConnection_Manual(t *testing.T) {
+func TestRegisterCloudConnection_RequiresEnrollmentCode(t *testing.T) {
 	_, client := newTestEnv(t, withSucceedingClient())
-	wantReg := cloud.Registration{
-		ClientID:     "manual-client-id",
-		ClientSecret: "manual-secret",
-		BosapiRoot:   "https://bosapi.example.com",
-	}
-
-	resp, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
+	_, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
 		Name: nodeName,
-		Method: &cloudpb.RegisterCloudConnectionRequest_Manual{
-			Manual: &cloudpb.RegisterCloudConnectionRequest_ManualCredentials{
-				ClientId:     wantReg.ClientID,
-				ClientSecret: wantReg.ClientSecret,
-				BosapiRoot:   wantReg.BosapiRoot,
-			},
+	})
+	if err == nil {
+		t.Fatal("expected error when enrollment_code is absent")
+	}
+	if s, ok := status.FromError(err); !ok || s.Code() != codes.InvalidArgument {
+		t.Errorf("got %v, want InvalidArgument", err)
+	}
+}
+
+// TestRegisterCloudConnection_RejectedCode pins that a 401 from the registration
+// endpoint (SCC returns a generic {error:"unauthorized"} for a bad/expired/used
+// code) is surfaced as invalid_enrollment_code — the register endpoint's only
+// authorisation is the code, so a 401 there can only mean the code was rejected.
+func TestRegisterCloudConnection_RejectedCode(t *testing.T) {
+	_, client := newTestEnv(t, withSucceedingClient())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"unauthorized","message":"Invalid enrollment code"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	_, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
+		Name: nodeName,
+		EnrollmentCode: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode{
+			Code:        "BADCODE",
+			RegisterUrl: srv.URL,
 		},
 	})
-	if err != nil {
-		t.Fatalf("RegisterCloudConnection: %v", err)
+	if err == nil {
+		t.Fatal("expected error for a rejected enrollment code")
 	}
-	got := resp.CloudConnection
-	want := &cloudpb.CloudConnection{
-		Name:       nodeName,
-		State:      cloudpb.CloudConnection_CONNECTING,
-		ClientId:   wantReg.ClientID,
-		BosapiRoot: wantReg.BosapiRoot,
-	}
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
-	}
-}
-
-// TestRegisterCloudConnection_Manual_ErrorCodes pins the sentinel strings returned for
-// each category of credential-check failure on the manual registration path.
-func TestRegisterCloudConnection_Manual_ErrorCodes(t *testing.T) {
-	tests := []struct {
-		name      string
-		clientErr error
-		wantCode  codes.Code
-		wantMsg   string
-	}{
-		{
-			name:      "invalid_client_credentials from oauth2.RetrieveError",
-			clientErr: &oauth2.RetrieveError{Response: &http.Response{StatusCode: http.StatusUnauthorized}},
-			wantCode:  codes.PermissionDenied,
-			wantMsg:   "invalid_client_credentials",
-		},
-		{
-			name:      "server_unreachable from net.Error",
-			clientErr: &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection refused")},
-			wantCode:  codes.Unavailable,
-			wantMsg:   "server_unreachable",
-		},
-		{
-			name:      "credential_check_failed for other errors",
-			clientErr: errors.New("unexpected server error"),
-			wantCode:  codes.PermissionDenied,
-			wantMsg:   "credential_check_failed",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			fc := &fakeCloudClient{err: tc.clientErr}
-			_, client := newTestEnv(t, cloud.WithClientFactory(
-				func(_ cloud.Registration) cloud.Client { return fc },
-			))
-
-			_, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
-				Name: nodeName,
-				Method: &cloudpb.RegisterCloudConnectionRequest_Manual{
-					Manual: &cloudpb.RegisterCloudConnectionRequest_ManualCredentials{
-						ClientId:     "id",
-						ClientSecret: "secret",
-						BosapiRoot:   "http://example.com",
-					},
-				},
-			})
-			if err == nil {
-				t.Fatal("expected error, got nil")
-			}
-			assertStatusError(t, err, tc.wantCode, tc.wantMsg)
-		})
-	}
+	assertStatusError(t, err, codes.PermissionDenied, "invalid_enrollment_code")
 }
 
 func TestUnlinkCloudConnection(t *testing.T) {
 	conn, client := newTestEnv(t, withSucceedingClient())
-	fakeSrv, _ := fakeRegisterServer(t)
+	fakeSrv := fakeRegisterServer(t, "node-123")
 
 	// Register first.
 	_, err := client.RegisterCloudConnection(context.Background(), &cloudpb.RegisterCloudConnectionRequest{
 		Name: nodeName,
-		Method: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode_{
-			EnrollmentCode: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode{
-				Code:        "ABC123",
-				RegisterUrl: fakeSrv.URL,
-			},
+		EnrollmentCode: &cloudpb.RegisterCloudConnectionRequest_EnrollmentCode{
+			Code:        "ABC123",
+			RegisterUrl: fakeSrv.URL,
 		},
 	})
 	if err != nil {
@@ -278,7 +283,7 @@ func TestUnlinkCloudConnection(t *testing.T) {
 		t.Errorf("state after unlink = %v, want UNCONFIGURED", unlinkResp.CloudConnection.State)
 	}
 	if conn.State().Connectivity != cloud.Unconfigured {
-		t.Errorf("conn.State().State = %v, want StateUnconfigured", conn.State().Connectivity)
+		t.Errorf("conn.State().Connectivity = %v, want Unconfigured", conn.State().Connectivity)
 	}
 }
 
@@ -305,7 +310,6 @@ func TestPullCloudConnection_InitialState(t *testing.T) {
 
 func TestPullCloudConnection_UpdatesOnly(t *testing.T) {
 	conn, client := newTestEnv(t, withSucceedingClient())
-	fakeSrv, _ := fakeRegisterServer(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -318,12 +322,8 @@ func TestPullCloudConnection_UpdatesOnly(t *testing.T) {
 		t.Fatalf("PullCloudConnection: %v", err)
 	}
 
-	// Trigger a state change: register via the fake HTTP server, then persist via conn.
-	reg, err := cloud.Register(ctx, "CODE", fakeSrv.URL, "test-node")
-	if err != nil {
-		t.Fatalf("cloud.Register: %v", err)
-	}
-	if _, err = conn.Register(ctx, reg); err != nil {
+	// Trigger a state change by registering a credential directly.
+	if _, err = conn.Register(ctx, newTestRegistration(t, "node-123")); err != nil {
 		t.Fatalf("conn.Register: %v", err)
 	}
 
@@ -358,10 +358,10 @@ func TestTestCloudConnection_ErrorCodes(t *testing.T) {
 		wantMsg   string
 	}{
 		{
-			name:      "invalid_client_credentials from oauth2.RetrieveError",
-			clientErr: &oauth2.RetrieveError{Response: &http.Response{StatusCode: http.StatusUnauthorized}},
+			name:      "invalid_client_certificate from a 401 (rejected client cert)",
+			clientErr: &cloud.APIError{StatusCode: http.StatusUnauthorized},
 			wantCode:  codes.PermissionDenied,
-			wantMsg:   "invalid_client_credentials",
+			wantMsg:   "invalid_client_certificate",
 		},
 		{
 			name:      "server_unreachable from net.Error",
@@ -382,13 +382,11 @@ func TestTestCloudConnection_ErrorCodes(t *testing.T) {
 			ctx := context.Background()
 			fc := &fakeCloudClient{} // starts returning nil — registration succeeds
 			conn, client := newTestEnv(t, cloud.WithClientFactory(
-				func(_ cloud.Registration) cloud.Client { return fc },
+				func(_ *cloud.Registration) cloud.Client { return fc },
 			))
 
-			// Establish a registration so TestConn has an active updater.
-			if _, err := conn.Register(ctx, cloud.Registration{
-				ClientID: "id", ClientSecret: "secret", BosapiRoot: "http://example.com",
-			}); err != nil {
+			// Establish a credential so TestConn has an active updater.
+			if _, err := conn.Register(ctx, newTestRegistration(t, "node-123")); err != nil {
 				t.Fatalf("setup Register: %v", err)
 			}
 
@@ -410,14 +408,11 @@ func TestGetCloudConnection_StateTransitions(t *testing.T) {
 	ctx := context.Background()
 	fc := &fakeCloudClient{}
 	conn, client := newTestEnv(t, cloud.WithClientFactory(
-		func(_ cloud.Registration) cloud.Client { return fc },
+		func(_ *cloud.Registration) cloud.Client { return fc },
 	))
 
-	// After Register succeeds the state should be CONNECTING (credentials present,
-	// but no successful AutoPoll round-trip yet).
-	if _, err := conn.Register(ctx, cloud.Registration{
-		ClientID: "id", ClientSecret: "secret", BosapiRoot: "http://example.com",
-	}); err != nil {
+	// After Register succeeds the state should be CONNECTING.
+	if _, err := conn.Register(ctx, newTestRegistration(t, "node-123")); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 	resp, err := client.GetCloudConnection(ctx, &cloudpb.GetCloudConnectionRequest{Name: nodeName})

@@ -7,13 +7,14 @@ import {
   GetCloudConnectionDefaultsRequest,
   PullCloudConnectionRequest,
   RegisterCloudConnectionRequest,
+  RenewCloudConnectionRequest,
   TestCloudConnectionRequest,
   UnlinkCloudConnectionRequest
 } from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb';
 
 export const CloudErrCode = {
   INVALID_ENROLLMENT_CODE:    'invalid_enrollment_code',
-  INVALID_CLIENT_CREDENTIALS: 'invalid_client_credentials',
+  INVALID_CLIENT_CERTIFICATE: 'invalid_client_certificate',
   SERVER_UNREACHABLE:         'server_unreachable',
   CREDENTIAL_CHECK_FAILED:    'credential_check_failed',
   CONNECTION_FAILED:          'connection_failed',
@@ -21,9 +22,9 @@ export const CloudErrCode = {
 
 export const CloudErrMessage = {
   [CloudErrCode.INVALID_ENROLLMENT_CODE]:    'Enrollment code is invalid, expired or already used',
-  [CloudErrCode.INVALID_CLIENT_CREDENTIALS]: 'Invalid client ID or secret',
+  [CloudErrCode.INVALID_CLIENT_CERTIFICATE]: 'The server rejected this controller’s certificate',
   [CloudErrCode.SERVER_UNREACHABLE]:         'Could not reach the server — check the server address',
-  [CloudErrCode.CREDENTIAL_CHECK_FAILED]:    'Credential check failed — verify client ID, secret and server address',
+  [CloudErrCode.CREDENTIAL_CHECK_FAILED]:    'Credential check failed — the issued certificate could not be verified',
   [CloudErrCode.CONNECTION_FAILED]:          'Could not connect to the server',
 };
 
@@ -58,7 +59,7 @@ export function pullCloudConnection(request, resource) {
 }
 
 /**
- * @param {{name: string, enrollmentCode?: {code: string, registerUrl?: string}, manual?: {clientId: string, clientSecret: string, bosapiRoot: string}}} request
+ * @param {{name: string, enrollmentCode?: {code: string, registerUrl?: string}}} request
  * @param {ActionTracker<any>} [tracker]
  * @return {Promise<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb').RegisterCloudConnectionResponse.AsObject>}
  */
@@ -72,12 +73,6 @@ export function registerCloudConnection(request, tracker) {
       ec.setCode(request.enrollmentCode.code ?? '');
       ec.setRegisterUrl(request.enrollmentCode.registerUrl ?? '');
       req.setEnrollmentCode(ec);
-    } else if (request.manual) {
-      const mc = new RegisterCloudConnectionRequest.ManualCredentials();
-      mc.setClientId(request.manual.clientId ?? '');
-      mc.setClientSecret(request.manual.clientSecret ?? '');
-      mc.setBosapiRoot(request.manual.bosapiRoot ?? '');
-      req.setManual(mc);
     }
     return api.registerCloudConnection(req);
   });
@@ -94,6 +89,21 @@ export function getCloudConnectionDefaults(request, tracker) {
     const req = new GetCloudConnectionDefaultsRequest();
     req.setName(request.name ?? '');
     return api.getCloudConnectionDefaults(req);
+  });
+}
+
+/**
+ * Force an immediate certificate renewal against the SCC renewal endpoint.
+ * @param {Partial<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb').RenewCloudConnectionRequest.AsObject>} request
+ * @param {ActionTracker<any>} [tracker]
+ * @return {Promise<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/ops/cloud/v1alpha/cloud_connection_pb').RenewCloudConnectionResponse.AsObject>}
+ */
+export function renewCloudConnection(request, tracker) {
+  return trackAction('CloudConnectionApi.RenewCloudConnection', tracker ?? {}, endpoint => {
+    const api = apiClient(endpoint);
+    const req = new RenewCloudConnectionRequest();
+    req.setName(request.name ?? '');
+    return api.renewCloudConnection(req);
   });
 }
 
