@@ -1,11 +1,8 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
 	"embed"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
@@ -37,7 +34,6 @@ func (s *uiServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /ui/nodes", s.serveNodes)
 	mux.HandleFunc("POST /ui/nodes", s.createNode)
 	mux.HandleFunc("POST /ui/nodes/{id}/delete", s.deleteNode)
-	mux.HandleFunc("POST /ui/nodes/{id}/rotate-secret", s.rotateNodeSecret)
 	mux.HandleFunc("POST /ui/nodes/{id}/create-enrollment-code", s.createEnrollmentCode)
 	mux.HandleFunc("GET /ui/nodes/{id}/check-ins", s.serveCheckIns)
 	mux.HandleFunc("GET /ui/config-versions", s.serveConfigVersions)
@@ -73,15 +69,6 @@ func parseBeforeIDQuery(r *http.Request, name string) int64 {
 		return v
 	}
 	return math.MaxInt64
-}
-
-func uiGenerateSecret() (secret, hash []byte, err error) {
-	secret = make([]byte, 32)
-	if _, err = rand.Read(secret); err != nil {
-		return nil, nil, err
-	}
-	h := sha256.Sum256(secret)
-	return secret, h[:], nil
 }
 
 func errRedirect(w http.ResponseWriter, r *http.Request, dest, msg string) {
@@ -216,19 +203,10 @@ func (s *uiServer) createNode(w http.ResponseWriter, r *http.Request) {
 	}
 	siteID, _ := strconv.ParseInt(r.PostForm.Get("siteId"), 10, 64)
 
-	secret, hash, err := uiGenerateSecret()
-	if err != nil {
-		errRedirect(w, r, "/ui/nodes", err.Error())
-		return
-	}
-
-	var node queries.Node
-	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		var e error
-		node, e = tx.CreateNode(r.Context(), queries.CreateNodeParams{
-			Hostname:   hostname,
-			SiteID:     siteID,
-			SecretHash: hash,
+	err := s.store.Write(r.Context(), func(tx *store.Tx) error {
+		_, e := tx.CreateNode(r.Context(), queries.CreateNodeParams{
+			Hostname: hostname,
+			SiteID:   siteID,
 		})
 		return e
 	})
@@ -237,10 +215,8 @@ func (s *uiServer) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.render(w, "node_secret", nodeSecretViewData{
-		Node:   node,
-		Secret: base64.StdEncoding.EncodeToString(secret),
-	})
+	// Credentials are issued via enrollment codes, not at node creation.
+	http.Redirect(w, r, "/ui/nodes", http.StatusSeeOther)
 }
 
 func (s *uiServer) deleteNode(w http.ResponseWriter, r *http.Request) {
@@ -258,42 +234,6 @@ func (s *uiServer) deleteNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/ui/nodes", http.StatusSeeOther)
-}
-
-func (s *uiServer) rotateNodeSecret(w http.ResponseWriter, r *http.Request) {
-	id, err := parseIDPath(r, "id")
-	if err != nil {
-		errRedirect(w, r, "/ui/nodes", "invalid id")
-		return
-	}
-
-	secret, hash, err := uiGenerateSecret()
-	if err != nil {
-		errRedirect(w, r, "/ui/nodes", err.Error())
-		return
-	}
-
-	var node queries.Node
-	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
-		var e error
-		node, e = tx.GetNode(r.Context(), id)
-		if e != nil {
-			return e
-		}
-		return tx.UpdateNodeSecretHash(r.Context(), queries.UpdateNodeSecretHashParams{
-			ID:         id,
-			SecretHash: hash,
-		})
-	})
-	if err != nil {
-		errRedirect(w, r, "/ui/nodes", err.Error())
-		return
-	}
-
-	s.render(w, "node_secret", nodeSecretViewData{
-		Node:   node,
-		Secret: base64.StdEncoding.EncodeToString(secret),
-	})
 }
 
 func (s *uiServer) serveConfigVersions(w http.ResponseWriter, r *http.Request) {
@@ -534,9 +474,10 @@ func (s *uiServer) createEnrollmentCode(w http.ResponseWriter, r *http.Request) 
 			return e
 		}
 		ec, e = tx.CreateEnrollmentCode(r.Context(), queries.CreateEnrollmentCodeParams{
-			NodeID:    id,
-			Code:      code,
-			ExpiresAt: expiresAt,
+			NodeID:     id,
+			Code:       code,
+			ExpiresAt:  expiresAt,
+			TargetSlot: "primary",
 		})
 		return e
 	})

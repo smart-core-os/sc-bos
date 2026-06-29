@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 )
 
@@ -24,6 +27,33 @@ func (noopClient) CheckIn(_ context.Context, _ cloud.CheckInRequest) (cloud.Chec
 
 func (noopClient) DownloadPayload(_ context.Context, _ string) (io.ReadCloser, error) {
 	panic("DownloadPayload not expected in config load tests")
+}
+
+func (noopClient) Renew(_ context.Context) (*cloud.Registration, error) {
+	panic("Renew not expected in config load tests")
+}
+
+func (noopClient) SetRegistration(_ *cloud.Registration) {}
+
+// testRegistration builds a self-signed credential for tests that just need an
+// active registration (the noopClient handles all server interaction).
+func testRegistration(t *testing.T) *cloud.Registration {
+	t.Helper()
+	key, err := pki.GenerateECP256Key()
+	if err != nil {
+		t.Fatalf("key: %v", err)
+	}
+	der, err := pki.CreateSelfSignedCertificate(&x509.Certificate{
+		Subject: pkix.Name{CommonName: "test-node"},
+	}, key)
+	if err != nil {
+		t.Fatalf("cert: %v", err)
+	}
+	leaf, err := x509.ParseCertificate(der)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	return &cloud.Registration{Key: key, Chain: []*x509.Certificate{leaf}}
 }
 
 // setupInstallingState creates a "installing" symlink in storeDir pointing to depID,
@@ -73,18 +103,14 @@ func newTestEnv(t *testing.T) (*cloud.Conn, *cloud.DeploymentStore, string) {
 	store := cloud.NewDeploymentStore(storeDir)
 
 	regStore := cloud.NewFileRegistrationStore(filepath.Join(t.TempDir(), "registration.json"))
-	conn, err := cloud.OpenConn(t.Context(), regStore, store,
-		cloud.WithClientFactory(func(cloud.Registration) cloud.Client { return noopClient{} }),
+	conn, err := cloud.OpenConn(t.Context(), regStore, store, "",
+		cloud.WithClientFactory(func(*cloud.Registration) cloud.Client { return noopClient{} }),
 	)
 	if err != nil {
 		t.Fatalf("OpenConn: %v", err)
 	}
 	// Pre-register so the updater is initialised (needed for CommitInstall/FailInstall).
-	if _, err = conn.Register(t.Context(), cloud.Registration{
-		ClientID:     "test-client",
-		ClientSecret: "test-secret",
-		BosapiRoot:   "http://localhost",
-	}); err != nil {
+	if _, err = conn.Register(t.Context(), testRegistration(t)); err != nil {
 		t.Fatalf("conn.Register: %v", err)
 	}
 	return conn, store, storePath

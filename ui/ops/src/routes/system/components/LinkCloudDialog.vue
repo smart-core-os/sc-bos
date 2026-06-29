@@ -8,16 +8,40 @@
         <v-card-text>
           <v-list density="compact">
             <v-list-item>
-              <v-list-item-subtitle>Client ID</v-list-item-subtitle>
+              <v-list-item-subtitle>Node ID</v-list-item-subtitle>
               <v-list-item-title class="text-body-2 font-weight-medium">
-                {{ cloudConnection.clientId || '—' }}
+                {{ cloudConnection.nodeId || '—' }}
               </v-list-item-title>
             </v-list-item>
             <v-list-item>
-              <v-list-item-subtitle>Server</v-list-item-subtitle>
+              <v-list-item-subtitle>API endpoint</v-list-item-subtitle>
               <v-list-item-title class="text-body-2 font-weight-medium">
-                {{ cloudConnection.bosapiRoot || '—' }}
+                {{ cloudConnection.apiEndpoint || '—' }}
               </v-list-item-title>
+            </v-list-item>
+            <v-divider/>
+            <v-list-item>
+              <v-list-item-subtitle>Certificate issued</v-list-item-subtitle>
+              <v-list-item-title class="text-body-2 font-weight-medium">
+                {{ formatDate(cloudConnection.certificateIssuedTime) }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-subtitle>Certificate expires</v-list-item-subtitle>
+              <v-list-item-title class="text-body-2 font-weight-medium">
+                {{ formatDate(cloudConnection.certificateExpiryTime) }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-subtitle>Auto-renews</v-list-item-subtitle>
+              <v-list-item-title class="text-body-2 font-weight-medium">
+                {{ formatDate(cloudConnection.nextRenewalTime) }}
+              </v-list-item-title>
+              <template #append>
+                <v-btn size="small" variant="text" :loading="renewTracker.loading" @click="doRenew">
+                  Renew now
+                </v-btn>
+              </template>
             </v-list-item>
             <v-divider/>
             <v-list-item>
@@ -48,6 +72,12 @@
         <v-alert v-if="testTracker.error" type="error" class="mx-4 mb-2" density="compact" closable>
           {{ testErrorMessage }}
         </v-alert>
+        <v-alert v-if="renewSuccess" type="success" class="mx-4 mb-2" density="compact" closable>
+          Certificate renewed
+        </v-alert>
+        <v-alert v-if="renewTracker.error" type="error" class="mx-4 mb-2" density="compact" closable>
+          {{ renewErrorMessage }}
+        </v-alert>
         <v-card-actions>
           <v-btn @click="dialog = false">Close</v-btn>
           <v-spacer/>
@@ -73,66 +103,34 @@
         </v-dialog>
       </template>
 
-      <!-- Enrollment form with method tabs -->
+      <!-- Enrollment form -->
       <template v-else>
-        <v-tabs v-model="tab" density="compact">
-          <v-tab value="code">Enrollment Code</v-tab>
-          <v-tab value="manual">Manual</v-tab>
-        </v-tabs>
         <v-divider/>
 
         <v-form @submit.prevent="doRegister">
           <v-card-text>
-            <v-tabs-window v-model="tab">
-              <!-- Enrollment code tab -->
-              <v-tabs-window-item value="code">
+            <v-text-field
+                v-model="enrollmentCode"
+                label="Enrollment code"
+                hint="6-character code from Smart Core Connect"
+                persistent-hint
+                variant="filled"
+                class="mb-3 mt-1"
+                autofocus/>
+            <v-checkbox
+                v-model="advancedExpanded"
+                label="Show advanced options"
+                hide-details/>
+            <v-expand-transition>
+              <div v-show="advancedExpanded">
                 <v-text-field
-                    v-model="enrollmentCode"
-                    label="Enrollment code"
-                    hint="6-character code from Smart Core Connect"
-                    persistent-hint
-                    variant="filled"
-                    class="mb-3 mt-1"
-                    autofocus/>
-                <v-checkbox
-                    v-model="advancedExpanded"
-                    label="Show advanced options"
-                    hide-details/>
-                <v-expand-transition>
-                  <div v-show="advancedExpanded">
-                    <v-text-field
-                        v-model="registerUrlOverride"
-                        label="Register URL"
-                        :hint="defaultRegisterUrl ? `Default: ${defaultRegisterUrl}` : 'Required - no default is configured'"
-                        persistent-hint
-                        variant="filled"/>
-                  </div>
-                </v-expand-transition>
-              </v-tabs-window-item>
-
-              <!-- Manual credentials tab -->
-              <v-tabs-window-item value="manual">
-                <v-text-field
-                    v-model="clientId"
-                    label="Client ID"
-                    variant="filled"
-                    class="mb-3 mt-1"
-                    autocomplete="off"/>
-                <v-text-field
-                    v-model="clientSecret"
-                    label="Client secret"
-                    type="password"
-                    autocomplete="off"
-                    variant="filled"
-                    class="mb-3"/>
-                <v-text-field
-                    v-model="bosapiRoot"
-                    label="BOS API root"
-                    hint="e.g. https://bosapi.example.com"
+                    v-model="registerUrlOverride"
+                    label="Register URL"
+                    :hint="defaultRegisterUrl ? `Default: ${defaultRegisterUrl}` : 'Required - no default is configured'"
                     persistent-hint
                     variant="filled"/>
-              </v-tabs-window-item>
-            </v-tabs-window>
+              </div>
+            </v-expand-transition>
           </v-card-text>
 
           <v-alert v-if="registerTracker.error" type="error" class="mx-4 mb-2" density="compact">
@@ -158,7 +156,8 @@
 
 <script setup>
 import {
-  CloudErrMessage, getCloudConnectionDefaults, registerCloudConnection, testCloudConnection, unlinkCloudConnection
+  CloudErrMessage, getCloudConnectionDefaults, registerCloudConnection, renewCloudConnection, testCloudConnection,
+  unlinkCloudConnection
 } from '@/api/ui/cloud-connection.js';
 import {newActionTracker} from '@/api/resource.js';
 import {useNow} from '@/components/now.js';
@@ -175,21 +174,16 @@ const emit = defineEmits(['linked', 'unlinked']);
 const dialog = defineModel({type: Boolean, default: false});
 const unlinkDialog = ref(false);
 
-const tab = ref('code');
-
-// Enrollment code tab
+// Enrollment code
 const enrollmentCode = ref('');
 const registerUrlOverride = ref('');
-
-// Manual tab
-const clientId = ref('');
-const clientSecret = ref('');
-const bosapiRoot = ref('');
 
 const registerTracker = reactive(newActionTracker());
 const unlinkTracker = reactive(newActionTracker());
 const testTracker = reactive(newActionTracker());
 const testSuccess = ref(false);
+const renewTracker = reactive(newActionTracker());
+const renewSuccess = ref(false);
 
 const {now} = useNow(SECOND);
 
@@ -224,6 +218,7 @@ const advancedExpanded = ref(false);
 watch(dialog, async (open) => {
   if (!open) {
     testSuccess.value = false;
+    renewSuccess.value = false;
     return;
   }
 
@@ -239,12 +234,9 @@ watch(dialog, async (open) => {
 });
 
 const canSubmit = computed(() => {
-  if (tab.value === 'code') {
-    if (!enrollmentCode.value) return false;
-    if (!defaultRegisterUrl.value && !registerUrlOverride.value) return false;
-    return true;
-  }
-  return !!(clientId.value && clientSecret.value && bosapiRoot.value);
+  if (!enrollmentCode.value) return false;
+  if (!defaultRegisterUrl.value && !registerUrlOverride.value) return false;
+  return true;
 });
 
 const registerErrorMessage = computed(() => {
@@ -257,6 +249,12 @@ const testErrorMessage = computed(() => {
   const err = testTracker.error?.error;
   if (!err) return '';
   return CloudErrMessage[err.message] || err.message || 'Connection test failed';
+});
+
+const renewErrorMessage = computed(() => {
+  const err = renewTracker.error?.error;
+  if (!err) return '';
+  return CloudErrMessage[err.message] || err.message || 'Renewal failed';
 });
 
 const unlinkErrorMessage = computed(() => {
@@ -276,19 +274,13 @@ const isLinked = computed(() =>
 );
 
 async function doRegister() {
-  const request = {name: props.nodeName};
-  if (tab.value === 'code') {
-    request.enrollmentCode = {
+  const request = {
+    name: props.nodeName,
+    enrollmentCode: {
       code: enrollmentCode.value.trim(),
       registerUrl: registerUrlOverride.value.trim()
-    };
-  } else {
-    request.manual = {
-      clientId: clientId.value.trim(),
-      clientSecret: clientSecret.value,
-      bosapiRoot: bosapiRoot.value.trim()
-    };
-  }
+    }
+  };
   await registerCloudConnection(request, registerTracker).catch(() => {});
   if (!registerTracker.error) {
     resetFields();
@@ -300,6 +292,20 @@ async function doTest() {
   testSuccess.value = false;
   await testCloudConnection({name: props.nodeName}, testTracker).catch(() => {});
   if (!testTracker.error) testSuccess.value = true;
+}
+
+async function doRenew() {
+  renewSuccess.value = false;
+  await renewCloudConnection({name: props.nodeName}, renewTracker).catch(() => {});
+  if (!renewTracker.error) renewSuccess.value = true;
+}
+
+/** Format a protobuf Timestamp ({seconds, nanos}) as a short date, or '—' if absent. */
+function formatDate(ts) {
+  if (!ts?.seconds) return '—';
+  return new Date(ts.seconds * 1000).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
 }
 
 async function doUnlink() {
@@ -315,9 +321,6 @@ async function doUnlink() {
 function resetFields() {
   enrollmentCode.value = '';
   registerUrlOverride.value = '';
-  clientId.value = '';
-  clientSecret.value = '';
-  bosapiRoot.value = '';
   advancedExpanded.value = false;
 }
 </script>

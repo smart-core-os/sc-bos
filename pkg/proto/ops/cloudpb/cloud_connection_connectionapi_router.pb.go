@@ -168,6 +168,15 @@ func (r *ConnectionApiRouter) UnlinkCloudConnection(ctx context.Context, request
 	return child.UnlinkCloudConnection(ctx, request)
 }
 
+func (r *ConnectionApiRouter) RenewCloudConnection(ctx context.Context, request *RenewCloudConnectionRequest) (*RenewCloudConnectionResponse, error) {
+	child, err := r.GetCloudConnectionApiClient(request.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return child.RenewCloudConnection(ctx, request)
+}
+
 func (r *ConnectionApiRouter) GetCloudConnectionDefaults(ctx context.Context, request *GetCloudConnectionDefaultsRequest) (*GetCloudConnectionDefaultsResponse, error) {
 	child, err := r.GetCloudConnectionApiClient(request.Name)
 	if err != nil {

@@ -2,22 +2,32 @@ package cloud
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/google/renameio/v2"
+
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
-// RegistrationStore persists and retrieves a Registration.
+// RegistrationStore persists and retrieves the controller's cloud Registration
+// (API endpoint + EC private key + Connect-CA certificate chain).
 type RegistrationStore interface {
-	Load(ctx context.Context) (Registration, bool, error)
-	Save(ctx context.Context, reg Registration) error
+	Load(ctx context.Context) (*Registration, bool, error)
+	Save(ctx context.Context, reg *Registration) error
 	Clear(ctx context.Context) error
 }
 
-// NewFileRegistrationStore returns a RegistrationStore backed by a JSON file at path.
-// Writes are atomic (temp-file + rename) and the file is created with 0600 permissions.
+// NewFileRegistrationStore returns a RegistrationStore backed by a single JSON
+// file at path (written atomically, 0600). Holding the key, certificate chain
+// and API endpoint in one file means they are always mutually consistent — a
+// crash can never leave a key without its certificate, or a certificate issued
+// by one origin paired with a different endpoint.
 func NewFileRegistrationStore(path string) RegistrationStore {
 	return &fileRegistrationStore{path: path}
 }
@@ -26,54 +36,74 @@ type fileRegistrationStore struct {
 	path string
 }
 
-func (s *fileRegistrationStore) Load(_ context.Context) (Registration, bool, error) {
+// registrationJSON is the on-disk representation: PEM for the key and chain so
+// the file is human-inspectable, plus the API endpoint.
+type registrationJSON struct {
+	APIEndpoint string `json:"apiEndpoint"`
+	Key         string `json:"key"`         // PEM (PKCS#8)
+	Certificate string `json:"certificate"` // PEM chain, leaf first
+}
+
+func (s *fileRegistrationStore) Load(_ context.Context) (*Registration, bool, error) {
 	data, err := os.ReadFile(s.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return Registration{}, false, nil
+		return nil, false, nil
 	}
 	if err != nil {
-		return Registration{}, false, fmt.Errorf("read registration file: %w", err)
+		return nil, false, fmt.Errorf("read registration: %w", err)
 	}
-	var reg Registration
-	if err := json.Unmarshal(data, &reg); err != nil {
-		return Registration{}, false, fmt.Errorf("decode registration file: %w", err)
+
+	var dto registrationJSON
+	if err := json.Unmarshal(data, &dto); err != nil {
+		return nil, false, fmt.Errorf("decode registration: %w", err)
+	}
+
+	block, _ := pem.Decode([]byte(dto.Key))
+	if block == nil {
+		return nil, false, fmt.Errorf("registration: invalid key PEM")
+	}
+	keyAny, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, false, fmt.Errorf("registration: parse key: %w", err)
+	}
+	key, ok := keyAny.(pki.PrivateKey)
+	if !ok {
+		return nil, false, fmt.Errorf("registration: unexpected key type %T", keyAny)
+	}
+	chain, err := pki.ParseCertificatesPEM([]byte(dto.Certificate))
+	if err != nil {
+		return nil, false, fmt.Errorf("registration: parse certificate chain: %w", err)
+	}
+
+	reg, err := newRegistration(key, chain, dto.APIEndpoint)
+	if err != nil {
+		return nil, false, fmt.Errorf("registration: %w", err)
 	}
 	return reg, true, nil
 }
 
-func (s *fileRegistrationStore) Save(_ context.Context, reg Registration) error {
-	data, err := json.Marshal(reg)
+func (s *fileRegistrationStore) Save(_ context.Context, reg *Registration) error {
+	keyPEM, err := pki.EncodePrivateKey(reg.Key)
+	if err != nil {
+		return fmt.Errorf("encode key: %w", err)
+	}
+	data, err := json.Marshal(registrationJSON{
+		APIEndpoint: reg.APIEndpoint,
+		Key:         string(keyPEM),
+		Certificate: string(pki.EncodeCertificates(reg.Chain)),
+	})
 	if err != nil {
 		return fmt.Errorf("encode registration: %w", err)
 	}
 
-	dir := filepath.Dir(s.path)
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
 		return fmt.Errorf("create registration dir: %w", err)
 	}
-
-	tmp, err := os.CreateTemp(dir, ".reg-*.tmp")
-	if err != nil {
-		return fmt.Errorf("create temp file: %w", err)
-	}
-	tmpPath := tmp.Name()
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(tmpPath)
+	// renameio writes to a temp file in the same directory and renames it into
+	// place, so a reader never sees a partial file and a crash never corrupts
+	// the existing registration.
+	if err := renameio.WriteFile(s.path, data, 0600); err != nil {
 		return fmt.Errorf("write registration: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("close temp file: %w", err)
-	}
-	if err := os.Chmod(tmpPath, 0600); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("set permissions: %w", err)
-	}
-	if err := os.Rename(tmpPath, s.path); err != nil {
-		_ = os.Remove(tmpPath)
-		return fmt.Errorf("rename temp file: %w", err)
 	}
 	return nil
 }

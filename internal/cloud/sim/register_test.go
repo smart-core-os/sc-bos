@@ -1,36 +1,35 @@
 package sim
 
 import (
-	"bytes"
+	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"net/url"
 	"regexp"
-	"strconv"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 var codeRegexp = regexp.MustCompile(`^[A-Z0-9]{6}$`)
 
 func TestCreateEnrollmentCode(t *testing.T) {
 	ts := newTestServer(t)
-	defer ts.Close()
 	client := ts.Client()
 
 	var site Site
 	resp := doRequest(t, client, "POST", listSitesURL(ts.URL), map[string]string{"name": "Test Site"}, &site)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var nodeResp CreateNodeResponse
+	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
 		"siteId":   sid(site.ID),
-	}, &nodeResp)
+	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
-	node := nodeResp.Node
 
 	t.Run("generates a code for a valid node", func(t *testing.T) {
 		var ec EnrollmentCode
@@ -42,6 +41,9 @@ func TestCreateEnrollmentCode(t *testing.T) {
 		}
 		if ec.NodeID != node.ID {
 			t.Errorf("expected nodeId %d, got %d", node.ID, ec.NodeID)
+		}
+		if ec.TargetSlot != "primary" {
+			t.Errorf("expected default targetSlot primary, got %q", ec.TargetSlot)
 		}
 		if time.Until(ec.ExpiresAt) < 14*time.Minute {
 			t.Errorf("expected at least 14 minutes until expiry, got %v", time.Until(ec.ExpiresAt))
@@ -60,23 +62,20 @@ func TestCreateEnrollmentCode(t *testing.T) {
 }
 
 func TestDeviceRegister(t *testing.T) {
-	ts := newTestServer(t)
-	defer ts.Close()
+	ts, _, apiServer := newTestServerWithStore(t)
 	client := ts.Client()
 
 	var site Site
 	resp := doRequest(t, client, "POST", listSitesURL(ts.URL), map[string]string{"name": "Test Site"}, &site)
 	assertStatus(t, resp, http.StatusCreated)
 
-	var nodeResp CreateNodeResponse
+	var node Node
 	resp = doRequest(t, client, "POST", listNodesURL(ts.URL), map[string]any{
 		"hostname": "test-node",
 		"siteId":   sid(site.ID),
-	}, &nodeResp)
+	}, &node)
 	assertStatus(t, resp, http.StatusCreated)
-	node := nodeResp.Node
 
-	// Generate an enrollment code for use in sub-tests that need a fresh one.
 	freshCode := func(t *testing.T) string {
 		t.Helper()
 		var ec EnrollmentCode
@@ -85,78 +84,84 @@ func TestDeviceRegister(t *testing.T) {
 		return ec.Code
 	}
 
-	t.Run("registers with valid code", func(t *testing.T) {
-		var reg DeviceRegisterResponse
-		resp := doRegister(t, client, ts.URL, freshCode(t), "test/path/AC-01", &reg)
+	t.Run("registers with valid code and issues a cert with CN=nodeId", func(t *testing.T) {
+		resp, chain := doRegisterReq(t, client, deviceRegisterURL(ts.URL), freshCode(t), "test/path/AC-01")
 		assertStatus(t, resp, http.StatusCreated)
-
-		if reg.ClientID == "" {
-			t.Error("expected non-empty client_id")
+		if ct := resp.Header.Get("Content-Type"); ct != "application/pem-certificate-chain" {
+			t.Errorf("Content-Type = %q, want application/pem-certificate-chain", ct)
 		}
-		if expect := "test/path/AC-01"; reg.ClientName != expect {
-			t.Errorf("expected client_name %q, got %q", expect, reg.ClientName)
+		if len(chain) == 0 {
+			t.Fatal("empty certificate chain")
+		}
+		// The CA sets the leaf CN to the node id, not the name from the CSR.
+		if got, want := chain[0].Subject.CommonName, sid(node.ID); got != want {
+			t.Errorf("leaf CN = %q, want %q", got, want)
 		}
 	})
 
 	t.Run("code is single-use", func(t *testing.T) {
 		code := freshCode(t)
-		resp := doRegister(t, client, ts.URL, code, "test", nil)
+		resp, _ := doRegisterReq(t, client, deviceRegisterURL(ts.URL), code, "test")
 		assertStatus(t, resp, http.StatusCreated)
 
-		// Second use must be rejected
-		resp = doRegister(t, client, ts.URL, code, "test", nil)
+		resp, _ = doRegisterReq(t, client, deviceRegisterURL(ts.URL), code, "test")
 		assertStatus(t, resp, http.StatusUnauthorized)
 	})
 
-	t.Run("new secret is usable with token endpoint", func(t *testing.T) {
-		var reg DeviceRegisterResponse
-		resp := doRegister(t, client, ts.URL, freshCode(t), "test/path/AC-01", &reg)
-		assertStatus(t, resp, http.StatusCreated)
-
-		clientID, err := strconv.ParseInt(reg.ClientID, 10, 64)
-		if err != nil {
-			t.Fatalf("parse client_id: %v", err)
-		}
-
-		resp, err = client.PostForm(tokenURL(ts.URL), url.Values{
-			"grant_type":    {"client_credentials"},
-			"client_id":     {strconv.FormatInt(clientID, 10)},
-			"client_secret": {base64.StdEncoding.EncodeToString(reg.ClientSecret)},
-		})
-		if err != nil {
-			t.Fatalf("token request failed: %v", err)
-		}
-		defer func() { _ = resp.Body.Close() }()
-		assertStatus(t, resp, http.StatusOK)
-	})
-
 	t.Run("missing authorization header", func(t *testing.T) {
-		resp := doRequest(t, client, "POST", deviceRegisterURL(ts.URL),
-			map[string]string{"client_name": "test"}, nil)
+		req, _ := http.NewRequest("POST", deviceRegisterURL(ts.URL), strings.NewReader(""))
+		req.Header.Set("Content-Type", "application/pkcs10")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		_ = resp.Body.Close()
 		assertStatus(t, resp, http.StatusUnauthorized)
 	})
 
 	t.Run("unknown code is rejected", func(t *testing.T) {
-		resp := doRegister(t, client, ts.URL, "ZZZZZZ", "test", nil)
+		resp, _ := doRegisterReq(t, client, deviceRegisterURL(ts.URL), "ZZZZZZ", "test")
 		assertStatus(t, resp, http.StatusUnauthorized)
+	})
+
+	t.Run("renew issues a fresh cert with the same CN over mTLS", func(t *testing.T) {
+		// Enroll, then renew using the issued certificate.
+		cert := enrollCert(t, ts, freshCode(t))
+		deviceClient := mtlsClientFor(apiServer, cert)
+
+		resp, chain := doRegisterReq(t, deviceClient, deviceRenewURL(ts.URL), "", "renewing")
+		assertStatus(t, resp, http.StatusOK) // renewal returns 200 (matches SCC)
+		if len(chain) == 0 {
+			t.Fatal("empty renewed chain")
+		}
+		if got, want := chain[0].Subject.CommonName, sid(node.ID); got != want {
+			t.Errorf("renewed leaf CN = %q, want %q", got, want)
+		}
 	})
 }
 
-// doRegister calls POST /v1/device/register with the given enrollment code as Bearer token.
-func doRegister(t *testing.T, client *http.Client, base, code, clientName string, out any) *http.Response {
+// doRegisterReq builds a CSR for cn and POSTs it (base64 DER, application/pkcs10)
+// to url, optionally with a bearer token. It returns the response and the parsed
+// PEM certificate chain (nil on non-2xx).
+func doRegisterReq(t *testing.T, client *http.Client, url, bearer, cn string) (*http.Response, []*x509.Certificate) {
 	t.Helper()
-
-	body, err := json.Marshal(map[string]string{"client_name": clientName})
+	key, err := pki.GenerateECP256Key()
 	if err != nil {
-		t.Fatalf("marshal body: %v", err)
+		t.Fatalf("generate key: %v", err)
+	}
+	csrDER, err := pki.CreateCSRDER(key, cn)
+	if err != nil {
+		t.Fatalf("create CSR: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", deviceRegisterURL(base), bytes.NewReader(body))
+	req, err := http.NewRequest("POST", url, strings.NewReader(base64.StdEncoding.EncodeToString(csrDER)))
 	if err != nil {
 		t.Fatalf("create request: %v", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+code)
+	req.Header.Set("Content-Type", "application/pkcs10")
+	if bearer != "" {
+		req.Header.Set("Authorization", "Bearer "+bearer)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -164,18 +169,23 @@ func doRegister(t *testing.T, client *http.Client, base, code, clientName string
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if out != nil {
-		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
-			t.Fatalf("decode response: %v", err)
-		}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return resp, nil
 	}
-	return resp
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	chain, err := pki.ParseCertificatesPEM(body)
+	if err != nil {
+		t.Fatalf("parse chain: %v", err)
+	}
+	return resp, chain
 }
 
 func enrollmentCodesURL(base string, nodeID int64) string {
 	return fmt.Sprintf("%s/api/v1/management/nodes/%d/enrollment-codes", base, nodeID)
 }
 
-func deviceRegisterURL(base string) string {
-	return base + "/v1/device/register"
-}
+func deviceRegisterURL(base string) string { return base + "/v1/device/register" }
+func deviceRenewURL(base string) string    { return base + "/v1/device/certificate/renew" }

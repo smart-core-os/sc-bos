@@ -22,9 +22,6 @@ func (b baseViewData) DeleteSitePath(id int64) string {
 func (b baseViewData) DeleteNodePath(id int64) string {
 	return fmt.Sprintf("/ui/nodes/%d/delete", id)
 }
-func (b baseViewData) RotateSecretPath(id int64) string {
-	return fmt.Sprintf("/ui/nodes/%d/rotate-secret", id)
-}
 func (b baseViewData) CreateEnrollmentCodePath(id int64) string {
 	return fmt.Sprintf("/ui/nodes/%d/create-enrollment-code", id)
 }
@@ -55,12 +52,6 @@ type nodesViewData struct {
 	SiteID        int64
 	NextPageToken string
 	Error         string
-}
-
-type nodeSecretViewData struct {
-	baseViewData
-	Node   queries.Node
-	Secret string // base64-encoded raw bytes, shown once
 }
 
 type configVersionsViewData struct {

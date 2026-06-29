@@ -9,67 +9,64 @@ servers:
   - url: /v1/device
 
 paths:
-  /token:
+  /register:
     post:
-      summary: OAuth2 token endpoint
-      operationId: token
+      summary: Enroll device
+      operationId: deviceRegister
       tags: [DeviceAPI]
       description: >-
-        Implements the OAuth2 Client Credentials Grant (RFC 6749 §4.4).
-        Exchanges client_id and client_secret for a short-lived JWT access token.
+        Exchanges a PKCS#10 CSR for a signed certificate chain, authorised by a
+        single-use enrollment code sent as a Bearer token. The code is
+        invalidated on success. Inspired by EST simpleenroll (RFC 7030), not an EST implementation.
+      security:
+        - enrollmentCode: []
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          application/pkcs10:
             schema:
-              type: object
-              required: [grant_type, client_id, client_secret]
-              properties:
-                grant_type:
-                  type: string
-                  enum: [client_credentials]
-                client_id:
-                  type: string
-                client_secret:
-                  type: string
+              type: string
+              format: byte
+              description: >-
+                DER-encoded PKCS#10 CSR, base64-encoded
       responses:
-        '200':
-          description: Access token issued
+        '201':
+          description: Certificate issued; PEM chain, leaf first then the CA.
           content:
-            application/json:
+            application/pem-certificate-chain:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /register:
+  /certificate/renew:
     post:
-      summary: Register device
-      operationId: deviceRegister
+      summary: Renew device certificate
+      operationId: deviceRenew
       tags: [DeviceAPI]
       description: >-
-        Exchanges a valid enrollment code (provided as a Bearer token) for
-        client credentials. The enrollment code is single-use and invalidated
-        on success. The returned client_secret cannot be retrieved later.
-      security:
-        - bearerToken: []
+        Issues a fresh certificate to an already-enrolled controller, authorised
+        by its current certificate (mutual TLS) — no enrollment code. The
+        credentialId is preserved. Same media types as registration. Inspired by
+        EST simplereenroll (RFC 7030), not an EST implementation.
       requestBody:
         required: true
         content:
-          application/json:
+          application/pkcs10:
             schema:
-              $ref: '#/components/schemas/DeviceRegisterRequest'
+              type: string
+              format: byte
+              description: >-
+                DER-encoded PKCS#10 CSR, base64-encoded
       responses:
-        '201':
-          description: Device registered; client credentials issued
+        '200':
+          description: Certificate renewed; PEM chain, leaf first then the CA.
           content:
-            application/json:
+            application/pem-certificate-chain:
               schema:
-                $ref: '#/components/schemas/DeviceRegisterResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -79,10 +76,8 @@ paths:
       operationId: checkIn
       tags: [DeviceAPI]
       description: >-
-        Records a check-in for the authenticated node and returns the
-        newest active deployment (if any).
-      security:
-        - bearerToken: []
+        Records a check-in for the controller (authenticated by its X.509 client
+        certificate, mutual TLS) and returns the newest active deployment, if any.
       requestBody:
         required: false
         content:
@@ -224,11 +219,11 @@ paths:
               $ref: '#/components/schemas/CreateNodeRequest'
       responses:
         '201':
-          description: Node created. The response includes the initial Node secret.
+          description: Node created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateNodeResponse'
+                $ref: '#/components/schemas/Node'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -300,28 +295,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EnrollmentCode'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /nodes/{id}/rotate-secret:
-    parameters:
-      - $ref: '#/components/parameters/id'
-    post:
-      summary: Rotate node secret
-      operationId: rotateNodeSecret
-      tags: [Nodes]
-      description: >-
-        Generates a new secret for the node. The previous secret is invalidated.
-        The new secret cannot be retrieved later.
-      responses:
-        '200':
-          description: The updated Node, including the new secret.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateNodeResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -717,23 +690,6 @@ components:
           type: integer
           format: int64
 
-    CreateNodeResponse:
-      description: >-
-        Response from creating a node or rotating its secret.
-        Contains the node fields plus an authentication secret.
-      allOf:
-        - $ref: '#/components/schemas/Node'
-        - type: object
-          required: [secret]
-          properties:
-            secret:
-              type: string
-              format: byte
-              description: >-
-                Secret (32 bytes, base64-encoded). Secrets are only returned
-                from the API call that generates them. The client must store
-                the secret as it cannot be retrieved later.
-
     NodeCheckIn:
       type: object
       required: [id, nodeId, checkInTime]
@@ -896,32 +852,6 @@ components:
           type: string
           format: date-time
 
-    DeviceRegisterRequest:
-      type: object
-      properties:
-        client_name:
-          type: string
-
-    DeviceRegisterResponse:
-      type: object
-      required: [client_id, client_secret, client_name, bosapi_root]
-      properties:
-        client_id:
-          type: string
-          description: Numeric node ID as a decimal string
-        client_secret:
-          type: string
-          format: byte
-          description: >-
-            32-byte secret (base64-encoded). Must be stored by the client;
-            it cannot be retrieved later.
-        client_name:
-          type: string
-        bosapi_root:
-          type: string
-          format: uri
-          description: Base URL of the BOS API for this node
-
     CheckInRequest:
       type: object
       properties:
@@ -974,19 +904,6 @@ components:
           type: string
           description: Reason the deployment failed
 
-    TokenResponse:
-      type: object
-      required: [access_token, token_type, expires_in]
-      properties:
-        access_token:
-          type: string
-        token_type:
-          type: string
-          enum: [Bearer]
-        expires_in:
-          type: integer
-          description: Token lifetime in seconds
-
     CheckInResponse:
       type: object
       required: [checkIn]
@@ -1019,15 +936,18 @@ components:
           $ref: '#/components/schemas/ConfigVersion'
 
   securitySchemes:
-    bearerToken:
+    enrollmentCode:
       type: http
       scheme: bearer
-      bearerFormat: JWT
-      description: JWT access token obtained from the token endpoint
+      description: >-
+        Single-use enrollment code sent as a Bearer token. Authorises device
+        registration only; check-in and renewal authenticate via mutual TLS
+        (the controller's X.509 client certificate), which OpenAPI 3.0 cannot
+        express as a security scheme — see those operations' descriptions.
 
 tags:
   - name: DeviceAPI
-    description: BOS-facing device API (token, check-in)
+    description: BOS-facing device API (registration, renewal, check-in)
   - name: Sites
     description: Physical location management
   - name: Nodes
