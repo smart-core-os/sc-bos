@@ -10,25 +10,25 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
-// ErrNotRegistered is returned by Update, CommitInstall, and FailInstall when
-// there is no active registration. Callers can treat it as "nothing to do".
-var ErrNotRegistered = errors.New("cloud: no active registration")
+// ErrNotRegistered is returned by Update, Renew, CommitInstall, and FailInstall
+// when there is no active credential. Callers can treat it as "nothing to do".
+var ErrNotRegistered = errors.New("cloud: no active credential")
 
 // Connectivity represents the cloud connection lifecycle state.
 type Connectivity int
 
 const (
-	Unconfigured Connectivity = iota // no registration on disk
-	Connecting                       // credentials present, no successful check-in yet
+	Unconfigured Connectivity = iota // no credential on disk
+	Connecting                       // credential present, no successful check-in yet
 	Connected                        // last check-in succeeded
 	Failed                           // last check-in failed
 )
 
 // ConnState is a point-in-time snapshot of the cloud connection: the current
-// registration (nil when unconfigured) together with the latest check-in health.
+// credential (nil when unconfigured) together with the latest check-in health.
 type ConnState struct {
 	Connectivity    Connectivity
-	Registration    *Registration // nil iff Connectivity == Unconfigured
+	Credential      *Credential // nil iff Connectivity == Unconfigured
 	LastCheckInTime time.Time
 	LastError       error
 	ChangeTime      time.Time // when this snapshot was produced
@@ -43,33 +43,48 @@ func WithUpdaterOptions(opts ...UpdaterOption) ConnOption {
 	return func(c *Conn) { c.updaterOpts = append(c.updaterOpts, opts...) }
 }
 
-// WithClientFactory sets a factory used to build a Client for a given Registration.
+// WithClientFactory sets a factory used to build a Client for a given Credential.
 // Primarily useful in tests to inject a fake transport.
-func WithClientFactory(f func(Registration) Client) ConnOption {
+func WithClientFactory(f func(*Credential) Client) ConnOption {
 	return func(c *Conn) { c.newClient = f }
 }
 
+// WithClientOptions forwards HTTPClientOptions to the default Client built for
+// each Credential (e.g. WithInsecureSkipVerify for local cloudsim). Ignored when
+// a custom factory is set via WithClientFactory.
+func WithClientOptions(opts ...HTTPClientOption) ConnOption {
+	return func(c *Conn) { c.clientOpts = append(c.clientOpts, opts...) }
+}
+
 // Conn manages the lifecycle of a cloud connection.
-// It tracks the current Registration, broadcasts ConnState changes, and owns a
-// DeploymentUpdater that is rebuilt whenever the Registration changes.
+// It tracks the current Credential, broadcasts ConnState changes, and owns a
+// DeploymentUpdater that is rebuilt whenever the Credential changes.
 // Methods are safe to call concurrently.
 type Conn struct {
 	// Immutable after construction — no locking required.
-	regStore    RegistrationStore
+	credStore   CredentialStore
 	depStore    *DeploymentStore
-	newClient   func(Registration) Client
+	newClient   func(*Credential) Client
 	updaterOpts []UpdaterOption
+	clientOpts  []HTTPClientOption
 
 	// serial is a binary semaphore (buffered channel of size 1, pre-filled).
 	// Acquire with lockSerial; release with unlockSerial.
 	// Held for the full duration of any operation that calls the server or
-	// modifies the stores. Unlink also holds it, so it waits for any in-flight
-	// operation to complete before clearing state.
+	// modifies the stores.
 	serial chan struct{}
 
-	// updater is the active DeploymentUpdater; nil when unconfigured.
-	// Protected by serial.
+	// client and updater are the active Client and DeploymentUpdater; nil when
+	// unconfigured. Protected by serial. client renews the certificate in place
+	// (hot reload), so it survives a renewal — only a new enrollment replaces it.
+	client  Client
 	updater *DeploymentUpdater
+
+	// baseURL is the SCC API origin the active client targets (check-in/renew).
+	// It defaults to the configured register URL but follows the URL a successful
+	// Register enrolled against, so the client always talks to the issuing origin.
+	// Protected by serial.
+	baseURL string
 
 	// mu protects state. Read-only operations (State, PullState) acquire only mu,
 	// never serial, so they never block on long-running server calls.
@@ -79,22 +94,31 @@ type Conn struct {
 	bus minibus.Bus[ConnState]
 }
 
-// OpenConn creates a new Conn backed by the given stores.
-// depStore is used to construct a DeploymentUpdater whenever a Registration is loaded or set.
-func OpenConn(ctx context.Context, regStore RegistrationStore, depStore *DeploymentStore, opts ...ConnOption) (*Conn, error) {
+// OpenConn creates a new Conn backed by the given stores. baseURL is any URL on
+// the SCC API origin (e.g. the configured register URL); the check-in and renew
+// endpoints are derived from it. depStore is used to construct a DeploymentUpdater
+// whenever a Credential is loaded or set.
+func OpenConn(ctx context.Context, credStore CredentialStore, depStore *DeploymentStore, baseURL string, opts ...ConnOption) (*Conn, error) {
 	serial := make(chan struct{}, 1)
 	serial <- struct{}{} // initialise as unlocked
 	c := &Conn{
-		regStore: regStore,
-		depStore: depStore,
-		state:    ConnState{Connectivity: Unconfigured},
-		newClient: func(r Registration) Client {
-			return NewHTTPClient(r)
-		},
-		serial: serial,
+		credStore: credStore,
+		depStore:  depStore,
+		state:     ConnState{Connectivity: Unconfigured},
+		serial:    serial,
+		baseURL:   baseURL,
 	}
 	for _, opt := range opts {
 		opt(c)
+	}
+	// Default client factory honours any HTTPClientOptions (e.g. insecure TLS for
+	// local cloudsim) collected from ConnOptions above, and targets c.baseURL so a
+	// Register against an override URL is honoured. A WithClientFactory option
+	// overrides this entirely.
+	if c.newClient == nil {
+		c.newClient = func(cred *Credential) Client {
+			return NewHTTPClient(cred, c.baseURL, c.clientOpts...)
+		}
 	}
 	if err := c.start(ctx); err != nil {
 		return nil, err
@@ -102,67 +126,127 @@ func OpenConn(ctx context.Context, regStore RegistrationStore, depStore *Deploym
 	return c, nil
 }
 
-// start loads the persisted Registration (if any) and initialises internal state.
-// If no registration exists the Conn stays in the unconfigured state.
+// start loads the persisted Credential (if any) and initialises internal state.
+// If no credential exists the Conn stays in the unconfigured state.
 func (c *Conn) start(ctx context.Context) error {
-	reg, ok, err := c.regStore.Load(ctx)
+	cred, ok, err := c.credStore.Load(ctx)
 	if err != nil {
-		return fmt.Errorf("load registration: %w", err)
+		return fmt.Errorf("load credential: %w", err)
 	}
 	if !ok {
 		return nil
 	}
 	// no locking required as start is only called during construction
-	c.updater = NewDeploymentUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
-	st := c.updateState(ConnState{Connectivity: Connecting, Registration: &reg})
+	c.client = c.newClient(cred)
+	c.updater = NewDeploymentUpdater(c.depStore, c.client, c.updaterOpts...)
+	st := c.updateState(ConnState{Connectivity: Connecting, Credential: cred})
 	c.bus.Send(ctx, st)
 	return nil
 }
 
-// Register persists the supplied credentials and updates internal state.
-// A new DeploymentUpdater is created for the new registration.
-func (c *Conn) Register(ctx context.Context, reg Registration) (ConnState, error) {
+// Register persists the supplied credential and updates internal state.
+// A new Client and DeploymentUpdater are created for the new credential.
+// registerURL is the URL the credential was enrolled against; when non-empty its
+// origin becomes the origin the client uses for check-in and renewal, so those
+// always target the server that issued the certificate. Pass "" to keep the
+// configured origin.
+func (c *Conn) Register(ctx context.Context, cred *Credential, registerURL string) (ConnState, error) {
 	if !c.lockSerial(ctx) {
 		return ConnState{}, ctx.Err()
 	}
 	defer c.unlockSerial()
 
-	// check that the new registration will actually work before saving it
-	newUpdater := NewDeploymentUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
+	if registerURL != "" {
+		c.baseURL = registerURL
+	}
+
+	// check that the new credential will actually work before saving it
+	newClient := c.newClient(cred)
+	newUpdater := NewDeploymentUpdater(c.depStore, newClient, c.updaterOpts...)
 	if err := newUpdater.CheckIn(ctx); err != nil {
 		return ConnState{}, &CredentialCheckError{Err: err}
 	}
-	if err := c.regStore.Save(ctx, reg); err != nil {
-		return ConnState{}, fmt.Errorf("persist registration: %w", err)
+	if err := c.credStore.Save(ctx, cred); err != nil {
+		return ConnState{}, fmt.Errorf("persist credential: %w", err)
 	}
 
+	closeIdle(c.client)
+	c.client = newClient
 	c.updater = newUpdater
-	st := c.updateState(ConnState{Connectivity: Connecting, Registration: &reg})
+	st := c.updateState(ConnState{Connectivity: Connecting, Credential: cred})
 
 	c.bus.Send(ctx, st)
 	return st, nil
 }
 
-// Unlink removes the persisted Registration and returns the Conn to the unconfigured state.
+// Renew exchanges the current certificate for a fresh one over the authenticated
+// connection, persists it, and hot-swaps it into the live client without
+// restarting. Returns ErrNotRegistered when no credential is active.
+func (c *Conn) Renew(ctx context.Context) error {
+	if !c.lockSerial(ctx) {
+		return ctx.Err()
+	}
+	defer c.unlockSerial()
+
+	if c.client == nil {
+		return ErrNotRegistered
+	}
+	newCred, err := c.client.Renew(ctx)
+	if err != nil {
+		return err
+	}
+	// persist before swapping, so a crash never loses the new credential
+	if err := c.credStore.Save(ctx, newCred); err != nil {
+		return fmt.Errorf("persist renewed credential: %w", err)
+	}
+	c.client.SetCredential(newCred)
+
+	c.mu.Lock()
+	c.state.Credential = newCred
+	c.state.ChangeTime = time.Now()
+	c.mu.Unlock()
+
+	// Renewal alone doesn't tell us the connection is healthy — and if we were in
+	// Failed, the stale error must be cleared. A check-in with the new certificate
+	// refreshes Connectivity and LastError so a successful renew can't leave a
+	// stale Failed status behind. The renewal itself succeeded regardless, so a
+	// check-in failure here is recorded for display but not returned as an error.
+	checkErr := c.updater.CheckIn(ctx)
+	c.recordCheckIn(newCred, time.Now(), checkErr)
+	return nil
+}
+
+// Unlink removes the persisted Credential and returns the Conn to the unconfigured state.
 func (c *Conn) Unlink(ctx context.Context) error {
 	if !c.lockSerial(ctx) {
 		return ctx.Err()
 	}
 	defer c.unlockSerial()
 
-	if err := c.regStore.Clear(ctx); err != nil {
-		return fmt.Errorf("clear registration: %w", err)
+	if err := c.credStore.Clear(ctx); err != nil {
+		return fmt.Errorf("clear credential: %w", err)
 	}
+	closeIdle(c.client)
+	c.client = nil
 	c.updater = nil
 	st := c.updateState(ConnState{Connectivity: Unconfigured})
 	c.bus.Send(ctx, st)
 	return nil
 }
 
-// TestConn performs a non-mutating check-in using the current registration to
-// verify connectivity and credentials. The outcome is recorded so that
-// State/PullState immediately reflect the result.
-// Returns ErrNotRegistered when no registration is active.
+// closeIdle releases any pooled idle connections held by a client that is being
+// replaced, so its transport's keep-alive sockets are not retained until GC.
+// No-op for clients (e.g. test fakes) that do not manage a connection pool.
+func closeIdle(client Client) {
+	if c, ok := client.(interface{ CloseIdleConnections() }); ok {
+		c.CloseIdleConnections()
+	}
+}
+
+// TestConn performs a non-mutating check-in using the current credential to
+// verify connectivity. The outcome is recorded so that State/PullState
+// immediately reflect the result.
+// Returns ErrNotRegistered when no credential is active.
 func (c *Conn) TestConn(ctx context.Context) error {
 	if !c.lockSerial(ctx) {
 		return ctx.Err()
@@ -174,11 +258,11 @@ func (c *Conn) TestConn(ctx context.Context) error {
 		return ErrNotRegistered
 	}
 	c.mu.Lock()
-	reg := c.state.Registration
+	cred := c.state.Credential
 	c.mu.Unlock()
 
 	err := u.CheckIn(ctx)
-	c.recordCheckIn(reg, time.Now(), err)
+	c.recordCheckIn(cred, time.Now(), err)
 	return err
 }
 
@@ -199,8 +283,8 @@ func (c *Conn) PullState(ctx context.Context) (ConnState, <-chan ConnState) {
 	return initial, changes
 }
 
-// Update performs a deployment check-in using the current registration.
-// Returns ErrNotRegistered when no registration is active.
+// Update performs a deployment check-in using the current credential.
+// Returns ErrNotRegistered when no credential is active.
 // The check-in outcome is recorded internally so that State/PullState reflect it.
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	if !c.lockSerial(ctx) {
@@ -213,16 +297,16 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 		return false, ErrNotRegistered
 	}
 	c.mu.Lock()
-	reg := c.state.Registration
+	cred := c.state.Credential
 	c.mu.Unlock()
 
 	needReboot, err = u.Update(ctx)
-	c.recordCheckIn(reg, time.Now(), err)
+	c.recordCheckIn(cred, time.Now(), err)
 	return needReboot, err
 }
 
 // CommitInstall marks the installing deployment as active and reports the result.
-// Returns ErrNotRegistered when no registration is active.
+// Returns ErrNotRegistered when no credential is active.
 func (c *Conn) CommitInstall(ctx context.Context) error {
 	if !c.lockSerial(ctx) {
 		return ctx.Err()
@@ -236,7 +320,7 @@ func (c *Conn) CommitInstall(ctx context.Context) error {
 }
 
 // FailInstall clears the installing mark and reports the failure.
-// Returns ErrNotRegistered when no registration is active.
+// Returns ErrNotRegistered when no credential is active.
 func (c *Conn) FailInstall(ctx context.Context, message string) error {
 	if !c.lockSerial(ctx) {
 		return ctx.Err()
@@ -249,11 +333,11 @@ func (c *Conn) FailInstall(ctx context.Context, message string) error {
 	return c.updater.FailInstall(ctx, message)
 }
 
-// recordCheckIn reports the outcome of a check-in made using reg.
-// If reg is no longer the current registration the outcome is discarded.
-func (c *Conn) recordCheckIn(reg *Registration, t time.Time, err error) {
+// recordCheckIn reports the outcome of a check-in made using cred.
+// If cred is no longer the current credential (by node id) the outcome is discarded.
+func (c *Conn) recordCheckIn(cred *Credential, t time.Time, err error) {
 	c.mu.Lock()
-	if c.state.Registration == nil || reg == nil || c.state.Registration.ClientID != reg.ClientID {
+	if c.state.Credential == nil || cred == nil || c.state.Credential.NodeID() != cred.NodeID() {
 		c.mu.Unlock()
 		return
 	}

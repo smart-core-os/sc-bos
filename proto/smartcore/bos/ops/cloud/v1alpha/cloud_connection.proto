@@ -13,6 +13,12 @@ service CloudConnectionApi {
   rpc RegisterCloudConnection(RegisterCloudConnectionRequest) returns (RegisterCloudConnectionResponse);
   rpc UnlinkCloudConnection(UnlinkCloudConnectionRequest) returns (UnlinkCloudConnectionResponse);
 
+  // RenewCloudConnection forces an immediate certificate renewal against the SCC
+  // renewal endpoint, authorised by the controller's current certificate. This is
+  // the same operation AutoRenew performs automatically near end-of-life; exposing
+  // it lets an operator renew on demand (e.g. for testing or after key rotation).
+  rpc RenewCloudConnection(RenewCloudConnectionRequest) returns (RenewCloudConnectionResponse);
+
   rpc GetCloudConnectionDefaults(GetCloudConnectionDefaultsRequest) returns (GetCloudConnectionDefaultsResponse);
   rpc TestCloudConnection(TestCloudConnectionRequest) returns (TestCloudConnectionResponse);
 }
@@ -20,10 +26,22 @@ service CloudConnectionApi {
 message CloudConnection {
   string name = 1;
   State state = 2;
-  string client_id = 3;
-  string bosapi_root = 4;
+  // node_id is the SCC-assigned node identity, read from the client certificate
+  // subject CN. Empty until enrolled. Stable across certificate renewals.
+  string node_id = 3;
+  // api_endpoint is the SCC API origin this controller is configured to talk to.
+  string api_endpoint = 4;
   google.protobuf.Timestamp last_check_in_time = 5;
   string last_error = 6;
+  // certificate_expiry_time is the NotAfter of the current client certificate.
+  // Empty until enrolled.
+  google.protobuf.Timestamp certificate_expiry_time = 7;
+  // next_renewal_time is when the controller will automatically renew its
+  // certificate (roughly two-thirds through its lifetime). Empty until enrolled.
+  google.protobuf.Timestamp next_renewal_time = 8;
+  // certificate_issued_time is the NotBefore of the current client certificate.
+  // Empty until enrolled.
+  google.protobuf.Timestamp certificate_issued_time = 9;
 
   enum State {
     STATE_UNSPECIFIED = 0;
@@ -60,10 +78,9 @@ message PullCloudConnectionResponse {
 
 message RegisterCloudConnectionRequest {
   string name = 1;
-  oneof method {
-    EnrollmentCode enrollment_code = 2;
-    ManualCredentials manual = 3;
-  }
+  // Registration is always via a short-lived enrollment code obtained from the
+  // SCC management console; the controller generates its keypair and CSR locally.
+  EnrollmentCode enrollment_code = 2;
 
   // EnrollmentCode registers using a short-lived enrollment code obtained from the SCC management console.
   message EnrollmentCode {
@@ -71,14 +88,6 @@ message RegisterCloudConnectionRequest {
     // register_url is the POST endpoint for the registration server.
     // If empty, the server falls back to its configured default.
     string register_url = 2;
-  }
-
-  // ManualCredentials registers by supplying OAuth2 client credentials directly,
-  // for cases where no enrollment code is available.
-  message ManualCredentials {
-    string client_id = 1;
-    string client_secret = 2;
-    string bosapi_root = 3;
   }
 }
 
@@ -91,6 +100,14 @@ message UnlinkCloudConnectionRequest {
 }
 
 message UnlinkCloudConnectionResponse {
+  CloudConnection cloud_connection = 1;
+}
+
+message RenewCloudConnectionRequest {
+  string name = 1;
+}
+
+message RenewCloudConnectionResponse {
   CloudConnection cloud_connection = 1;
 }
 

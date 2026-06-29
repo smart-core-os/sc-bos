@@ -11,11 +11,11 @@ export class CloudConnection extends jspb.Message {
   getState(): CloudConnection.State;
   setState(value: CloudConnection.State): CloudConnection;
 
-  getClientId(): string;
-  setClientId(value: string): CloudConnection;
+  getNodeId(): string;
+  setNodeId(value: string): CloudConnection;
 
-  getBosapiRoot(): string;
-  setBosapiRoot(value: string): CloudConnection;
+  getApiEndpoint(): string;
+  setApiEndpoint(value: string): CloudConnection;
 
   getLastCheckInTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
   setLastCheckInTime(value?: google_protobuf_timestamp_pb.Timestamp): CloudConnection;
@@ -24,6 +24,21 @@ export class CloudConnection extends jspb.Message {
 
   getLastError(): string;
   setLastError(value: string): CloudConnection;
+
+  getCertificateExpiryTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setCertificateExpiryTime(value?: google_protobuf_timestamp_pb.Timestamp): CloudConnection;
+  hasCertificateExpiryTime(): boolean;
+  clearCertificateExpiryTime(): CloudConnection;
+
+  getNextRenewalTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setNextRenewalTime(value?: google_protobuf_timestamp_pb.Timestamp): CloudConnection;
+  hasNextRenewalTime(): boolean;
+  clearNextRenewalTime(): CloudConnection;
+
+  getCertificateIssuedTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setCertificateIssuedTime(value?: google_protobuf_timestamp_pb.Timestamp): CloudConnection;
+  hasCertificateIssuedTime(): boolean;
+  clearCertificateIssuedTime(): CloudConnection;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CloudConnection.AsObject;
@@ -37,10 +52,13 @@ export namespace CloudConnection {
   export type AsObject = {
     name: string;
     state: CloudConnection.State;
-    clientId: string;
-    bosapiRoot: string;
+    nodeId: string;
+    apiEndpoint: string;
     lastCheckInTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     lastError: string;
+    certificateExpiryTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    nextRenewalTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    certificateIssuedTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 
   export enum State {
@@ -176,13 +194,6 @@ export class RegisterCloudConnectionRequest extends jspb.Message {
   hasEnrollmentCode(): boolean;
   clearEnrollmentCode(): RegisterCloudConnectionRequest;
 
-  getManual(): RegisterCloudConnectionRequest.ManualCredentials | undefined;
-  setManual(value?: RegisterCloudConnectionRequest.ManualCredentials): RegisterCloudConnectionRequest;
-  hasManual(): boolean;
-  clearManual(): RegisterCloudConnectionRequest;
-
-  getMethodCase(): RegisterCloudConnectionRequest.MethodCase;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): RegisterCloudConnectionRequest.AsObject;
   static toObject(includeInstance: boolean, msg: RegisterCloudConnectionRequest): RegisterCloudConnectionRequest.AsObject;
@@ -195,7 +206,6 @@ export namespace RegisterCloudConnectionRequest {
   export type AsObject = {
     name: string;
     enrollmentCode?: RegisterCloudConnectionRequest.EnrollmentCode.AsObject;
-    manual?: RegisterCloudConnectionRequest.ManualCredentials.AsObject;
   };
 
   export class EnrollmentCode extends jspb.Message {
@@ -220,39 +230,6 @@ export namespace RegisterCloudConnectionRequest {
     };
   }
 
-
-  export class ManualCredentials extends jspb.Message {
-    getClientId(): string;
-    setClientId(value: string): ManualCredentials;
-
-    getClientSecret(): string;
-    setClientSecret(value: string): ManualCredentials;
-
-    getBosapiRoot(): string;
-    setBosapiRoot(value: string): ManualCredentials;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ManualCredentials.AsObject;
-    static toObject(includeInstance: boolean, msg: ManualCredentials): ManualCredentials.AsObject;
-    static serializeBinaryToWriter(message: ManualCredentials, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): ManualCredentials;
-    static deserializeBinaryFromReader(message: ManualCredentials, reader: jspb.BinaryReader): ManualCredentials;
-  }
-
-  export namespace ManualCredentials {
-    export type AsObject = {
-      clientId: string;
-      clientSecret: string;
-      bosapiRoot: string;
-    };
-  }
-
-
-  export enum MethodCase {
-    METHOD_NOT_SET = 0,
-    ENROLLMENT_CODE = 2,
-    MANUAL = 3,
-  }
 }
 
 export class RegisterCloudConnectionResponse extends jspb.Message {
@@ -308,6 +285,44 @@ export class UnlinkCloudConnectionResponse extends jspb.Message {
 }
 
 export namespace UnlinkCloudConnectionResponse {
+  export type AsObject = {
+    cloudConnection?: CloudConnection.AsObject;
+  };
+}
+
+export class RenewCloudConnectionRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): RenewCloudConnectionRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RenewCloudConnectionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: RenewCloudConnectionRequest): RenewCloudConnectionRequest.AsObject;
+  static serializeBinaryToWriter(message: RenewCloudConnectionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RenewCloudConnectionRequest;
+  static deserializeBinaryFromReader(message: RenewCloudConnectionRequest, reader: jspb.BinaryReader): RenewCloudConnectionRequest;
+}
+
+export namespace RenewCloudConnectionRequest {
+  export type AsObject = {
+    name: string;
+  };
+}
+
+export class RenewCloudConnectionResponse extends jspb.Message {
+  getCloudConnection(): CloudConnection | undefined;
+  setCloudConnection(value?: CloudConnection): RenewCloudConnectionResponse;
+  hasCloudConnection(): boolean;
+  clearCloudConnection(): RenewCloudConnectionResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RenewCloudConnectionResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: RenewCloudConnectionResponse): RenewCloudConnectionResponse.AsObject;
+  static serializeBinaryToWriter(message: RenewCloudConnectionResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RenewCloudConnectionResponse;
+  static deserializeBinaryFromReader(message: RenewCloudConnectionResponse, reader: jspb.BinaryReader): RenewCloudConnectionResponse;
+}
+
+export namespace RenewCloudConnectionResponse {
   export type AsObject = {
     cloudConnection?: CloudConnection.AsObject;
   };

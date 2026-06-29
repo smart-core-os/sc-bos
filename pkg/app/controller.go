@@ -125,7 +125,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	// CloudConnectionApi is announced directly (not via a system plugin) so the Ops UI can always
 	// read cloud status and initiate enrollment, even before any systems have started.
 	rootNode.Announce(cName,
-		node.HasServer[cloudpb.CloudConnectionApiServer](cloudpb.RegisterCloudConnectionApiServer, opscloud.NewCloudConnectionServer(ci.Conn, cName, ci.RegisterURL)),
+		node.HasServer[cloudpb.CloudConnectionApiServer](cloudpb.RegisterCloudConnectionApiServer, opscloud.NewCloudConnectionServer(ci.Conn, cName, ci.RegisterURL, ci.registerOpts()...)),
 	)
 
 	dbPath := files.Path(config.DataDir, "db.bolt")
@@ -216,10 +216,20 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 
 // cloudInfo holds results of cloud connection setup.
 type cloudInfo struct {
-	Conn        *cloud.Conn
-	Store       *cloud.DeploymentStore
-	DataRoot    *os.Root
-	RegisterURL string
+	Conn               *cloud.Conn
+	Store              *cloud.DeploymentStore
+	DataRoot           *os.Root
+	RegisterURL        string
+	InsecureSkipVerify bool // dev: don't verify the SCC server cert (local cloudsim)
+}
+
+// registerOpts returns the cloud.RegisterOptions implied by this cloudInfo, for
+// the enrollment path in the Ops API.
+func (ci cloudInfo) registerOpts() []cloud.RegisterOption {
+	if ci.InsecureSkipVerify {
+		return []cloud.RegisterOption{cloud.WithRegisterInsecureSkipVerify()}
+	}
+	return nil
 }
 
 // pkiInfo holds results of PKI and TLS configuration.
@@ -259,31 +269,56 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (
 	var storeOptions []cloud.StoreOption
 	var connOptions []cloud.ConnOption
 	var registerURL string
+	keyFile := "cloud.key.pem"
+	certFile := "cloud.cert.pem"
 	if config.Cloud != nil {
 		storeOptions = append(storeOptions, cloud.WithPreserveDownloads(config.Cloud.PreserveDownloads))
 		if config.Cloud.MaxDeploymentSizeMiB != 0 {
 			storeOptions = append(storeOptions, cloud.WithMaxDeploymentSize(int64(config.Cloud.MaxDeploymentSizeMiB)*1024*1024))
 		}
 		registerURL = config.Cloud.RegisterURL
+		if config.Cloud.KeyFile != "" {
+			keyFile = config.Cloud.KeyFile
+		}
+		if config.Cloud.CertFile != "" {
+			certFile = config.Cloud.CertFile
+		}
+		if config.Cloud.InsecureSkipVerify {
+			logger.Warn("cloud.insecureSkipVerify is set — NOT verifying the SCC server certificate. Dev only; never use against a real SCC")
+			connOptions = append(connOptions, cloud.WithClientOptions(cloud.WithInsecureSkipVerify()))
+		}
 	}
 	storeOptions = append(storeOptions, cloud.WithStoreLogger(logger.Named("cloud.store")))
 	cloudStore := cloud.NewDeploymentStore(cloudDataRoot, storeOptions...)
 	connOptions = append(connOptions, cloud.WithUpdaterOptions(cloud.WithLogger(logger.Named("cloud"))))
 
-	regStorePath := filepath.Join(cloudDataDir, "registration.json")
-	regStore := cloud.NewFileRegistrationStore(regStorePath)
+	credStore := cloud.NewFileCredentialStore(
+		resolveCloudPath(cloudDataDir, keyFile),
+		resolveCloudPath(cloudDataDir, certFile),
+		logger.Named("cloud.credstore"),
+	)
 
-	cloudConn, err := cloud.OpenConn(ctx, regStore, cloudStore, connOptions...)
+	cloudConn, err := cloud.OpenConn(ctx, credStore, cloudStore, registerURL, connOptions...)
 	if err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to start cloud connection: %w", err)
 	}
 
+	insecure := config.Cloud != nil && config.Cloud.InsecureSkipVerify
 	return cloudInfo{
-		Conn:        cloudConn,
-		Store:       cloudStore,
-		DataRoot:    cloudDataRoot,
-		RegisterURL: registerURL,
+		Conn:               cloudConn,
+		Store:              cloudStore,
+		DataRoot:           cloudDataRoot,
+		RegisterURL:        registerURL,
+		InsecureSkipVerify: insecure,
 	}, nil
+}
+
+// resolveCloudPath returns p unchanged if absolute, otherwise joined under dir.
+func resolveCloudPath(dir, p string) string {
+	if filepath.IsAbs(p) {
+		return p
+	}
+	return filepath.Join(dir, p)
 }
 
 func loadAppConfig(ctx context.Context, config sysconf.Config, ci cloudInfo, logger *zap.Logger) (ConfigStore, error) {
@@ -714,6 +749,10 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
 				return restartNowError{reason: "automatic restart to install deployment"}
 			}
+			return nil
+		})
+		group.Go(func() error {
+			cloud.AutoRenew(ctx, c.Cloud, c.Logger.Named("cloud.auto-renew"))
 			return nil
 		})
 	}

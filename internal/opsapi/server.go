@@ -21,12 +21,21 @@ type CloudConnectionServer struct {
 	conn               CloudConnection
 	nodeName           string
 	defaultRegisterURL string
+	apiEndpoint        string // origin (scheme://host) of defaultRegisterURL, surfaced for display
+	registerOpts       []cloud.RegisterOption
 }
 
 // NewCloudConnectionServer creates a CloudConnectionServer that delegates to conn.
-// nodeName is the authoritative name for this node's cloud connection.
-func NewCloudConnectionServer(conn CloudConnection, nodeName string, defaultRegisterURL string) *CloudConnectionServer {
-	return &CloudConnectionServer{conn: conn, nodeName: nodeName, defaultRegisterURL: defaultRegisterURL}
+// nodeName is the authoritative name for this node's cloud connection. registerOpts
+// are forwarded to cloud.Register (e.g. WithRegisterInsecureSkipVerify for local cloudsim).
+func NewCloudConnectionServer(conn CloudConnection, nodeName string, defaultRegisterURL string, registerOpts ...cloud.RegisterOption) *CloudConnectionServer {
+	return &CloudConnectionServer{
+		conn:               conn,
+		nodeName:           nodeName,
+		defaultRegisterURL: defaultRegisterURL,
+		apiEndpoint:        cloud.OriginOf(defaultRegisterURL),
+		registerOpts:       registerOpts,
+	}
 }
 
 func (s *CloudConnectionServer) GetCloudConnection(_ context.Context, req *cloudpb.GetCloudConnectionRequest) (*cloudpb.GetCloudConnectionResponse, error) {
@@ -35,7 +44,7 @@ func (s *CloudConnectionServer) GetCloudConnection(_ context.Context, req *cloud
 	}
 	st := s.conn.State()
 	return &cloudpb.GetCloudConnectionResponse{
-		CloudConnection: connStateToProto(s.nodeName, st),
+		CloudConnection: connStateToProto(s.nodeName, s.apiEndpoint, st),
 	}, nil
 }
 
@@ -54,7 +63,7 @@ func (s *CloudConnectionServer) PullCloudConnection(req *cloudpb.PullCloudConnec
 				Name:            s.nodeName,
 				Type:            typespb.ChangeType_UPDATE,
 				ChangeTime:      ts,
-				CloudConnection: connStateToProto(s.nodeName, v),
+				CloudConnection: connStateToProto(s.nodeName, s.apiEndpoint, v),
 			}},
 		})
 	}
@@ -79,57 +88,40 @@ func (s *CloudConnectionServer) RegisterCloudConnection(ctx context.Context, req
 	if err := s.validateName(req.Name); err != nil {
 		return nil, err
 	}
-	var (
-		reg cloud.Registration
-		err error
-	)
-	switch m := req.GetMethod().(type) {
-	case *cloudpb.RegisterCloudConnectionRequest_EnrollmentCode_:
-		ec := m.EnrollmentCode
-		// validate required fields
-		if ec.GetCode() == "" {
-			return nil, requiredFieldError("code")
-		}
 
-		regUrl := s.defaultRegisterURL
-		if ec.GetRegisterUrl() != "" {
-			regUrl = ec.GetRegisterUrl()
-		}
-		if regUrl == "" {
-			// this can happen if the default URL is empty
-			return nil, errNoDefaultRegisterURL
-		}
-		reg, err = cloud.Register(ctx, ec.GetCode(), regUrl, s.nodeName)
-		if err != nil {
-			return nil, translateErrDefault(err, status.Errorf(codes.Internal, "register: %v", err))
-		}
-	case *cloudpb.RegisterCloudConnectionRequest_Manual:
-		mc := m.Manual
-		// validate required fields
-		var missingFields []string
-		if mc.ClientId == "" {
-			missingFields = append(missingFields, "client_id")
-		}
-		if mc.ClientSecret == "" {
-			missingFields = append(missingFields, "client_secret")
-		}
-		if mc.BosapiRoot == "" {
-			missingFields = append(missingFields, "bosapi_root")
-		}
-		if len(missingFields) > 0 {
-			return nil, requiredFieldError(missingFields...)
-		}
-
-		reg = cloud.Registration{
-			ClientID:     mc.GetClientId(),
-			ClientSecret: mc.GetClientSecret(),
-			BosapiRoot:   mc.GetBosapiRoot(),
-		}
-	default:
-		return nil, status.Error(codes.InvalidArgument, "registration method is required")
+	ec := req.GetEnrollmentCode()
+	if ec == nil {
+		return nil, status.Error(codes.InvalidArgument, "enrollment_code is required")
+	}
+	if ec.GetCode() == "" {
+		return nil, requiredFieldError("code")
 	}
 
-	st, err := s.conn.Register(ctx, reg)
+	regUrl := s.defaultRegisterURL
+	if ec.GetRegisterUrl() != "" {
+		regUrl = ec.GetRegisterUrl()
+	}
+	if regUrl == "" {
+		// this can happen if the default URL is empty
+		return nil, errNoDefaultRegisterURL
+	}
+
+	cred, err := cloud.Register(ctx, ec.GetCode(), regUrl, s.nodeName, s.registerOpts...)
+	if err != nil {
+		switch {
+		case cloud.IsConnectionError(err):
+			return nil, errServerUnreachable
+		case cloud.IsInvalidEnrollmentCode(err), cloud.IsInvalidCredentialsError(err):
+			// The registration endpoint's only authorisation is the enrollment
+			// code, so a 401/403 (SCC returns a generic "unauthorized") — or an
+			// explicit invalid_enrollment_code — means the code was rejected.
+			return nil, errInvalidEnrollmentCode
+		default:
+			return nil, status.Errorf(codes.Internal, "register: %v", err)
+		}
+	}
+
+	st, err := s.conn.Register(ctx, cred, regUrl)
 	if err != nil {
 		if cloud.IsCredentialCheckError(err) {
 			return nil, translateErrDefault(err, errCredentialCheckFailed)
@@ -138,7 +130,30 @@ func (s *CloudConnectionServer) RegisterCloudConnection(ctx context.Context, req
 	}
 
 	return &cloudpb.RegisterCloudConnectionResponse{
-		CloudConnection: connStateToProto(s.nodeName, st),
+		CloudConnection: connStateToProto(s.nodeName, s.apiEndpoint, st),
+	}, nil
+}
+
+func (s *CloudConnectionServer) RenewCloudConnection(ctx context.Context, req *cloudpb.RenewCloudConnectionRequest) (*cloudpb.RenewCloudConnectionResponse, error) {
+	if err := s.validateName(req.Name); err != nil {
+		return nil, err
+	}
+	if err := s.conn.Renew(ctx); err != nil {
+		if errors.Is(err, cloud.ErrNotRegistered) {
+			return nil, errNotRegistered
+		}
+		switch {
+		case cloud.IsInvalidCredentialsError(err):
+			return nil, errInvalidClientCertificate
+		case cloud.IsConnectionError(err):
+			return nil, errServerUnreachable
+		default:
+			return nil, status.Errorf(codes.Internal, "renew: %v", err)
+		}
+	}
+	st := s.conn.State()
+	return &cloudpb.RenewCloudConnectionResponse{
+		CloudConnection: connStateToProto(s.nodeName, s.apiEndpoint, st),
 	}, nil
 }
 
@@ -163,7 +178,7 @@ func (s *CloudConnectionServer) TestCloudConnection(ctx context.Context, req *cl
 		}
 		switch {
 		case cloud.IsInvalidCredentialsError(err):
-			return nil, errInvalidClientCredentials
+			return nil, errInvalidClientCertificate
 		case cloud.IsConnectionError(err):
 			return nil, errServerUnreachable
 		default:
@@ -182,7 +197,7 @@ func (s *CloudConnectionServer) UnlinkCloudConnection(ctx context.Context, req *
 	}
 	st := s.conn.State()
 	return &cloudpb.UnlinkCloudConnectionResponse{
-		CloudConnection: connStateToProto(s.nodeName, st),
+		CloudConnection: connStateToProto(s.nodeName, s.apiEndpoint, st),
 	}, nil
 }
 
@@ -193,17 +208,22 @@ func (s *CloudConnectionServer) validateName(name string) error {
 	return nil
 }
 
-func connStateToProto(name string, st cloud.ConnState) *cloudpb.CloudConnection {
+func connStateToProto(name, apiEndpoint string, st cloud.ConnState) *cloudpb.CloudConnection {
 	pb := &cloudpb.CloudConnection{
-		Name:  name,
-		State: cloudStateToProto(st.Connectivity),
+		Name:        name,
+		State:       cloudStateToProto(st.Connectivity),
+		ApiEndpoint: apiEndpoint,
 	}
 	if st.LastError != nil {
 		pb.LastError = status.Convert(translateErr(st.LastError)).Message()
 	}
-	if st.Registration != nil {
-		pb.ClientId = st.Registration.ClientID
-		pb.BosapiRoot = st.Registration.BosapiRoot
+	if st.Credential != nil {
+		pb.NodeId = st.Credential.NodeID()
+		if leaf := st.Credential.Leaf(); leaf != nil {
+			pb.CertificateIssuedTime = timestamppb.New(leaf.NotBefore)
+			pb.CertificateExpiryTime = timestamppb.New(leaf.NotAfter)
+			pb.NextRenewalTime = timestamppb.New(cloud.RenewAt(leaf))
+		}
 	}
 	if !st.LastCheckInTime.IsZero() {
 		pb.LastCheckInTime = timestamppb.New(st.LastCheckInTime)
@@ -240,7 +260,7 @@ func requiredFieldError(fields ...string) error {
 var (
 	errInvalidEnrollmentCode    = status.Error(codes.PermissionDenied, "invalid_enrollment_code")
 	errNoDefaultRegisterURL     = status.Error(codes.InvalidArgument, "register_url not supplied and no default configured")
-	errInvalidClientCredentials = status.Error(codes.PermissionDenied, "invalid_client_credentials")
+	errInvalidClientCertificate = status.Error(codes.PermissionDenied, "invalid_client_certificate")
 	errServerUnreachable        = status.Error(codes.Unavailable, "server_unreachable")
 	errCredentialCheckFailed    = status.Error(codes.PermissionDenied, "credential_check_failed")
 	errConnectionFailed         = status.Error(codes.Unavailable, "connection_failed")
@@ -256,7 +276,7 @@ func translateErrDefault(err, defaultErr error) error {
 	case cloud.IsInvalidEnrollmentCode(err):
 		return errInvalidEnrollmentCode
 	case cloud.IsInvalidCredentialsError(err):
-		return errInvalidClientCredentials
+		return errInvalidClientCertificate
 	case cloud.IsConnectionError(err):
 		return errServerUnreachable
 	case errors.Is(err, cloud.ErrNotRegistered):
@@ -269,7 +289,8 @@ func translateErrDefault(err, defaultErr error) error {
 type CloudConnection interface {
 	State() cloud.ConnState
 	PullState(context.Context) (initial cloud.ConnState, changes <-chan cloud.ConnState)
-	Register(ctx context.Context, reg cloud.Registration) (cloud.ConnState, error)
+	Register(ctx context.Context, cred *cloud.Credential, registerURL string) (cloud.ConnState, error)
+	Renew(ctx context.Context) error
 	Unlink(ctx context.Context) error
 	TestConn(ctx context.Context) error
 }
