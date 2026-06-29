@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -67,17 +68,24 @@ func run(ctx context.Context, logger *zap.Logger) (err error) {
 	uiSrv := &uiServer{store: dataStore}
 	uiSrv.RegisterRoutes(mux)
 
-	return serveContext(ctx, lis, mux, logger)
+	tlsConfig, err := apiServer.ServerTLSConfig()
+	if err != nil {
+		return fmt.Errorf("failed to build TLS config: %w", err)
+	}
+
+	return serveContext(ctx, lis, mux, tlsConfig, logger)
 }
 
-func serveContext(ctx context.Context, lis net.Listener, handler http.Handler, logger *zap.Logger) error {
+func serveContext(ctx context.Context, lis net.Listener, handler http.Handler, tlsConfig *tls.Config, logger *zap.Logger) error {
 	server := http.Server{
-		Handler: handler,
+		Handler:   handler,
+		TLSConfig: tlsConfig,
 	}
 
 	errCh := make(chan error)
 	go func() {
-		err := server.Serve(lis)
+		// certs are supplied via TLSConfig, so the file args are empty
+		err := server.ServeTLS(lis, "", "")
 		if errors.Is(err, http.ErrServerClosed) {
 			// not considered a reportable error
 			err = nil

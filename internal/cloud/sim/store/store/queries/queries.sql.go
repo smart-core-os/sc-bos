@@ -133,20 +133,26 @@ func (q *Queries) CreateDeployment(ctx context.Context, arg CreateDeploymentPara
 
 const createEnrollmentCode = `-- name: CreateEnrollmentCode :one
 
-INSERT INTO enrollment_codes (node_id, code, expires_at)
-VALUES (?1, ?2, ?3)
-RETURNING id, node_id, code, expires_at, used_at
+INSERT INTO enrollment_codes (node_id, code, expires_at, target_slot)
+VALUES (?1, ?2, ?3, ?4)
+RETURNING id, node_id, code, expires_at, used_at, target_slot
 `
 
 type CreateEnrollmentCodeParams struct {
-	NodeID    int64
-	Code      string
-	ExpiresAt time.Time
+	NodeID     int64
+	Code       string
+	ExpiresAt  time.Time
+	TargetSlot string
 }
 
 // Enrollment Codes
 func (q *Queries) CreateEnrollmentCode(ctx context.Context, arg CreateEnrollmentCodeParams) (EnrollmentCode, error) {
-	row := q.db.QueryRowContext(ctx, createEnrollmentCode, arg.NodeID, arg.Code, arg.ExpiresAt)
+	row := q.db.QueryRowContext(ctx, createEnrollmentCode,
+		arg.NodeID,
+		arg.Code,
+		arg.ExpiresAt,
+		arg.TargetSlot,
+	)
 	var i EnrollmentCode
 	err := row.Scan(
 		&i.ID,
@@ -154,32 +160,31 @@ func (q *Queries) CreateEnrollmentCode(ctx context.Context, arg CreateEnrollment
 		&i.Code,
 		&i.ExpiresAt,
 		&i.UsedAt,
+		&i.TargetSlot,
 	)
 	return i, err
 }
 
 const createNode = `-- name: CreateNode :one
 
-INSERT INTO nodes (hostname, site_id, secret_hash, create_time)
-VALUES (?1, ?2, ?3, datetime('now', 'subsec'))
-RETURNING id, hostname, site_id, secret_hash, create_time
+INSERT INTO nodes (hostname, site_id, create_time)
+VALUES (?1, ?2, datetime('now', 'subsec'))
+RETURNING id, hostname, site_id, create_time
 `
 
 type CreateNodeParams struct {
-	Hostname   string
-	SiteID     int64
-	SecretHash []byte
+	Hostname string
+	SiteID   int64
 }
 
 // Nodes
 func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, error) {
-	row := q.db.QueryRowContext(ctx, createNode, arg.Hostname, arg.SiteID, arg.SecretHash)
+	row := q.db.QueryRowContext(ctx, createNode, arg.Hostname, arg.SiteID)
 	var i Node
 	err := row.Scan(
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
-		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
@@ -244,6 +249,19 @@ WHERE id = ?1
 
 func (q *Queries) DeleteConfigVersion(ctx context.Context, id int64) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteConfigVersion, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteCredential = `-- name: DeleteCredential :execrows
+DELETE FROM credentials WHERE credential_id = ?1
+`
+
+// Retire a credential (clears its slot).
+func (q *Queries) DeleteCredential(ctx context.Context, credentialID string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteCredential, credentialID)
 	if err != nil {
 		return 0, err
 	}
@@ -326,7 +344,7 @@ func (q *Queries) GetActiveDeploymentByNode(ctx context.Context, nodeID int64) (
 }
 
 const getActiveEnrollmentCode = `-- name: GetActiveEnrollmentCode :one
-SELECT id, node_id, code, expires_at, used_at FROM enrollment_codes
+SELECT id, node_id, code, expires_at, used_at, target_slot FROM enrollment_codes
 WHERE code = ?1 AND used_at IS NULL AND expires_at > datetime('now', 'subsec')
 `
 
@@ -339,6 +357,7 @@ func (q *Queries) GetActiveEnrollmentCode(ctx context.Context, code string) (Enr
 		&i.Code,
 		&i.ExpiresAt,
 		&i.UsedAt,
+		&i.TargetSlot,
 	)
 	return i, err
 }
@@ -360,6 +379,64 @@ func (q *Queries) GetConfigVersion(ctx context.Context, id int64) (ConfigVersion
 		&i.CreateTime,
 	)
 	return i, err
+}
+
+const getCredentialByCredentialID = `-- name: GetCredentialByCredentialID :one
+SELECT id, node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time FROM credentials WHERE credential_id = ?1
+`
+
+func (q *Queries) GetCredentialByCredentialID(ctx context.Context, credentialID string) (Credential, error) {
+	row := q.db.QueryRowContext(ctx, getCredentialByCredentialID, credentialID)
+	var i Credential
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.CredentialID,
+		&i.Slot,
+		&i.Serial,
+		&i.Fingerprint,
+		&i.NotBefore,
+		&i.NotAfter,
+		&i.CreateTime,
+	)
+	return i, err
+}
+
+const getCredentialsByNode = `-- name: GetCredentialsByNode :many
+SELECT id, node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time FROM credentials WHERE node_id = ?1 ORDER BY slot
+`
+
+func (q *Queries) GetCredentialsByNode(ctx context.Context, nodeID int64) ([]Credential, error) {
+	rows, err := q.db.QueryContext(ctx, getCredentialsByNode, nodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Credential
+	for rows.Next() {
+		var i Credential
+		if err := rows.Scan(
+			&i.ID,
+			&i.NodeID,
+			&i.CredentialID,
+			&i.Slot,
+			&i.Serial,
+			&i.Fingerprint,
+			&i.NotBefore,
+			&i.NotAfter,
+			&i.CreateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getDeployment = `-- name: GetDeployment :one
@@ -423,7 +500,7 @@ func (q *Queries) GetDeploymentWithConfigVersion(ctx context.Context, id int64) 
 }
 
 const getNode = `-- name: GetNode :one
-SELECT id, hostname, site_id, secret_hash, create_time
+SELECT id, hostname, site_id, create_time
 FROM nodes
 WHERE id = ?1
 `
@@ -435,24 +512,6 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
-		&i.SecretHash,
-		&i.CreateTime,
-	)
-	return i, err
-}
-
-const getNodeBySecretHash = `-- name: GetNodeBySecretHash :one
-SELECT id, hostname, site_id, secret_hash, create_time FROM nodes WHERE secret_hash = ?1
-`
-
-func (q *Queries) GetNodeBySecretHash(ctx context.Context, secretHash []byte) (Node, error) {
-	row := q.db.QueryRowContext(ctx, getNodeBySecretHash, secretHash)
-	var i Node
-	err := row.Scan(
-		&i.ID,
-		&i.Hostname,
-		&i.SiteID,
-		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
@@ -755,7 +814,7 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 }
 
 const listNodes = `-- name: ListNodes :many
-SELECT id, hostname, site_id, secret_hash, create_time
+SELECT id, hostname, site_id, create_time
 FROM nodes
 WHERE id > ?1
 ORDER BY id
@@ -780,7 +839,6 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 			&i.ID,
 			&i.Hostname,
 			&i.SiteID,
-			&i.SecretHash,
 			&i.CreateTime,
 		); err != nil {
 			return nil, err
@@ -797,7 +855,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 }
 
 const listNodesBySite = `-- name: ListNodesBySite :many
-SELECT id, hostname, site_id, secret_hash, create_time
+SELECT id, hostname, site_id, create_time
 FROM nodes
 WHERE site_id = ?1 AND id > ?2
 ORDER BY id
@@ -823,7 +881,6 @@ func (q *Queries) ListNodesBySite(ctx context.Context, arg ListNodesBySiteParams
 			&i.ID,
 			&i.Hostname,
 			&i.SiteID,
-			&i.SecretHash,
 			&i.CreateTime,
 		); err != nil {
 			return nil, err
@@ -884,6 +941,46 @@ func (q *Queries) MarkEnrollmentCodeUsed(ctx context.Context, id int64) error {
 	return err
 }
 
+const updateCredentialCert = `-- name: UpdateCredentialCert :one
+UPDATE credentials
+SET serial = ?1, fingerprint = ?2, not_before = ?3, not_after = ?4
+WHERE credential_id = ?5
+RETURNING id, node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time
+`
+
+type UpdateCredentialCertParams struct {
+	Serial       string
+	Fingerprint  []byte
+	NotBefore    time.Time
+	NotAfter     time.Time
+	CredentialID string
+}
+
+// Renewal: replace the cert metadata for an existing credential, keeping the same
+// credential_id and slot.
+func (q *Queries) UpdateCredentialCert(ctx context.Context, arg UpdateCredentialCertParams) (Credential, error) {
+	row := q.db.QueryRowContext(ctx, updateCredentialCert,
+		arg.Serial,
+		arg.Fingerprint,
+		arg.NotBefore,
+		arg.NotAfter,
+		arg.CredentialID,
+	)
+	var i Credential
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.CredentialID,
+		&i.Slot,
+		&i.Serial,
+		&i.Fingerprint,
+		&i.NotBefore,
+		&i.NotAfter,
+		&i.CreateTime,
+	)
+	return i, err
+}
+
 const updateDeploymentStatus = `-- name: UpdateDeploymentStatus :one
 UPDATE deployments
 SET status = ?1,
@@ -920,7 +1017,7 @@ const updateNode = `-- name: UpdateNode :one
 UPDATE nodes
 SET hostname = ?1, site_id = ?2
 WHERE id = ?3
-RETURNING id, hostname, site_id, secret_hash, create_time
+RETURNING id, hostname, site_id, create_time
 `
 
 type UpdateNodeParams struct {
@@ -936,24 +1033,9 @@ func (q *Queries) UpdateNode(ctx context.Context, arg UpdateNodeParams) (Node, e
 		&i.ID,
 		&i.Hostname,
 		&i.SiteID,
-		&i.SecretHash,
 		&i.CreateTime,
 	)
 	return i, err
-}
-
-const updateNodeSecretHash = `-- name: UpdateNodeSecretHash :exec
-UPDATE nodes SET secret_hash = ?1 WHERE id = ?2
-`
-
-type UpdateNodeSecretHashParams struct {
-	SecretHash []byte
-	ID         int64
-}
-
-func (q *Queries) UpdateNodeSecretHash(ctx context.Context, arg UpdateNodeSecretHashParams) error {
-	_, err := q.db.ExecContext(ctx, updateNodeSecretHash, arg.SecretHash, arg.ID)
-	return err
 }
 
 const updateSite = `-- name: UpdateSite :one
@@ -972,5 +1054,58 @@ func (q *Queries) UpdateSite(ctx context.Context, arg UpdateSiteParams) (Site, e
 	row := q.db.QueryRowContext(ctx, updateSite, arg.Name, arg.ID)
 	var i Site
 	err := row.Scan(&i.ID, &i.Name, &i.CreateTime)
+	return i, err
+}
+
+const upsertCredential = `-- name: UpsertCredential :one
+
+INSERT INTO credentials (node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now', 'subsec'))
+ON CONFLICT (node_id, slot) DO UPDATE SET
+    credential_id = excluded.credential_id,
+    serial = excluded.serial,
+    fingerprint = excluded.fingerprint,
+    not_before = excluded.not_before,
+    not_after = excluded.not_after,
+    create_time = excluded.create_time
+RETURNING id, node_id, credential_id, slot, serial, fingerprint, not_before, not_after, create_time
+`
+
+type UpsertCredentialParams struct {
+	NodeID       int64
+	CredentialID string
+	Slot         string
+	Serial       string
+	Fingerprint  []byte
+	NotBefore    time.Time
+	NotAfter     time.Time
+}
+
+// Credentials
+// Fills (or replaces) the given node's credential slot at registration. A fresh
+// credential_id is minted per code exchange, so a re-enrollment of the same slot
+// replaces the marker and all cert metadata.
+func (q *Queries) UpsertCredential(ctx context.Context, arg UpsertCredentialParams) (Credential, error) {
+	row := q.db.QueryRowContext(ctx, upsertCredential,
+		arg.NodeID,
+		arg.CredentialID,
+		arg.Slot,
+		arg.Serial,
+		arg.Fingerprint,
+		arg.NotBefore,
+		arg.NotAfter,
+	)
+	var i Credential
+	err := row.Scan(
+		&i.ID,
+		&i.NodeID,
+		&i.CredentialID,
+		&i.Slot,
+		&i.Serial,
+		&i.Fingerprint,
+		&i.NotBefore,
+		&i.NotAfter,
+		&i.CreateTime,
+	)
 	return i, err
 }

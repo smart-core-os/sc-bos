@@ -2,18 +2,23 @@ package sim
 
 import (
 	"bytes"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud/sim/store/store"
+	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
 
 // TestCascadeDelete verifies that deleting a site cascades to nodes, config versions, and deployments
@@ -266,6 +271,17 @@ func newTestServer(t *testing.T) *httptest.Server {
 
 func newTestServerWithStore(t *testing.T) (*httptest.Server, *store.Store) {
 	t.Helper()
+	ts, s, _ := newTestServerFull(t)
+	return ts, s
+}
+
+// newTestServerFull starts an in-memory sim served over TLS (mTLS accept mode),
+// returning the server, its store, and the *Server (for the dev-CA pool used to
+// build client-certificate transports). The default ts.Client() trusts the
+// server and is sufficient for management-API and registration calls (which do
+// not require a client certificate).
+func newTestServerFull(t *testing.T) (*httptest.Server, *store.Store, *Server) {
+	t.Helper()
 	logger := zap.NewNop()
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
@@ -276,10 +292,81 @@ func newTestServerWithStore(t *testing.T) (*httptest.Server, *store.Store) {
 	}
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
-	testServer := httptest.NewServer(mux)
+
+	testServer := httptest.NewUnstartedServer(mux)
+	tlsCfg, err := apiServer.ServerTLSConfig()
+	if err != nil {
+		t.Fatalf("server TLS config: %v", err)
+	}
+	testServer.TLS = tlsCfg
+	testServer.StartTLS()
 	t.Cleanup(testServer.Close)
 
-	return testServer, s
+	return testServer, s, apiServer
+}
+
+// enrollClient enrolls a node via the CSR exchange using the given enrollment
+// code, then returns an HTTP client that presents the issued certificate over
+// mTLS (for calling the device check-in / renew endpoints).
+func enrollClient(t *testing.T, ts *httptest.Server, apiServer *Server, code string) *http.Client {
+	t.Helper()
+	return mtlsClientFor(apiServer, enrollCert(t, ts, code))
+}
+
+// mtlsClientFor returns an HTTP client presenting cert over mTLS and trusting the
+// sim's dev CA for server verification.
+func mtlsClientFor(apiServer *Server, cert tls.Certificate) *http.Client {
+	return &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      apiServer.CACertPool(),
+		},
+	}}
+}
+
+// enrollCert runs the registration CSR exchange and returns the issued client
+// certificate (key + chain) as a tls.Certificate.
+func enrollCert(t *testing.T, ts *httptest.Server, code string) tls.Certificate {
+	t.Helper()
+	key, err := pki.GenerateECP256Key()
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	csrDER, err := pki.CreateCSRDER(key, "test-device")
+	if err != nil {
+		t.Fatalf("create CSR: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/device/register",
+		strings.NewReader(base64.StdEncoding.EncodeToString(csrDER)))
+	if err != nil {
+		t.Fatalf("create register request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/pkcs10")
+	req.Header.Set("Content-Transfer-Encoding", "base64")
+	req.Header.Set("Authorization", "Bearer "+code)
+
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatalf("register request: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("register: expected 201, got %d", resp.StatusCode)
+	}
+	chainPEM, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read chain: %v", err)
+	}
+	chain, err := pki.ParseCertificatesPEM(chainPEM)
+	if err != nil || len(chain) == 0 {
+		t.Fatalf("parse chain: %v (n=%d)", err, len(chain))
+	}
+	cert := tls.Certificate{PrivateKey: key, Leaf: chain[0]}
+	for _, c := range chain {
+		cert.Certificate = append(cert.Certificate, c.Raw)
+	}
+	return cert
 }
 
 func doRequest(t *testing.T, client *http.Client, method, url string, req, res any) *http.Response {
@@ -345,6 +432,9 @@ func deploymentURL(base string, id int64) string {
 }
 func listNodeCheckInsURL(base string, nodeID int64) string {
 	return fmt.Sprintf("%s/api/v1/management/nodes/%d/check-ins", base, nodeID)
+}
+func listNodeEnrollmentCodesURL(base string, nodeID int64) string {
+	return fmt.Sprintf("%s/api/v1/management/nodes/%d/enrollment-codes", base, nodeID)
 }
 func nodeCheckInURL(base string, nodeID int64, id int64) string {
 	return fmt.Sprintf("%s/api/v1/management/nodes/%d/check-ins/%d", base, nodeID, id)

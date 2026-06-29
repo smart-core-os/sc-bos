@@ -21,7 +21,7 @@ import (
 func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *zap.Logger) bool {
 	initial, changes := conn.PullState(ctx)
 	changes = concurrent.BreakBackpressure(changes) // only care about the latest value, drop others
-	cur := initial.Registration
+	cur := initial.Credential
 
 	var initialTick <-chan time.Time
 	if cur != nil {
@@ -38,10 +38,10 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 			if !ok {
 				return false
 			}
-			if sameRegistration(cur, snap.Registration) {
-				continue // health-only update, not a registration change
+			if sameCredential(cur, snap.Credential) {
+				continue // health-only update (or renewal), not a (re-)enrollment change
 			}
-			cur = snap.Registration
+			cur = snap.Credential
 			if cur == nil {
 				continue // keep waiting
 			}
@@ -58,8 +58,7 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 			continue
 		}
 		logger.Debug("checking for deployment updates",
-			zap.String("bosapi", cur.BosapiRoot),
-			zap.String("clientId", cur.ClientID))
+			zap.String("nodeId", cur.NodeID()))
 		needReboot, err := conn.Update(ctx)
 		if errors.Is(err, ErrNotRegistered) {
 			continue
@@ -72,9 +71,12 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 	}
 }
 
-func sameRegistration(a, b *Registration) bool {
+// sameCredential reports whether a and b represent the same enrolled identity.
+// It compares node id (stable across renewals), so a routine certificate renewal
+// is not treated as a re-enrollment that would reset the poll phase.
+func sameCredential(a, b *Credential) bool {
 	if a == nil || b == nil {
 		return a == nil && b == nil
 	}
-	return *a == *b
+	return a.NodeID() == b.NodeID()
 }

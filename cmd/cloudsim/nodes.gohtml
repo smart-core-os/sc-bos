@@ -35,9 +35,6 @@
     <a href="/ui/nodes/{{.ID}}/check-ins">Check-ins</a> |
     <a href="/ui/config-versions?nodeId={{.ID}}">Configs</a> |
     <a href="/ui/deployments?nodeId={{.ID}}">Deployments</a><br>
-    <form method="post" action="{{$.RotateSecretPath .ID}}">
-      <button type="submit">Rotate Secret</button>
-    </form>
     <form method="post" action="{{$.CreateEnrollmentCodePath .ID}}">
       <button type="submit">Create Enrollment Code</button>
     </form>

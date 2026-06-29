@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/x509"
 	"embed"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,6 +31,7 @@ import (
 type clientEnv struct {
 	testServer *httptest.Server
 	httpClient *http.Client
+	caPool     *x509.CertPool // sim dev-CA pool, for building mTLS clients
 	storeDir   *os.Root
 	store      *DeploymentStore
 	storePath  string // temp dir absolute path for filesystem assertions
@@ -38,10 +39,74 @@ type clientEnv struct {
 	nodeID     int64
 }
 
-// setupClientEnv creates a test environment with an httptest server and DeploymentClient.
+// setupClientEnv creates a test environment: an mTLS sim server, a node enrolled
+// via the CSR exchange, and a DeploymentUpdater whose client presents the issued
+// certificate.
 func setupClientEnv(t *testing.T) *clientEnv {
 	t.Helper()
 
+	ts, apiServer, _ := newTLSSim(t)
+	client := ts.Client() // trusts the sim server; used for management + register
+
+	// Create site
+	var site sim.Site
+	resp := doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/sites",
+		map[string]string{"name": "Test Site"}, &site)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create site: expected 201, got %d", resp.StatusCode)
+	}
+
+	// Create node
+	var created sim.Node
+	resp = doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/nodes", map[string]any{
+		"hostname": "test-node",
+		"siteId":   strconv.FormatInt(site.ID, 10),
+	}, &created)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create node: expected 201, got %d", resp.StatusCode)
+	}
+
+	// Enroll: obtain a code, then exchange a CSR for a certificate.
+	var ec sim.EnrollmentCode
+	resp = doSimRequest(t, client, "POST",
+		fmt.Sprintf("%s/api/v1/management/nodes/%d/enrollment-codes", ts.URL, created.ID), nil, &ec)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create enrollment code: expected 201, got %d", resp.StatusCode)
+	}
+	cred, err := Register(context.Background(), ec.Code, ts.URL+"/v1/device/register", "test-node",
+		WithRegisterHTTPClient(client))
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	// Create temp store dir
+	storePath := t.TempDir()
+	storeDir, err := os.OpenRoot(storePath)
+	if err != nil {
+		t.Fatalf("open root: %v", err)
+	}
+	t.Cleanup(func() { _ = storeDir.Close() })
+
+	httpClient := NewHTTPClient(cred, ts.URL, WithServerRootCAs(apiServer.CACertPool()))
+	store := NewDeploymentStore(storeDir)
+	updater := NewDeploymentUpdater(store, httpClient)
+
+	return &clientEnv{
+		testServer: ts,
+		httpClient: client,
+		caPool:     apiServer.CACertPool(),
+		storeDir:   storeDir,
+		store:      store,
+		storePath:  storePath,
+		updater:    updater,
+		nodeID:     created.ID,
+	}
+}
+
+// newTLSSim starts an in-memory sim served over TLS (mTLS accept mode) and
+// returns the server, the *sim.Server (for its CA pool), and the backing store.
+func newTLSSim(t *testing.T) (*httptest.Server, *sim.Server, *store.Store) {
+	t.Helper()
 	logger := zap.NewNop()
 	s := store.NewMemoryStore(logger)
 	t.Cleanup(func() { _ = s.Close() })
@@ -52,57 +117,17 @@ func setupClientEnv(t *testing.T) *clientEnv {
 	}
 	mux := http.NewServeMux()
 	apiServer.RegisterRoutes(mux)
-	ts := httptest.NewServer(mux)
+
+	ts := httptest.NewUnstartedServer(mux)
+	tlsCfg, err := apiServer.ServerTLSConfig()
+	if err != nil {
+		t.Fatalf("server TLS config: %v", err)
+	}
+	ts.TLS = tlsCfg
+	ts.StartTLS()
 	t.Cleanup(ts.Close)
 
-	client := ts.Client()
-
-	// Create site
-	var site sim.Site
-	resp := doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/sites",
-		map[string]string{"name": "Test Site"}, &site)
-	if resp.StatusCode != http.StatusCreated {
-		t.Fatalf("create site: expected 201, got %d", resp.StatusCode)
-	}
-
-	// Create node (capture raw secret bytes)
-	var created sim.CreateNodeResponse
-	resp = doSimRequest(t, client, "POST", ts.URL+"/api/v1/management/nodes", map[string]any{
-		"hostname": "test-node",
-		"siteId":   strconv.FormatInt(site.ID, 10),
-	}, &created)
-	if resp.StatusCode != http.StatusCreated {
-		t.Fatalf("create node: expected 201, got %d", resp.StatusCode)
-	}
-
-	// Base64-encode raw secret for use with the token endpoint
-	encodedSecret := base64.StdEncoding.EncodeToString(created.Secret)
-
-	// Create temp store dir
-	storePath := t.TempDir()
-	storeDir, err := os.OpenRoot(storePath)
-	if err != nil {
-		t.Fatalf("open root: %v", err)
-	}
-	t.Cleanup(func() { _ = storeDir.Close() })
-
-	httpClient := NewHTTPClient(Registration{
-		ClientID:     strconv.FormatInt(created.ID, 10),
-		ClientSecret: encodedSecret,
-		BosapiRoot:   ts.URL,
-	}, WithHTTPClient(ts.Client()))
-	store := NewDeploymentStore(storeDir)
-	updater := NewDeploymentUpdater(store, httpClient)
-
-	return &clientEnv{
-		testServer: ts,
-		httpClient: client,
-		storeDir:   storeDir,
-		store:      store,
-		storePath:  storePath,
-		updater:    updater,
-		nodeID:     created.ID,
-	}
+	return ts, apiServer, s
 }
 
 //go:embed testdata
@@ -559,17 +584,15 @@ func TestPoll(t *testing.T) {
 	t.Run("server auth error", func(t *testing.T) {
 		env := setupClientEnv(t)
 
-		// Create an updater with a wrong client secret — token endpoint will reject it
-		badHTTPClient := NewHTTPClient(Registration{
-			ClientID:     "999999",
-			ClientSecret: "wrong-secret",
-			BosapiRoot:   env.testServer.URL,
-		}, WithHTTPClient(env.httpClient))
+		// A credential the sim CA never issued — its client certificate does not
+		// chain to the server's ClientCAs, so the mTLS handshake/guard rejects it.
+		bogus := testCredential(t, "999999")
+		badHTTPClient := NewHTTPClient(bogus, env.testServer.URL, WithServerRootCAs(env.caPool))
 		badUpdater := NewDeploymentUpdater(env.store, badHTTPClient)
 
 		_, err := badUpdater.Update(ctx)
 		if err == nil {
-			t.Error("expected error with wrong secret, got nil")
+			t.Error("expected error with an unrecognised client certificate, got nil")
 		}
 	})
 }
@@ -820,12 +843,8 @@ func TestDownloadPayload_InsecureURLBlocked(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// checkInEndpoint uses a different HTTPS host so downloads from ts go through plainHTTP.
-	client := NewHTTPClient(Registration{
-		ClientID:     "id",
-		ClientSecret: "secret",
-		BosapiRoot:   "https://other-host",
-	}, WithHTTPClient(ts.Client()))
+	// API origin is a different HTTPS host so downloads from ts go through plainHTTP.
+	client := NewHTTPClient(nil, "https://other-host", WithHTTPClient(ts.Client()))
 
 	tests := []struct {
 		name        string
@@ -874,12 +893,8 @@ func TestDownloadPayload_Authorization(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// checkInEndpoint is on a different host than ts, so downloads from ts should not include auth.
-	client := NewHTTPClient(Registration{
-		ClientID:     "id",
-		ClientSecret: "secret",
-		BosapiRoot:   "http://other-host",
-	})
+	// API origin is on a different host than ts, so downloads from ts should not include auth.
+	client := NewHTTPClient(nil, "http://other-host", WithHTTPClient(ts.Client()))
 
 	rc, err := client.DownloadPayload(context.Background(), ts.URL+"/payload.tar.gz")
 	if err != nil {

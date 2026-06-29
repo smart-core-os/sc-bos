@@ -6,8 +6,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"golang.org/x/oauth2"
 )
 
 // CheckInRequest is the optional request body for the check-in endpoint.
@@ -96,13 +94,11 @@ func IsCredentialCheckError(err error) bool {
 	return errors.As(err, &e)
 }
 
-// IsInvalidCredentialsError reports whether err indicates that the OAuth2
-// client credentials were rejected by the server.
+// IsInvalidCredentialsError reports whether err indicates that the controller's
+// client certificate was rejected by the server (401/403 on an mTLS endpoint) —
+// i.e. the credential no longer occupies a slot (revoked) or is otherwise
+// invalid, and re-enrollment is required.
 func IsInvalidCredentialsError(err error) bool {
-	var re *oauth2.RetrieveError
-	if errors.As(err, &re) {
-		return true
-	}
 	var apiErr *APIError
 	return errors.As(err, &apiErr) &&
 		(apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden)
