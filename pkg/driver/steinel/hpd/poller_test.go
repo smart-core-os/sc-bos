@@ -24,10 +24,11 @@ func TestPoller_process_reliability(t *testing.T) {
 	tests := map[string]struct {
 		body      string
 		wantState healthpb.HealthCheck_Reliability_State
+		wantCode  string // expected LastError code, empty for a reliable response
 	}{
-		"empty body":     {body: `{}`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE},
-		"wrong type":     {body: `{"SensorName": "HPD2", "Temperature": "warm"}`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE},
-		"invalid json":   {body: `not json`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE},
+		"empty body":     {body: `{}`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE, wantCode: SensorMissing},
+		"wrong type":     {body: `{"SensorName": "HPD2", "Temperature": "warm"}`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE, wantCode: BadResponse},
+		"invalid json":   {body: `not json`, wantState: healthpb.HealthCheck_Reliability_BAD_RESPONSE, wantCode: BadResponse},
 		"healthy sensor": {body: `{"SensorName": "HPD2", "Temperature": 20.2}`, wantState: healthpb.HealthCheck_Reliability_RELIABLE},
 	}
 
@@ -56,6 +57,9 @@ func TestPoller_process_reliability(t *testing.T) {
 			}
 			if state := got.GetReliability().GetState(); state != tc.wantState {
 				t.Errorf("reliability state = %v, want %v", state, tc.wantState)
+			}
+			if code := got.GetReliability().GetLastError().GetCode().GetCode(); code != tc.wantCode {
+				t.Errorf("reliability error code = %q, want %q", code, tc.wantCode)
 			}
 		})
 	}

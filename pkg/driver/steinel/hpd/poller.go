@@ -72,7 +72,7 @@ func (p *poller) process(ctx context.Context) {
 		// The base can answer 200 with an empty body ({}) when it is connected but the
 		// sensor module itself is missing. Comms are fine, but the response carries no
 		// sensor data, so treat it as a bad response rather than healthy.
-		p.faultCheck.UpdateReliability(ctx, badResponse)
+		p.faultCheck.UpdateReliability(ctx, sensorMissing)
 		p.logger.Error("sensor returned no data, the sensor module may be missing or disconnected")
 		return
 	}

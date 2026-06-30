@@ -5,9 +5,10 @@ import "github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 const (
 	SystemName = "Steinel HPD"
 
-	BadResponse = "BadResponse"
-	DriverError = "DriverError"
-	Offline     = "Offline"
+	BadResponse   = "BadResponse"
+	DriverError   = "DriverError"
+	Offline       = "Offline"
+	SensorMissing = "SensorMissing"
 )
 
 // commsHealthCheck returns a health check that monitors whether a device is online and communicating properly.
@@ -42,6 +43,18 @@ var (
 			DetailsText: "The device has sent an unexpected response to a request",
 			Code: &healthpb.HealthCheck_Error_Code{
 				Code:   BadResponse,
+				System: SystemName,
+			},
+		},
+	}
+
+	sensorMissing = &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+		LastError: &healthpb.HealthCheck_Error{
+			SummaryText: "Sensor Missing",
+			DetailsText: "The device returned no sensor data; the sensor module may be missing or disconnected from its base",
+			Code: &healthpb.HealthCheck_Error_Code{
+				Code:   SensorMissing,
 				System: SystemName,
 			},
 		},
