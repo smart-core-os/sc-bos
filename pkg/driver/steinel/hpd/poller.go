@@ -55,12 +55,25 @@ func (p *poller) process(ctx context.Context) {
 			return // we're stopping, not a device fault
 		}
 		h := noResponse
-		var unsupportedTypeErr *json.UnmarshalTypeError
-		if errors.Is(err, unsupportedTypeErr) {
+		var (
+			typeErr   *json.UnmarshalTypeError
+			syntaxErr *json.SyntaxError
+		)
+		if errors.As(err, &typeErr) || errors.As(err, &syntaxErr) {
+			// the device responded, we just couldn't make sense of the body
 			h = badResponse
 		}
 		p.faultCheck.UpdateReliability(ctx, h)
 		p.logger.Error("failed to GET sensor", zap.Error(err))
+		return
+	}
+
+	if response.SensorName == "" {
+		// The base can answer 200 with an empty body ({}) when it is connected but the
+		// sensor module itself is missing. Comms are fine, but the response carries no
+		// sensor data, so treat it as a bad response rather than healthy.
+		p.faultCheck.UpdateReliability(ctx, badResponse)
+		p.logger.Error("sensor returned no data, the sensor module may be missing or disconnected")
 		return
 	}
 
