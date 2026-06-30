@@ -1,4 +1,4 @@
-package minibus
+package concurrent
 
 import (
 	"testing"
@@ -7,9 +7,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestDropExcess(t *testing.T) {
+func TestBreakBackpressure(t *testing.T) {
 	source := make(chan any)
-	consumer := DropExcess(source)
+	consumer := BreakBackpressure(source)
 
 	// we can send a value and it gets buffered...
 	sendQuickly(t, source, "hello")

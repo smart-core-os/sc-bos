@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/util/concurrent"
 )
 
 // Value represents a simple state field in an object. Think Temperature or Volume or Occupancy. Use a Value to
@@ -142,7 +143,7 @@ func (r *Value) onUpdate(ctx context.Context, config *ReadRequest) (<-chan *Valu
 
 	ch := r.bus.Listen(ctx)
 	if !config.Backpressure {
-		ch = minibus.DropExcess(ch)
+		ch = concurrent.BreakBackpressure(ch)
 	}
 
 	return ch, value, changeTime
