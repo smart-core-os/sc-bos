@@ -1,5 +1,6 @@
 import PluginPageLoading from '@/dynamic/PluginPageLoading.vue';
 import {useSidebarStore} from '@/stores/sidebar.js';
+import {useUiConfigStore} from '@/stores/uiConfig.js';
 import {serviceName} from '@/util/gateway.js';
 import deepEqual from 'fast-deep-equal';
 import {computed, onScopeDispose, toValue, watch, watchEffect} from 'vue';
@@ -123,9 +124,13 @@ export function useServiceRoutes(category, parent = undefined) {
  * }}
  */
 export function useServiceRouterLink(category, name, id) {
-  const hasLink = computed(() => Boolean(toValue(category) && toValue(id)));
+  const router = useRouter();
+  const uiConfig = useUiConfigStore();
+
+  // We have a link target whenever we know which service to edit.
+  const linkable = computed(() => Boolean(toValue(category) && toValue(id)));
   const to = computed(() => {
-    if (!hasLink.value) return undefined;
+    if (!linkable.value) return undefined;
     if (toValue(name)) {
       return {
         name: toSingular(toValue(category)) + '-name-id',
@@ -138,8 +143,23 @@ export function useServiceRouterLink(category, name, id) {
       };
     }
   });
+  // hasLink is only true when the link target exists AND the edit page is
+  // actually available to the user, i.e. its route path is enabled by the UI
+  // config. Without this check we'd show an edit button that navigates to a
+  // page the navigation guard immediately redirects away from.
+  const hasLink = computed(() => {
+    if (!to.value) return false;
+    let resolved;
+    try {
+      resolved = router.resolve(to.value);
+    } catch {
+      return false;
+    }
+    if (!resolved.matched.length) return false;
+    return uiConfig.pathEnabled(resolved.path);
+  });
   const toManualEdit = computed(() => {
-    if (!hasLink.value) return undefined;
+    if (!linkable.value) return undefined;
     if (toValue(name)) {
       return {
         name: toSingular(toValue(category)) + '-name-id-json',
