@@ -67,11 +67,6 @@ const props = defineProps({
     default: () => {
     }
   },
-  statusLog: {
-    type: Object,
-    default: () => {
-    }
-  },
   device: {
     type: Object,
     default: () => {
@@ -89,10 +84,7 @@ const props = defineProps({
 const {setAcknowledged} = useAcknowledgement();
 const emit = defineEmits(['click:close']);
 
-const {color} = useStatus(
-    () => props.accessAttempt,
-    () => props.statusLog
-);
+const {color} = useStatus(() => props.accessAttempt);
 
 const statusColor = computed(() => {
   if (props.openClose) {
@@ -174,7 +166,6 @@ const user = computed(() => {
 
 onBeforeUnmount(() => {
   closeResource(props.accessAttempt);
-  closeResource(props.statusLog);
 });
 </script>
 <style lang="scss" scoped>

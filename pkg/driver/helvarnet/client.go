@@ -9,11 +9,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/helvarnet/config"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
-	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
 type tcpClient struct {
@@ -22,7 +19,6 @@ type tcpClient struct {
 	conn   net.Conn
 	logger *zap.Logger
 	mu     sync.Mutex
-	status *resource.Value // *statuspb.StatusLog
 }
 
 func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient {
@@ -31,8 +27,6 @@ func newTcpClient(addr *net.TCPAddr, l *zap.Logger, cfg *config.Root) *tcpClient
 		cfg:    cfg,
 		conn:   nil,
 		logger: l,
-		mu:     sync.Mutex{},
-		status: resource.NewValue(resource.WithInitialValue(&statuspb.StatusLog{}), resource.WithNoDuplicates()),
 	}
 }
 
@@ -97,20 +91,10 @@ func (c *tcpClient) sendAndReceive(ctx context.Context, pkt string, want string)
 				c.close()
 				continue
 			}
-			_, _ = c.status.Set(&statuspb.StatusLog{
-				Level:       statuspb.StatusLog_NOMINAL,
-				RecordTime:  timestamppb.New(time.Now()),
-				Description: "Communication with lighting server successful",
-			})
 			return response, nil
 		}
 		time.Sleep(c.cfg.RetrySleepDuration.Duration)
 	}
-	_, _ = c.status.Set(&statuspb.StatusLog{
-		Level:       statuspb.StatusLog_NON_FUNCTIONAL,
-		RecordTime:  timestamppb.New(time.Now()),
-		Description: "Can't connect to the lighting server",
-	})
 	return "", fmt.Errorf("failed to send and receive packet")
 }
 

@@ -1,3 +1,5 @@
+// Deprecated: The status trait is superseded by the health trait (smartcore.bos.health.v1).
+// Migrate consumers to use HealthApi instead.
 syntax = "proto3";
 
 package smartcore.bos.status.v1;
@@ -10,7 +12,10 @@ import "smartcore/bos/status/v1/status.proto";
 import "smartcore/bos/types/time/v1/period.proto";
 
 // Provides historical entries for changes to the status of a device.
+//
+// Deprecated: Use the health trait (smartcore.bos.health.v1) instead.
 service StatusHistory {
+  option deprecated = true;
   rpc ListCurrentStatusHistory(ListCurrentStatusHistoryRequest) returns (ListCurrentStatusHistoryResponse);
 }
 

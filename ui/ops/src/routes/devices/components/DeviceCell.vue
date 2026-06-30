@@ -95,10 +95,6 @@
       <emergency-cell v-bind="resource"/>
     </with-emergency>
 
-    <with-status v-if="hasCell('StatusLog')" v-slot="{ resource }" :name="props.item.name" :paused="props.paused">
-      <status-log-cell v-bind="resource"/>
-    </with-status>
-
     <health-checks-cell v-if="healthExperiment" :model-value="props.item?.healthChecksList ?? []"/>
 
     <with-allocation v-if="hasCell('Allocation')" v-slot="{ resource }" :name="props.item.name" :paused="props.paused">
@@ -131,8 +127,6 @@ import OccupancyCell from '@/traits/occupancy/OccupancyCell.vue';
 import WithOccupancy from '@/traits/occupancy/WithOccupancy.vue';
 import OpenCloseCell from '@/traits/openClose/OpenCloseCell.vue';
 import WithOpenClose from '@/traits/openClose/WithOpenClose.vue';
-import StatusLogCell from '@/traits/status/StatusLogCell.vue';
-import WithStatus from '@/traits/status/WithStatus.vue';
 import TemperatureCell from '@/traits/temperature/TemperatureCell.vue';
 import WithTemperature from '@/traits/temperature/WithTemperature.vue';
 import TransportCell from '@/traits/transport/TransportCell.vue';
@@ -185,9 +179,6 @@ const visibleCells = computed(() => {
   }
   if (hasTrait(props.item, 'smartcore.bos.Transport')) {
     cells['Transport'] = true;
-  }
-  if (hasTrait(props.item, 'smartcore.bos.Status')) {
-    cells['StatusLog'] = true;
   }
   if (hasTrait(props.item, 'smartcore.bos.Meter')) {
     cells['Meter'] = true;
