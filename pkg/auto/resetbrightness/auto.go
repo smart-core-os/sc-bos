@@ -18,10 +18,10 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/resetbrightness/config"
-	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/util/chans"
+	"github.com/smart-core-os/sc-bos/pkg/util/concurrent"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
@@ -69,7 +69,7 @@ func (a *impl) applyConfig(ctx context.Context, cfg config.Root) error {
 		// These chans do this.
 		readStateUpdates := make(chan struct{})
 		defer close(readStateUpdates)
-		readStateUpdated := minibus.DropExcess(readStateUpdates)
+		readStateUpdated := concurrent.BreakBackpressure(readStateUpdates)
 
 		rs := &readState{
 			Brightness: make(map[string]value),
