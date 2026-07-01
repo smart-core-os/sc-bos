@@ -4,13 +4,15 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
 type Value[T any] struct {
 	m        sync.RWMutex
 	value    T
 	modified time.Time
-	bus      Bus[ValueEvent[T]]
+	bus      minibus.Bus[ValueEvent[T]]
 }
 
 func NewValue[T any](initial T) *Value[T] {
@@ -35,19 +37,29 @@ func (v *Value[T]) Set(ctx context.Context, value T) (old T, ok bool) {
 	v.modified = timestamp
 	v.m.Unlock()
 
-	ok = v.bus.Send(ctx, ValueEvent[T]{
+	v.bus.Send(ctx, ValueEvent[T]{
 		Timestamp: timestamp,
 		Old:       old,
 		New:       value,
 	})
+	// ok reports whether the change was distributed without ctx being cancelled.
+	ok = ctx.Err() == nil
 	return
 }
 
+// Changes returns the current value and a channel of future changes.
+// With backpressure, changes are sent directly over the returned channel and a slow receiver will block senders.
+// Without backpressure, the bufferSize most recent changes are buffered and older ones are silently discarded if
+// the receiver does not keep up; bufferSize must be 1 or more.
 func (v *Value[T]) Changes(ctx context.Context, backpressure bool, bufferSize int) (value T, changes <-chan ValueEvent[T]) {
 	v.m.RLock()
 	defer v.m.RUnlock()
 
-	return v.value, v.bus.Listen(ctx, backpressure, bufferSize)
+	ch := v.bus.Listen(ctx)
+	if !backpressure {
+		ch = BreakBackpressureBuffered(ch, bufferSize)
+	}
+	return v.value, ch
 }
 
 type ValueEvent[T any] struct {
