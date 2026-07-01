@@ -52,6 +52,11 @@
             <v-icon size="11" class="mr-1">mdi-network</v-icon>
             {{ node.grpcAddress }}
           </div>
+          <div v-if="softwareVersion"
+               class="text-caption text-medium-emphasis d-flex align-center mt-1">
+            <v-icon size="11" class="mr-1">mdi-tag-outline</v-icon>
+            <span class="text-truncate" :title="softwareVersion">{{ softwareVersion }}</span>
+          </div>
         </div>
         <v-menu min-width="175px">
           <template #activator="{ props: _props }">
@@ -326,6 +331,7 @@ import {pullCloudConnection, CloudErrMessage} from '@/api/ui/cloud-connection.js
 import {getDownloadLogUrl} from '@/api/ui/log.js';
 import {closeResource, newResourceValue} from '@/api/resource.js';
 import {pullBootState, reboot} from '@/api/sc/traits/boot.js';
+import {getMetadata} from '@/api/sc/traits/metadata.js';
 import {timestampToDate} from '@/api/convpb.js';
 import {triggerDownloadFromUrl} from '@/components/download/download.js';
 import {useHasHubSystem, usePullService, usePullServiceMetadata} from '@/composables/services.js';
@@ -429,6 +435,20 @@ const cloudDialogOpen = ref(false);
 const cloudLastError = computed(() => {
   return CloudErrMessage[cloudResource.value?.lastError] || cloudResource.value?.lastError || 'Cloud connection offline';
 });
+
+// Software (build) version, reported via the node's metadata. Static per run, so fetch once
+// per node rather than streaming. Nodes that don't report a version simply omit the line.
+const softwareVersion = ref(null);
+watch(() => props.node?.name, async (name) => {
+  softwareVersion.value = null;
+  if (!name) return;
+  try {
+    const md = await getMetadata({name, readMask: {pathsList: ['product.software_version']}});
+    softwareVersion.value = md.product?.softwareVersion || null;
+  } catch {
+    softwareVersion.value = null;
+  }
+}, {immediate: true});
 
 const onShowCertificates = (address) => emit('click:show-certificates', address);
 const onForgetNode = (address) => emit('click:forget-node', address);

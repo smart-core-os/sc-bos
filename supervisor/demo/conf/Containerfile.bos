@@ -1,0 +1,14 @@
+# BOS test image — production-like. The base (localhost/smartcore/bos:base) is built straight from the
+# repo's main Dockerfile (UI included). This overlays the demo node's config — the vanti-ugs example
+# (mock devices + the ops/cohort Ops UI config), adapted by 01-build.sh to run DB-less (history on
+# sqlite, local-auth login) — and bakes a distinct BOS_VERSION_OVERRIDE per image (v1, v2). The override
+# must live in the image (not the Quadlet unit) because the Supervisor restarts the same unit for both
+# versions. These files are staged into the build context by 01-build.sh (not committed in conf/).
+FROM localhost/smartcore/bos:base
+
+COPY app.conf.json /cfg/app.conf.json
+COPY system.conf.json /cfg/system.conf.json
+COPY ui-config/ /app/ui-config/
+
+ARG BOS_VERSION=dev
+ENV BOS_VERSION_OVERRIDE=$BOS_VERSION

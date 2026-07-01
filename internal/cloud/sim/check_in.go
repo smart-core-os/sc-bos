@@ -19,6 +19,14 @@ import (
 type CheckInResponse struct {
 	CheckIn      CheckInAck    `json:"checkIn"`
 	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
+	LatestUpdate *LatestUpdate `json:"latestUpdate,omitempty"`
+}
+
+// LatestUpdate is the active update deployment and its artefact, returned on check-in. It is the
+// software-update analogue of LatestConfig.
+type LatestUpdate struct {
+	UpdateDeployment UpdateDeployment `json:"updateDeployment"`
+	UpdateArtefact   UpdateArtefact   `json:"updateArtefact"`
 }
 
 // CheckInAck is the acknowledgement portion of the check-in response.
@@ -28,15 +36,37 @@ type CheckInAck struct {
 }
 
 type LatestConfig struct {
-	Deployment    Deployment    `json:"deployment"`
-	ConfigVersion ConfigVersion `json:"configVersion"`
+	ConfigDeployment ConfigDeployment `json:"deployment"`
+	ConfigVersion    ConfigVersion    `json:"configVersion"`
 }
 
 // CheckInRequest is the optional request body for the check-in endpoint.
+//
+// The config channel (currentDeployment/installingDeployment/failedDeployment) is the original,
+// frozen wire contract. The update channel (currentUpdate/installingUpdate/failedUpdate) is the
+// parallel software-update reporting, added without changing the config fields.
 type CheckInRequest struct {
 	CurrentDeployment    *CheckInDeploymentRef        `json:"currentDeployment,omitempty"`
 	InstallingDeployment *CheckInInstallingDeployment `json:"installingDeployment,omitempty"`
 	FailedDeployment     *CheckInFailedDeployment     `json:"failedDeployment,omitempty"`
+
+	CurrentUpdate    *CheckInDeploymentRef    `json:"currentUpdate,omitempty"`
+	InstallingUpdate *CheckInInstallingUpdate `json:"installingUpdate,omitempty"`
+	FailedUpdate     *CheckInFailedUpdate     `json:"failedUpdate,omitempty"`
+}
+
+// CheckInInstallingUpdate references an update deployment being installed, optionally with error and
+// attempt info.
+type CheckInInstallingUpdate struct {
+	ID       int64  `json:"id,string"`
+	Error    string `json:"error,omitempty"`
+	Attempts int    `json:"attempts,omitempty"`
+}
+
+// CheckInFailedUpdate reports an update deployment that failed, triggering a FAILED status update.
+type CheckInFailedUpdate struct {
+	ID     int64  `json:"id,string"`
+	Reason string `json:"reason,omitempty"`
 }
 
 // CheckInInstallingDeployment references a deployment being installed, optionally with error and attempt info.
@@ -76,9 +106,12 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		checkIn       queries.NodeCheckIn
-		deployment    queries.Deployment
+		deployment    queries.ConfigDeployment
 		configVersion queries.ConfigVersion
 		hasDeploy     bool
+
+		updateDep queries.UpdateDeployment
+		hasUpdate bool
 	)
 	err = s.store.Write(r.Context(), func(tx *store.Tx) error {
 		node, err := tx.GetNode(r.Context(), nodeID)
@@ -88,7 +121,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 
 		if req.InstallingDeployment != nil {
 			// auto-update deployment status to IN_PROGRESS when node reports it's installing, if it was PENDING before
-			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.InstallingDeployment.ID)
+			row, err := tx.GetConfigDeploymentWithConfigVersion(r.Context(), req.InstallingDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("installing deployment %d: not found: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
@@ -99,7 +132,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 				return fmt.Errorf("installing deployment %d: belongs to a different node: %w", req.InstallingDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusPending {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 					ID:     req.InstallingDeployment.ID,
 					Status: statusInProgress,
 				})
@@ -111,7 +144,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 
 		if req.CurrentDeployment != nil {
 			// auto-update deployment status to COMPLETED if node reports its current version
-			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.CurrentDeployment.ID)
+			row, err := tx.GetConfigDeploymentWithConfigVersion(r.Context(), req.CurrentDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("current deployment %d: not found: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
@@ -122,7 +155,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 				return fmt.Errorf("current deployment %d: belongs to a different node: %w", req.CurrentDeployment.ID, errInvalidRequest)
 			}
 			if row.Status == statusInProgress {
-				_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+				_, err = tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 					ID:     req.CurrentDeployment.ID,
 					Status: statusCompleted,
 				})
@@ -133,7 +166,7 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if req.FailedDeployment != nil {
-			row, err := tx.GetDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
+			row, err := tx.GetConfigDeploymentWithConfigVersion(r.Context(), req.FailedDeployment.ID)
 			if errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("failed deployment %d: not found: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
@@ -143,10 +176,77 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			if row.NodeID != node.ID {
 				return fmt.Errorf("failed deployment %d: belongs to a different node: %w", req.FailedDeployment.ID, errInvalidRequest)
 			}
-			_, err = tx.UpdateDeploymentStatus(r.Context(), queries.UpdateDeploymentStatusParams{
+			_, err = tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
 				ID:     req.FailedDeployment.ID,
 				Status: statusFailed,
 				Reason: nullString(req.FailedDeployment.Reason),
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		// The update channel mirrors the config transitions above. Update deployments carry node_id
+		// directly, so no join is needed to check ownership.
+		if req.InstallingUpdate != nil {
+			dep, err := tx.GetUpdateDeployment(r.Context(), req.InstallingUpdate.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("installing update %d: not found: %w", req.InstallingUpdate.ID, errInvalidRequest)
+			}
+			if err != nil {
+				return err
+			}
+			if dep.NodeID != node.ID {
+				return fmt.Errorf("installing update %d: belongs to a different node: %w", req.InstallingUpdate.ID, errInvalidRequest)
+			}
+			if dep.Status == statusPending {
+				_, err = tx.SetUpdateDeploymentStatus(r.Context(), queries.SetUpdateDeploymentStatusParams{
+					ID:     req.InstallingUpdate.ID,
+					Status: statusInProgress,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if req.CurrentUpdate != nil {
+			dep, err := tx.GetUpdateDeployment(r.Context(), req.CurrentUpdate.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("current update %d: not found: %w", req.CurrentUpdate.ID, errInvalidRequest)
+			}
+			if err != nil {
+				return err
+			}
+			if dep.NodeID != node.ID {
+				return fmt.Errorf("current update %d: belongs to a different node: %w", req.CurrentUpdate.ID, errInvalidRequest)
+			}
+			if dep.Status == statusInProgress {
+				_, err = tx.SetUpdateDeploymentStatus(r.Context(), queries.SetUpdateDeploymentStatusParams{
+					ID:     req.CurrentUpdate.ID,
+					Status: statusCompleted,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if req.FailedUpdate != nil {
+			dep, err := tx.GetUpdateDeployment(r.Context(), req.FailedUpdate.ID)
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("failed update %d: not found: %w", req.FailedUpdate.ID, errInvalidRequest)
+			}
+			if err != nil {
+				return err
+			}
+			if dep.NodeID != node.ID {
+				return fmt.Errorf("failed update %d: belongs to a different node: %w", req.FailedUpdate.ID, errInvalidRequest)
+			}
+			_, err = tx.SetUpdateDeploymentStatus(r.Context(), queries.SetUpdateDeploymentStatusParams{
+				ID:     req.FailedUpdate.ID,
+				Status: statusFailed,
+				Reason: nullString(req.FailedUpdate.Reason),
 			})
 			if err != nil {
 				return err
@@ -167,28 +267,60 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			installingError = req.InstallingDeployment.Error
 			installingAttempts = req.InstallingDeployment.Attempts
 		}
+
+		var currentUpdateID *int64
+		if req.CurrentUpdate != nil {
+			currentUpdateID = &req.CurrentUpdate.ID
+		}
+		var installingUpdateID *int64
+		if req.InstallingUpdate != nil {
+			installingUpdateID = &req.InstallingUpdate.ID
+		}
+		var installingUpdateError string
+		var installingUpdateAttempts int
+		if req.InstallingUpdate != nil {
+			installingUpdateError = req.InstallingUpdate.Error
+			installingUpdateAttempts = req.InstallingUpdate.Attempts
+		}
 		checkIn, err = tx.CreateNodeCheckIn(r.Context(), queries.CreateNodeCheckInParams{
 			NodeID:                       node.ID,
 			CurrentDeploymentID:          nullInt64(currentID),
 			InstallingDeploymentID:       nullInt64(installingID),
 			InstallingDeploymentError:    nullString(installingError),
 			InstallingDeploymentAttempts: nullInt64FromInt(installingAttempts),
+			CurrentUpdateDeploymentID:    nullInt64(currentUpdateID),
+			InstallingUpdateDeploymentID: nullInt64(installingUpdateID),
+			InstallingUpdateError:        nullString(installingUpdateError),
+			InstallingUpdateAttempts:     nullInt64FromInt(installingUpdateAttempts),
 		})
 		if err != nil {
 			return err
 		}
 
-		deployment, err = tx.GetActiveDeploymentByNode(r.Context(), node.ID)
-		if errors.Is(err, sql.ErrNoRows) {
+		deployment, err = tx.GetActiveConfigDeploymentByNode(r.Context(), node.ID)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
 			hasDeploy = false
-			return nil
-		}
-		if err != nil {
+		case err != nil:
 			return err
+		default:
+			hasDeploy = true
+			configVersion, err = tx.GetConfigVersion(r.Context(), deployment.ConfigVersionID)
+			if err != nil {
+				return err
+			}
 		}
-		hasDeploy = true
-		configVersion, err = tx.GetConfigVersion(r.Context(), deployment.ConfigVersionID)
-		return err
+
+		updateDep, err = tx.GetActiveUpdateDeploymentByNode(r.Context(), node.ID)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			hasUpdate = false
+		case err != nil:
+			return err
+		default:
+			hasUpdate = true
+		}
+		return nil
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -214,8 +346,20 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 	if hasDeploy {
 		resp.LatestConfig = &LatestConfig{
-			Deployment:    toDeployment(deployment),
-			ConfigVersion: toConfigVersion(r, configVersion),
+			ConfigDeployment: toConfigDeployment(deployment),
+			ConfigVersion:    toConfigVersion(r, configVersion),
+		}
+	}
+	if hasUpdate {
+		artefact, err := s.store.GetUpdateArtefact(r.Context(), updateDep.UpdateArtefactID)
+		if err != nil {
+			writeError(w, errInternal)
+			logger.Error("failed to read update artefact", zap.Error(err))
+			return
+		}
+		resp.LatestUpdate = &LatestUpdate{
+			UpdateDeployment: toUpdateDeployment(updateDep),
+			UpdateArtefact:   toUpdateArtefact(r, artefact),
 		}
 	}
 

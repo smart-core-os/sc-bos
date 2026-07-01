@@ -38,7 +38,7 @@ type ConnState struct {
 type ConnOption func(*Conn)
 
 // WithUpdaterOptions appends opts to the UpdaterOption slice forwarded to each
-// newly-created DeploymentUpdater.
+// newly-created ConfigUpdater.
 func WithUpdaterOptions(opts ...UpdaterOption) ConnOption {
 	return func(c *Conn) { c.updaterOpts = append(c.updaterOpts, opts...) }
 }
@@ -49,16 +49,23 @@ func WithClientFactory(f func(Registration) Client) ConnOption {
 	return func(c *Conn) { c.newClient = f }
 }
 
+// WithSoftwareUpdater enables the update channel on the shared poll check-in, dispatching the
+// latestUpdate block to u. When unset the update channel is not reported and latestUpdate is ignored.
+func WithSoftwareUpdater(u *SoftwareUpdater) ConnOption {
+	return func(c *Conn) { c.softwareUpdater = u }
+}
+
 // Conn manages the lifecycle of a cloud connection.
 // It tracks the current Registration, broadcasts ConnState changes, and owns a
-// DeploymentUpdater that is rebuilt whenever the Registration changes.
+// ConfigUpdater that is rebuilt whenever the Registration changes.
 // Methods are safe to call concurrently.
 type Conn struct {
 	// Immutable after construction — no locking required.
-	regStore    RegistrationStore
-	depStore    *DeploymentStore
-	newClient   func(Registration) Client
-	updaterOpts []UpdaterOption
+	regStore        RegistrationStore
+	depStore        *DeploymentStore
+	newClient       func(Registration) Client
+	updaterOpts     []UpdaterOption
+	softwareUpdater *SoftwareUpdater // nil when the update channel is disabled
 
 	// serial is a binary semaphore (buffered channel of size 1, pre-filled).
 	// Acquire with lockSerial; release with unlockSerial.
@@ -67,9 +74,9 @@ type Conn struct {
 	// operation to complete before clearing state.
 	serial chan struct{}
 
-	// updater is the active DeploymentUpdater; nil when unconfigured.
+	// updater is the active ConfigUpdater; nil when unconfigured.
 	// Protected by serial.
-	updater *DeploymentUpdater
+	updater *ConfigUpdater
 
 	// mu protects state. Read-only operations (State, PullState) acquire only mu,
 	// never serial, so they never block on long-running server calls.
@@ -80,7 +87,7 @@ type Conn struct {
 }
 
 // OpenConn creates a new Conn backed by the given stores.
-// depStore is used to construct a DeploymentUpdater whenever a Registration is loaded or set.
+// depStore is used to construct a ConfigUpdater whenever a Registration is loaded or set.
 func OpenConn(ctx context.Context, regStore RegistrationStore, depStore *DeploymentStore, opts ...ConnOption) (*Conn, error) {
 	serial := make(chan struct{}, 1)
 	serial <- struct{}{} // initialise as unlocked
@@ -113,14 +120,14 @@ func (c *Conn) start(ctx context.Context) error {
 		return nil
 	}
 	// no locking required as start is only called during construction
-	c.updater = NewDeploymentUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
+	c.updater = NewConfigUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
 	st := c.updateState(ConnState{Connectivity: Connecting, Registration: &reg})
 	c.bus.Send(ctx, st)
 	return nil
 }
 
 // Register persists the supplied credentials and updates internal state.
-// A new DeploymentUpdater is created for the new registration.
+// A new ConfigUpdater is created for the new registration.
 func (c *Conn) Register(ctx context.Context, reg Registration) (ConnState, error) {
 	if !c.lockSerial(ctx) {
 		return ConnState{}, ctx.Err()
@@ -128,7 +135,7 @@ func (c *Conn) Register(ctx context.Context, reg Registration) (ConnState, error
 	defer c.unlockSerial()
 
 	// check that the new registration will actually work before saving it
-	newUpdater := NewDeploymentUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
+	newUpdater := NewConfigUpdater(c.depStore, c.newClient(reg), c.updaterOpts...)
 	if err := newUpdater.CheckIn(ctx); err != nil {
 		return ConnState{}, &CredentialCheckError{Err: err}
 	}
@@ -199,9 +206,41 @@ func (c *Conn) PullState(ctx context.Context) (ConnState, <-chan ConnState) {
 	return initial, changes
 }
 
-// Update performs a deployment check-in using the current registration.
+// WaitConnected blocks until the connection has had a successful check-in (Connectivity == Connected),
+// or ctx is done. It returns nil once connected, otherwise ctx.Err(). If the connection is already
+// Connected it returns immediately.
+func (c *Conn) WaitConnected(ctx context.Context) error {
+	// Scope the subscription to a child ctx we cancel on return, so the bus drops our listener.
+	// Otherwise, with a long-lived ctx, the leaked undrained listener blocks later check-in broadcasts.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	state, changes := c.PullState(ctx)
+	if state.Connectivity == Connected {
+		return nil
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case st, ok := <-changes:
+			if !ok {
+				return ctx.Err()
+			}
+			if st.Connectivity == Connected {
+				return nil
+			}
+		}
+	}
+}
+
+// Update performs a single shared check-in using the current registration and dispatches the
+// response to both channels: the config channel (ConfigUpdater) and, when enabled, the update
+// channel (SoftwareUpdater). One check-in carries both channels' current state.
 // Returns ErrNotRegistered when no registration is active.
 // The check-in outcome is recorded internally so that State/PullState reflect it.
+//
+// needReboot reflects the config channel only; an update channel that records an install intent does
+// not itself trigger a reboot here (the Supervisor restarts BOS in a later phase).
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	if !c.lockSerial(ctx) {
 		return false, ctx.Err()
@@ -216,9 +255,34 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	reg := c.state.Registration
 	c.mu.Unlock()
 
-	needReboot, err = u.Update(ctx)
-	c.recordCheckIn(reg, time.Now(), err)
-	return needReboot, err
+	// Build the request from the config channel's state, perform a single check-in, and dispatch the
+	// response to each handler. The update channel reports via its own follow-up check-ins in HandleUpdate.
+	req, err := u.CheckInRequest(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// Record the whole poll's outcome (transport plus handler errors) so State and WaitConnected
+	// reflect a config/update that reached the server but then failed to download or stage, not just
+	// the transport check-in.
+	defer func() { c.recordCheckIn(reg, time.Now(), err) }()
+
+	resp, err := u.client.CheckIn(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("check-in: %w", err)
+	}
+
+	needReboot, err = u.HandleConfig(ctx, req, resp)
+	if err != nil {
+		return needReboot, err
+	}
+	if c.softwareUpdater != nil {
+		if err = c.softwareUpdater.HandleUpdate(ctx, u.client, resp); err != nil {
+			err = fmt.Errorf("handle update: %w", err)
+			return needReboot, err
+		}
+	}
+	return needReboot, nil
 }
 
 // CommitInstall marks the installing deployment as active and reports the result.

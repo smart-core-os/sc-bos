@@ -1,0 +1,63 @@
+{{- /*gotype: github.com/smart-core-os/sc-bos/cmd/cloudsim.updateArtefactsViewData*/ -}}
+{{define "update_artefacts"}}
+<!DOCTYPE html>
+<html>
+<head><title>Update Artefacts - CloudSim</title></head>
+<body>
+{{template "nav" .}}
+<h1>Update Artefacts</h1>
+{{if .Error}}<p><strong>Error: {{.Error}}</strong></p>{{end}}
+
+<h2>Upload Artefact</h2>
+<form method="post" action="/ui/update-artefacts" enctype="multipart/form-data">
+  <label>Version: <input type="text" name="version" required></label><br>
+  <label>Platform:
+    <select name="platform">
+      <option value="podman">podman</option>
+      <option value="freebsd">freebsd</option>
+    </select>
+  </label><br>
+  <label>Site ID (optional): <input type="number" name="siteId" value="{{.SiteID}}"></label><br>
+  <label>Description (optional): <input type="text" name="description"></label><br>
+  <label>Payload: <input type="file" name="payload" required></label><br>
+  <button type="submit">Upload</button>
+</form>
+
+<h2>Filter</h2>
+<form method="get" action="/ui/update-artefacts">
+  <label>Site ID: <input type="number" name="siteId" value="{{.SiteID}}"></label>
+  <label>Platform: <input type="text" name="platform" value="{{.Platform}}"></label>
+  <button type="submit">Filter</button>
+  {{if or .SiteID .Platform}}<a href="/ui/update-artefacts">Clear filter</a>{{end}}
+</form>
+
+<h2>Artefacts{{if .SiteID}} (site {{.SiteID}}){{end}}{{if .Platform}} (platform {{.Platform}}){{end}}</h2>
+<table border="1">
+<tr><th>ID</th><th>Site ID</th><th>Platform</th><th>Version</th><th>SHA-256</th><th>Size</th><th>Description</th><th>Created</th><th>Actions</th></tr>
+{{range .UpdateArtefacts}}
+<tr>
+  <td>{{.ID}}</td>
+  <td>{{if .SiteID.Valid}}{{.SiteID.Int64}}{{end}}</td>
+  <td>{{.Platform}}</td>
+  <td>{{.Version}}</td>
+  <td><small>{{.Sha256.String}}</small></td>
+  <td>{{.Size}}</td>
+  <td>{{.Description.String}}</td>
+  <td>{{.CreateTime.Format "2006-01-02 15:04:05"}}</td>
+  <td>
+    <a href="/api/v1/management/update-artefacts/{{.ID}}/payload">Download</a><br>
+    <form method="post" action="{{$.DeleteUpdateArtefactPath .ID}}">
+      <button type="submit">Delete</button>
+    </form>
+  </td>
+</tr>
+{{else}}
+<tr><td colspan="9">No artefacts.</td></tr>
+{{end}}
+</table>
+{{if .NextPageToken}}
+<p><a href="/ui/update-artefacts?after={{.NextPageToken}}{{if .SiteID}}&amp;siteId={{.SiteID}}{{end}}{{if .Platform}}&amp;platform={{.Platform}}{{end}}">Next page &raquo;</a></p>
+{{end}}
+</body>
+</html>
+{{end}}

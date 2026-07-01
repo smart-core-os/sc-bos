@@ -99,6 +99,7 @@ func TestStore_Nodes(t *testing.T) {
 	var nodeID int64
 	err = store.Write(ctx, func(tx *Tx) error {
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "TEST-AC-01",
 			SiteID:     siteID,
 			SecretHash: hash,
@@ -120,6 +121,7 @@ func TestStore_Nodes(t *testing.T) {
 			return err
 		}
 		want := queries.Node{
+			Platform:   "podman",
 			ID:         nodeID,
 			Hostname:   "TEST-AC-01",
 			SiteID:     siteID,
@@ -172,6 +174,7 @@ func TestStore_ConfigVersions(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: hash,
@@ -262,6 +265,7 @@ func TestStore_Deployments(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -288,7 +292,7 @@ func TestStore_Deployments(t *testing.T) {
 	// Test creating a deployment
 	var deploymentID int64
 	err = store.Write(ctx, func(tx *Tx) error {
-		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		deployment, err := tx.CreateConfigDeployment(ctx, queries.CreateConfigDeploymentParams{
 			ConfigVersionID: configVersionID,
 			Status:          "pending",
 		})
@@ -304,17 +308,17 @@ func TestStore_Deployments(t *testing.T) {
 
 	// Test getting a deployment
 	err = store.Read(ctx, func(tx *Tx) error {
-		deployment, err := tx.GetDeployment(ctx, deploymentID)
+		deployment, err := tx.GetConfigDeployment(ctx, deploymentID)
 		if err != nil {
 			return err
 		}
-		want := queries.Deployment{
+		want := queries.ConfigDeployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
 			Status:          "pending",
 			FinishedTime:    sql.NullTime{Valid: false},
 		}
-		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime")); diff != "" {
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.ConfigDeployment{}, "StartTime")); diff != "" {
 			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		return nil
@@ -325,19 +329,19 @@ func TestStore_Deployments(t *testing.T) {
 
 	// Test updating deployment status to completed
 	err = store.Write(ctx, func(tx *Tx) error {
-		deployment, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
+		deployment, err := tx.UpdateConfigDeploymentStatus(ctx, queries.UpdateConfigDeploymentStatusParams{
 			ID:     deploymentID,
 			Status: "completed",
 		})
 		if err != nil {
 			return err
 		}
-		want := queries.Deployment{
+		want := queries.ConfigDeployment{
 			ID:              deploymentID,
 			ConfigVersionID: configVersionID,
 			Status:          "completed",
 		}
-		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+		if diff := cmp.Diff(want, deployment, cmpopts.IgnoreFields(queries.ConfigDeployment{}, "StartTime", "FinishedTime")); diff != "" {
 			t.Errorf("deployment mismatch (-want +got):\n%s", diff)
 		}
 		if !deployment.FinishedTime.Valid {
@@ -357,7 +361,7 @@ func TestStore_Deployments(t *testing.T) {
 			return err
 		}
 
-		deployments, err := tx.ListDeploymentsByNode(ctx, queries.ListDeploymentsByNodeParams{
+		deployments, err := tx.ListConfigDeploymentsByNode(ctx, queries.ListConfigDeploymentsByNodeParams{
 			NodeID:   config.NodeID,
 			BeforeID: math.MaxInt64,
 			Limit:    10,
@@ -369,12 +373,12 @@ func TestStore_Deployments(t *testing.T) {
 			t.Errorf("expected 1 deployment, got %d", len(deployments))
 		}
 		if len(deployments) > 0 {
-			want := queries.Deployment{
+			want := queries.ConfigDeployment{
 				ID:              deploymentID,
 				ConfigVersionID: configVersionID,
 				Status:          "completed",
 			}
-			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries.Deployment{}, "StartTime", "FinishedTime")); diff != "" {
+			if diff := cmp.Diff(want, deployments[0], cmpopts.IgnoreFields(queries.ConfigDeployment{}, "StartTime", "FinishedTime")); diff != "" {
 				t.Errorf("deployment in list mismatch (-want +got):\n%s", diff)
 			}
 		}
@@ -402,6 +406,7 @@ func TestStore_NodeCheckIns(t *testing.T) {
 		}
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -490,6 +495,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		siteID = site.ID
 
 		node, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "TEST-AC-01",
 			SiteID:     site.ID,
 			SecretHash: sampleHash(0),
@@ -515,7 +521,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 		configVersionID = config.ID
 
-		deployment, err := tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		deployment, err := tx.CreateConfigDeployment(ctx, queries.CreateConfigDeploymentParams{
 			ConfigVersionID: config.ID,
 			Status:          "pending",
 		})
@@ -566,7 +572,7 @@ func TestStore_CascadeDeletes(t *testing.T) {
 		}
 
 		// Check deployment is deleted
-		_, err = tx.GetDeployment(ctx, deploymentID)
+		_, err = tx.GetConfigDeployment(ctx, deploymentID)
 		if err == nil {
 			t.Error("expected deployment to be deleted, but it still exists")
 		}
@@ -698,6 +704,7 @@ func TestStore_CountOperations(t *testing.T) {
 		site2ID = site2.ID
 
 		node1, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "NODE-01",
 			SiteID:     site1ID,
 			SecretHash: sampleHash(1),
@@ -708,6 +715,7 @@ func TestStore_CountOperations(t *testing.T) {
 		node1ID = node1.ID
 
 		node2, err := tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "NODE-02",
 			SiteID:     site1ID,
 			SecretHash: sampleHash(2),
@@ -718,6 +726,7 @@ func TestStore_CountOperations(t *testing.T) {
 		node2ID = node2.ID
 
 		_, err = tx.CreateNode(ctx, queries.CreateNodeParams{
+			Platform:   "podman",
 			Hostname:   "NODE-03",
 			SiteID:     site2ID,
 			SecretHash: sampleHash(3),
@@ -746,7 +755,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 
 		// Create a deployment
-		_, err = tx.CreateDeployment(ctx, queries.CreateDeploymentParams{
+		_, err = tx.CreateConfigDeployment(ctx, queries.CreateConfigDeploymentParams{
 			ConfigVersionID: cv2.ID,
 			Status:          "pending",
 		})
@@ -804,7 +813,7 @@ func TestStore_CountOperations(t *testing.T) {
 		}
 
 		// Count deployments
-		deploymentCount, err := tx.CountDeployments(ctx)
+		deploymentCount, err := tx.CountConfigDeployments(ctx)
 		if err != nil {
 			return err
 		}
@@ -874,7 +883,7 @@ func TestStore_UpdateNonExistent(t *testing.T) {
 
 	// Test updating non-existent deployment status
 	err = store.Write(ctx, func(tx *Tx) error {
-		_, err := tx.UpdateDeploymentStatus(ctx, queries.UpdateDeploymentStatusParams{
+		_, err := tx.UpdateConfigDeploymentStatus(ctx, queries.UpdateConfigDeploymentStatusParams{
 			ID:     99999,
 			Status: "completed",
 		})

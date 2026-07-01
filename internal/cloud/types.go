@@ -15,6 +15,10 @@ type CheckInRequest struct {
 	CurrentDeployment    *CheckInDeploymentRef        `json:"currentDeployment,omitempty"`
 	InstallingDeployment *CheckInInstallingDeployment `json:"installingDeployment,omitempty"`
 	FailedDeployment     *CheckInFailedDeployment     `json:"failedDeployment,omitempty"`
+
+	CurrentUpdate    *CheckInDeploymentRef        `json:"currentUpdate,omitempty"`
+	InstallingUpdate *CheckInInstallingDeployment `json:"installingUpdate,omitempty"`
+	FailedUpdate     *CheckInFailedDeployment     `json:"failedUpdate,omitempty"`
 }
 
 // CheckInDeploymentRef references a deployment by ID.
@@ -39,6 +43,41 @@ type CheckInFailedDeployment struct {
 type CheckInResponse struct {
 	CheckIn      NodeCheckIn   `json:"checkIn"`
 	LatestConfig *LatestConfig `json:"latestConfig,omitempty"`
+	LatestUpdate *LatestUpdate `json:"latestUpdate,omitempty"`
+}
+
+// LatestUpdate bundles the active update deployment with its artefact. It is the software-update
+// analogue of LatestConfig.
+type LatestUpdate struct {
+	UpdateDeployment UpdateDeployment `json:"updateDeployment"`
+	UpdateArtefact   UpdateArtefact   `json:"updateArtefact"`
+}
+
+// UpdateDeployment is the JSON representation of an update deployment: the rollout of one update
+// artefact to one node.
+type UpdateDeployment struct {
+	ID               string     `json:"id"`
+	UpdateArtefactID string     `json:"updateArtefactId"`
+	NodeID           string     `json:"nodeId"`
+	Status           string     `json:"status"`
+	StartTime        time.Time  `json:"startTime"`
+	FinishedTime     *time.Time `json:"finishedTime,omitempty"`
+	Reason           string     `json:"reason,omitempty"`
+}
+
+// UpdateArtefact is the JSON representation of a BOS update artefact's metadata. The payload itself
+// is never included here; it is downloaded separately from PayloadURL. BOS only acts on Version,
+// SHA256, and PayloadURL, but the block is modelled faithfully.
+type UpdateArtefact struct {
+	ID          string    `json:"id"`
+	SiteID      string    `json:"siteId,omitempty"`
+	Platform    string    `json:"platform"`
+	Version     string    `json:"version"`
+	SHA256      string    `json:"sha256,omitempty"`
+	Description string    `json:"description"`
+	Size        string    `json:"size"`
+	PayloadURL  string    `json:"payloadUrl"`
+	CreateTime  time.Time `json:"createTime"`
 }
 
 // NodeCheckIn is the JSON representation of a node check-in.

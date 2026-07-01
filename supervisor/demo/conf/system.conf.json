@@ -1,0 +1,22 @@
+{
+  "staticHosting": [
+    {"path": "/", "filePath": "/app/ops-ui"},
+    {"path": "/__/scos/", "filePath": "/app/ui-config"}
+  ],
+  "logger": {
+    "level": "DEBUG"
+  },
+  "systems": {
+    "authn": {
+      "user": {
+        "fileAccounts": true
+      }
+    }
+  },
+  "supervisor": {
+    "enabled": true
+  },
+  "cloud": {
+    "pollInterval": "30s"
+  }
+}

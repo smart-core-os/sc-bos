@@ -63,12 +63,26 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/management/config-versions/{id}/payload", s.getConfigVersionPayload)
 	mux.HandleFunc("DELETE /api/v1/management/config-versions/{id}", s.deleteConfigVersion)
 
-	// Deployments
-	mux.HandleFunc("GET /api/v1/management/deployments", s.listDeployments)
-	mux.HandleFunc("POST /api/v1/management/deployments", s.createDeployment)
-	mux.HandleFunc("GET /api/v1/management/deployments/{id}", s.getDeployment)
-	mux.HandleFunc("PATCH /api/v1/management/deployments/{id}", s.updateDeploymentStatus)
-	mux.HandleFunc("DELETE /api/v1/management/deployments/{id}", s.deleteDeployment)
+	// ConfigDeployments
+	mux.HandleFunc("GET /api/v1/management/config-deployments", s.listConfigDeployments)
+	mux.HandleFunc("POST /api/v1/management/config-deployments", s.createConfigDeployment)
+	mux.HandleFunc("GET /api/v1/management/config-deployments/{id}", s.getConfigDeployment)
+	mux.HandleFunc("PATCH /api/v1/management/config-deployments/{id}", s.updateConfigDeploymentStatus)
+	mux.HandleFunc("DELETE /api/v1/management/config-deployments/{id}", s.deleteConfigDeployment)
+
+	// Update Artefacts
+	mux.HandleFunc("GET /api/v1/management/update-artefacts", s.listUpdateArtefacts)
+	mux.HandleFunc("POST /api/v1/management/update-artefacts", s.createUpdateArtefact)
+	mux.HandleFunc("GET /api/v1/management/update-artefacts/{id}", s.getUpdateArtefact)
+	mux.HandleFunc("GET /api/v1/management/update-artefacts/{id}/payload", s.getUpdateArtefactPayload)
+	mux.HandleFunc("DELETE /api/v1/management/update-artefacts/{id}", s.deleteUpdateArtefact)
+
+	// Update Deployments
+	mux.HandleFunc("GET /api/v1/management/update-deployments", s.listUpdateDeployments)
+	mux.HandleFunc("POST /api/v1/management/update-deployments", s.createUpdateDeployment)
+	mux.HandleFunc("GET /api/v1/management/update-deployments/{id}", s.getUpdateDeployment)
+	mux.HandleFunc("PATCH /api/v1/management/update-deployments/{id}", s.updateUpdateDeploymentStatus)
+	mux.HandleFunc("DELETE /api/v1/management/update-deployments/{id}", s.deleteUpdateDeployment)
 
 	// Enrollment codes
 	mux.HandleFunc("POST /api/v1/management/nodes/{id}/enrollment-codes", s.createEnrollmentCode)

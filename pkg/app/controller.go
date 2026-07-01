@@ -32,6 +32,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
 	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/internal/supervisor"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/reflectionapi"
@@ -52,7 +53,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/enrollmentpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -74,7 +77,13 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 
-	ci, err := initCloud(ctx, config, logger)
+	supConn := initSupervisor(config, logger)
+	var supClient supervisorpb.SupervisorApiClient
+	if supConn != nil {
+		supClient = supervisorpb.NewSupervisorApiClient(supConn)
+	}
+
+	ci, err := initCloud(ctx, config, logger, supClient)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +187,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		ControllerConfig: confStore,
 		Enrollment:       pi.EnrollServer,
 		Cloud:            ci.Conn,
+		Supervisor:       supClient,
 		Logger:           logger,
 		LogCapture:       capture,
 		LogLevel:         &logLevel,
@@ -211,6 +221,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		c.Defer(ai.AuditSetup.Close)
 	}
 	c.Defer(ci.Store.Close)
+	if supConn != nil {
+		c.Defer(supConn.Close)
+	}
 	return c, nil
 }
 
@@ -241,7 +254,7 @@ type authInfo struct {
 }
 
 // initCloud sets up the cloud connection. The Conn is always created; it is a no-op when unconfigured.
-func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (cloudInfo, error) {
+func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger, supClient supervisorpb.SupervisorApiClient) (cloudInfo, error) {
 	cloudDataDir := filepath.Join(config.DataDir, cloudDirName)
 	if err := os.MkdirAll(cloudDataDir, 0750); err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to create cloud data directory: %w", err)
@@ -273,6 +286,17 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (
 	regStorePath := filepath.Join(cloudDataDir, "registration.json")
 	regStore := cloud.NewFileRegistrationStore(regStorePath)
 
+	updaterOpts := []cloud.SoftwareUpdaterOption{
+		cloud.WithSoftwareUpdaterLogger(logger.Named("cloud.update")),
+		cloud.WithSoftwareUpdaterVersion(EffectiveVersion()),
+	}
+	// A nil client means the Supervisor integration is disabled
+	if supClient != nil {
+		updaterOpts = append(updaterOpts, cloud.WithUpdateInstaller(supClient))
+	}
+	softwareUpdater := cloud.NewSoftwareUpdater(updaterOpts...)
+	connOptions = append(connOptions, cloud.WithSoftwareUpdater(softwareUpdater))
+
 	cloudConn, err := cloud.OpenConn(ctx, regStore, cloudStore, connOptions...)
 	if err != nil {
 		return cloudInfo{}, fmt.Errorf("failed to start cloud connection: %w", err)
@@ -284,6 +308,22 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger) (
 		DataRoot:    cloudDataRoot,
 		RegisterURL: registerURL,
 	}, nil
+}
+
+// initSupervisor opens the Supervisor connection when the integration is enabled.
+// Returns nil when supervisor is disabled, absent, or fails to dial — all non-fatal in dev.
+func initSupervisor(config sysconf.Config, logger *zap.Logger) *grpc.ClientConn {
+	sup := config.Supervisor
+	if sup == nil || !sup.Enabled {
+		return nil
+	}
+	conn, err := supervisor.Dial(sup.SocketPath)
+	if err != nil {
+		logger.Warn("failed to dial supervisor — update integration disabled", zap.String("socketPath", sup.SocketPath), zap.Error(err))
+		return nil
+	}
+	logger.Info("supervisor client ready", zap.String("socketPath", sup.SocketPath))
+	return conn
 }
 
 func loadAppConfig(ctx context.Context, config sysconf.Config, ci cloudInfo, logger *zap.Logger) (ConfigStore, error) {
@@ -631,6 +671,7 @@ type Controller struct {
 	ControllerConfig ConfigStore
 	Enrollment       *enrollment.Server
 	Cloud            *cloud.Conn
+	Supervisor       supervisorpb.SupervisorApiClient // nil when supervisor integration is disabled or failed to dial
 
 	// services for drivers/automations
 	Logger          *zap.Logger
@@ -683,7 +724,17 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 	// metadata associated with the node itself
 	// we don't support changing metadata while running
-	c.Node.Announce(c.Node.Name(), node.HasMetadata(initialConfig.Metadata))
+	features := []node.Feature{node.HasMetadata(initialConfig.Metadata)}
+	// Report the running build version as the node's software version, unless an operator
+	// pinned one in config. The nil-safe getters handle an absent Metadata or Product.
+	if initialConfig.Metadata.GetProduct().GetSoftwareVersion() == "" {
+		if v := EffectiveVersion(); v != "" {
+			features = append(features, node.HasMetadata(&metadatapb.Metadata{
+				Product: &metadatapb.Metadata_Product{SoftwareVersion: v},
+			}))
+		}
+	}
+	c.Node.Announce(c.Node.Name(), features...)
 
 	storeUndo := dataretention.Start(ctx, c.Node, c.SystemConfig.Name, c.Stores, c.SystemConfig.Stores, c.Logger)
 	defer storeUndo()
@@ -714,6 +765,12 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 				c.Logger.Info("triggering automatic restart to apply new deployment")
 				return restartNowError{reason: "automatic restart to install deployment"}
 			}
+			return nil
+		})
+	}
+	if c.Supervisor != nil {
+		group.Go(func() error {
+			c.commitToSupervisor(ctx)
 			return nil
 		})
 	}
@@ -759,6 +816,24 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 
 	err = multierr.Append(err, group.Wait())
 	return
+}
+
+// commitToSupervisor tells the Supervisor which version BOS is now running. This prevents the supervisor from assuming
+// that an update has failed, and rolling us back.
+//
+// It is best-effort and blocks until complete.
+// Requires c.Supervisor to be non-nil.
+func (c *Controller) commitToSupervisor(ctx context.Context) {
+	log := c.Logger.Named("supervisor")
+	// If we expect to connect to the cloud, don't commit until we confirm it's working, so that an update which breaks
+	// cloud connection will be rolled back.
+	if c.Cloud != nil && c.Cloud.State().Connectivity != cloud.Unconfigured {
+		if err := c.Cloud.WaitConnected(ctx); err != nil {
+			log.Debug("supervisor commit skipped: no successful check-in before shutdown", zap.Error(err))
+			return
+		}
+	}
+	supervisor.RunStartupCommit(ctx, c.Supervisor, EffectiveVersion(), log)
 }
 
 const (

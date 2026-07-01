@@ -9,21 +9,21 @@ import (
 	"time"
 )
 
-type ConfigVersion struct {
-	ID          int64
-	NodeID      int64
-	Description sql.NullString
-	Payload     []byte
-	CreateTime  time.Time
-}
-
-type Deployment struct {
+type ConfigDeployment struct {
 	ID              int64
 	ConfigVersionID int64
 	Status          string
 	StartTime       time.Time
 	FinishedTime    sql.NullTime
 	Reason          sql.NullString
+}
+
+type ConfigVersion struct {
+	ID          int64
+	NodeID      int64
+	Description sql.NullString
+	Payload     []byte
+	CreateTime  time.Time
 }
 
 type EnrollmentCode struct {
@@ -40,6 +40,7 @@ type Node struct {
 	SiteID     int64
 	SecretHash []byte
 	CreateTime time.Time
+	Platform   string
 }
 
 type NodeCheckIn struct {
@@ -50,10 +51,34 @@ type NodeCheckIn struct {
 	InstallingDeploymentID       sql.NullInt64
 	InstallingDeploymentError    sql.NullString
 	InstallingDeploymentAttempts sql.NullInt64
+	CurrentUpdateDeploymentID    sql.NullInt64
+	InstallingUpdateDeploymentID sql.NullInt64
+	InstallingUpdateError        sql.NullString
+	InstallingUpdateAttempts     sql.NullInt64
 }
 
 type Site struct {
 	ID         int64
 	Name       string
 	CreateTime time.Time
+}
+
+type UpdateArtefact struct {
+	ID          int64
+	SiteID      sql.NullInt64
+	Platform    string
+	Version     string
+	Sha256      []byte
+	Description sql.NullString
+	CreateTime  time.Time
+}
+
+type UpdateDeployment struct {
+	ID               int64
+	UpdateArtefactID int64
+	NodeID           int64
+	Status           string
+	StartTime        time.Time
+	FinishedTime     sql.NullTime
+	Reason           sql.NullString
 }
