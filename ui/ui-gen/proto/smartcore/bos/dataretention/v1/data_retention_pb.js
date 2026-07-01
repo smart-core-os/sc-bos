@@ -540,7 +540,9 @@ proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.toObject = fun
 proto.smartcore.bos.dataretention.v1.DataRetentionBytes.toObject = function(includeInstance, msg) {
   var f, obj = {
 used: (f = jspb.Message.getField(msg, 1)) == null ? undefined : f,
-capacity: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f
+capacity: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
+otherUsed: (f = jspb.Message.getField(msg, 3)) == null ? undefined : f,
+available: (f = jspb.Message.getField(msg, 4)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -585,6 +587,14 @@ proto.smartcore.bos.dataretention.v1.DataRetentionBytes.deserializeBinaryFromRea
       var value = /** @type {number} */ (reader.readUint64());
       msg.setCapacity(value);
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setOtherUsed(value);
+      break;
+    case 4:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setAvailable(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -625,6 +635,20 @@ proto.smartcore.bos.dataretention.v1.DataRetentionBytes.serializeBinaryToWriter 
   if (f != null) {
     writer.writeUint64(
       2,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 3));
+  if (f != null) {
+    writer.writeUint64(
+      3,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 4));
+  if (f != null) {
+    writer.writeUint64(
+      4,
       f
     );
   }
@@ -700,6 +724,78 @@ proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.clearCapacity 
  */
 proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.hasCapacity = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional uint64 other_used = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.getOtherUsed = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.dataretention.v1.DataRetentionBytes} returns this
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.setOtherUsed = function(value) {
+  return jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.dataretention.v1.DataRetentionBytes} returns this
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.clearOtherUsed = function() {
+  return jspb.Message.setField(this, 3, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.hasOtherUsed = function() {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional uint64 available = 4;
+ * @return {number}
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.getAvailable = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.dataretention.v1.DataRetentionBytes} returns this
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.setAvailable = function(value) {
+  return jspb.Message.setField(this, 4, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.dataretention.v1.DataRetentionBytes} returns this
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.clearAvailable = function() {
+  return jspb.Message.setField(this, 4, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.dataretention.v1.DataRetentionBytes.prototype.hasAvailable = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

@@ -71,8 +71,10 @@ func updateSqliteModel(ctx context.Context, s *stores.Stores, model *dataretenti
 	usedItems := uint64(count)
 
 	bytesMsg := &dataretentionpb.DataRetentionBytes{Used: &used}
-	if cap, _, ok := diskCapacity(dataDir, used); ok {
+	if cap, otherUsed, available, ok := diskCapacity(dataDir, used); ok {
 		bytesMsg.Capacity = &cap
+		bytesMsg.OtherUsed = &otherUsed
+		bytesMsg.Available = &available
 	}
 
 	_, _ = model.SetDataRetention(&dataretentionpb.DataRetention{

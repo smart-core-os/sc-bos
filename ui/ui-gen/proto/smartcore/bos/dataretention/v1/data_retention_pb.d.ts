@@ -41,6 +41,16 @@ export class DataRetentionBytes extends jspb.Message {
   hasCapacity(): boolean;
   clearCapacity(): DataRetentionBytes;
 
+  getOtherUsed(): number;
+  setOtherUsed(value: number): DataRetentionBytes;
+  hasOtherUsed(): boolean;
+  clearOtherUsed(): DataRetentionBytes;
+
+  getAvailable(): number;
+  setAvailable(value: number): DataRetentionBytes;
+  hasAvailable(): boolean;
+  clearAvailable(): DataRetentionBytes;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DataRetentionBytes.AsObject;
   static toObject(includeInstance: boolean, msg: DataRetentionBytes): DataRetentionBytes.AsObject;
@@ -53,6 +63,8 @@ export namespace DataRetentionBytes {
   export type AsObject = {
     used?: number;
     capacity?: number;
+    otherUsed?: number;
+    available?: number;
   };
 
   export enum UsedCase {
@@ -63,6 +75,16 @@ export namespace DataRetentionBytes {
   export enum CapacityCase {
     _CAPACITY_NOT_SET = 0,
     CAPACITY = 2,
+  }
+
+  export enum OtherUsedCase {
+    _OTHER_USED_NOT_SET = 0,
+    OTHER_USED = 3,
+  }
+
+  export enum AvailableCase {
+    _AVAILABLE_NOT_SET = 0,
+    AVAILABLE = 4,
   }
 }
 

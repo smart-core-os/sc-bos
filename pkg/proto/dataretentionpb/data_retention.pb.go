@@ -79,12 +79,32 @@ func (x *DataRetention) GetItems() *DataRetentionItems {
 }
 
 // DataRetentionBytes describes storage consumption measured in bytes.
+//
+// The fields partition the storage backing this store:
+//
+//	capacity = used + other_used + available + reserved
+//
+// where reserved is space that exists but this store cannot use (e.g. filesystem
+// blocks reserved for root). When the relevant fields are present, clients can derive:
+//
+//	space free to this store = available
+//	store fullness           = used / (used + available)                          // 0 when empty, 100 when this store can grow no further
+//	disk fullness (df Use%)  = (used + other_used) / (used + other_used + available)
 type DataRetentionBytes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Bytes currently in use.
+	// Bytes currently in use by this data store.
 	Used *uint64 `protobuf:"varint,1,opt,name=used,proto3,oneof" json:"used,omitempty"`
-	// Total capacity in bytes. Omit if unlimited or unknown.
-	Capacity      *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
+	// Total capacity in bytes of the volume backing this store: the effective limit it
+	// can grow into. For a filesystem-backed store this is the size of the containing
+	// filesystem, which reflects a volume/quota limit when that limit is enforced at the
+	// filesystem level. Omit if unlimited or unknown.
+	Capacity *uint64 `protobuf:"varint,2,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`
+	// Bytes used by other data sharing the same volume (i.e. not this data store).
+	OtherUsed *uint64 `protobuf:"varint,3,opt,name=other_used,json=otherUsed,proto3,oneof" json:"other_used,omitempty"`
+	// Bytes this store can still write before reaching capacity. Excludes space that
+	// exists but is unusable by this store (e.g. filesystem blocks reserved for root),
+	// so it may be less than capacity - used - other_used. Omit if unknown.
+	Available     *uint64 `protobuf:"varint,4,opt,name=available,proto3,oneof" json:"available,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -129,6 +149,20 @@ func (x *DataRetentionBytes) GetUsed() uint64 {
 func (x *DataRetentionBytes) GetCapacity() uint64 {
 	if x != nil && x.Capacity != nil {
 		return *x.Capacity
+	}
+	return 0
+}
+
+func (x *DataRetentionBytes) GetOtherUsed() uint64 {
+	if x != nil && x.OtherUsed != nil {
+		return *x.OtherUsed
+	}
+	return 0
+}
+
+func (x *DataRetentionBytes) GetAvailable() uint64 {
+	if x != nil && x.Available != nil {
+		return *x.Available
 	}
 	return 0
 }
@@ -729,12 +763,18 @@ const file_smartcore_bos_dataretention_v1_data_retention_proto_rawDesc = "" +
 	"3smartcore/bos/dataretention/v1/data_retention.proto\x12\x1esmartcore.bos.dataretention.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x01\n" +
 	"\rDataRetention\x12H\n" +
 	"\x05bytes\x18\x01 \x01(\v22.smartcore.bos.dataretention.v1.DataRetentionBytesR\x05bytes\x12H\n" +
-	"\x05items\x18\x02 \x01(\v22.smartcore.bos.dataretention.v1.DataRetentionItemsR\x05items\"d\n" +
+	"\x05items\x18\x02 \x01(\v22.smartcore.bos.dataretention.v1.DataRetentionItemsR\x05items\"\xc8\x01\n" +
 	"\x12DataRetentionBytes\x12\x17\n" +
 	"\x04used\x18\x01 \x01(\x04H\x00R\x04used\x88\x01\x01\x12\x1f\n" +
-	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01B\a\n" +
+	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"other_used\x18\x03 \x01(\x04H\x02R\totherUsed\x88\x01\x01\x12!\n" +
+	"\tavailable\x18\x04 \x01(\x04H\x03R\tavailable\x88\x01\x01B\a\n" +
 	"\x05_usedB\v\n" +
-	"\t_capacity\"d\n" +
+	"\t_capacityB\r\n" +
+	"\v_other_usedB\f\n" +
+	"\n" +
+	"_available\"d\n" +
 	"\x12DataRetentionItems\x12\x17\n" +
 	"\x04used\x18\x01 \x01(\x04H\x00R\x04used\x88\x01\x01\x12\x1f\n" +
 	"\bcapacity\x18\x02 \x01(\x04H\x01R\bcapacity\x88\x01\x01B\a\n" +
