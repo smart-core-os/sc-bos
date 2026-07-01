@@ -97,8 +97,6 @@ func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer
 
 	features := []node.Feature{
 		node.HasMetadata(cfg.Metadata),
-		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airQualitySensor)),
-		node.HasTrait(trait.AirQualitySensor),
 		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(temperature)),
 		node.HasTrait(trait.AirTemperature),
 		node.HasServer(brightnesssensorpb.RegisterBrightnessSensorApiServer, brightnesssensorpb.BrightnessSensorApiServer(brightnessSensor)),
@@ -108,6 +106,16 @@ func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer
 		node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(soundSensor)),
 		node.HasTrait(soundsensorpb.TraitName),
 		node.HasDeviceType(metadatapb.Metadata_DEVICE),
+	}
+	pollSensors := []sensor{temperature, occupancy}
+	// The HPD model has no air quality module, so only the multisensor announces and
+	// polls that trait. Announcing it for an HPD would produce errors when read.
+	if cfg.HasAirQuality() {
+		features = append(features,
+			node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airQualitySensor)),
+			node.HasTrait(trait.AirQualitySensor),
+		)
+		pollSensors = append(pollSensors, airQualitySensor)
 	}
 	if cfg.UDMITopicPrefix != "" {
 		// without a topic prefix devices would all export to the same MQTT topic, so no prefix means no UDMI
@@ -120,7 +128,7 @@ func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer
 	}
 	announcer.Announce(cfg.Name, features...)
 
-	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, airQualitySensor, occupancy, temperature)
+	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, pollSensors...)
 
 	wg.Go(func() {
 		defer client.Client.CloseIdleConnections()

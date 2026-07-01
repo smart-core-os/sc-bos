@@ -112,6 +112,34 @@ func TestParseConfig_multiDeviceDefaults(t *testing.T) {
 	}
 }
 
+func TestParseConfig_deviceModel(t *testing.T) {
+	data := `{
+		"name": "steinel-hpd",
+		"passwordFile": ` + quote(writePasswordFile(t, "p")) + `,
+		"devices": [
+			{"name": "sensors/hpd", "ipAddress": "10.0.0.1", "model": "hpd"},
+			{"name": "sensors/multi", "ipAddress": "10.0.0.2", "model": "multisensor"},
+			{"name": "sensors/default", "ipAddress": "10.0.0.3"}
+		]
+	}`
+	root, err := ParseConfig([]byte(data))
+	if err != nil {
+		t.Fatalf("ParseConfig: %v", err)
+	}
+
+	// the hpd has no air quality module
+	if hpd := root.Devices[0]; hpd.HasAirQuality() {
+		t.Errorf("devices[0] model %q: HasAirQuality() = true, want false", hpd.Model)
+	}
+	// the multisensor and the default (no model) both have air quality
+	if multi := root.Devices[1]; !multi.HasAirQuality() {
+		t.Errorf("devices[1] model %q: HasAirQuality() = false, want true", multi.Model)
+	}
+	if def := root.Devices[2]; !def.HasAirQuality() {
+		t.Errorf("devices[2] model %q: HasAirQuality() = false, want true", def.Model)
+	}
+}
+
 func TestParseConfig_errors(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -176,6 +204,12 @@ func TestParseConfig_errors(t *testing.T) {
 			name:    "root udmiTopicPrefix with devices",
 			data:    `{"name": "x", "udmiTopicPrefix": "t", "devices": [{"name": "a", "ipAddress": "10.0.0.1"}]}`,
 			wantErr: "legacy single-device options",
+		},
+		{
+			name: "unknown model",
+			data: `{"name": "x", "passwordFile": ` + quote(writePasswordFile(t, "p")) + `,
+				"devices": [{"name": "a", "ipAddress": "10.0.0.1", "model": "not-a-model"}]}`,
+			wantErr: "unknown model",
 		},
 		{
 			name: "duplicate udmiTopicPrefix",

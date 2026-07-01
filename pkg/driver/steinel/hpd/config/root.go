@@ -15,6 +15,15 @@ import (
 // DefaultPollInterval is how often each device is polled for updates unless configured otherwise.
 const DefaultPollInterval = 60 * time.Second
 
+// Steinel device models. A device's Model selects which sensors it has.
+const (
+	// ModelMultisensor is the full multisensor, with every sensor including air quality.
+	// This is the default when a device does not set a model.
+	ModelMultisensor = "multisensor"
+	// ModelHPD is the HPD, which has no air quality module.
+	ModelHPD = "hpd"
+)
+
 type Root struct {
 	driver.BaseConfig
 
@@ -64,6 +73,11 @@ type Device struct {
 	// Must be unique between devices, otherwise their exports would share an MQTT topic.
 	UDMITopicPrefix string `json:"udmiTopicPrefix,omitempty"`
 
+	// Model selects the Steinel device variant, which determines the sensors it has.
+	// "" (default) and "multisensor" announce every trait; "hpd" omits air quality,
+	// which that model lacks. See the Model constants for the accepted values.
+	Model string `json:"model,omitempty"`
+
 	// password is the device password read from PasswordFile, see ResolvedPassword.
 	password string
 }
@@ -71,6 +85,12 @@ type Device struct {
 // ResolvedPassword returns the device password read from PasswordFile during ParseConfig.
 func (d Device) ResolvedPassword() string {
 	return d.password
+}
+
+// HasAirQuality reports whether the device model has an air quality sensor.
+// Only the HPD model lacks one; the default and multisensor have it.
+func (d Device) HasAirQuality() bool {
+	return d.Model != ModelHPD
 }
 
 func ParseConfig(data []byte) (Root, error) {
@@ -126,6 +146,11 @@ func ParseConfig(data []byte) (Root, error) {
 		}
 		if device.Password != "" {
 			return Root{}, fmt.Errorf("devices[%d] %q: plaintext passwords in config are not supported, use passwordFile", i, device.Name)
+		}
+		switch device.Model {
+		case "", ModelMultisensor, ModelHPD:
+		default:
+			return Root{}, fmt.Errorf("devices[%d] %q: unknown model %q, want one of %q or %q", i, device.Name, device.Model, ModelMultisensor, ModelHPD)
 		}
 		if err := device.resolvePassword(root.PasswordFile, passwords); err != nil {
 			return Root{}, fmt.Errorf("devices[%d] %q: %w", i, device.Name, err)
