@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 type Trait struct {
@@ -58,6 +59,36 @@ func (r Resource) Pull(ctx context.Context, conn grpc.ClientConnInterface, req P
 		return r.pull(ctx, conn, req)
 	}
 	return Stream{}, status.Errorf(codes.Unimplemented, "pull not implemented")
+}
+
+// Fetcher returns a [pull.Fetcher] that reads this resource from conn for the given request,
+// streaming via Pull and polling via Get.
+func (r Resource) Fetcher(conn grpc.ClientConnInterface, req ReadRequest) pull.Fetcher[Value] {
+	return pull.NewFetcher(
+		func(ctx context.Context, changes chan<- Value) error {
+			stream, err := r.Pull(ctx, conn, PullRequest{ReadRequest: req})
+			if err != nil {
+				return err
+			}
+			for {
+				res, err := stream.Recv()
+				if err != nil {
+					return err
+				}
+				for _, change := range res.Changes {
+					changes <- change.Value
+				}
+			}
+		},
+		func(ctx context.Context, changes chan<- Value) error {
+			value, err := r.Get(ctx, conn, GetRequest{ReadRequest: req})
+			if err != nil {
+				return err
+			}
+			changes <- value
+			return nil
+		},
+	)
 }
 
 type Value struct {

@@ -89,3 +89,34 @@ func PathValues(p Path, m proto.Message) (Values, error) {
 	}
 	return v, nil
 }
+
+// FieldsAreSet reports whether all message fields along the path are actually set (not nil/default).
+//
+// [PathValues] returns a value for each step in a path, even when traversing through nil/unset
+// message fields. This means it can return "success" with a zero/default value when the actual
+// field path doesn't exist in the message. FieldsAreSet distinguishes between "field is set to a
+// zero value" and "field is not set at all (nil pointer)".
+func FieldsAreSet(path Values) bool {
+	for i := 1; i < len(path.Path); i++ {
+		step := path.Path[i]
+
+		switch step.Kind() {
+		case FieldAccessStep:
+			fd := step.FieldDescriptor()
+			parentMsg := path.Index(i - 1).Value.Message()
+
+			if fd.HasPresence() {
+				if !parentMsg.Has(fd) {
+					return false
+				}
+			}
+
+		case ListIndexStep, MapIndexStep, AnyExpandStep:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
+}

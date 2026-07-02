@@ -664,9 +664,9 @@ func TestPathFieldsAreSet(t *testing.T) {
 				return
 			}
 
-			got := pathFieldsAreSet(values)
+			got := protopath2.FieldsAreSet(values)
 			if got != tt.want {
-				t.Errorf("pathFieldsAreSet() = %v, want %v", got, tt.want)
+				t.Errorf("FieldsAreSet() = %v, want %v", got, tt.want)
 				t.Logf("Message: %v", tt.message)
 				t.Logf("Path: %q", tt.path)
 			}
