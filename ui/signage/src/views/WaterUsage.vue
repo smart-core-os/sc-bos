@@ -10,7 +10,7 @@ import WaterComp from '@/components/WaterTank.vue';
 import {useInterval} from '@/composables/time.js';
 import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {sub} from 'date-fns';
+import {startOfDay, startOfHour, startOfMinute, startOfMonth, startOfYear, sub} from 'date-fns';
 import {computed, effectScope, reactive, ref, watch} from 'vue';
 
 
@@ -35,21 +35,50 @@ const props = defineProps({
   refreshInterval: {
     type: Number,
     default: 60 * 1000 // 1 minute in ms; set to 0 to disable
+  },
+  // When true the window snaps to calendar boundaries for `period` (e.g. from 12am
+  // local time for 'day'); when false it is a rolling window of one `period` ending now.
+  alignToPeriod: {
+    type: Boolean,
+    default: false
   }
 });
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
 
-// Tick drives the rolling window — start and end update each interval
+// Start of the calendar period, keyed by `period` (e.g. startOfDay -> 12am local time).
+const startOfPeriod = {
+  minute: startOfMinute,
+  hour: startOfHour,
+  day: startOfDay,
+  month: startOfMonth,
+  year: startOfYear,
+};
+
+// Tick drives the refresh — the window recomputes each interval.
 const tick = useInterval(() => props.refreshInterval);
-const end = computed(() => { tick.value; return sub(new Date(), {[`${props.period}s`]: -_offset.value}); });
-const start = computed(() => sub(end.value, {[`${props.period}s`]: 1}));
+const endIsLive = computed(() => _offset.value === 0);
+
+// Reference point: `offset` periods before now (offset 0 -> the current period).
+const reference = computed(() => { tick.value; return sub(new Date(), {[`${props.period}s`]: -_offset.value}); });
+
+// When aligned, the window is the calendar period containing the reference: it counts
+// from that period's start (e.g. 12am today) up to a live "now" for the current period,
+// or to the start of the next period for a past one. Otherwise it is a rolling window
+// of one `period` ending at the reference.
+const start = computed(() => props.alignToPeriod
+    ? startOfPeriod[props.period](reference.value)
+    : sub(reference.value, {[`${props.period}s`]: 1}));
+const end = computed(() => {
+  if (endIsLive.value) return reference.value;
+  return props.alignToPeriod
+      ? startOfPeriod[props.period](sub(reference.value, {[`${props.period}s`]: -1}))
+      : reference.value;
+});
 
 // const {response: meterReadingInfo} = useDescribeMeterReading(() => props.name);
 
 const readingAtStart = useMeterReadingAt(() => props.name, start);
-
-const endIsLive = computed(() => _offset.value === 0);
 let endCalcScope = null;
 const readingAtEnd = reactive({value: null});
 watch(endIsLive, (endIsLive) => {
