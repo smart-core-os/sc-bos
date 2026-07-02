@@ -55,9 +55,9 @@ be registered in the shared trait registry (`pkg/auto/internal/anytrait`). Suita
 - `source` - the `trait`, optional `resource`, and the `measured` and `setPoint` field paths.
 - `tolerance` - the maximum allowed absolute difference, in the value's native unit. Must be `> 0`.
 - `duration` - how long the deviation must persist before a fault is raised. Must be `> 0`.
-- `maxDuration` - optional absolute backstop. When set, a fault is raised once the deviation has
-  persisted continuously for this long irrespective of set point changes. Must be `> duration`.
-  Omit to disable.
+- `maxDuration` - optional absolute backstop that supplements `duration` (it does not replace it,
+  and cannot be set on its own). When set, a fault is raised once the deviation has persisted
+  continuously for this long irrespective of set point changes. Must be `> duration`. Omit to disable.
 - `check` - health check metadata (display name, description, impacts). Bounds are not used.
 
 Example monitoring a fan coil unit's return-air set point tracking:

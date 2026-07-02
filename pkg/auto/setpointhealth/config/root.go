@@ -38,6 +38,9 @@ type Root struct {
 	// It catches equipment that never tracks while its set point is repeatedly adjusted, which would
 	// otherwise keep restarting the Duration countdown and never trip. Unset (zero) disables the
 	// backstop. Must be greater than Duration when set.
+	//
+	// MaxDuration supplements Duration rather than replacing it: Duration is always required, and
+	// MaxDuration is optional. Setting MaxDuration on its own is not valid.
 	MaxDuration jsontypes.Duration `json:"maxDuration,omitempty"`
 }
 
