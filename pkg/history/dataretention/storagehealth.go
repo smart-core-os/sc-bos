@@ -11,6 +11,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
+// tickInterval is how often pollLoop refreshes disk utilisation figures.
+const tickInterval = 30 * time.Second
+
 // storageHealth lazily maintains a BoundsCheck reporting disk utilisation for a store.
 // The check is created on the first update, so stores without capacity information
 // (e.g. SQLite on Windows, or Postgres with no configured max size) never call update
@@ -96,7 +99,7 @@ func startPolling(ctx context.Context, model *dataretentionpb.Model, alwaysPoll 
 // unconditionally — used when a storage HealthCheck is an always-on consumer of the
 // polled data.
 func pollLoop(ctx context.Context, model *dataretentionpb.Model, alwaysPoll bool, update func(ctx context.Context, full bool)) {
-	tick := time.NewTicker(30 * time.Second)
+	tick := time.NewTicker(tickInterval)
 	defer tick.Stop()
 	update(ctx, true)
 	for {
@@ -114,7 +117,7 @@ func pollLoop(ctx context.Context, model *dataretentionpb.Model, alwaysPoll bool
 				return
 			case <-model.WaitForSubscriber():
 				update(ctx, true)
-				tick.Reset(30 * time.Second)
+				tick.Reset(tickInterval)
 			case <-tick.C:
 				update(ctx, false)
 			}
@@ -124,7 +127,7 @@ func pollLoop(ctx context.Context, model *dataretentionpb.Model, alwaysPoll bool
 				return
 			case <-model.WaitForSubscriber():
 				update(ctx, true)
-				tick.Reset(30 * time.Second)
+				tick.Reset(tickInterval)
 			}
 		}
 	}
