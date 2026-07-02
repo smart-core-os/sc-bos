@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/http"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -225,6 +226,7 @@ type HealthTTL struct {
 
 func Default() Config {
 	logConf := zap.NewDevelopmentConfig()
+	logConf.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	one := 1
 	config := Config{
 		ConfigDirs:  []string{".conf"},
