@@ -12,6 +12,7 @@
     <TemperatureSystems :name="props.temperature.name"
                         id="TemperatureSystems"/>
     <WaterUsage :name="props.water.name"
+                :align-to-period="props.water.alignToPeriod"
                 id="WaterUsage"/>
     <footer>
       Powered by
