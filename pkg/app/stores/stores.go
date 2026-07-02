@@ -24,6 +24,9 @@ var (
 // Config configures shared storage (dbs) for systems on this node.
 type Config struct {
 	Postgres *PostgresConfig `json:"postgres,omitempty"`
+	// StorageHealthHighPercent is the disk utilisation percentage (0-100) at or above which
+	// a store's storage HealthCheck reports HIGH. When zero, a default of 90 is used.
+	StorageHealthHighPercent float32 `json:"storageHealthHighPercent,omitempty"`
 	// Local directory for storing database files.
 	DataDir string      `json:"-"`
 	Logger  *zap.Logger `json:"-"`
@@ -31,6 +34,11 @@ type Config struct {
 
 type PostgresConfig struct {
 	pgxutil.ConnectConfig
+	// MaxSizeBytes is the maximum storage size, in bytes, the Postgres history store is
+	// allowed to use. Postgres does not report a disk capacity itself, so this must be set
+	// to enable the storage utilisation HealthCheck and the bytes.capacity DataRetention
+	// field for the Postgres store. When zero, no capacity is reported and no check is raised.
+	MaxSizeBytes uint64 `json:"maxSizeBytes,omitempty"`
 }
 
 const retryConnectDelay = 100 * time.Millisecond

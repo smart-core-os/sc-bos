@@ -685,7 +685,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 	// we don't support changing metadata while running
 	c.Node.Announce(c.Node.Name(), node.HasMetadata(initialConfig.Metadata))
 
-	storeUndo := dataretention.Start(ctx, c.Node, c.SystemConfig.Name, c.Stores, c.SystemConfig.Stores, c.Logger)
+	storeUndo := dataretention.Start(ctx, c.Node, c.SystemConfig.Name, c.Stores, c.SystemConfig.Stores, c.CheckRegistry.ForOwner("stores"), c.Logger)
 	defer storeUndo()
 
 	group, ctx := errgroup.WithContext(ctx)
