@@ -120,6 +120,12 @@ export namespace RenewHubNodeRequest {
 }
 
 export class ListHubNodesRequest extends jspb.Message {
+  getPageSize(): number;
+  setPageSize(value: number): ListHubNodesRequest;
+
+  getPageToken(): string;
+  setPageToken(value: string): ListHubNodesRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListHubNodesRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListHubNodesRequest): ListHubNodesRequest.AsObject;
@@ -130,6 +136,8 @@ export class ListHubNodesRequest extends jspb.Message {
 
 export namespace ListHubNodesRequest {
   export type AsObject = {
+    pageSize: number;
+    pageToken: string;
   };
 }
 
@@ -138,6 +146,12 @@ export class ListHubNodesResponse extends jspb.Message {
   setNodesList(value: Array<HubNode>): ListHubNodesResponse;
   clearNodesList(): ListHubNodesResponse;
   addNodes(value?: HubNode, index?: number): HubNode;
+
+  getNextPageToken(): string;
+  setNextPageToken(value: string): ListHubNodesResponse;
+
+  getTotalSize(): number;
+  setTotalSize(value: number): ListHubNodesResponse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListHubNodesResponse.AsObject;
@@ -150,6 +164,8 @@ export class ListHubNodesResponse extends jspb.Message {
 export namespace ListHubNodesResponse {
   export type AsObject = {
     nodesList: Array<HubNode.AsObject>;
+    nextPageToken: string;
+    totalSize: number;
   };
 }
 

@@ -1247,7 +1247,8 @@ proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.toObject = function(opt
  */
 proto.smartcore.bos.hub.v1.ListHubNodesRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
+pageToken: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1284,6 +1285,14 @@ proto.smartcore.bos.hub.v1.ListHubNodesRequest.deserializeBinaryFromReader = fun
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setPageSize(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setPageToken(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1313,6 +1322,56 @@ proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.serializeBinary = funct
  */
 proto.smartcore.bos.hub.v1.ListHubNodesRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      1,
+      f
+    );
+  }
+  f = message.getPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional int32 page_size = 1;
+ * @return {number}
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.getPageSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.hub.v1.ListHubNodesRequest} returns this
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.setPageSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional string page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.getPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.hub.v1.ListHubNodesRequest} returns this
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesRequest.prototype.setPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -1356,7 +1415,9 @@ proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.toObject = function(op
 proto.smartcore.bos.hub.v1.ListHubNodesResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
 nodesList: jspb.Message.toObjectList(msg.getNodesList(),
-    proto.smartcore.bos.hub.v1.HubNode.toObject, includeInstance)
+    proto.smartcore.bos.hub.v1.HubNode.toObject, includeInstance),
+nextPageToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
+totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -1398,6 +1459,14 @@ proto.smartcore.bos.hub.v1.ListHubNodesResponse.deserializeBinaryFromReader = fu
       reader.readMessage(value,proto.smartcore.bos.hub.v1.HubNode.deserializeBinaryFromReader);
       msg.addNodes(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setNextPageToken(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setTotalSize(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1433,6 +1502,20 @@ proto.smartcore.bos.hub.v1.ListHubNodesResponse.serializeBinaryToWriter = functi
       1,
       f,
       proto.smartcore.bos.hub.v1.HubNode.serializeBinaryToWriter
+    );
+  }
+  f = message.getNextPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getTotalSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
     );
   }
 };
@@ -1473,6 +1556,42 @@ proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.addNodes = function(op
  */
 proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.clearNodesList = function() {
   return this.setNodesList([]);
+};
+
+
+/**
+ * optional string next_page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.getNextPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.hub.v1.ListHubNodesResponse} returns this
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.setNextPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 total_size = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.getTotalSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.hub.v1.ListHubNodesResponse} returns this
+ */
+proto.smartcore.bos.hub.v1.ListHubNodesResponse.prototype.setTotalSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 

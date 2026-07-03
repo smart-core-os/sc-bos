@@ -64,11 +64,25 @@ message RenewHubNodeRequest {
 }
 
 message ListHubNodesRequest {
-
+  // The maximum number of nodes to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 items will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+  // A page token, received from a previous `ListHubNodesResponse` call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 2;
 }
 
 message ListHubNodesResponse {
   repeated HubNode nodes = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+  // If non-zero this is the total number of hub nodes.
+  // This may be an estimate.
+  int32 total_size = 3;
 }
 
 message PullHubNodesRequest {

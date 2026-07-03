@@ -110,6 +110,12 @@ export class ListBookingsRequest extends jspb.Message {
   getUpdatesOnly(): boolean;
   setUpdatesOnly(value: boolean): ListBookingsRequest;
 
+  getPageSize(): number;
+  setPageSize(value: number): ListBookingsRequest;
+
+  getPageToken(): string;
+  setPageToken(value: string): ListBookingsRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListBookingsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListBookingsRequest): ListBookingsRequest.AsObject;
@@ -124,6 +130,8 @@ export namespace ListBookingsRequest {
     bookingIntersects?: smartcore_bos_types_time_v1_period_pb.Period.AsObject;
     readMask?: google_protobuf_field_mask_pb.FieldMask.AsObject;
     updatesOnly: boolean;
+    pageSize: number;
+    pageToken: string;
   };
 }
 
@@ -132,6 +140,12 @@ export class ListBookingsResponse extends jspb.Message {
   setBookingsList(value: Array<Booking>): ListBookingsResponse;
   clearBookingsList(): ListBookingsResponse;
   addBookings(value?: Booking, index?: number): Booking;
+
+  getNextPageToken(): string;
+  setNextPageToken(value: string): ListBookingsResponse;
+
+  getTotalSize(): number;
+  setTotalSize(value: number): ListBookingsResponse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListBookingsResponse.AsObject;
@@ -144,6 +158,8 @@ export class ListBookingsResponse extends jspb.Message {
 export namespace ListBookingsResponse {
   export type AsObject = {
     bookingsList: Array<Booking.AsObject>;
+    nextPageToken: string;
+    totalSize: number;
   };
 }
 

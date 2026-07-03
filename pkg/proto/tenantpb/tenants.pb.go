@@ -225,7 +225,15 @@ func (x *Secret) GetEtag() string {
 }
 
 type ListTenantsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The maximum number of tenants to return.
+	// The service may return fewer than this value.
+	// If unspecified, at most 50 items will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListTenantsResponse` call.
+	// Provide this to retrieve the subsequent page.
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -260,9 +268,29 @@ func (*ListTenantsRequest) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_tenant_v1_tenants_proto_rawDescGZIP(), []int{2}
 }
 
+func (x *ListTenantsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListTenantsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListTenantsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tenants       []*Tenant              `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Tenants []*Tenant              `protobuf:"bytes,1,rep,name=tenants,proto3" json:"tenants,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// If non-zero this is the total number of tenants.
+	// This may be an estimate.
+	TotalSize     int32 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -302,6 +330,20 @@ func (x *ListTenantsResponse) GetTenants() []*Tenant {
 		return x.Tenants
 	}
 	return nil
+}
+
+func (x *ListTenantsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListTenantsResponse) GetTotalSize() int32 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
 }
 
 type PullTenantsRequest struct {
@@ -813,9 +855,17 @@ func (x *RemoveTenantZonesRequest) GetRemoveZoneNames() []string {
 }
 
 type ListSecretsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	IncludeHash   bool                   `protobuf:"varint,1,opt,name=include_hash,json=includeHash,proto3" json:"include_hash,omitempty"`
-	Filter        string                 `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"` // TODO: paging
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	IncludeHash bool                   `protobuf:"varint,1,opt,name=include_hash,json=includeHash,proto3" json:"include_hash,omitempty"`
+	Filter      string                 `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	// The maximum number of secrets to return.
+	// The service may return fewer than this value.
+	// If unspecified, at most 50 items will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListSecretsResponse` call.
+	// Provide this to retrieve the subsequent page.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -864,9 +914,29 @@ func (x *ListSecretsRequest) GetFilter() string {
 	return ""
 }
 
+func (x *ListSecretsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListSecretsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListSecretsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Secrets       []*Secret              `protobuf:"bytes,1,rep,name=secrets,proto3" json:"secrets,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Secrets []*Secret              `protobuf:"bytes,1,rep,name=secrets,proto3" json:"secrets,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// If non-zero this is the total number of secrets.
+	// This may be an estimate.
+	TotalSize     int32 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -906,6 +976,20 @@ func (x *ListSecretsResponse) GetSecrets() []*Secret {
 		return x.Secrets
 	}
 	return nil
+}
+
+func (x *ListSecretsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListSecretsResponse) GetTotalSize() int32 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
 }
 
 type PullSecretsRequest struct {
@@ -1704,10 +1788,16 @@ const file_smartcore_bos_tenant_v1_tenants_proto_rawDesc = "" +
 	"\x0efirst_use_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\ffirstUseTime\x12>\n" +
 	"\rlast_use_time\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vlastUseTime\x12\x12\n" +
 	"\x04etag\x18\n" +
-	" \x01(\tR\x04etag\"\x14\n" +
-	"\x12ListTenantsRequest\"P\n" +
+	" \x01(\tR\x04etag\"P\n" +
+	"\x12ListTenantsRequest\x12\x1b\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x97\x01\n" +
 	"\x13ListTenantsResponse\x129\n" +
-	"\atenants\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.TenantR\atenants\"7\n" +
+	"\atenants\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.TenantR\atenants\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"7\n" +
 	"\x12PullTenantsRequest\x12!\n" +
 	"\fupdates_only\x18\x01 \x01(\bR\vupdatesOnly\"\xe4\x01\n" +
 	"\x13PullTenantsResponse\x12M\n" +
@@ -1741,12 +1831,18 @@ const file_smartcore_bos_tenant_v1_tenants_proto_rawDesc = "" +
 	"\x0eadd_zone_names\x18\x02 \x03(\tR\faddZoneNames\"c\n" +
 	"\x18RemoveTenantZonesRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12*\n" +
-	"\x11remove_zone_names\x18\x03 \x03(\tR\x0fremoveZoneNames\"O\n" +
+	"\x11remove_zone_names\x18\x03 \x03(\tR\x0fremoveZoneNames\"\x8b\x01\n" +
 	"\x12ListSecretsRequest\x12!\n" +
 	"\finclude_hash\x18\x01 \x01(\bR\vincludeHash\x12\x16\n" +
-	"\x06filter\x18\x02 \x01(\tR\x06filter\"P\n" +
+	"\x06filter\x18\x02 \x01(\tR\x06filter\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\x97\x01\n" +
 	"\x13ListSecretsResponse\x129\n" +
-	"\asecrets\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.SecretR\asecrets\"Z\n" +
+	"\asecrets\x18\x01 \x03(\v2\x1f.smartcore.bos.tenant.v1.SecretR\asecrets\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"Z\n" +
 	"\x12PullSecretsRequest\x12!\n" +
 	"\finclude_hash\x18\x01 \x01(\bR\vincludeHash\x12!\n" +
 	"\fupdates_only\x18\x02 \x01(\bR\vupdatesOnly\"\xe4\x01\n" +

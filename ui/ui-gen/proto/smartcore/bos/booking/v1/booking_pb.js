@@ -996,7 +996,9 @@ proto.smartcore.bos.booking.v1.ListBookingsRequest.toObject = function(includeIn
 name: jspb.Message.getFieldWithDefault(msg, 1, ""),
 bookingIntersects: (f = msg.getBookingIntersects()) && smartcore_bos_types_time_v1_period_pb.Period.toObject(includeInstance, f),
 readMask: (f = msg.getReadMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
-updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+updatesOnly: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
+pageSize: jspb.Message.getFieldWithDefault(msg, 5, 0),
+pageToken: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
   if (includeInstance) {
@@ -1050,6 +1052,14 @@ proto.smartcore.bos.booking.v1.ListBookingsRequest.deserializeBinaryFromReader =
     case 4:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setUpdatesOnly(value);
+      break;
+    case 5:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setPageSize(value);
+      break;
+    case 6:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setPageToken(value);
       break;
     default:
       reader.skipField();
@@ -1107,6 +1117,20 @@ proto.smartcore.bos.booking.v1.ListBookingsRequest.serializeBinaryToWriter = fun
   if (f) {
     writer.writeBool(
       4,
+      f
+    );
+  }
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      5,
+      f
+    );
+  }
+  f = message.getPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
       f
     );
   }
@@ -1223,6 +1247,42 @@ proto.smartcore.bos.booking.v1.ListBookingsRequest.prototype.setUpdatesOnly = fu
 };
 
 
+/**
+ * optional int32 page_size = 5;
+ * @return {number}
+ */
+proto.smartcore.bos.booking.v1.ListBookingsRequest.prototype.getPageSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.booking.v1.ListBookingsRequest} returns this
+ */
+proto.smartcore.bos.booking.v1.ListBookingsRequest.prototype.setPageSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 5, value);
+};
+
+
+/**
+ * optional string page_token = 6;
+ * @return {string}
+ */
+proto.smartcore.bos.booking.v1.ListBookingsRequest.prototype.getPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.booking.v1.ListBookingsRequest} returns this
+ */
+proto.smartcore.bos.booking.v1.ListBookingsRequest.prototype.setPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
 
 /**
  * List of repeated fields within this message type.
@@ -1263,7 +1323,9 @@ proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.toObject = functio
 proto.smartcore.bos.booking.v1.ListBookingsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
 bookingsList: jspb.Message.toObjectList(msg.getBookingsList(),
-    proto.smartcore.bos.booking.v1.Booking.toObject, includeInstance)
+    proto.smartcore.bos.booking.v1.Booking.toObject, includeInstance),
+nextPageToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
+totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -1305,6 +1367,14 @@ proto.smartcore.bos.booking.v1.ListBookingsResponse.deserializeBinaryFromReader 
       reader.readMessage(value,proto.smartcore.bos.booking.v1.Booking.deserializeBinaryFromReader);
       msg.addBookings(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setNextPageToken(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setTotalSize(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1340,6 +1410,20 @@ proto.smartcore.bos.booking.v1.ListBookingsResponse.serializeBinaryToWriter = fu
       1,
       f,
       proto.smartcore.bos.booking.v1.Booking.serializeBinaryToWriter
+    );
+  }
+  f = message.getNextPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getTotalSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
     );
   }
 };
@@ -1380,6 +1464,42 @@ proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.addBookings = func
  */
 proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.clearBookingsList = function() {
   return this.setBookingsList([]);
+};
+
+
+/**
+ * optional string next_page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.getNextPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.booking.v1.ListBookingsResponse} returns this
+ */
+proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.setNextPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 total_size = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.getTotalSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.booking.v1.ListBookingsResponse} returns this
+ */
+proto.smartcore.bos.booking.v1.ListBookingsResponse.prototype.setTotalSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 

@@ -283,7 +283,15 @@ func (x *RenewHubNodeRequest) GetAddress() string {
 }
 
 type ListHubNodesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The maximum number of nodes to return.
+	// The service may return fewer than this value.
+	// If unspecified, at most 50 items will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListHubNodesResponse` call.
+	// Provide this to retrieve the subsequent page.
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -318,9 +326,29 @@ func (*ListHubNodesRequest) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_hub_v1_hub_proto_rawDescGZIP(), []int{5}
 }
 
+func (x *ListHubNodesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListHubNodesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListHubNodesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nodes         []*HubNode             `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Nodes []*HubNode             `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// If non-zero this is the total number of hub nodes.
+	// This may be an estimate.
+	TotalSize     int32 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -360,6 +388,20 @@ func (x *ListHubNodesResponse) GetNodes() []*HubNode {
 		return x.Nodes
 	}
 	return nil
+}
+
+func (x *ListHubNodesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListHubNodesResponse) GetTotalSize() int32 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
 }
 
 type PullHubNodesRequest struct {
@@ -755,10 +797,16 @@ const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"/\n" +
 	"\x13RenewHubNodeRequest\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x15\n" +
-	"\x13ListHubNodesRequest\"K\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"Q\n" +
+	"\x13ListHubNodesRequest\x12\x1b\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x92\x01\n" +
 	"\x14ListHubNodesResponse\x123\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x05nodes\"8\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x05nodes\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"8\n" +
 	"\x13PullHubNodesRequest\x12!\n" +
 	"\fupdates_only\x18\x03 \x01(\bR\vupdatesOnly\"\xdb\x02\n" +
 	"\x14PullHubNodesResponse\x12K\n" +

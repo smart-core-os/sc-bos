@@ -268,7 +268,18 @@ type ListBookingsRequest struct {
 	ReadMask *fieldmaskpb.FieldMask `protobuf:"bytes,3,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	// When true the device will only send changes to the resource value.
 	// The default behaviour is to send the current value immediately followed by any updates as they happen.
-	UpdatesOnly   bool `protobuf:"varint,4,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
+	// Only applies to PullBookings; ignored by ListBookings.
+	UpdatesOnly bool `protobuf:"varint,4,opt,name=updates_only,json=updatesOnly,proto3" json:"updates_only,omitempty"`
+	// The maximum number of bookings to return.
+	// The service may return fewer than this value.
+	// If unspecified, at most 50 items will be returned.
+	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	// Only applies to ListBookings; ignored by PullBookings.
+	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous `ListBookingsResponse` call.
+	// Provide this to retrieve the subsequent page.
+	// Only applies to ListBookings; ignored by PullBookings.
+	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -331,10 +342,30 @@ func (x *ListBookingsRequest) GetUpdatesOnly() bool {
 	return false
 }
 
+func (x *ListBookingsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListBookingsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListBookingsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// the list of bookings for the given request
-	Bookings      []*Booking `protobuf:"bytes,1,rep,name=bookings,proto3" json:"bookings,omitempty"`
+	Bookings []*Booking `protobuf:"bytes,1,rep,name=bookings,proto3" json:"bookings,omitempty"`
+	// A token, which can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// If non-zero this is the total number of bookings.
+	// This may be an estimate.
+	TotalSize     int32 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -374,6 +405,20 @@ func (x *ListBookingsResponse) GetBookings() []*Booking {
 		return x.Bookings
 	}
 	return nil
+}
+
+func (x *ListBookingsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListBookingsResponse) GetTotalSize() int32 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
 }
 
 type CheckInBookingRequest struct {
@@ -976,14 +1021,20 @@ const file_smartcore_bos_booking_v1_booking_proto_rawDesc = "" +
 	"\n" +
 	"NO_SUPPORT\x10\x01\x12\t\n" +
 	"\x05STATE\x10\x02\x12\b\n" +
-	"\x04TIME\x10\x03\"\xd9\x01\n" +
+	"\x04TIME\x10\x03\"\x95\x02\n" +
 	"\x13ListBookingsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12R\n" +
 	"\x12booking_intersects\x18\x02 \x01(\v2#.smartcore.bos.types.time.v1.PeriodR\x11bookingIntersects\x127\n" +
 	"\tread_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\x12!\n" +
-	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\"U\n" +
+	"\fupdates_only\x18\x04 \x01(\bR\vupdatesOnly\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x06 \x01(\tR\tpageToken\"\x9c\x01\n" +
 	"\x14ListBookingsResponse\x12=\n" +
-	"\bbookings\x18\x01 \x03(\v2!.smartcore.bos.booking.v1.BookingR\bbookings\"z\n" +
+	"\bbookings\x18\x01 \x03(\v2!.smartcore.bos.booking.v1.BookingR\bbookings\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"z\n" +
 	"\x15CheckInBookingRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +

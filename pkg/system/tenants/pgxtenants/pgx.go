@@ -81,7 +81,17 @@ func (s *Server) ListTenants(ctx context.Context, request *tenantpb.ListTenantsR
 		return nil, errDatabase
 	}
 
-	return &tenantpb.ListTenantsResponse{Tenants: tenants}, nil
+	page, nextPageToken, total, err := paginate(tenants, request.GetPageSize(), request.GetPageToken(),
+		func(t *tenantpb.Tenant) string { return t.GetId() })
+	if err != nil {
+		return nil, err
+	}
+
+	return &tenantpb.ListTenantsResponse{
+		Tenants:       page,
+		NextPageToken: nextPageToken,
+		TotalSize:     total,
+	}, nil
 }
 
 func (s *Server) PullTenants(request *tenantpb.PullTenantsRequest, server tenantpb.TenantApi_PullTenantsServer) error {
@@ -265,14 +275,25 @@ func (s *Server) ListSecrets(ctx context.Context, request *tenantpb.ListSecretsR
 		logger.Error("db.ListTenantSecrets failed", zap.Error(err))
 		return nil, errDatabase
 	}
+
+	page, nextPageToken, total, err := paginate(secrets, request.GetPageSize(), request.GetPageToken(),
+		func(s *tenantpb.Secret) string { return s.GetId() })
+	if err != nil {
+		return nil, err
+	}
+
 	// unless specifically requested, censor the hashes
 	if !request.IncludeHash {
-		for i := range secrets {
-			secrets[i].SecretHash = nil
+		for i := range page {
+			page[i].SecretHash = nil
 		}
 	}
 
-	return &tenantpb.ListSecretsResponse{Secrets: secrets}, nil
+	return &tenantpb.ListSecretsResponse{
+		Secrets:       page,
+		NextPageToken: nextPageToken,
+		TotalSize:     total,
+	}, nil
 }
 
 func (s *Server) PullSecrets(request *tenantpb.PullSecretsRequest, server tenantpb.TenantApi_PullSecretsServer) error {
