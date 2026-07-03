@@ -32,7 +32,7 @@ func NewSystem(services system.Services) *System {
 		logger:  services.Logger.Named("tenants"),
 	}
 	s.Service = service.New(
-		s.applyConfig,
+		service.MonoApply(s.applyConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", s.logger)
 		})),
