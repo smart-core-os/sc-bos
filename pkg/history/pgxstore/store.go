@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 )
 
@@ -36,22 +37,39 @@ func New(ctx context.Context, source, connStr string, opts ...Option) (*Store, e
 	return SetupStoreFromPool(ctx, source, pool, opts...)
 }
 
+// SetupStoreFromPool sets up the schema and returns a Store backed by a single
+// pool used for reads, writes, and admin (schema) operations.
 func SetupStoreFromPool(ctx context.Context, source string, pool *pgxpool.Pool, opts ...Option) (*Store, error) {
-	err := SetupDB(ctx, pool)
+	return SetupStoreFromPools(ctx, source, pgxutil.SamePool(pool), opts...)
+}
+
+// SetupStoreFromPools sets up the schema using the admin pool and returns a
+// Store that reads via pools.Read and writes via pools.Write.
+func SetupStoreFromPools(ctx context.Context, source string, pools pgxutil.Pools, opts ...Option) (*Store, error) {
+	err := SetupDB(ctx, pools.Admin)
 	if err != nil {
 		return nil, fmt.Errorf("setup %w", err)
 	}
 
-	return NewStoreFromPool(source, pool, opts...), nil
+	return NewStoreFromPools(source, pools, opts...), nil
 }
 
 const LargeMaxCount = 1e7
 
+// NewStoreFromPool returns a Store backed by a single pool used for both reads
+// and writes. The schema is assumed to already exist.
 func NewStoreFromPool(source string, pool *pgxpool.Pool, opts ...Option) *Store {
+	return NewStoreFromPools(source, pgxutil.SamePool(pool), opts...)
+}
+
+// NewStoreFromPools returns a Store that reads via pools.Read and writes via
+// pools.Write. The schema is assumed to already exist.
+func NewStoreFromPools(source string, pools pgxutil.Pools, opts ...Option) *Store {
 	s := &Store{
-		slice:  slice{pool: pool, source: source},
-		now:    time.Now,
-		logger: zap.NewNop(),
+		slice:     slice{readPool: pools.Read, source: source},
+		writePool: pools.Write,
+		now:       time.Now,
+		logger:    zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -64,6 +82,8 @@ func NewStoreFromPool(source string, pool *pgxpool.Pool, opts ...Option) *Store 
 
 type Store struct {
 	slice
+
+	writePool *pgxpool.Pool
 
 	now    func() time.Time
 	logger *zap.Logger
@@ -78,7 +98,7 @@ func (s *Store) Insert(ctx context.Context, at time.Time, payload []byte) (histo
 		Payload:    payload,
 	}
 
-	row := s.pool.QueryRow(ctx, "INSERT INTO history (source, create_time, payload) VALUES ($1, $2, $3) RETURNING id",
+	row := s.writePool.QueryRow(ctx, "INSERT INTO history (source, create_time, payload) VALUES ($1, $2, $3) RETURNING id",
 		s.source, at, payload)
 
 	var id int64
@@ -119,7 +139,7 @@ func (s *Store) gc(now time.Time) error {
 
 	if s.maxAge > 0 {
 		t := now.Add(-s.maxAge)
-		_, err := s.pool.Exec(context.Background(), "DELETE FROM history WHERE source = $1 AND create_time < $2", s.source, t)
+		_, err := s.writePool.Exec(context.Background(), "DELETE FROM history WHERE source = $1 AND create_time < $2", s.source, t)
 		if err != nil {
 			return err
 		}
@@ -128,7 +148,7 @@ func (s *Store) gc(now time.Time) error {
 		// We use create_time here as a substitute for a strict incremental id.
 		// At most we leak records equal to the collisions of create_time, which should be minimal.
 		sql := fmt.Sprintf(`DELETE FROM history WHERE source = $1 AND create_time < (SELECT create_time FROM history WHERE source = $1 ORDER BY create_time DESC LIMIT 1 OFFSET %d)`, s.maxCount)
-		_, err := s.pool.Exec(context.Background(), sql, s.source)
+		_, err := s.writePool.Exec(context.Background(), sql, s.source)
 		if err != nil {
 			return err
 		}
@@ -137,17 +157,17 @@ func (s *Store) gc(now time.Time) error {
 }
 
 type slice struct {
-	pool     *pgxpool.Pool
+	readPool *pgxpool.Pool
 	source   string // distinguishes between this store and other stores that use the same table
 	from, to history.Record
 }
 
 func (s slice) Slice(from, to history.Record) history.Slice {
 	return slice{
-		pool:   s.pool,
-		source: s.source,
-		from:   from,
-		to:     to,
+		readPool: s.readPool,
+		source:   s.source,
+		from:     from,
+		to:       to,
 	}
 }
 
@@ -174,7 +194,7 @@ func (s slice) read(ctx context.Context, into []history.Record, desc bool) (int,
 	}
 
 	sql := fmt.Sprintf("SELECT id, create_time, payload FROM history WHERE %s ORDER BY %s LIMIT %v", strings.Join(where, " AND "), orderBy, len(into))
-	rows, err := s.pool.Query(ctx, sql, args...)
+	rows, err := s.readPool.Query(ctx, sql, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -203,7 +223,7 @@ func (s slice) Len(ctx context.Context) (int, error) {
 	}
 
 	sql := fmt.Sprintf("SELECT COUNT(*) FROM history WHERE %s", strings.Join(where, " AND "))
-	row := s.pool.QueryRow(ctx, sql, args...)
+	row := s.readPool.QueryRow(ctx, sql, args...)
 	var count int
 	err = row.Scan(&count)
 	return count, err

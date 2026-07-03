@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/proto/publicationpb"
 )
@@ -37,14 +38,23 @@ func NewServer(ctx context.Context, connStr string) (*Server, error) {
 	return NewServerFromPool(ctx, pool)
 }
 
+// NewServerFromPool returns a Server backed by a single pool used for reads,
+// writes, and admin (schema) operations.
 func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) (*Server, error) {
-	err := SetupDB(ctx, pool)
+	return NewServerFromPools(ctx, pgxutil.SamePool(pool), opts...)
+}
+
+// NewServerFromPools returns a Server that sets up its schema via pools.Admin
+// and routes reads to pools.Read and writes to pools.Write.
+func NewServerFromPools(ctx context.Context, pools pgxutil.Pools, opts ...Option) (*Server, error) {
+	err := SetupDB(ctx, pools.Admin)
 	if err != nil {
 		return nil, fmt.Errorf("setup %w", err)
 	}
 
 	s := &Server{
-		pool: pool,
+		read:  pools.Read,
+		write: pools.Write,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -56,7 +66,8 @@ type Server struct {
 	publicationpb.UnimplementedPublicationApiServer
 
 	logger *zap.Logger
-	pool   *pgxpool.Pool
+	read   *pgxpool.Pool
+	write  *pgxpool.Pool
 }
 
 func (p *Server) CreatePublication(ctx context.Context, request *publicationpb.CreatePublicationRequest) (*publicationpb.Publication, error) {
@@ -72,7 +83,7 @@ func (p *Server) CreatePublication(ctx context.Context, request *publicationpb.C
 	mediaType := input.GetMediaType()
 
 	var output *publicationpb.Publication
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.write, func(tx pgx.Tx) error {
 		// Register the publication
 		err := CreatePublication(ctx, tx, pubID, audience)
 		if err != nil {
@@ -120,7 +131,7 @@ func (p *Server) GetPublication(ctx context.Context, request *publicationpb.GetP
 	version := request.GetVersion()
 
 	var output *publicationpb.Publication
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.read, func(tx pgx.Tx) error {
 		var err error
 		output, err = GetPublication(ctx, tx, id, version)
 		return err
@@ -141,7 +152,7 @@ func (p *Server) UpdatePublication(ctx context.Context, request *publicationpb.U
 	}
 	var updated *publicationpb.Publication
 
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.write, func(tx pgx.Tx) error {
 		var err error
 		if request.GetVersion() != "" {
 			err = checkLatestVersion(ctx, tx, request.GetPublication().GetId(), request.GetVersion())
@@ -169,7 +180,7 @@ func (p *Server) UpdatePublication(ctx context.Context, request *publicationpb.U
 func (p *Server) DeletePublication(ctx context.Context, request *publicationpb.DeletePublicationRequest) (*publicationpb.Publication, error) {
 	var pub *publicationpb.Publication
 
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.write, func(tx pgx.Tx) error {
 		var err error
 		// if a version is specified, check that it's the latest version
 		// this helps clients to avoid racing each other
@@ -215,7 +226,7 @@ func (p *Server) ListPublications(ctx context.Context, request *publicationpb.Li
 		publications []*publicationpb.Publication
 		nextToken    string
 	)
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.read, func(tx pgx.Tx) error {
 		var err error
 		publications, nextToken, err = GetPublicationsPaginated(ctx, tx, request.GetPageToken(), limit)
 		return err
@@ -250,7 +261,7 @@ func (p *Server) AcknowledgePublication(ctx context.Context, request *publicatio
 	}
 
 	var updated *publicationpb.Publication
-	err := pgx.BeginFunc(ctx, p.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, p.write, func(tx pgx.Tx) error {
 		err := CreatePublicationAcknowledgement(ctx, tx, request.GetId(), request.GetVersion(), time.Now(), accepted,
 			request.GetReceiptRejectedReason(), request.GetAllowAcknowledged())
 		if err != nil {

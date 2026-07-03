@@ -7,11 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/history/config"
@@ -235,13 +233,7 @@ func (a *automation) startDeviceRecording(ctx context.Context, announce node.Ann
 func (a *automation) createStore(ctx context.Context, src config.Source, storage *config.Storage) (history.Store, error) {
 	switch storage.Type {
 	case "postgres":
-		var pool *pgxpool.Pool
-		var err error
-		if storage.ConnectConfig.IsZero() {
-			_, _, pool, err = a.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, storage.ConnectConfig)
-		}
+		pools, err := a.stores.PostgresPoolsFor(ctx, storage.RoleConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -254,7 +246,7 @@ func (a *automation) createStore(ctx context.Context, src config.Source, storage
 				opts = append(opts, pgxstore.WithMaxCount(ttl.MaxCount))
 			}
 		}
-		return pgxstore.SetupStoreFromPool(ctx, src.SourceName(), pool, opts...)
+		return pgxstore.SetupStoreFromPools(ctx, src.SourceName(), pools, opts...)
 	case "memory":
 		var opts []memstore.Option
 		if ttl := storage.TTL; ttl != nil {

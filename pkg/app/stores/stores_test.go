@@ -15,8 +15,10 @@ func TestPostgresStore_Postgres(t *testing.T) {
 		s := &Stores{
 			postgresStore: postgresStore{
 				cfg: &PostgresConfig{
-					ConnectConfig: pgxutil.ConnectConfig{
-						URI: "postgres://user:password@localhost:5432/dbname", // will fail to connect in test
+					RoleConfig: pgxutil.RoleConfig{
+						ConnectConfig: pgxutil.ConnectConfig{
+							URI: "postgres://user:password@localhost:5432/dbname", // will fail to connect in test
+						},
 					},
 				},
 			},

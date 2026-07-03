@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
@@ -46,14 +47,23 @@ func NewServer(ctx context.Context, connStr string) (*Server, error) {
 	return NewServerFromPool(ctx, pool)
 }
 
+// NewServerFromPool returns a Server backed by a single pool used for reads,
+// writes, and admin (schema) operations.
 func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) (*Server, error) {
-	err := SetupDB(ctx, pool)
+	return NewServerFromPools(ctx, pgxutil.SamePool(pool), opts...)
+}
+
+// NewServerFromPools returns a Server that sets up its schema via pools.Admin
+// and routes reads to pools.Read and writes to pools.Write.
+func NewServerFromPools(ctx context.Context, pools pgxutil.Pools, opts ...Option) (*Server, error) {
+	err := SetupDB(ctx, pools.Admin)
 	if err != nil {
 		return nil, fmt.Errorf("setup %w", err)
 	}
 
 	s := &Server{
-		pool: pool,
+		read:  pools.Read,
+		write: pools.Write,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -64,7 +74,8 @@ func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) 
 type Server struct {
 	hubpb.UnimplementedHubApiServer
 	logger *zap.Logger
-	pool   *pgxpool.Pool
+	read   *pgxpool.Pool
+	write  *pgxpool.Pool
 
 	dbChanges minibus.Bus[*hubpb.PullHubNodesResponse_Change]
 
@@ -77,7 +88,7 @@ type Server struct {
 func (n *Server) GetHubNode(ctx context.Context, request *hubpb.GetHubNodeRequest) (*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollment Enrollment
-	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.read, func(tx pgx.Tx) (err error) {
 		dbEnrollment, err = SelectEnrollment(ctx, tx, request.GetAddress())
 		return
 	})
@@ -106,7 +117,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 	}
 
 	// check if the node is already enrolled
-	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, n.read, func(tx pgx.Tx) error {
 		_, err := SelectEnrollment(ctx, tx, nodeReg.Address)
 		return err
 	})
@@ -126,7 +137,7 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.write, func(tx pgx.Tx) error {
 		return InsertEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: nodeReg.Description,
@@ -168,7 +179,7 @@ func (n *Server) deleteHubNode(ctx context.Context, reg *hubpb.HubNode) error {
 func (n *Server) listAllHubNodes(ctx context.Context) ([]*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollments []Enrollment
-	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, n.read, func(tx pgx.Tx) (err error) {
 		dbEnrollments, err = SelectEnrollments(ctx, tx)
 		return
 	})
@@ -265,7 +276,7 @@ func (n *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRe
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 
-	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.write, func(tx pgx.Tx) error {
 		return UpdateEnrollment(ctx, tx, Enrollment{
 			Name:        en.TargetName,
 			Description: reg.Description,
@@ -344,7 +355,7 @@ func (n *Server) ForgetHubNode(ctx context.Context, request *hubpb.ForgetHubNode
 		return nil, err
 	}
 
-	err = pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, n.write, func(tx pgx.Tx) error {
 		return DeleteEnrollment(ctx, tx, reg.Address)
 	})
 	if err != nil {

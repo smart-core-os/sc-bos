@@ -13,14 +13,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 	"github.com/smart-core-os/sc-bos/internal/util/pki/expire"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
@@ -107,24 +105,12 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		hubConn = conn
 	case config.StorageTypePostgres:
-		var pool *pgxpool.Pool
-		var err error
-		if cfg.Storage.ConnectConfig.IsZero() {
-			_, _, pool, err = s.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, cfg.Storage.ConnectConfig)
-			if err == nil {
-				go func() {
-					<-ctx.Done()
-					pool.Close()
-				}()
-			}
-		}
+		pools, err := s.stores.PostgresPoolsFor(ctx, cfg.Storage.RoleConfig)
 		if err != nil {
 			return fmt.Errorf("connect: %w", err)
 		}
 
-		server, err := pgxhub.NewServerFromPool(ctx, pool, pgxhub.WithLogger(s.logger))
+		server, err := pgxhub.NewServerFromPools(ctx, pools, pgxhub.WithLogger(s.logger))
 		if err != nil {
 			return fmt.Errorf("init: %w", err)
 		}

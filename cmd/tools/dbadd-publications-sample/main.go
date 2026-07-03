@@ -40,9 +40,11 @@ func main() {
 		conf = config.Root{
 			Storage: &config.Storage{
 				Type: "postgres",
-				ConnectConfig: pgxutil.ConnectConfig{
-					URI:          "postgres://postgres@localhost:5432/smart_core",
-					PasswordFile: passFile.Name(),
+				RoleConfig: pgxutil.RoleConfig{
+					ConnectConfig: pgxutil.ConnectConfig{
+						URI:          "postgres://postgres@localhost:5432/smart_core",
+						PasswordFile: passFile.Name(),
+					},
 				},
 			},
 		}

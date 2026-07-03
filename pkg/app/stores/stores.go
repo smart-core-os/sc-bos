@@ -33,7 +33,7 @@ type Config struct {
 }
 
 type PostgresConfig struct {
-	pgxutil.ConnectConfig
+	pgxutil.RoleConfig
 	// MaxSizeBytes is the maximum storage size, in bytes, the Postgres history store is
 	// allowed to use. Postgres does not report a disk capacity itself, so this must be set
 	// to enable the storage utilisation HealthCheck and the bytes.capacity DataRetention
@@ -82,6 +82,7 @@ type postgresStore struct {
 	cfg *PostgresConfig
 
 	mu            sync.Mutex
+	pools         pgxutil.Pools
 	r, w, admin   *pgxpool.Pool
 	err           error
 	latestErrTime time.Time
@@ -117,15 +118,37 @@ func (s *postgresStore) Postgres() (r, w, admin *pgxpool.Pool, _ error) {
 		return nil, nil, nil, fmt.Errorf("%w [cached]", s.err)
 	}
 
-	// todo: support r, w, and admin pools
-	pool, err := pgxutil.Connect(context.Background(), s.cfg.ConnectConfig)
+	pools, err := pgxutil.ConnectRoles(context.Background(), s.cfg.RoleConfig)
 	if err != nil {
 		s.latestErrTime = time.Now()
 		return fail(err)
 	}
 
-	s.r, s.w, s.admin = pool, pool, pool
+	s.pools = pools
+	s.r, s.w, s.admin = pools.Read, pools.Write, pools.Admin
 	return s.r, s.w, s.admin, nil
+}
+
+// PostgresPoolsFor returns the postgres connection pools a subsystem should use
+// given its storage config rc.
+//
+// If rc is zero the shared node pools are returned; these are owned by the
+// Stores and must not be closed by the caller. Otherwise a dedicated set of
+// pools is opened from rc and closed automatically when ctx is done.
+func (s *postgresStore) PostgresPoolsFor(ctx context.Context, rc pgxutil.RoleConfig) (pgxutil.Pools, error) {
+	if rc.IsZero() {
+		r, w, admin, err := s.Postgres()
+		if err != nil {
+			return pgxutil.Pools{}, err
+		}
+		return pgxutil.Pools{Read: r, Write: w, Admin: admin}, nil
+	}
+	pools, err := pgxutil.ConnectRoles(ctx, rc)
+	if err != nil {
+		return pgxutil.Pools{}, err
+	}
+	context.AfterFunc(ctx, pools.Close)
+	return pools, nil
 }
 
 func (s *postgresStore) close() error {
@@ -136,9 +159,9 @@ func (s *postgresStore) close() error {
 		return nil
 	}
 
-	s.r.Close()
-	s.w.Close()
-	s.admin.Close()
+	// Close each distinct pool once; roles may share an underlying pool.
+	s.pools.Close()
+	s.pools = pgxutil.Pools{}
 	s.r = nil
 	s.w = nil
 	s.admin = nil

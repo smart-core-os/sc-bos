@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/internal/util/pass"
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/internal/util/rpcutil"
 	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
 	"github.com/smart-core-os/sc-bos/pkg/util/masks"
@@ -42,14 +43,23 @@ func NewServer(ctx context.Context, connStr string) (*Server, error) {
 	return NewServerFromPool(ctx, pool)
 }
 
+// NewServerFromPool returns a Server backed by a single pool used for reads,
+// writes, and admin (schema) operations.
 func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool, opts ...Option) (*Server, error) {
-	err := SetupDB(ctx, pool)
+	return NewServerFromPools(ctx, pgxutil.SamePool(pool), opts...)
+}
+
+// NewServerFromPools returns a Server that sets up its schema via pools.Admin
+// and routes reads to pools.Read and writes to pools.Write.
+func NewServerFromPools(ctx context.Context, pools pgxutil.Pools, opts ...Option) (*Server, error) {
+	err := SetupDB(ctx, pools.Admin)
 	if err != nil {
 		return nil, fmt.Errorf("setup %w", err)
 	}
 
 	s := &Server{
-		pool: pool,
+		read:  pools.Read,
+		write: pools.Write,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -64,7 +74,8 @@ var (
 
 type Server struct {
 	tenantpb.UnimplementedTenantApiServer
-	pool   *pgxpool.Pool
+	read   *pgxpool.Pool
+	write  *pgxpool.Pool
 	logger *zap.Logger
 }
 
@@ -72,7 +83,7 @@ func (s *Server) ListTenants(ctx context.Context, request *tenantpb.ListTenantsR
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenants []*tenantpb.Tenant
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.read, func(tx pgx.Tx) (err error) {
 		tenants, err = ListTenants(ctx, tx)
 		return
 	})
@@ -102,7 +113,7 @@ func (s *Server) CreateTenant(ctx context.Context, request *tenantpb.CreateTenan
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var newTenant *tenantpb.Tenant
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) (err error) {
 		newTenant, err = CreateTenant(ctx, tx, request.Tenant.Title)
 		if err != nil {
 			return
@@ -132,7 +143,7 @@ func (s *Server) GetTenant(ctx context.Context, request *tenantpb.GetTenantReque
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenant *tenantpb.Tenant
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.read, func(tx pgx.Tx) error {
 		var err error
 		tenant, err = GetTenant(ctx, tx, request.GetId())
 		return err
@@ -162,7 +173,7 @@ func (s *Server) UpdateTenant(ctx context.Context, request *tenantpb.UpdateTenan
 		return nil, err
 	}
 
-	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err = pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) (err error) {
 		if rpcutil.MaskContains(request.UpdateMask, "title") {
 			err = UpdateTenantTitle(ctx, tx, tenant.Id, tenant.Title)
 			if err != nil {
@@ -194,7 +205,7 @@ func (s *Server) UpdateTenant(ctx context.Context, request *tenantpb.UpdateTenan
 func (s *Server) DeleteTenant(ctx context.Context, request *tenantpb.DeleteTenantRequest) (*tenantpb.DeleteTenantResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("id", request.Id))
 
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) error {
 		return DeleteTenant(ctx, tx, request.Id)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -214,7 +225,7 @@ func (s *Server) PullTenant(request *tenantpb.PullTenantRequest, server tenantpb
 func (s *Server) AddTenantZones(ctx context.Context, request *tenantpb.AddTenantZonesRequest) (*tenantpb.Tenant, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) error {
 		return AddTenantZones(ctx, tx, request.TenantId, request.AddZoneNames)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -231,7 +242,7 @@ func (s *Server) RemoveTenantZones(ctx context.Context, request *tenantpb.Remove
 	logger := rpcutil.ServerLogger(ctx, s.logger)
 
 	var tenant *tenantpb.Tenant
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) (err error) {
 		err = RemoveTenantZones(ctx, tx, request.TenantId, request.RemoveZoneNames)
 		if err != nil {
 			return err
@@ -267,7 +278,7 @@ func (s *Server) ListSecrets(ctx context.Context, request *tenantpb.ListSecretsR
 	}
 
 	var secrets []*tenantpb.Secret
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.read, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, tenantID)
 		return
 	})
@@ -315,7 +326,7 @@ func (s *Server) CreateSecret(ctx context.Context, request *tenantpb.CreateSecre
 		return nil, status.Errorf(codes.Internal, "secret hashing failed: %s", err.Error())
 	}
 
-	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err = pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) (err error) {
 		secret, err = CreateTenantSecret(ctx, tx, secret)
 		return
 	})
@@ -337,7 +348,7 @@ func (s *Server) VerifySecret(ctx context.Context, request *tenantpb.VerifySecre
 	}
 
 	var secrets []*tenantpb.Secret
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.read, func(tx pgx.Tx) (err error) {
 		secrets, err = ListTenantSecrets(ctx, tx, request.TenantId)
 		return
 	})
@@ -358,7 +369,7 @@ func (s *Server) GetSecret(ctx context.Context, request *tenantpb.GetSecretReque
 	logger := rpcutil.ServerLogger(ctx, s.logger).With(zap.String("secret_id", request.GetId()))
 
 	var secret *tenantpb.Secret
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) (err error) {
+	err := pgx.BeginFunc(ctx, s.read, func(tx pgx.Tx) (err error) {
 		secret, err = GetTenantSecret(ctx, tx, request.Id)
 		return
 	})
@@ -378,7 +389,7 @@ func (s *Server) UpdateSecret(ctx context.Context, request *tenantpb.UpdateSecre
 
 func (s *Server) DeleteSecret(ctx context.Context, request *tenantpb.DeleteSecretRequest) (*tenantpb.DeleteSecretResponse, error) {
 	logger := rpcutil.ServerLogger(ctx, s.logger)
-	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, s.write, func(tx pgx.Tx) error {
 		return DeleteTenantSecret(ctx, tx, request.Id)
 	})
 	if errors.Is(err, pgx.ErrNoRows) {

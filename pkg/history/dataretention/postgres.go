@@ -85,9 +85,10 @@ func (b *postgresBackend) Purge(ctx context.Context, before *time.Time) (uint64,
 }
 
 func (b *postgresBackend) Compact(ctx context.Context) error {
-	_, w, _, err := b.stores.Postgres()
+	// VACUUM requires table ownership / the MAINTAIN privilege, so use the admin pool.
+	_, _, admin, err := b.stores.Postgres()
 	if err != nil {
 		return fmt.Errorf("postgres: %w", err)
 	}
-	return pgxstore.Vacuum(ctx, w)
+	return pgxstore.Vacuum(ctx, admin)
 }
