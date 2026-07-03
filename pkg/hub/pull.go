@@ -206,9 +206,19 @@ func (c *NodeFetcher) Pull(ctx context.Context, changes chan<- *hubpb.PullHubNod
 }
 
 func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNodesResponse_Change) error {
-	nodes, err := c.ListHubNodes(ctx, &hubpb.ListHubNodesRequest{})
-	if err != nil {
-		return err
+	// Page through every node: Poll reconciles the full set against c.known, so a partial
+	// list would spuriously emit REMOVE changes for nodes beyond the first page.
+	var allNodes []*hubpb.HubNode
+	for pageToken := ""; ; {
+		res, err := c.ListHubNodes(ctx, &hubpb.ListHubNodesRequest{PageToken: pageToken})
+		if err != nil {
+			return err
+		}
+		allNodes = append(allNodes, res.GetNodes()...)
+		if res.GetNextPageToken() == "" {
+			break
+		}
+		pageToken = res.GetNextPageToken()
 	}
 	if c.known == nil {
 		c.known = make(map[string]*hubpb.HubNode)
@@ -218,7 +228,7 @@ func (c *NodeFetcher) Poll(ctx context.Context, changes chan<- *hubpb.PullHubNod
 		unseen[s] = struct{}{}
 	}
 
-	for _, node := range nodes.Nodes {
+	for _, node := range allNodes {
 		// we do extra work here to try and send out more accurate changes to make callers lives easier
 		change := &hubpb.PullHubNodesResponse_Change{
 			Type:     typespb.ChangeType_ADD,

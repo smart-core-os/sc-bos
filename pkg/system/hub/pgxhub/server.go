@@ -23,6 +23,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
+	"github.com/smart-core-os/sc-bos/pkg/system/hub/internal/hubpage"
 	"github.com/smart-core-os/sc-bos/pkg/system/hub/remote"
 )
 
@@ -163,7 +164,8 @@ func (n *Server) deleteHubNode(ctx context.Context, reg *hubpb.HubNode) error {
 	}, n.TestTLSConfig)
 }
 
-func (n *Server) ListHubNodes(ctx context.Context, request *hubpb.ListHubNodesRequest) (*hubpb.ListHubNodesResponse, error) {
+// listAllHubNodes returns every enrolled node, unpaginated.
+func (n *Server) listAllHubNodes(ctx context.Context) ([]*hubpb.HubNode, error) {
 	logger := rpcutil.ServerLogger(ctx, n.logger)
 	var dbEnrollments []Enrollment
 	err := pgx.BeginFunc(ctx, n.pool, func(tx pgx.Tx) (err error) {
@@ -183,8 +185,25 @@ func (n *Server) ListHubNodes(ctx context.Context, request *hubpb.ListHubNodesRe
 			Description: en.Description,
 		})
 	}
+	return registrations, nil
+}
 
-	return &hubpb.ListHubNodesResponse{Nodes: registrations}, nil
+func (n *Server) ListHubNodes(ctx context.Context, request *hubpb.ListHubNodesRequest) (*hubpb.ListHubNodesResponse, error) {
+	all, err := n.listAllHubNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes, nextPageToken, total, err := hubpage.Paginate(all, request.GetPageSize(), request.GetPageToken())
+	if err != nil {
+		return nil, err
+	}
+
+	return &hubpb.ListHubNodesResponse{
+		Nodes:         nodes,
+		NextPageToken: nextPageToken,
+		TotalSize:     total,
+	}, nil
 }
 
 func (n *Server) PullHubNodes(request *hubpb.PullHubNodesRequest, server hubpb.HubApi_PullHubNodesServer) error {
@@ -193,11 +212,11 @@ func (n *Server) PullHubNodes(request *hubpb.PullHubNodesRequest, server hubpb.H
 	events := n.dbChanges.Listen(server.Context())
 
 	if !request.UpdatesOnly {
-		nodes, err := n.ListHubNodes(server.Context(), &hubpb.ListHubNodesRequest{})
+		nodes, err := n.listAllHubNodes(server.Context())
 		if err != nil {
 			return err
 		}
-		for _, node := range nodes.Nodes {
+		for _, node := range nodes {
 			err := server.Send(&hubpb.PullHubNodesResponse{Changes: []*hubpb.PullHubNodesResponse_Change{
 				{
 					Type:       typespb.ChangeType_ADD,

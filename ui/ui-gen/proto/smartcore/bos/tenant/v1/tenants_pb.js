@@ -1603,7 +1603,8 @@ proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.toObject = function(o
  */
 proto.smartcore.bos.tenant.v1.ListTenantsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
+pageToken: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1640,6 +1641,14 @@ proto.smartcore.bos.tenant.v1.ListTenantsRequest.deserializeBinaryFromReader = f
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setPageSize(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setPageToken(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1669,6 +1678,56 @@ proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.serializeBinary = fun
  */
 proto.smartcore.bos.tenant.v1.ListTenantsRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      1,
+      f
+    );
+  }
+  f = message.getPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional int32 page_size = 1;
+ * @return {number}
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.getPageSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListTenantsRequest} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.setPageSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional string page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.getPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListTenantsRequest} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsRequest.prototype.setPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -1712,7 +1771,9 @@ proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.toObject = function(
 proto.smartcore.bos.tenant.v1.ListTenantsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
 tenantsList: jspb.Message.toObjectList(msg.getTenantsList(),
-    proto.smartcore.bos.tenant.v1.Tenant.toObject, includeInstance)
+    proto.smartcore.bos.tenant.v1.Tenant.toObject, includeInstance),
+nextPageToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
+totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -1754,6 +1815,14 @@ proto.smartcore.bos.tenant.v1.ListTenantsResponse.deserializeBinaryFromReader = 
       reader.readMessage(value,proto.smartcore.bos.tenant.v1.Tenant.deserializeBinaryFromReader);
       msg.addTenants(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setNextPageToken(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setTotalSize(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1789,6 +1858,20 @@ proto.smartcore.bos.tenant.v1.ListTenantsResponse.serializeBinaryToWriter = func
       1,
       f,
       proto.smartcore.bos.tenant.v1.Tenant.serializeBinaryToWriter
+    );
+  }
+  f = message.getNextPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getTotalSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
     );
   }
 };
@@ -1829,6 +1912,42 @@ proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.addTenants = functio
  */
 proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.clearTenantsList = function() {
   return this.setTenantsList([]);
+};
+
+
+/**
+ * optional string next_page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.getNextPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListTenantsResponse} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.setNextPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 total_size = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.getTotalSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListTenantsResponse} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListTenantsResponse.prototype.setTotalSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 
@@ -3965,7 +4084,9 @@ proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.toObject = function(o
 proto.smartcore.bos.tenant.v1.ListSecretsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 includeHash: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
-filter: jspb.Message.getFieldWithDefault(msg, 2, "")
+filter: jspb.Message.getFieldWithDefault(msg, 2, ""),
+pageSize: jspb.Message.getFieldWithDefault(msg, 3, 0),
+pageToken: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -4010,6 +4131,14 @@ proto.smartcore.bos.tenant.v1.ListSecretsRequest.deserializeBinaryFromReader = f
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setFilter(value);
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setPageSize(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setPageToken(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4053,6 +4182,20 @@ proto.smartcore.bos.tenant.v1.ListSecretsRequest.serializeBinaryToWriter = funct
       f
     );
   }
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
+    );
+  }
+  f = message.getPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
 };
 
 
@@ -4089,6 +4232,42 @@ proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.getFilter = function(
  */
 proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.setFilter = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 page_size = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.getPageSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListSecretsRequest} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.setPageSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional string page_token = 4;
+ * @return {string}
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.getPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListSecretsRequest} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsRequest.prototype.setPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
@@ -4132,7 +4311,9 @@ proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.toObject = function(
 proto.smartcore.bos.tenant.v1.ListSecretsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
 secretsList: jspb.Message.toObjectList(msg.getSecretsList(),
-    proto.smartcore.bos.tenant.v1.Secret.toObject, includeInstance)
+    proto.smartcore.bos.tenant.v1.Secret.toObject, includeInstance),
+nextPageToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
+totalSize: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -4174,6 +4355,14 @@ proto.smartcore.bos.tenant.v1.ListSecretsResponse.deserializeBinaryFromReader = 
       reader.readMessage(value,proto.smartcore.bos.tenant.v1.Secret.deserializeBinaryFromReader);
       msg.addSecrets(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setNextPageToken(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setTotalSize(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4209,6 +4398,20 @@ proto.smartcore.bos.tenant.v1.ListSecretsResponse.serializeBinaryToWriter = func
       1,
       f,
       proto.smartcore.bos.tenant.v1.Secret.serializeBinaryToWriter
+    );
+  }
+  f = message.getNextPageToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getTotalSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
     );
   }
 };
@@ -4249,6 +4452,42 @@ proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.addSecrets = functio
  */
 proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.clearSecretsList = function() {
   return this.setSecretsList([]);
+};
+
+
+/**
+ * optional string next_page_token = 2;
+ * @return {string}
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.getNextPageToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListSecretsResponse} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.setNextPageToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 total_size = 3;
+ * @return {number}
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.getTotalSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.tenant.v1.ListSecretsResponse} returns this
+ */
+proto.smartcore.bos.tenant.v1.ListSecretsResponse.prototype.setTotalSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 

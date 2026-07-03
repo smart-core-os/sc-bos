@@ -109,6 +109,12 @@ export namespace Secret {
 }
 
 export class ListTenantsRequest extends jspb.Message {
+  getPageSize(): number;
+  setPageSize(value: number): ListTenantsRequest;
+
+  getPageToken(): string;
+  setPageToken(value: string): ListTenantsRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListTenantsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListTenantsRequest): ListTenantsRequest.AsObject;
@@ -119,6 +125,8 @@ export class ListTenantsRequest extends jspb.Message {
 
 export namespace ListTenantsRequest {
   export type AsObject = {
+    pageSize: number;
+    pageToken: string;
   };
 }
 
@@ -127,6 +135,12 @@ export class ListTenantsResponse extends jspb.Message {
   setTenantsList(value: Array<Tenant>): ListTenantsResponse;
   clearTenantsList(): ListTenantsResponse;
   addTenants(value?: Tenant, index?: number): Tenant;
+
+  getNextPageToken(): string;
+  setNextPageToken(value: string): ListTenantsResponse;
+
+  getTotalSize(): number;
+  setTotalSize(value: number): ListTenantsResponse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListTenantsResponse.AsObject;
@@ -139,6 +153,8 @@ export class ListTenantsResponse extends jspb.Message {
 export namespace ListTenantsResponse {
   export type AsObject = {
     tenantsList: Array<Tenant.AsObject>;
+    nextPageToken: string;
+    totalSize: number;
   };
 }
 
@@ -427,6 +443,12 @@ export class ListSecretsRequest extends jspb.Message {
   getFilter(): string;
   setFilter(value: string): ListSecretsRequest;
 
+  getPageSize(): number;
+  setPageSize(value: number): ListSecretsRequest;
+
+  getPageToken(): string;
+  setPageToken(value: string): ListSecretsRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSecretsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListSecretsRequest): ListSecretsRequest.AsObject;
@@ -439,6 +461,8 @@ export namespace ListSecretsRequest {
   export type AsObject = {
     includeHash: boolean;
     filter: string;
+    pageSize: number;
+    pageToken: string;
   };
 }
 
@@ -447,6 +471,12 @@ export class ListSecretsResponse extends jspb.Message {
   setSecretsList(value: Array<Secret>): ListSecretsResponse;
   clearSecretsList(): ListSecretsResponse;
   addSecrets(value?: Secret, index?: number): Secret;
+
+  getNextPageToken(): string;
+  setNextPageToken(value: string): ListSecretsResponse;
+
+  getTotalSize(): number;
+  setTotalSize(value: number): ListSecretsResponse;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSecretsResponse.AsObject;
@@ -459,6 +489,8 @@ export class ListSecretsResponse extends jspb.Message {
 export namespace ListSecretsResponse {
   export type AsObject = {
     secretsList: Array<Secret.AsObject>;
+    nextPageToken: string;
+    totalSize: number;
   };
 }
 
