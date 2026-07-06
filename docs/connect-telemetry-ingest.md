@@ -75,13 +75,15 @@ differ, so a body test works too. The chosen discriminator is Connect's to decid
   "timestamp": "2026-06-22T10:15:00Z",
   "version": "1.5.2",
   "points": {
-    "usage":    { "present_value": 123.45 },
-    "produced": { "present_value": 67.89 }
+    "energy_accumulator":          { "present_value": 123.45 },
+    "exported_energy_accumulator": { "present_value": 67.89 }
   }
 }
 ```
 
 - ISO-8601 `timestamp` is the reading instant (`MeterReading.end_time`, falling back to now).
+- Point names are **DBO standard field names** (`pkg/dbo`) — see the meter mapping below and
+  `.claude/plans/dbo-conformance-plan.md`.
 - One `present_value` per present point; an absent point means "no update" (partial messages
   are first-class in `ingest.md`).
 - `version` is the UDMI envelope schema version. Note: `ingest.md`'s telemetry example **omits
@@ -102,8 +104,8 @@ differ, so a body test works too. The chosen discriminator is Connect's to decid
   },
   "pointset": {
     "points": {
-      "usage":    { "units": "kWh" },
-      "produced": { "units": "kWh" }
+      "energy_accumulator":          { "units": "kWh" },
+      "exported_energy_accumulator": { "units": "kWh" }
     }
   }
 }
@@ -124,14 +126,19 @@ Shape matches `ingest.md`'s device-metadata example. Built from the device's
 
 ### Meter point mapping (the only trait wired today)
 
-| UDMI point | Value source            | Units (discovery)                    |
-|------------|-------------------------|--------------------------------------|
-| `usage`    | `MeterReading.usage`    | `MeterReadingSupport.usage_unit`     |
-| `produced` | `MeterReading.produced` | `MeterReadingSupport.produced_unit`  |
+Point names are DBO standard fields (`pkg/dbo`); discovery `units` carry the **raw** device
+unit string (the raw→DBO unit-name mapping, e.g. `kWh`→`kilowatt_hours`, is a building-config
+concern):
 
-`produced` is only emitted (telemetry and inventory) when the meter declares a
-`produced_unit`, avoiding a spurious constant-zero series for consumption-only meters.
-Meters are read-only, so no point is `writable`.
+| DBO field (point name)         | Value source            | Units (discovery, raw)               |
+|--------------------------------|-------------------------|--------------------------------------|
+| `energy_accumulator`           | `MeterReading.usage`    | `MeterReadingSupport.usage_unit`     |
+| `exported_energy_accumulator`  | `MeterReading.produced` | `MeterReadingSupport.produced_unit`  |
+
+`exported_energy_accumulator` is only emitted (telemetry and inventory) when the meter declares
+a `produced_unit`, avoiding a spurious constant-zero series for consumption-only meters.
+Meters are read-only, so no point is `writable`. NB an energy-only meter has **no canonical DBO
+entity type** (all `METERS/EM_PWM*` require `power_sensor`) — see the DBO conformance plan.
 
 On the trait-poll path there are no raw vendor point names, so the trait's semantic field
 names become the UDMI point names. This is the trade-off for supporting devices that don't

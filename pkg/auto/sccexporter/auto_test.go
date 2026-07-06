@@ -14,6 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -125,17 +126,17 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	// Telemetry: usage + produced, timestamped from the reading's end_time.
 	ev, ok := dev.buildTelemetry(context.Background(), time.Now(), logger)
 	require.True(t, ok)
-	require.Contains(t, ev.Points, meterPointUsage)
-	require.Contains(t, ev.Points, meterPointProduced)
-	assert.Equal(t, float32(123.45), ev.Points[meterPointUsage].PresentValue)
-	assert.Equal(t, float32(67.89), ev.Points[meterPointProduced].PresentValue)
+	require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
+	require.Contains(t, ev.Points, dbo.FieldExportedEnergyAccumulator)
+	assert.Equal(t, float32(123.45), ev.Points[dbo.FieldEnergyAccumulator].PresentValue)
+	assert.Equal(t, float32(67.89), ev.Points[dbo.FieldExportedEnergyAccumulator].PresentValue)
 	assert.WithinDuration(t, end, ev.Timestamp, time.Second)
 
 	// Discovery: point inventory carries the units from meter support.
 	disc := dev.buildDiscovery(time.Now())
 	require.NotNil(t, disc.Pointset)
-	assert.Equal(t, "kWh", disc.Pointset.Points[meterPointUsage].Units)
-	assert.Equal(t, "kWh", disc.Pointset.Points[meterPointProduced].Units)
+	assert.Equal(t, "kWh", disc.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
+	assert.Equal(t, "kWh", disc.Pointset.Points[dbo.FieldExportedEnergyAccumulator].Units)
 }
 
 // TestGetAllTraitImplementorsUnsupported confirms an unsupported trait is skipped

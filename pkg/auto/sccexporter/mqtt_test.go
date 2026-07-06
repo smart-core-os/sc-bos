@@ -27,6 +27,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -78,7 +79,7 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 	tele := udmi.PointsetEvent{
 		Timestamp: time.Now().UTC(),
 		Version:   udmi.PointsetVersion,
-		Points:    udmi.PointsEvent{meterPointUsage: {PresentValue: 123.45}},
+		Points:    udmi.PointsEvent{dbo.FieldEnergyAccumulator: {PresentValue: 123.45}},
 	}
 	teleBytes, err := json.Marshal(tele)
 	require.NoError(t, err)
@@ -88,7 +89,7 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 		Timestamp: time.Now().UTC(),
 		Version:   udmi.PointsetVersion,
 		System:    udmi.MetadataSystem{Name: "Main Meter"},
-		Pointset:  &udmi.MetadataPointset{Points: map[string]udmi.MetadataPoint{meterPointUsage: {Units: "kWh"}}},
+		Pointset:  &udmi.MetadataPointset{Points: map[string]udmi.MetadataPoint{dbo.FieldEnergyAccumulator: {Units: "kWh"}}},
 	}
 	discBytes, err := json.Marshal(disc)
 	require.NoError(t, err)
@@ -108,14 +109,14 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 	require.True(t, ok, "telemetry not received on %s", pointsetTop)
 	var teleRT udmi.PointsetEvent
 	require.NoError(t, json.Unmarshal(teleMsg.payload, &teleRT))
-	require.Contains(t, teleRT.Points, meterPointUsage)
+	require.Contains(t, teleRT.Points, dbo.FieldEnergyAccumulator)
 
 	discMsg, ok := got[discoveryTop]
 	require.True(t, ok, "discovery not received on %s", discoveryTop)
 	var discRT udmi.MetadataEvent
 	require.NoError(t, json.Unmarshal(discMsg.payload, &discRT))
 	require.NotNil(t, discRT.Pointset)
-	assert.Equal(t, "kWh", discRT.Pointset.Points[meterPointUsage].Units)
+	assert.Equal(t, "kWh", discRT.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
 }
 
 type capturedMsg struct {

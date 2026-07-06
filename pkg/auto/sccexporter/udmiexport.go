@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
@@ -13,13 +14,6 @@ import (
 const (
 	subfolderPointset  = "pointset"
 	subfolderDiscovery = "discovery"
-)
-
-// Meter point names. On the trait-poll path there are no raw vendor point names,
-// so the meter trait's semantic fields become the UDMI point names.
-const (
-	meterPointUsage    = "usage"
-	meterPointProduced = "produced"
 )
 
 // eventTopic builds the UDMI event topic for a device under the Connect ingest
@@ -40,43 +34,36 @@ func discoveryTopic(prefix, deviceRef string) string {
 	return eventTopic(prefix, deviceRef, subfolderDiscovery)
 }
 
-// meterTelemetry maps a meter reading to a UDMI pointset event.
+// meterTelemetry maps a meter reading to a UDMI pointset event keyed by DBO
+// standard field names (energy_accumulator, and exported_energy_accumulator when
+// the meter reports export). Emitting DBO field names directly makes the
+// building-config translation an identity mapping.
 //
 // The reading instant is MeterReading.end_time, falling back to now when unset.
-// usage is always emitted; produced is only emitted when the meter reports
-// production — the support declares a producedUnit, or (when support is unknown)
-// the produced value is non-zero — to avoid a spurious constant-zero series for
-// consumption-only meters.
 func meterTelemetry(r *meterpb.MeterReading, support *meterpb.MeterReadingSupport, now time.Time) udmi.PointsetEvent {
 	ts := now
 	if r.GetEndTime() != nil {
 		ts = r.GetEndTime().AsTime()
 	}
-	points := udmi.PointsEvent{
-		meterPointUsage: {PresentValue: r.GetUsage()},
-	}
-	if meterHasProduced(r, support) {
-		points[meterPointProduced] = udmi.PointValue{PresentValue: r.GetProduced()}
+	points := udmi.PointsEvent{}
+	for _, f := range dbo.MeterFields(support.GetUsageUnit(), support.GetProducedUnit()) {
+		value := r.GetUsage()
+		if f.Exported {
+			value = r.GetProduced()
+		}
+		points[f.Field] = udmi.PointValue{PresentValue: value}
 	}
 	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: points}
 }
 
-func meterHasProduced(r *meterpb.MeterReading, support *meterpb.MeterReadingSupport) bool {
-	if support != nil {
-		return support.GetProducedUnit() != ""
-	}
-	return r.GetProduced() != 0
-}
-
-// meterInventory contributes the meter's declared points to discovery. Meters are
-// read-only, so no point is marked writable. Units come from MeterReadingSupport;
-// produced is only listed when the meter declares a producedUnit.
+// meterInventory contributes the meter's declared points to discovery, keyed by
+// DBO field name. Meters are read-only, so no point is marked writable. Units carry
+// the raw device unit string (the raw→DBO unit-name mapping is applied in the
+// building-config translation).
 func meterInventory(support *meterpb.MeterReadingSupport) map[string]udmi.MetadataPoint {
-	inv := map[string]udmi.MetadataPoint{
-		meterPointUsage: {Units: support.GetUsageUnit()},
-	}
-	if support.GetProducedUnit() != "" {
-		inv[meterPointProduced] = udmi.MetadataPoint{Units: support.GetProducedUnit()}
+	inv := map[string]udmi.MetadataPoint{}
+	for _, f := range dbo.MeterFields(support.GetUsageUnit(), support.GetProducedUnit()) {
+		inv[f.Field] = udmi.MetadataPoint{Units: f.RawUnit}
 	}
 	return inv
 }

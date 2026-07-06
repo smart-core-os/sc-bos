@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
@@ -33,7 +34,7 @@ func TestMeterTelemetry(t *testing.T) {
 	end := time.Date(2026, 6, 22, 10, 15, 0, 0, time.UTC)
 	now := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	t.Run("usage and produced with support", func(t *testing.T) {
+	t.Run("usage and produced map to DBO energy fields", func(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 123.45, Produced: 67.89, EndTime: timestamppb.New(end)}
 		support := &meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}
 
@@ -41,10 +42,10 @@ func TestMeterTelemetry(t *testing.T) {
 
 		assert.Equal(t, end, ev.Timestamp, "timestamp should be the reading end_time")
 		assert.Equal(t, udmi.PointsetVersion, ev.Version)
-		require.Contains(t, ev.Points, meterPointUsage)
-		require.Contains(t, ev.Points, meterPointProduced)
-		assert.Equal(t, float32(123.45), ev.Points[meterPointUsage].PresentValue)
-		assert.Equal(t, float32(67.89), ev.Points[meterPointProduced].PresentValue)
+		require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
+		require.Contains(t, ev.Points, dbo.FieldExportedEnergyAccumulator)
+		assert.Equal(t, float32(123.45), ev.Points[dbo.FieldEnergyAccumulator].PresentValue)
+		assert.Equal(t, float32(67.89), ev.Points[dbo.FieldExportedEnergyAccumulator].PresentValue)
 	})
 
 	t.Run("falls back to now when end_time unset", func(t *testing.T) {
@@ -53,54 +54,55 @@ func TestMeterTelemetry(t *testing.T) {
 		assert.Equal(t, now, ev.Timestamp)
 	})
 
-	t.Run("consumption-only meter omits produced when support has no producedUnit", func(t *testing.T) {
+	t.Run("consumption-only meter omits exported when support has no producedUnit", func(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 10, Produced: 0, EndTime: timestamppb.New(end)}
 		support := &meterpb.MeterReadingSupport{UsageUnit: "kWh"} // no ProducedUnit
 
 		ev := meterTelemetry(r, support, now)
 
-		require.Contains(t, ev.Points, meterPointUsage)
-		assert.NotContains(t, ev.Points, meterPointProduced, "no producedUnit ⇒ no produced series")
+		require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
+		assert.NotContains(t, ev.Points, dbo.FieldExportedEnergyAccumulator, "no producedUnit ⇒ no exported series")
 	})
 
-	t.Run("without support falls back to non-zero produced", func(t *testing.T) {
-		withProduced := meterTelemetry(&meterpb.MeterReading{Usage: 10, Produced: 5}, nil, now)
-		assert.Contains(t, withProduced.Points, meterPointProduced)
-
-		zeroProduced := meterTelemetry(&meterpb.MeterReading{Usage: 10, Produced: 0}, nil, now)
-		assert.NotContains(t, zeroProduced.Points, meterPointProduced)
+	t.Run("without support, only the energy accumulator is emitted", func(t *testing.T) {
+		ev := meterTelemetry(&meterpb.MeterReading{Usage: 10, Produced: 5}, nil, now)
+		require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
+		assert.NotContains(t, ev.Points, dbo.FieldExportedEnergyAccumulator,
+			"without support (no declared producedUnit) exported energy is not claimed")
 	})
 }
 
 func TestMeterInventory(t *testing.T) {
-	t.Run("usage and produced units", func(t *testing.T) {
+	t.Run("usage and produced units (raw strings)", func(t *testing.T) {
 		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"})
-		require.Contains(t, inv, meterPointUsage)
-		require.Contains(t, inv, meterPointProduced)
-		assert.Equal(t, "kWh", inv[meterPointUsage].Units)
-		assert.Equal(t, "kWh", inv[meterPointProduced].Units)
+		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
+		require.Contains(t, inv, dbo.FieldExportedEnergyAccumulator)
+		// discovery carries the raw device unit string; DBO unit-name mapping is a
+		// building-config concern.
+		assert.Equal(t, "kWh", inv[dbo.FieldEnergyAccumulator].Units)
+		assert.Equal(t, "kWh", inv[dbo.FieldExportedEnergyAccumulator].Units)
 		// meters are read-only: nothing writable.
-		assert.False(t, inv[meterPointUsage].Writable)
-		assert.False(t, inv[meterPointProduced].Writable)
+		assert.False(t, inv[dbo.FieldEnergyAccumulator].Writable)
+		assert.False(t, inv[dbo.FieldExportedEnergyAccumulator].Writable)
 	})
 
-	t.Run("usage only when no producedUnit", func(t *testing.T) {
+	t.Run("energy accumulator only when no producedUnit", func(t *testing.T) {
 		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh"})
-		require.Contains(t, inv, meterPointUsage)
-		assert.NotContains(t, inv, meterPointProduced)
+		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
+		assert.NotContains(t, inv, dbo.FieldExportedEnergyAccumulator)
 	})
 
-	t.Run("nil support still lists usage", func(t *testing.T) {
+	t.Run("nil support still lists the energy accumulator", func(t *testing.T) {
 		inv := meterInventory(nil)
-		require.Contains(t, inv, meterPointUsage)
-		assert.Empty(t, inv[meterPointUsage].Units)
+		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
+		assert.Empty(t, inv[dbo.FieldEnergyAccumulator].Units)
 	})
 }
 
 func TestDiscoveryEvent(t *testing.T) {
 	now := time.Date(2026, 6, 22, 10, 15, 0, 0, time.UTC)
 	inv := map[string]udmi.MetadataPoint{
-		meterPointUsage: {Units: "kWh"},
+		dbo.FieldEnergyAccumulator: {Units: "kWh"},
 	}
 
 	meta := &metadatapb.Metadata{
@@ -123,8 +125,8 @@ func TestDiscoveryEvent(t *testing.T) {
 	require.NotNil(t, ev.System.Location)
 	assert.Equal(t, "03", ev.System.Location.Floor)
 	require.NotNil(t, ev.Pointset)
-	require.Contains(t, ev.Pointset.Points, meterPointUsage)
-	assert.Equal(t, "kWh", ev.Pointset.Points[meterPointUsage].Units)
+	require.Contains(t, ev.Pointset.Points, dbo.FieldEnergyAccumulator)
+	assert.Equal(t, "kWh", ev.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
 }
 
 func TestDiscoveryEventFallsBackToDeviceName(t *testing.T) {

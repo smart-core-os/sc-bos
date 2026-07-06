@@ -17,18 +17,22 @@ the topic grammar and the payload contract agreed with the Connect ingest side.
 
 ## Supported traits
 
-Only **Meter** (`smartcore.bos.Meter`) is exported today. The meter reading maps to two
-points:
+Only **Meter** (`smartcore.bos.Meter`) is exported today. Point names are **Google Digital
+Buildings Ontology (DBO) standard field names** (mapped in `pkg/dbo`), so the building-config
+translation is an identity mapping — see `docs/connect-telemetry-ingest.md` and
+`.claude/plans/dbo-conformance-plan.md`. The meter reading maps to:
 
-| Point      | Source                    | Units (discovery)              |
-|------------|---------------------------|--------------------------------|
-| `usage`    | `MeterReading.usage`      | `MeterReadingSupport.usage_unit`    |
-| `produced` | `MeterReading.produced`   | `MeterReadingSupport.produced_unit` |
+| DBO point (field)              | Source                  | Units (discovery)                   |
+|--------------------------------|-------------------------|-------------------------------------|
+| `energy_accumulator`           | `MeterReading.usage`    | `MeterReadingSupport.usage_unit`    |
+| `exported_energy_accumulator`  | `MeterReading.produced` | `MeterReadingSupport.produced_unit` |
 
-`produced` is only emitted when the meter reports production (its support declares a
-`produced_unit`), so consumption-only meters don't publish a constant-zero series. The
-telemetry timestamp is `MeterReading.end_time` (the reading instant), falling back to now.
-Meters are read-only, so no point is marked `writable`.
+`exported_energy_accumulator` is only emitted when the meter reports production (its support
+declares a `produced_unit`), so consumption-only meters don't publish a constant-zero series.
+The telemetry timestamp is `MeterReading.end_time` (the reading instant), falling back to now.
+Discovery units carry the **raw** device unit string; the raw→DBO unit-name mapping (e.g.
+`kWh`→`kilowatt_hours`) is a building-config concern. Meters are read-only, so no point is
+marked `writable`.
 
 Other traits configured in `traits` are logged as unsupported and skipped. Add a trait by
 implementing a `traitCollector` in `device.go` and wiring it in `newCollector` (`auto.go`).
