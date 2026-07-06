@@ -11,3 +11,8 @@ results_*.csv
 podman-build-secret*
 .bin
 demo/vanti-ugs/.env
+
+# sccexporter local demo artifacts (throwaway certs, broker config, generated DBO)
+example/config/vanti-ugs/scc-certs/
+/mosquitto.conf
+/building-config.yaml
