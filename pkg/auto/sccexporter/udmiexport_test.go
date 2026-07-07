@@ -39,7 +39,7 @@ func TestMeterTelemetry(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 123.45, Produced: 67.89, EndTime: timestamppb.New(end)}
 		support := &meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}
 
-		ev := meterTelemetry(r, support, now)
+		ev := meterTelemetry(r, support, now, dbo.NamingDBO)
 
 		assert.Equal(t, end, ev.Timestamp, "timestamp should be the reading end_time")
 		assert.Equal(t, udmi.PointsetVersion, ev.Version)
@@ -51,7 +51,7 @@ func TestMeterTelemetry(t *testing.T) {
 
 	t.Run("falls back to now when end_time unset", func(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 1}
-		ev := meterTelemetry(r, &meterpb.MeterReadingSupport{UsageUnit: "kWh"}, now)
+		ev := meterTelemetry(r, &meterpb.MeterReadingSupport{UsageUnit: "kWh"}, now, dbo.NamingDBO)
 		assert.Equal(t, now, ev.Timestamp)
 	})
 
@@ -59,14 +59,14 @@ func TestMeterTelemetry(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 10, Produced: 0, EndTime: timestamppb.New(end)}
 		support := &meterpb.MeterReadingSupport{UsageUnit: "kWh"} // no ProducedUnit
 
-		ev := meterTelemetry(r, support, now)
+		ev := meterTelemetry(r, support, now, dbo.NamingDBO)
 
 		require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
 		assert.NotContains(t, ev.Points, dbo.FieldExportedEnergyAccumulator, "no producedUnit ⇒ no exported series")
 	})
 
 	t.Run("without support, only the energy accumulator is emitted", func(t *testing.T) {
-		ev := meterTelemetry(&meterpb.MeterReading{Usage: 10, Produced: 5}, nil, now)
+		ev := meterTelemetry(&meterpb.MeterReading{Usage: 10, Produced: 5}, nil, now, dbo.NamingDBO)
 		require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
 		assert.NotContains(t, ev.Points, dbo.FieldExportedEnergyAccumulator,
 			"without support (no declared producedUnit) exported energy is not claimed")
@@ -74,16 +74,29 @@ func TestMeterTelemetry(t *testing.T) {
 
 	t.Run("water meter emits water_volume_accumulator from usage", func(t *testing.T) {
 		r := &meterpb.MeterReading{Usage: 42, EndTime: timestamppb.New(end)}
-		ev := meterTelemetry(r, &meterpb.MeterReadingSupport{UsageUnit: "m³"}, now)
+		ev := meterTelemetry(r, &meterpb.MeterReadingSupport{UsageUnit: "m³"}, now, dbo.NamingDBO)
 		require.Contains(t, ev.Points, dbo.FieldWaterVolumeAccumulator)
 		assert.NotContains(t, ev.Points, dbo.FieldEnergyAccumulator, "a water meter is not energy")
 		assert.Equal(t, float32(42), ev.Points[dbo.FieldWaterVolumeAccumulator].PresentValue)
+	})
+
+	t.Run("raw naming emits raw Smart Core point names", func(t *testing.T) {
+		r := &meterpb.MeterReading{Usage: 123.45, Produced: 67.89, EndTime: timestamppb.New(end)}
+		support := &meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}
+
+		ev := meterTelemetry(r, support, now, dbo.NamingRaw)
+
+		require.Contains(t, ev.Points, dbo.RawPointUsage)
+		require.Contains(t, ev.Points, dbo.RawPointProduced)
+		assert.NotContains(t, ev.Points, dbo.FieldEnergyAccumulator, "raw mode must not emit DBO names")
+		assert.Equal(t, float32(123.45), ev.Points[dbo.RawPointUsage].PresentValue)
+		assert.Equal(t, float32(67.89), ev.Points[dbo.RawPointProduced].PresentValue)
 	})
 }
 
 func TestMeterInventory(t *testing.T) {
 	t.Run("usage and produced units (raw strings)", func(t *testing.T) {
-		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"})
+		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}, dbo.NamingDBO)
 		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
 		require.Contains(t, inv, dbo.FieldExportedEnergyAccumulator)
 		// discovery carries the raw device unit string; DBO unit-name mapping is a
@@ -96,22 +109,30 @@ func TestMeterInventory(t *testing.T) {
 	})
 
 	t.Run("energy accumulator only when no producedUnit", func(t *testing.T) {
-		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh"}, dbo.NamingDBO)
 		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
 		assert.NotContains(t, inv, dbo.FieldExportedEnergyAccumulator)
 	})
 
 	t.Run("nil support still lists the energy accumulator", func(t *testing.T) {
-		inv := meterInventory(nil)
+		inv := meterInventory(nil, dbo.NamingDBO)
 		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
 		assert.Empty(t, inv[dbo.FieldEnergyAccumulator].Units)
 	})
 
 	t.Run("water meter lists water_volume_accumulator with raw m³", func(t *testing.T) {
-		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "m³"})
+		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "m³"}, dbo.NamingDBO)
 		require.Contains(t, inv, dbo.FieldWaterVolumeAccumulator)
 		assert.NotContains(t, inv, dbo.FieldEnergyAccumulator)
 		assert.Equal(t, "m³", inv[dbo.FieldWaterVolumeAccumulator].Units)
+	})
+
+	t.Run("raw naming lists raw point names with native units", func(t *testing.T) {
+		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}, dbo.NamingRaw)
+		require.Contains(t, inv, dbo.RawPointUsage)
+		require.Contains(t, inv, dbo.RawPointProduced)
+		assert.NotContains(t, inv, dbo.FieldEnergyAccumulator)
+		assert.Equal(t, "kWh", inv[dbo.RawPointUsage].Units)
 	})
 }
 

@@ -18,6 +18,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
@@ -37,6 +38,10 @@ type AutoImpl struct {
 
 	meterClient     meterpb.MeterApiClient
 	meterInfoClient meterpb.MeterInfoClient
+
+	// pointNaming is the resolved payload naming mode for the current config; it
+	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
+	pointNaming dbo.Naming
 }
 
 func (f factory) New(services auto.Services) service.Lifecycle {
@@ -62,6 +67,7 @@ func (a *AutoImpl) now() time.Time {
 
 func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 	a.initialiseClients(a.Node)
+	a.pointNaming = dbo.Naming(cfg.PointNaming)
 
 	grp, autoCtx := errgroup.WithContext(ctx)
 
@@ -209,7 +215,7 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, deviceName string) traitCollector {
 	switch traitName {
 	case meterpb.TraitName:
-		c := &meterCollector{name: deviceName, client: a.meterClient}
+		c := &meterCollector{name: deviceName, client: a.meterClient, naming: a.pointNaming}
 		// Fetch the reading support once; its units and production capability drive
 		// both the telemetry point selection and the discovery inventory.
 		if support, err := a.meterInfoClient.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: deviceName}); err != nil {

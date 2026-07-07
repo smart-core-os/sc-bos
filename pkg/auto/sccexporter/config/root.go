@@ -42,6 +42,11 @@ type Root struct {
 	// traits are discovered and polled. Only smartcore.bos.Meter is supported today.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
+	// PointNaming selects the point key emitted on the wire: "dbo" (default) emits DBO
+	// standard field names (so a building-config translation is an identity mapping);
+	// "raw" emits the raw Smart Core point names (usage/produced) and leaves the
+	// name→field mapping to the consumer (Connect's per-source pipeline).
+	PointNaming string `json:"pointNaming,omitempty"`
 	// FetchTimeout is the maximum time to wait for a single device's trait data fetch
 	// If a device takes longer than this, the fetch is cancelled and the device is skipped
 	// Default is 5 seconds
@@ -61,6 +66,15 @@ func ParseConfig(data []byte) (Root, error) {
 
 	if root.Mqtt.TopicPrefix == "" {
 		root.Mqtt.TopicPrefix = DefaultTopicPrefix
+	}
+
+	switch root.PointNaming {
+	case "":
+		root.PointNaming = "dbo"
+	case "dbo", "raw":
+		// ok
+	default:
+		return Root{}, fmt.Errorf("config parse failed, pointNaming must be \"dbo\" or \"raw\", got %q", root.PointNaming)
 	}
 
 	// Credential modes are mutually exclusive: either the cloud credential, or

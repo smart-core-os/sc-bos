@@ -109,14 +109,42 @@ func UnitName(raw string) string {
 	}
 }
 
-// MeterField is one DBO point a meter exposes: the standard field name, the raw
-// unit string the device reports, its DBO unit name (empty if unmappable), and
-// whether it is the exported/produced reading (vs consumed).
+// Raw Smart Core meter point names — the "vendor" names before DBO normalisation.
+// The Meter trait already reduces a meter to these two readings.
+const (
+	RawPointUsage    = "usage"
+	RawPointProduced = "produced"
+)
+
+// Naming selects the point key a caller emits on the wire. NamingDBO emits DBO
+// standard field names (so a building-config translation is an identity mapping);
+// NamingRaw emits the raw Smart Core point names and leaves the name→field mapping
+// to the consumer (Connect's per-source pipeline). The zero value is NamingDBO.
+type Naming string
+
+const (
+	NamingDBO Naming = "dbo"
+	NamingRaw Naming = "raw"
+)
+
+// MeterField is one DBO point a meter exposes: the DBO standard field name, the raw
+// Smart Core point name, the raw unit string the device reports, its DBO unit name
+// (empty if unmappable), and whether it is the exported/produced reading (vs consumed).
 type MeterField struct {
 	Field    string
+	RawName  string
 	RawUnit  string
 	Unit     string
 	Exported bool
+}
+
+// PointName returns the point key for this field under the given naming mode: the
+// raw Smart Core name for NamingRaw, otherwise the DBO standard field name.
+func (f MeterField) PointName(n Naming) string {
+	if n == NamingRaw {
+		return f.RawName
+	}
+	return f.Field
 }
 
 // MeterFields returns the DBO fields a meter exposes given the units declared by its
@@ -133,6 +161,7 @@ func MeterFields(usageUnit, producedUnit string) []MeterField {
 	if commodityForUnit(usageUnit) == commodityWater {
 		return []MeterField{{
 			Field:   FieldWaterVolumeAccumulator,
+			RawName: RawPointUsage,
 			RawUnit: usageUnit,
 			Unit:    UnitName(usageUnit),
 		}}
@@ -140,12 +169,14 @@ func MeterFields(usageUnit, producedUnit string) []MeterField {
 
 	fields := []MeterField{{
 		Field:   FieldEnergyAccumulator,
+		RawName: RawPointUsage,
 		RawUnit: usageUnit,
 		Unit:    UnitName(usageUnit),
 	}}
 	if producedUnit != "" {
 		fields = append(fields, MeterField{
 			Field:    FieldExportedEnergyAccumulator,
+			RawName:  RawPointProduced,
 			RawUnit:  producedUnit,
 			Unit:     UnitName(producedUnit),
 			Exported: true,

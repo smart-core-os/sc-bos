@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
@@ -72,11 +73,13 @@ func (d *device) buildDiscovery(now time.Time) udmi.MetadataEvent {
 
 // meterCollector exports the smartcore.bos.Meter trait as UDMI usage/produced
 // points. support (fetched once at discovery) carries the units and production
-// capability; it may be nil if the info API is unavailable.
+// capability; it may be nil if the info API is unavailable. naming selects raw vs
+// DBO point keys.
 type meterCollector struct {
 	name    string
 	client  meterpb.MeterApiClient
 	support *meterpb.MeterReadingSupport
+	naming  dbo.Naming
 }
 
 func (c *meterCollector) points(ctx context.Context, now time.Time) (udmi.PointsEvent, time.Time, error) {
@@ -84,10 +87,10 @@ func (c *meterCollector) points(ctx context.Context, now time.Time) (udmi.Points
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	ev := meterTelemetry(r, c.support, now)
+	ev := meterTelemetry(r, c.support, now, c.naming)
 	return ev.Points, ev.Timestamp, nil
 }
 
 func (c *meterCollector) inventory() map[string]udmi.MetadataPoint {
-	return meterInventory(c.support)
+	return meterInventory(c.support, c.naming)
 }

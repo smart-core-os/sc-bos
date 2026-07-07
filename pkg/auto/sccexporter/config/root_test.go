@@ -26,6 +26,25 @@ func TestParseConfig(t *testing.T) {
 		assert.Equal(t, 100, *root.Mqtt.MetadataInterval)
 		assert.NotNil(t, root.Mqtt.SendInterval)
 		assert.Equal(t, 5.0, root.FetchTimeout.Seconds())
+		assert.Equal(t, "dbo", root.PointNaming, "pointNaming defaults to dbo")
+	})
+
+	t.Run("pointNaming raw is accepted", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"pointNaming": "raw",
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, "raw", root.PointNaming)
+	})
+
+	t.Run("invalid pointNaming rejected", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"pointNaming": "vendor",
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}
+		}`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "pointNaming")
 	})
 
 	t.Run("cloud credential mode", func(t *testing.T) {

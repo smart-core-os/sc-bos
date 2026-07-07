@@ -34,13 +34,13 @@ func discoveryTopic(prefix, deviceRef string) string {
 	return eventTopic(prefix, deviceRef, subfolderDiscovery)
 }
 
-// meterTelemetry maps a meter reading to a UDMI pointset event keyed by DBO
-// standard field names (energy_accumulator, and exported_energy_accumulator when
-// the meter reports export). Emitting DBO field names directly makes the
-// building-config translation an identity mapping.
+// meterTelemetry maps a meter reading to a UDMI pointset event. The point key is
+// chosen by naming: DBO standard field names (energy_accumulator, …) make the
+// building-config translation an identity mapping; raw names (usage/produced) leave
+// the name→field mapping to the consumer.
 //
 // The reading instant is MeterReading.end_time, falling back to now when unset.
-func meterTelemetry(r *meterpb.MeterReading, support *meterpb.MeterReadingSupport, now time.Time) udmi.PointsetEvent {
+func meterTelemetry(r *meterpb.MeterReading, support *meterpb.MeterReadingSupport, now time.Time, naming dbo.Naming) udmi.PointsetEvent {
 	ts := now
 	if r.GetEndTime() != nil {
 		ts = r.GetEndTime().AsTime()
@@ -51,19 +51,18 @@ func meterTelemetry(r *meterpb.MeterReading, support *meterpb.MeterReadingSuppor
 		if f.Exported {
 			value = r.GetProduced()
 		}
-		points[f.Field] = udmi.PointValue{PresentValue: value}
+		points[f.PointName(naming)] = udmi.PointValue{PresentValue: value}
 	}
 	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: points}
 }
 
-// meterInventory contributes the meter's declared points to discovery, keyed by
-// DBO field name. Meters are read-only, so no point is marked writable. Units carry
-// the raw device unit string (the raw→DBO unit-name mapping is applied in the
-// building-config translation).
-func meterInventory(support *meterpb.MeterReadingSupport) map[string]udmi.MetadataPoint {
+// meterInventory contributes the meter's declared points to discovery, keyed by the
+// same name mode as the telemetry (see meterTelemetry). Meters are read-only, so no
+// point is marked writable. Units carry the raw device unit string.
+func meterInventory(support *meterpb.MeterReadingSupport, naming dbo.Naming) map[string]udmi.MetadataPoint {
 	inv := map[string]udmi.MetadataPoint{}
 	for _, f := range dbo.MeterFields(support.GetUsageUnit(), support.GetProducedUnit()) {
-		inv[f.Field] = udmi.MetadataPoint{Units: f.RawUnit}
+		inv[f.PointName(naming)] = udmi.MetadataPoint{Units: f.RawUnit}
 	}
 	return inv
 }

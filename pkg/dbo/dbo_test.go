@@ -66,6 +66,26 @@ func TestMeterFields(t *testing.T) {
 	})
 }
 
+func TestMeterFieldPointName(t *testing.T) {
+	fields := MeterFields("kWh", "kWh")
+	require.Len(t, fields, 2)
+
+	// DBO naming (default) yields the standard field names.
+	assert.Equal(t, FieldEnergyAccumulator, fields[0].PointName(NamingDBO))
+	assert.Equal(t, FieldExportedEnergyAccumulator, fields[1].PointName(NamingDBO))
+	assert.Equal(t, FieldEnergyAccumulator, fields[0].PointName(""), "zero value defaults to DBO")
+
+	// Raw naming yields the raw Smart Core point names.
+	assert.Equal(t, RawPointUsage, fields[0].PointName(NamingRaw))
+	assert.Equal(t, RawPointProduced, fields[1].PointName(NamingRaw))
+
+	// Water usage is also the raw "usage" point.
+	water := MeterFields("m³", "")
+	require.Len(t, water, 1)
+	assert.Equal(t, FieldWaterVolumeAccumulator, water[0].PointName(NamingDBO))
+	assert.Equal(t, RawPointUsage, water[0].PointName(NamingRaw))
+}
+
 func TestMeterEntityType(t *testing.T) {
 	t.Run("energy-only electricity meter is the non-canonical EM_INITIAL passthrough", func(t *testing.T) {
 		name, canonical := MeterEntityType("kWh")
