@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/google/renameio/v2"
+	"github.com/google/renameio/v2/maybe"
 
 	"github.com/smart-core-os/sc-bos/internal/util/pki"
 )
@@ -24,10 +24,10 @@ type RegistrationStore interface {
 }
 
 // NewFileRegistrationStore returns a RegistrationStore backed by a single JSON
-// file at path (written atomically, 0600). Holding the key, certificate chain
-// and API endpoint in one file means they are always mutually consistent — a
-// crash can never leave a key without its certificate, or a certificate issued
-// by one origin paired with a different endpoint.
+// file at path (written atomically where the OS supports it, 0600). Holding
+// the key, certificate chain and API endpoint in one file means they are always
+// mutually consistent — a crash can never leave a key without its certificate,
+// or a certificate issued by one origin paired with a different endpoint.
 func NewFileRegistrationStore(path string) RegistrationStore {
 	return &fileRegistrationStore{path: path}
 }
@@ -99,10 +99,12 @@ func (s *fileRegistrationStore) Save(_ context.Context, reg *Registration) error
 	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
 		return fmt.Errorf("create registration dir: %w", err)
 	}
-	// renameio writes to a temp file in the same directory and renames it into
-	// place, so a reader never sees a partial file and a crash never corrupts
-	// the existing registration.
-	if err := renameio.WriteFile(s.path, data, 0600); err != nil {
+	// maybe.WriteFile writes to a temp file in the same directory and renames it
+	// into place where the OS supports it, so a reader never sees a partial file
+	// and a crash never corrupts the existing registration. On platforms where
+	// atomic rename-into-place isn't available (e.g. Windows) it falls back to a
+	// best-effort direct write.
+	if err := maybe.WriteFile(s.path, data, 0600); err != nil {
 		return fmt.Errorf("write registration: %w", err)
 	}
 	return nil
