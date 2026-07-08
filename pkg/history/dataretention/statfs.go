@@ -23,7 +23,7 @@ func diskCapacity(dataDir string, dbUsedBytes uint64) (capacity uint64, otherUse
 	if diskUsed > dbUsedBytes {
 		otherUsed = diskUsed - dbUsedBytes
 	}
-	available = st.Bavail * bsize
+	available = uint64(st.Bavail) * bsize
 	ok = true
 	return
 }
