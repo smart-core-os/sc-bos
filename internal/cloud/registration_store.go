@@ -24,10 +24,10 @@ type RegistrationStore interface {
 }
 
 // NewFileRegistrationStore returns a RegistrationStore backed by a single JSON
-// file at path (written atomically, 0600). Holding the key, certificate chain
-// and API endpoint in one file means they are always mutually consistent — a
-// crash can never leave a key without its certificate, or a certificate issued
-// by one origin paired with a different endpoint.
+// file at path (written atomically where the OS supports it, 0600). Holding
+// the key, certificate chain and API endpoint in one file means they are always
+// mutually consistent — a crash can never leave a key without its certificate,
+// or a certificate issued by one origin paired with a different endpoint.
 func NewFileRegistrationStore(path string) RegistrationStore {
 	return &fileRegistrationStore{path: path}
 }
