@@ -104,7 +104,10 @@ type MetadataSystem struct {
 // constrains site to ^[A-Z]{2}-[A-Z]{3,4}-[A-Z0-9]{2,9}$, but we don't enforce
 // that here: the caller is responsible for supplying a conformant site code.
 type MetadataLocation struct {
-	Site  string `json:"site"`
+	// Site is omitted when empty: emitting "site":"" would violate the UDMI schema
+	// (a present location must carry a schema-conformant site), and on the Connect
+	// path site identity is supplied by broker enrichment, not the payload.
+	Site  string `json:"site,omitempty"`
 	Floor string `json:"floor,omitempty"`
 }
 

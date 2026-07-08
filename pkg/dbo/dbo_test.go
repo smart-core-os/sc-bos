@@ -17,6 +17,9 @@ func TestUnitName(t *testing.T) {
 		"kW":             UnitKilowatts,
 		"W":              UnitWatts,
 		" kWh ":          UnitKilowattHours,
+		"m³":             UnitCubicMeters,
+		"m3":             UnitCubicMeters,
+		"cubic_meters":   UnitCubicMeters,
 		"furlongs":       "", // unknown → empty
 		"":               "",
 	}
@@ -50,10 +53,29 @@ func TestMeterFields(t *testing.T) {
 		assert.Equal(t, "blips", fields[0].RawUnit)
 		assert.Empty(t, fields[0].Unit)
 	})
+
+	t.Run("water meter maps to water_volume_accumulator, usage only", func(t *testing.T) {
+		// m³ ⇒ water (see commodityForUnit); water is usage-only, so a producedUnit
+		// is ignored (DBO has no exported water field).
+		fields := MeterFields("m³", "m³")
+		require.Len(t, fields, 1)
+		assert.Equal(t, FieldWaterVolumeAccumulator, fields[0].Field)
+		assert.Equal(t, "m³", fields[0].RawUnit)
+		assert.Equal(t, UnitCubicMeters, fields[0].Unit)
+		assert.False(t, fields[0].Exported)
+	})
 }
 
-func TestMeterEntityTypeIsPlaceholder(t *testing.T) {
-	name, canonical := MeterEntityType()
-	assert.Equal(t, PlaceholderMeterType, name)
-	assert.False(t, canonical, "energy-only meter has no canonical DBO type")
+func TestMeterEntityType(t *testing.T) {
+	t.Run("energy-only electricity meter is the non-canonical EM_INITIAL passthrough", func(t *testing.T) {
+		name, canonical := MeterEntityType("kWh")
+		assert.Equal(t, ElectricityMeterType, name)
+		assert.False(t, canonical, "energy-only meter has no canonical DBO type")
+	})
+
+	t.Run("water meter is the canonical WM_STANDARD", func(t *testing.T) {
+		name, canonical := MeterEntityType("m³")
+		assert.Equal(t, WaterMeterType, name)
+		assert.True(t, canonical, "a volume-only water meter has a canonical DBO type")
+	})
 }

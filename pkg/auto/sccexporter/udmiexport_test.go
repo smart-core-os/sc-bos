@@ -1,6 +1,7 @@
 package sccexporter
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -70,6 +71,14 @@ func TestMeterTelemetry(t *testing.T) {
 		assert.NotContains(t, ev.Points, dbo.FieldExportedEnergyAccumulator,
 			"without support (no declared producedUnit) exported energy is not claimed")
 	})
+
+	t.Run("water meter emits water_volume_accumulator from usage", func(t *testing.T) {
+		r := &meterpb.MeterReading{Usage: 42, EndTime: timestamppb.New(end)}
+		ev := meterTelemetry(r, &meterpb.MeterReadingSupport{UsageUnit: "m³"}, now)
+		require.Contains(t, ev.Points, dbo.FieldWaterVolumeAccumulator)
+		assert.NotContains(t, ev.Points, dbo.FieldEnergyAccumulator, "a water meter is not energy")
+		assert.Equal(t, float32(42), ev.Points[dbo.FieldWaterVolumeAccumulator].PresentValue)
+	})
 }
 
 func TestMeterInventory(t *testing.T) {
@@ -96,6 +105,13 @@ func TestMeterInventory(t *testing.T) {
 		inv := meterInventory(nil)
 		require.Contains(t, inv, dbo.FieldEnergyAccumulator)
 		assert.Empty(t, inv[dbo.FieldEnergyAccumulator].Units)
+	})
+
+	t.Run("water meter lists water_volume_accumulator with raw m³", func(t *testing.T) {
+		inv := meterInventory(&meterpb.MeterReadingSupport{UsageUnit: "m³"})
+		require.Contains(t, inv, dbo.FieldWaterVolumeAccumulator)
+		assert.NotContains(t, inv, dbo.FieldEnergyAccumulator)
+		assert.Equal(t, "m³", inv[dbo.FieldWaterVolumeAccumulator].Units)
 	})
 }
 
@@ -124,6 +140,12 @@ func TestDiscoveryEvent(t *testing.T) {
 	assert.Equal(t, []string{"hvac"}, ev.System.Tags)
 	require.NotNil(t, ev.System.Location)
 	assert.Equal(t, "03", ev.System.Location.Floor)
+
+	// site is left empty (Connect enrichment supplies it) and must be omitted, not
+	// emitted as an invalid "site":"".
+	b, err := json.Marshal(ev)
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), `"site"`, "empty site must be omitted from discovery")
 	require.NotNil(t, ev.Pointset)
 	require.Contains(t, ev.Pointset.Points, dbo.FieldEnergyAccumulator)
 	assert.Equal(t, "kWh", ev.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
