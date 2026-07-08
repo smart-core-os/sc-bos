@@ -25,9 +25,10 @@ type Services struct {
 	CohortManager   node.Remote
 	ClientTLSConfig *tls.Config
 	// CloudCredential provides the node's Connect leaf certificate for mTLS to the
-	// telemetry broker, plus the node identity. It is nil until the cloud leaf
-	// credential is wired (PR #890); automations that need it must fall back or
-	// error clearly when it is absent.
+	// telemetry broker, plus the node identity. It is supplied by the node's cloud
+	// connection and is nil only when no cloud connection is configured; automations
+	// that need it must fall back or error clearly when it is absent (and its
+	// GetClientCertificate errors while the node is not yet enrolled).
 	CloudCredential CloudCredentialSource
 	Now             func() time.Time
 	Config          service.ConfigUpdater
@@ -36,9 +37,9 @@ type Services struct {
 
 // CloudCredentialSource exposes the node's current Connect leaf certificate and
 // identity for authenticating to the Connect telemetry (Event Grid MQTT) broker.
-// It is expected to be satisfied by the cloud connection once the leaf credential
-// lands (PR #890); GetClientCertificate must reflect credential renewals live so
-// callers can install it directly as tls.Config.GetClientCertificate.
+// It is satisfied by the node's cloud connection; GetClientCertificate reflects
+// credential renewals live so callers can install it directly as
+// tls.Config.GetClientCertificate.
 type CloudCredentialSource interface {
 	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
 	// NodeID returns the SCC node id (the leaf Subject CN), stable across renewals.

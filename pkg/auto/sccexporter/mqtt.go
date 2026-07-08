@@ -133,7 +133,7 @@ func (p *publisher) close(ctx context.Context) {
 func buildTLSConfig(cfg config.Mqtt, cred auto.CloudCredentialSource) (*tls.Config, error) {
 	if cfg.UseCloudCredential {
 		if cred == nil {
-			return nil, fmt.Errorf("mqtt.useCloudCredential is set but no cloud credential is available (pending PR #890)")
+			return nil, fmt.Errorf("mqtt.useCloudCredential is set but no cloud credential is available (no cloud connection configured)")
 		}
 		return &tls.Config{
 			GetClientCertificate: cred.GetClientCertificate,

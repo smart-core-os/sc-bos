@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"path"
 
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -67,9 +69,12 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		GRPCServices:    c.GRPC,
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
-		// CloudCredential is left nil until the Connect leaf credential lands (PR
-		// #890). Once the cloud *Conn exposes a Credential accessor, wire it here so
-		// the telemetry exporter can authenticate to the Event Grid MQTT broker.
+	}
+	// Give automations the node's Connect leaf credential (for mTLS to the Event
+	// Grid telemetry broker). The adapter reads the current registration per call,
+	// so it follows certificate renewals live.
+	if c.Cloud != nil {
+		ctxServices.CloudCredential = cloudCredential{conn: c.Cloud}
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
@@ -92,6 +97,27 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		}
 	}
 	return m, nil
+}
+
+// cloudCredential adapts the cloud connection to auto.CloudCredentialSource,
+// presenting the node's current Connect leaf certificate and node id for mTLS to
+// the telemetry broker. Both accessors read cloud.Conn.State() per call, so they
+// track certificate renewals (and enrollment) without reconnecting.
+type cloudCredential struct{ conn *cloud.Conn }
+
+func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	reg := c.conn.State().Registration
+	if reg == nil {
+		return nil, fmt.Errorf("cloud connection is not enrolled; no client certificate available")
+	}
+	return reg.TLSCertificate(), nil
+}
+
+func (c cloudCredential) NodeID() string {
+	if reg := c.conn.State().Registration; reg != nil {
+		return reg.NodeID()
+	}
+	return ""
 }
 
 func (c *Controller) startSystems() (*service.Map, error) {
