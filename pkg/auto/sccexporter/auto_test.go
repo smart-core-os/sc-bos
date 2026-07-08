@@ -2,628 +2,162 @@ package sccexporter
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
-func TestMetadata(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-	root := node.New("metadata")
-
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(root.ClientConn()),
-		},
-	}
-
-	metadata := &metadatapb.Metadata{
-		Name: "foo",
-		Appearance: &metadatapb.Metadata_Appearance{
-			Title:       "Foo Device",
-			Description: "A device for testing metadata",
-		},
-		Location: &metadatapb.Metadata_Location{
-			Floor: "1",
-			Zone:  "bar",
-		},
-	}
-
-	metaModel := metadatapb.NewModel(resource.WithInitialValue(metadata))
-	modelServer := metadatapb.NewModelServer(metaModel)
-	root.Announce("foo",
-		node.HasServer(metadatapb.RegisterMetadataApiServer, metadatapb.MetadataApiServer(modelServer)),
-		node.HasTrait(trait.Metadata),
-	)
-
-	sccexporter.initialiseClients(root)
-
-	dev := newDevice("foo", logger, metadata)
-
-	messagesCh := make(chan message, 1)
-
-	agent := "test-agent"
-
-	sccexporter.fetchAndPublishDeviceData(context.Background(), dev, agent, messagesCh, true, 30*time.Second)
-
-	require.Len(t, messagesCh, 1)
-
-	msg := <-messagesCh
-
-	require.Equal(t, agent, msg.Agent)
-	require.Equal(t, "foo", msg.Device.Name)
-	require.NotEmpty(t, msg.Device.Data)
-	require.Contains(t, msg.Device.Data, trait.Metadata)
-	require.Contains(t, msg.Device.Data[trait.Metadata], "metadata")
-
-	var receivedMetadata metadatapb.Metadata
-	err = protojson.Unmarshal(msg.Device.Data[trait.Metadata]["metadata"], &receivedMetadata)
-	require.NoError(t, err)
-
-	require.Equal(t, "foo", receivedMetadata.Name)
-	require.Equal(t, "Foo Device", receivedMetadata.Appearance.Title)
-	require.Equal(t, "A device for testing metadata", receivedMetadata.Appearance.Description)
-	require.Equal(t, "1", receivedMetadata.Location.Floor)
-	require.Equal(t, "bar", receivedMetadata.Location.Zone)
+// fakeCollector is a stub traitCollector for exercising device aggregation
+// without a live backend.
+type fakeCollector struct {
+	pts udmi.PointsEvent
+	ts  time.Time
+	err error
+	inv map[string]udmi.MetadataPoint
 }
 
-func TestFetchAndPublishDeviceData(t *testing.T) {
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
+func (f fakeCollector) points(context.Context, time.Time) (udmi.PointsEvent, time.Time, error) {
+	return f.pts, f.ts, f.err
+}
+func (f fakeCollector) inventory() map[string]udmi.MetadataPoint { return f.inv }
 
-	ctx := context.Background()
-	agent := "test-agent"
+func TestDeviceBuildTelemetry(t *testing.T) {
+	logger := zap.NewNop()
+	now := time.Date(2026, 6, 22, 10, 15, 0, 0, time.UTC)
+	earlier := now.Add(-time.Hour)
+	later := now.Add(-time.Minute)
 
-	t.Run("single trait with data", func(t *testing.T) {
-		dev := newDevice("test-device", logger, nil)
+	t.Run("merges points and takes the most recent timestamp", func(t *testing.T) {
+		dev := &device{name: "m1", collectors: []traitCollector{
+			fakeCollector{pts: udmi.PointsEvent{"a": {PresentValue: 1.0}}, ts: earlier},
+			fakeCollector{pts: udmi.PointsEvent{"b": {PresentValue: 2.0}}, ts: later},
+		}}
 
-		testDataJSON := `{
-			"value1": 42.5,
-			"value2": "test-value"
-		}`
-
-		dev.traits[trait.Name("test-trait")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return map[string]json.RawMessage{
-				"testResource": json.RawMessage(testDataJSON),
-			}, nil
-		}
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 30*time.Second)
-
-		require.Len(t, messagesCh, 1)
-		msg := <-messagesCh
-
-		require.Equal(t, agent, msg.Agent)
-		require.Equal(t, "test-device", msg.Device.Name)
-		require.NotEmpty(t, msg.Device.Data)
-		require.Contains(t, msg.Device.Data, trait.Name("test-trait"))
-		require.Contains(t, msg.Device.Data[trait.Name("test-trait")], "testResource")
-
-		var data map[string]any
-		err = json.Unmarshal(msg.Device.Data[trait.Name("test-trait")]["testResource"], &data)
-		require.NoError(t, err)
-		require.Equal(t, 42.5, data["value1"])
-		require.Equal(t, "test-value", data["value2"])
+		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		require.True(t, ok)
+		assert.Equal(t, later, ev.Timestamp)
+		assert.Equal(t, udmi.PointsetVersion, ev.Version)
+		assert.Contains(t, ev.Points, "a")
+		assert.Contains(t, ev.Points, "b")
 	})
 
-	t.Run("multiple traits with data", func(t *testing.T) {
-		dev := newDevice("multi-trait-device", logger, nil)
+	t.Run("skips collectors that error", func(t *testing.T) {
+		dev := &device{name: "m1", collectors: []traitCollector{
+			fakeCollector{err: errors.New("boom")},
+			fakeCollector{pts: udmi.PointsEvent{"b": {PresentValue: 2.0}}, ts: later},
+		}}
 
-		trait1JSON := `{
-			"measurement": 100.0,
-			"status": "active"
-		}`
-		dev.traits[trait.Name("trait1")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return map[string]json.RawMessage{
-				"resource1": json.RawMessage(trait1JSON),
-			}, nil
-		}
-
-		trait2JSON := `{
-			"temperature": 22.5,
-			"humidity": 45.0
-		}`
-		dev.traits[trait.Name("trait2")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return map[string]json.RawMessage{
-				"resource2": json.RawMessage(trait2JSON),
-			}, nil
-		}
-
-		trait3JSON := `{
-			"value": 42,
-			"unit": "kWh"
-		}`
-		dev.traits[trait.Name("trait3")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return map[string]json.RawMessage{
-				"resource3": json.RawMessage(trait3JSON),
-			}, nil
-		}
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 30*time.Second)
-
-		require.Len(t, messagesCh, 1)
-		msg := <-messagesCh
-
-		require.Len(t, msg.Device.Data, 3)
-		require.Contains(t, msg.Device.Data, trait.Name("trait1"))
-		require.Contains(t, msg.Device.Data, trait.Name("trait2"))
-		require.Contains(t, msg.Device.Data, trait.Name("trait3"))
-
-		var data1 map[string]any
-		err = json.Unmarshal(msg.Device.Data[trait.Name("trait1")]["resource1"], &data1)
-		require.NoError(t, err)
-		require.Equal(t, float64(100.0), data1["measurement"])
-		require.Equal(t, "active", data1["status"])
-
-		var data2 map[string]any
-		err = json.Unmarshal(msg.Device.Data[trait.Name("trait2")]["resource2"], &data2)
-		require.NoError(t, err)
-		require.Equal(t, float64(22.5), data2["temperature"])
-		require.Equal(t, float64(45.0), data2["humidity"])
-
-		var data3 map[string]any
-		err = json.Unmarshal(msg.Device.Data[trait.Name("trait3")]["resource3"], &data3)
-		require.NoError(t, err)
-		require.Equal(t, float64(42), data3["value"])
-		require.Equal(t, "kWh", data3["unit"])
+		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		require.True(t, ok)
+		assert.NotContains(t, ev.Points, "a")
+		assert.Contains(t, ev.Points, "b")
 	})
 
-	t.Run("trait fetcher returns error", func(t *testing.T) {
-		dev := newDevice("error-device", logger, nil)
-		dev.traits[trait.Name("failing-trait")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return nil, context.DeadlineExceeded
-		}
-
-		workingDataJSON := `{
-			"value": 123
-		}`
-
-		dev.traits[trait.Name("working-trait")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return map[string]json.RawMessage{
-				"workingResource": json.RawMessage(workingDataJSON),
-			}, nil
-		}
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 30*time.Second)
-
-		require.Len(t, messagesCh, 1)
-		msg := <-messagesCh
-
-		require.NotEmpty(t, msg.Device.Data)
-		require.Contains(t, msg.Device.Data, trait.Name("working-trait"))
-
-		var data map[string]any
-		err = json.Unmarshal(msg.Device.Data[trait.Name("working-trait")]["workingResource"], &data)
-		require.NoError(t, err)
-		require.Equal(t, float64(123), data["value"])
+	t.Run("no points ⇒ not ok", func(t *testing.T) {
+		dev := &device{name: "m1", collectors: []traitCollector{fakeCollector{err: errors.New("boom")}}}
+		_, ok := dev.buildTelemetry(context.Background(), now, logger)
+		assert.False(t, ok)
 	})
 
-	t.Run("all traits fail - no message sent", func(t *testing.T) {
-		dev := newDevice("all-fail-device", logger, nil)
-		dev.traits[trait.Name("trait1")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return nil, context.DeadlineExceeded
-		}
-		dev.traits[trait.Name("trait2")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			return nil, context.Canceled
-		}
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 30*time.Second)
-
-		require.Len(t, messagesCh, 0)
-	})
-
-	t.Run("device with no traits", func(t *testing.T) {
-		dev := newDevice("empty-device", logger, nil)
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 30*time.Second)
-
-		require.Len(t, messagesCh, 0)
-	})
-
-	t.Run("timeout on slow device", func(t *testing.T) {
-		dev := newDevice("slow-device", logger, nil)
-		dev.traits[trait.Name("slow-trait")] = func(ctx context.Context) (map[string]json.RawMessage, error) {
-			select {
-			case <-time.After(2 * time.Second):
-				return map[string]json.RawMessage{
-					"slowResource": json.RawMessage(`{"value": "should-not-see-this"}`),
-				}, nil
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
-		}
-
-		messagesCh := make(chan message, 1)
-
-		a := &AutoImpl{
-			Services: auto.Services{
-				Logger: logger,
-			},
-		}
-
-		a.fetchAndPublishDeviceData(ctx, dev, agent, messagesCh, false, 100*time.Millisecond)
-
-		require.Len(t, messagesCh, 0)
+	t.Run("falls back to now when collectors report no timestamp", func(t *testing.T) {
+		dev := &device{name: "m1", collectors: []traitCollector{
+			fakeCollector{pts: udmi.PointsEvent{"a": {PresentValue: 1.0}}}, // zero ts
+		}}
+		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		require.True(t, ok)
+		assert.Equal(t, now, ev.Timestamp)
 	})
 }
 
-func TestGetMeterDeviceAndData(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-	root := node.New("metadata")
-
-	startTime := time.Now().Add(-time.Hour)
-	endTime := time.Now()
-
-	meterReading := &meterpb.MeterReading{
-		Usage:     123.45,
-		StartTime: timestamppb.New(startTime),
-		EndTime:   timestamppb.New(endTime),
-		Produced:  67.89,
-	}
-
-	devicesApi := devices.NewServer(root)
-	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
-	modelServer := meterpb.NewModelServer(meterModel)
-	root.Announce("foo",
-		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
-		node.HasTrait(meterpb.TraitName),
-		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
-	)
-
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
-		},
-	}
-	sccexporter.initialiseClients(root)
-
-	allDevices := make(map[string]*device)
-	err = sccexporter.getAllTraitImplementors(context.Background(), meterpb.TraitName, allDevices)
-	require.NoError(t, err)
-
-	require.Len(t, allDevices, 1)
-	dev, exists := allDevices["foo"]
-	require.True(t, exists)
-	require.Equal(t, "foo", dev.name)
-
-	res := allDevices["foo"].traits
-	require.Len(t, res, 1)
-	traitData, err := res[meterpb.TraitName](context.Background())
-	require.NoError(t, err)
-
-	// Verify the structure contains meterReading resource
-	require.Contains(t, traitData, "meterReading")
-
-	reading := meterpb.MeterReading{}
-	err = protojson.Unmarshal(traitData["meterReading"], &reading)
-	require.NoError(t, err)
-
-	require.Equal(t, meterReading.Usage, reading.Usage)
-	require.Equal(t, meterReading.Produced, reading.Produced)
-	require.Equal(t, meterReading.StartTime.AsTime(), reading.StartTime.AsTime())
-	require.Equal(t, meterReading.EndTime.AsTime(), reading.EndTime.AsTime())
-}
-
-func TestGetMeterDeviceAndDataWithInfo(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
+// TestGetAllTraitImplementorsMeter exercises discovery + collector wiring against
+// a live meter model server, then builds telemetry and discovery end-to-end.
+func TestGetAllTraitImplementorsMeter(t *testing.T) {
+	logger := zap.NewNop()
 	root := node.New("meter")
 
-	startTime := time.Now().Add(-time.Hour)
-	endTime := time.Now()
-
-	meterReading := &meterpb.MeterReading{
-		Usage:     123.45,
-		StartTime: timestamppb.New(startTime),
-		EndTime:   timestamppb.New(endTime),
-		Produced:  67.89,
+	end := time.Now()
+	reading := &meterpb.MeterReading{
+		Usage:    123.45,
+		Produced: 67.89,
+		EndTime:  timestamppb.New(end),
 	}
-
-	meterInfo := &meterpb.MeterReadingSupport{
-		UsageUnit:    "kWh",
-		ProducedUnit: "kWh",
-	}
+	support := &meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "kWh"}
 
 	devicesApi := devices.NewServer(root)
-	meterModel := meterpb.NewModel(resource.WithInitialValue(meterReading))
-	modelServer := meterpb.NewModelServer(meterModel)
-	infoServer := &meterpb.InfoServer{MeterReading: meterInfo}
+	meterModel := meterpb.NewModel(resource.WithInitialValue(reading))
 	root.Announce("foo",
-		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(modelServer)),
-		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(infoServer)),
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: support})),
 		node.HasTrait(meterpb.TraitName),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
-		},
-	}
-	sccexporter.initialiseClients(root)
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  logger,
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	err = sccexporter.getAllTraitImplementors(context.Background(), meterpb.TraitName, allDevices)
-	require.NoError(t, err)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, allDevices))
 
 	require.Len(t, allDevices, 1)
-	dev, exists := allDevices["foo"]
-	require.True(t, exists)
-	require.Equal(t, "foo", dev.name)
+	dev := allDevices["foo"]
+	require.NotNil(t, dev)
+	require.Len(t, dev.collectors, 1)
 
-	sccexporter.getMeterInfo(context.Background(), meterpb.TraitName, allDevices)
-
-	require.NotNil(t, dev.info[meterpb.TraitName])
-	support, ok := dev.info[meterpb.TraitName].(*meterpb.MeterReadingSupport)
+	// Telemetry: usage + produced, timestamped from the reading's end_time.
+	ev, ok := dev.buildTelemetry(context.Background(), time.Now(), logger)
 	require.True(t, ok)
-	require.Equal(t, "kWh", support.UsageUnit)
-	require.Equal(t, "kWh", support.ProducedUnit)
+	require.Contains(t, ev.Points, meterPointUsage)
+	require.Contains(t, ev.Points, meterPointProduced)
+	assert.Equal(t, float32(123.45), ev.Points[meterPointUsage].PresentValue)
+	assert.Equal(t, float32(67.89), ev.Points[meterPointProduced].PresentValue)
+	assert.WithinDuration(t, end, ev.Timestamp, time.Second)
 
-	res := allDevices["foo"].traits
-	require.Len(t, res, 1)
-	traitData, err := res[meterpb.TraitName](context.Background())
-	require.NoError(t, err)
-
-	// Verify the structure contains both meterReading and meterReadingInfo
-	require.Contains(t, traitData, "meterReading")
-	require.Contains(t, traitData, "meterReadingInfo")
-
-	// Verify meter reading data
-	var reading meterpb.MeterReading
-	err = protojson.Unmarshal(traitData["meterReading"], &reading)
-	require.NoError(t, err)
-	require.Equal(t, meterReading.Usage, reading.Usage)
-	require.Equal(t, meterReading.Produced, reading.Produced)
-
-	// Verify meter reading info
-	var info meterpb.MeterReadingSupport
-	err = protojson.Unmarshal(traitData["meterReadingInfo"], &info)
-	require.NoError(t, err)
-	require.Equal(t, "kWh", info.UsageUnit)
-	require.Equal(t, "kWh", info.ProducedUnit)
+	// Discovery: point inventory carries the units from meter support.
+	disc := dev.buildDiscovery(time.Now())
+	require.NotNil(t, disc.Pointset)
+	assert.Equal(t, "kWh", disc.Pointset.Points[meterPointUsage].Units)
+	assert.Equal(t, "kWh", disc.Pointset.Points[meterPointProduced].Units)
 }
 
-func TestGetAirQualityDeviceAndData(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-	root := node.New("airquality")
-
-	co2Level := float32(450.5)
-	score := float32(75.5)
-
-	airQuality := &airqualitysensorpb.AirQuality{
-		CarbonDioxideLevel: &co2Level,
-		Score:              &score,
-	}
-
-	devicesApi := devices.NewServer(root)
-	airQualityModel := airqualitysensorpb.NewModel()
-	_, err = airQualityModel.UpdateAirQuality(airQuality)
-	require.NoError(t, err)
-	modelServer := airqualitysensorpb.NewModelServer(airQualityModel)
-	root.Announce("foo",
-		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(modelServer)),
-		node.HasTrait(trait.AirQualitySensor),
-		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
-	)
-
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
-		},
-	}
-	sccexporter.initialiseClients(root)
-
-	allDevices := make(map[string]*device)
-	err = sccexporter.getAllTraitImplementors(context.Background(), trait.AirQualitySensor, allDevices)
-	require.NoError(t, err)
-
-	require.Len(t, allDevices, 1)
-	dev, exists := allDevices["foo"]
-	require.True(t, exists)
-	require.Equal(t, "foo", dev.name)
-
-	res := allDevices["foo"].traits
-	require.Len(t, res, 1)
-	traitData, err := res[trait.AirQualitySensor](context.Background())
-	require.NoError(t, err)
-
-	// Verify the structure contains airQuality resource
-	require.Contains(t, traitData, "airQuality")
-
-	receivedAirQuality := airqualitysensorpb.AirQuality{}
-	err = protojson.Unmarshal(traitData["airQuality"], &receivedAirQuality)
-	require.NoError(t, err)
-
-	require.Equal(t, *airQuality.CarbonDioxideLevel, *receivedAirQuality.CarbonDioxideLevel)
-	require.Equal(t, *airQuality.Score, *receivedAirQuality.Score)
-}
-
-func TestGetAirTemperatureDeviceAndData(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
-	root := node.New("airtemperature")
-
-	celsius := 22.5
-
-	airTemperature := &airtemperaturepb.AirTemperature{
-		AmbientTemperature: &typespb.Temperature{ValueCelsius: celsius},
-	}
-
-	devicesApi := devices.NewServer(root)
-	airTemperatureModel := airtemperaturepb.NewModel()
-	_, err = airTemperatureModel.UpdateAirTemperature(airTemperature)
-	require.NoError(t, err)
-	modelServer := airtemperaturepb.NewModelServer(airTemperatureModel)
-	root.Announce("foo",
-		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(modelServer)),
-		node.HasTrait(trait.AirTemperature),
-		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
-	)
-
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
-		},
-	}
-	sccexporter.initialiseClients(root)
-
-	allDevices := make(map[string]*device)
-	err = sccexporter.getAllTraitImplementors(context.Background(), trait.AirTemperature, allDevices)
-	require.NoError(t, err)
-
-	require.Len(t, allDevices, 1)
-	dev, exists := allDevices["foo"]
-	require.True(t, exists)
-	require.Equal(t, "foo", dev.name)
-
-	res := allDevices["foo"].traits
-	require.Len(t, res, 1)
-	traitData, err := res[trait.AirTemperature](context.Background())
-	require.NoError(t, err)
-
-	// Verify the structure contains airTemperature resource
-	require.Contains(t, traitData, "airTemperature")
-
-	receivedAirTemperature := airtemperaturepb.AirTemperature{}
-	err = protojson.Unmarshal(traitData["airTemperature"], &receivedAirTemperature)
-	require.NoError(t, err)
-
-	require.Equal(t, airTemperature.AmbientTemperature.ValueCelsius, receivedAirTemperature.AmbientTemperature.ValueCelsius)
-}
-
-func TestGetOccupancyDeviceAndData(t *testing.T) {
-
-	logger, err := zap.NewDevelopment()
-	require.NoError(t, err)
+// TestGetAllTraitImplementorsUnsupported confirms an unsupported trait is skipped
+// (no collector, no device) rather than erroring.
+func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
+	logger := zap.NewNop()
 	root := node.New("occupancy")
 
-	stateChangeTime := time.Now().Add(-5 * time.Minute)
-
-	occupancy := &occupancysensorpb.Occupancy{
-		State:           occupancysensorpb.Occupancy_OCCUPIED,
-		PeopleCount:     5,
-		StateChangeTime: timestamppb.New(stateChangeTime),
-	}
-
 	devicesApi := devices.NewServer(root)
-	occupancyModel := occupancysensorpb.NewModel()
-	_, err = occupancyModel.SetOccupancy(occupancy)
-	require.NoError(t, err)
-	modelServer := occupancysensorpb.NewModelServer(occupancyModel)
 	root.Announce("foo",
-		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(modelServer)),
 		node.HasTrait(trait.OccupancySensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
-	sccexporter := &AutoImpl{
-		Services: auto.Services{
-			Logger:  logger,
-			Node:    root,
-			Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
-		},
-	}
-	sccexporter.initialiseClients(root)
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  logger,
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	err = sccexporter.getAllTraitImplementors(context.Background(), trait.OccupancySensor, allDevices)
-	require.NoError(t, err)
-
-	require.Len(t, allDevices, 1)
-	dev, exists := allDevices["foo"]
-	require.True(t, exists)
-	require.Equal(t, "foo", dev.name)
-
-	res := allDevices["foo"].traits
-	require.Len(t, res, 1)
-	traitData, err := res[trait.OccupancySensor](context.Background())
-	require.NoError(t, err)
-
-	// Verify the structure contains occupancy resource
-	require.Contains(t, traitData, "occupancy")
-
-	receivedOccupancy := occupancysensorpb.Occupancy{}
-	err = protojson.Unmarshal(traitData["occupancy"], &receivedOccupancy)
-	require.NoError(t, err)
-
-	require.Equal(t, occupancy.State, receivedOccupancy.State)
-	require.Equal(t, occupancy.PeopleCount, receivedOccupancy.PeopleCount)
-	require.Equal(t, occupancy.StateChangeTime.AsTime(), receivedOccupancy.StateChangeTime.AsTime())
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, allDevices))
+	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }

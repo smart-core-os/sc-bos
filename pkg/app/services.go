@@ -67,6 +67,9 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		GRPCServices:    c.GRPC,
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
+		// CloudCredential is left nil until the Connect leaf credential lands (PR
+		// #890). Once the cloud *Conn exposes a Credential accessor, wire it here so
+		// the telemetry exporter can authenticate to the Event Grid MQTT broker.
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {

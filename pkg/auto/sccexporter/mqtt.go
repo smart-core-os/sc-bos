@@ -4,180 +4,161 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.golang/autopaho"
+	"github.com/eclipse/paho.golang/paho"
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
-	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-type TraitData map[string]json.RawMessage
+// nodeIDProperty is the MQTT v5 user property carrying the publisher node id.
+// It is only meaningful on a plain/local MQTT v5 broker (dev), where Connect's
+// adapter reads the originator identity from it. On the Event Grid path identity
+// comes from the authenticated credential (enrichment), so it is ignored there.
+const nodeIDProperty = "nodeId"
 
-type Device struct {
-	Name string `json:"name"`
-	// Data is a map where the key is the trait name and the value is a nested object
-	// containing resource names mapped to their data/info
-	Data map[trait.Name]TraitData `json:"data,omitempty"`
+// publisher publishes UDMI messages to the Connect telemetry broker over MQTT v5.
+type publisher struct {
+	cm             *autopaho.ConnectionManager
+	qos            byte
+	nodeID         string // set as the v5 user property when non-empty
+	publishTimeout time.Duration
 }
 
-type message struct {
-	Agent     string    `json:"agent"`
-	Device    Device    `json:"device"`
-	Timestamp time.Time `json:"timestamp"`
+// newPublisher builds an MQTT v5 connection manager for the Connect telemetry
+// broker. The connection is established (and re-established) in the background for
+// the lifetime of ctx; publishing gates on connectivity per call.
+func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentialSource, logger *zap.Logger) (*publisher, error) {
+	tlsCfg, err := buildTLSConfig(cfg, cred)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(cfg.Host)
+	if err != nil {
+		return nil, fmt.Errorf("invalid mqtt host %q: %w", cfg.Host, err)
+	}
+
+	var nodeID string
+	if cred != nil {
+		nodeID = cred.NodeID()
+	}
+
+	clientID := cfg.ClientId
+	if clientID == "" {
+		clientID = nodeID
+	}
+
+	clientCfg := autopaho.ClientConfig{
+		ServerUrls:                    []*url.URL{u},
+		TlsCfg:                        tlsCfg,
+		KeepAlive:                     20,
+		CleanStartOnInitialConnection: false,
+		SessionExpiryInterval:         60,
+		ConnectTimeout:                cfg.ConnectTimeout.Duration,
+		OnConnectionUp: func(*autopaho.ConnectionManager, *paho.Connack) {
+			logger.Info("connected to Connect telemetry broker", zap.String("host", cfg.Host))
+		},
+		OnConnectError: func(err error) {
+			logger.Warn("Connect telemetry broker connection error", zap.Error(err))
+		},
+		ClientConfig: paho.ClientConfig{
+			ClientID: clientID,
+		},
+	}
+
+	cm, err := autopaho.NewConnection(ctx, clientCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &publisher{
+		cm:             cm,
+		qos:            byte(*cfg.Qos),
+		nodeID:         nodeID,
+		publishTimeout: cfg.PublishTimeout.Duration,
+	}, nil
 }
 
-type sccConnector struct {
-	logger         *zap.Logger
-	messagesCh     chan message
-	mqttCfg        config.Mqtt
-	mqttClient     mqtt.Client
-	reconnecting   bool
-	lastReconnect  time.Time
-	reconnectDelay time.Duration
+// publish sends payload to topic at the configured QoS, waiting up to
+// publishTimeout for the connection to be up. The nodeId user property is set
+// when known (local MQTT path).
+func (p *publisher) publish(ctx context.Context, topic string, payload []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, p.publishTimeout)
+	defer cancel()
+
+	if err := p.cm.AwaitConnection(ctx); err != nil {
+		return fmt.Errorf("await connection: %w", err)
+	}
+
+	_, err := p.cm.Publish(ctx, p.newPublishPacket(topic, payload))
+	return err
 }
 
-func newSccConnector(logger *zap.Logger, mqttCfg config.Mqtt, client mqtt.Client) *sccConnector {
-	s := &sccConnector{
-		logger:         logger,
-		messagesCh:     make(chan message, 100),
-		mqttCfg:        mqttCfg,
-		mqttClient:     client,
-		reconnecting:   false,
-		reconnectDelay: time.Second,
+// newPublishPacket builds the MQTT v5 publish packet, stamping the nodeId user
+// property when the node identity is known (local MQTT path).
+func (p *publisher) newPublishPacket(topic string, payload []byte) *paho.Publish {
+	pub := &paho.Publish{
+		QoS:     p.qos,
+		Topic:   topic,
+		Payload: payload,
 	}
-	return s
+	if p.nodeID != "" {
+		pub.Properties = &paho.PublishProperties{}
+		pub.Properties.User.Add(nodeIDProperty, p.nodeID)
+	}
+	return pub
 }
 
-// reconnect attempts to reconnect to the MQTT broker with exponential backoff.
-// Returns true if reconnection succeeded, false otherwise.
-// do not call this more than once per sccConnector instance
-func (s *sccConnector) reconnect(ctx context.Context) bool {
-	if s.reconnecting {
-		return false
-	}
-
-	now := time.Now()
-	if now.Sub(s.lastReconnect) < s.reconnectDelay {
-		s.logger.Debug("skipping reconnect attempt, too soon since last attempt",
-			zap.Duration("delay", s.reconnectDelay),
-			zap.Duration("elapsed", now.Sub(s.lastReconnect)))
-		return false
-	}
-
-	s.reconnecting = true
-	s.lastReconnect = now
-	defer func() {
-		s.reconnecting = false
-	}()
-
-	s.logger.Info("attempting to reconnect to MQTT broker",
-		zap.Duration("backoff", s.reconnectDelay))
-
-	s.mqttClient.Disconnect(500)
-
-	select {
-	case <-ctx.Done():
-		return false
-	case <-time.After(100 * time.Millisecond):
-	}
-
-	token := s.mqttClient.Connect()
-	if !token.WaitTimeout(s.mqttCfg.ConnectTimeout.Duration) {
-		s.logger.Error("timeout reconnecting to mqtt broker",
-			zap.Duration("backoff", s.reconnectDelay))
-		s.reconnectDelay = min(s.reconnectDelay*2, 60*time.Second)
-		return false
-	}
-
-	if err := token.Error(); err != nil {
-		s.logger.Error("failed to reconnect to mqtt broker",
-			zap.Error(err),
-			zap.Duration("backoff", s.reconnectDelay))
-		s.reconnectDelay = min(s.reconnectDelay*2, 60*time.Second)
-		return false
-	}
-
-	s.logger.Info("successfully reconnected to MQTT broker")
-	s.reconnectDelay = time.Second
-	return true
+// close disconnects the connection manager, waiting up to ctx for a clean
+// DISCONNECT.
+func (p *publisher) close(ctx context.Context) {
+	_ = p.cm.Disconnect(ctx)
 }
 
-// publishToScc listens on the messages channel and publishes messages to the SCC MQTT broker
-// do not call this more than once per sccConnector instance
-func (s *sccConnector) publishToScc(ctx context.Context) error {
-
-	token := s.mqttClient.Connect()
-	if !token.WaitTimeout(s.mqttCfg.ConnectTimeout.Duration) {
-		s.logger.Warn("failed to connect to MQTT client on startup, will retry on next message")
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case m, ok := <-s.messagesCh:
-			if !ok {
-				return nil
-			}
-
-			if !s.mqttClient.IsConnected() {
-				if !s.reconnect(ctx) {
-					s.logger.Warn("skipping message, mqtt client not connected",
-						zap.String("device", m.Device.Name))
-					continue
-				}
-			}
-
-			bytes, err := json.Marshal(m)
-			if err != nil {
-				s.logger.Error("failed to marshal scc payload", zap.Error(err))
-				continue
-			}
-
-			t := s.mqttClient.Publish(s.mqttCfg.Topic, byte(*s.mqttCfg.Qos), false, bytes)
-			if !t.WaitTimeout(s.mqttCfg.PublishTimeout.Duration) {
-				s.logger.Warn("timeout publishing message for device",
-					zap.String("device", m.Device.Name),
-					zap.Duration("timeout", s.mqttCfg.PublishTimeout.Duration))
-				continue
-			}
-			s.reconnectDelay = time.Second
+// buildTLSConfig assembles the client TLS config for the broker.
+//
+// In cloud-credential mode the client presents the Connect leaf certificate via
+// GetClientCertificate (renewals picked up live) and verifies the broker against
+// the system/public roots — Event Grid presents a normal public Azure TLS server
+// cert, so the Connect root is not used for server verification. In the file-path
+// dev/test mode the client cert is loaded from PEM and an optional CA verifies the
+// broker (empty ⇒ system roots).
+func buildTLSConfig(cfg config.Mqtt, cred auto.CloudCredentialSource) (*tls.Config, error) {
+	if cfg.UseCloudCredential {
+		if cred == nil {
+			return nil, fmt.Errorf("mqtt.useCloudCredential is set but no cloud credential is available (pending PR #890)")
 		}
+		return &tls.Config{
+			GetClientCertificate: cred.GetClientCertificate,
+			MinVersion:           tls.VersionTLS12,
+		}, nil
 	}
-}
-
-// newMqttClient creates a new MQTT client with TLS configuration
-// assumes the config contains valid paths with valid certs.
-func newMqttClient(cfg config.Mqtt) (mqtt.Client, error) {
-	opts := mqtt.NewClientOptions()
-	opts.AddBroker(cfg.Host)
-	opts.SetClientID(cfg.ClientId)
-	opts.SetOrderMatters(false)
 
 	cert, err := tls.LoadX509KeyPair(cfg.ClientCertPath, cfg.ClientKeyPath)
 	if err != nil {
 		return nil, err
 	}
-
-	caCert, err := os.ReadFile(cfg.CaCertPath)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	ok := caCertPool.AppendCertsFromPEM(caCert)
-	if !ok {
-		return nil, fmt.Errorf("failed to append CA certificate")
-	}
-
-	opts.TLSConfig = &tls.Config{
+	tlsCfg := &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		RootCAs:      caCertPool,
+		MinVersion:   tls.VersionTLS12,
 	}
-
-	return mqtt.NewClient(opts), nil
+	if cfg.CaCertPath != "" {
+		caCert, err := os.ReadFile(cfg.CaCertPath)
+		if err != nil {
+			return nil, err
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to append CA certificate")
+		}
+		tlsCfg.RootCAs = pool
+	}
+	return tlsCfg, nil
 }

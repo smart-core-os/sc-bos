@@ -9,25 +9,37 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
+// DefaultTopicPrefix is the fixed intent prefix under which telemetry is
+// published (the publish-authz scope). Everything below it is source-native
+// UDMI addressing. See docs/connect-telemetry-ingest.md.
+const DefaultTopicPrefix = "tlm"
+
 type Mqtt struct {
-	Agent            string              `json:"agent"`
-	Host             string              `json:"host"`
-	Topic            string              `json:"topic"` // the topic to publish to
-	ClientId         string              `json:"clientId"`
-	ClientKeyPath    string              `json:"clientKeyPath"`                       // file path to client private key
-	ClientCertPath   string              `json:"clientCertPath"`                      // file path to client certificate
-	CaCertPath       string              `json:"caCertPath"`                          // file path to CA certificate
+	Host        string `json:"host"`                  // MQTT v5 broker address, e.g. "tls://broker.example.com:8883"
+	TopicPrefix string `json:"topicPrefix,omitempty"` // fixed intent prefix, defaults to "tlm"
+	ClientId    string `json:"clientId,omitempty"`    // MQTT client id
+
+	// Credential mode. Exactly one of useCloudCredential or the file-path certs
+	// below is used. useCloudCredential draws the Connect leaf certificate from
+	// the node's cloud connection (mTLS, identity via enrichment). The file-path
+	// certs are a dev/test fallback usable before the cloud credential is wired.
+	UseCloudCredential bool   `json:"useCloudCredential,omitempty"`
+	ClientKeyPath      string `json:"clientKeyPath,omitempty"`  // file path to client private key
+	ClientCertPath     string `json:"clientCertPath,omitempty"` // file path to client certificate
+	CaCertPath         string `json:"caCertPath,omitempty"`     // optional CA for verifying the broker; empty ⇒ system roots
+
+	Qos              *int                `json:"qos,omitempty"`                       // MQTT qos, defaults to 1 if not provided or not 0,1 or 2
 	ConnectTimeout   *jsontypes.Duration `json:"connectTimeout,omitempty,omitzero"`   // timeout for connecting to MQTT broker, defaults to 5s
 	PublishTimeout   *jsontypes.Duration `json:"publishTimeout,omitempty,omitzero"`   // timeout for publishing to MQTT, defaults to 5s
-	Qos              *int                `json:"qos,omitempty"`                       // MQTT qos, defaults to 1 if not provided or not 0,1 or 2
 	SendInterval     *jsontypes.Schedule `json:"sendInterval,omitempty,omitzero"`     // time between sends, defaults to 15m
-	MetadataInterval *int                `json:"metadataInterval,omitempty,omitzero"` // how often to include metadata (every N data sends), defaults to 100
+	MetadataInterval *int                `json:"metadataInterval,omitempty,omitzero"` // how often to publish discovery (every N data sends), defaults to 100
 }
 
 type Root struct {
 	auto.Config
 
-	// A list of all traits we want to send data for
+	// Traits is the set of traits to export. Devices implementing one of these
+	// traits are discovered and polled. Only smartcore.bos.Meter is supported today.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
 	// FetchTimeout is the maximum time to wait for a single device's trait data fetch
@@ -41,6 +53,26 @@ func ParseConfig(data []byte) (Root, error) {
 
 	if err := json.Unmarshal(data, &root); err != nil {
 		return Root{}, err
+	}
+
+	if root.Mqtt.Host == "" {
+		return Root{}, fmt.Errorf("config parse failed, mqtt.host is required")
+	}
+
+	if root.Mqtt.TopicPrefix == "" {
+		root.Mqtt.TopicPrefix = DefaultTopicPrefix
+	}
+
+	// Credential modes are mutually exclusive: either the cloud credential, or
+	// the file-path certs, never both.
+	if root.Mqtt.UseCloudCredential {
+		if root.Mqtt.ClientCertPath != "" || root.Mqtt.ClientKeyPath != "" || root.Mqtt.CaCertPath != "" {
+			return Root{}, fmt.Errorf("config parse failed, mqtt.useCloudCredential cannot be combined with clientCertPath/clientKeyPath/caCertPath")
+		}
+	} else {
+		if root.Mqtt.ClientCertPath == "" || root.Mqtt.ClientKeyPath == "" {
+			return Root{}, fmt.Errorf("config parse failed, either mqtt.useCloudCredential must be set or both mqtt.clientCertPath and mqtt.clientKeyPath must be provided")
+		}
 	}
 
 	if root.Mqtt.SendInterval == nil {

@@ -2,136 +2,92 @@ package sccexporter
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-// DataFetcher is a function that fetches device data for a specific trait
-// Returns a map of resource names to their JSON data (e.g., "meterReading" -> data, "meterReadingInfo" -> info)
-type DataFetcher func(ctx context.Context) (map[string]json.RawMessage, error)
+// traitCollector fetches telemetry and declares the discovery inventory for one
+// trait of one device. New traits are supported by adding a collector.
+type traitCollector interface {
+	// points fetches the current reading and returns its UDMI points plus the
+	// reading instant (now when the source reports no timestamp).
+	points(ctx context.Context, now time.Time) (udmi.PointsEvent, time.Time, error)
+	// inventory returns this trait's declared point inventory (units/writable) for
+	// the discovery message.
+	inventory() map[string]udmi.MetadataPoint
+}
 
+// device is a discovered device to export: its Smart Core metadata (for
+// discovery) plus one collector per supported trait it implements.
 type device struct {
-	name     string
-	logger   *zap.Logger
-	traits   map[trait.Name]DataFetcher
-	info     map[trait.Name]proto.Message
-	metaData *metadatapb.Metadata
+	name       string // Smart Core device name; also the deviceRef in the topic (parked gap)
+	metaData   *metadatapb.Metadata
+	collectors []traitCollector
 }
 
-func newDevice(name string, logger *zap.Logger, metaData *metadatapb.Metadata) *device {
-	d := &device{
-		name:     name,
-		logger:   logger,
-		traits:   make(map[trait.Name]DataFetcher),
-		info:     make(map[trait.Name]proto.Message),
-		metaData: metaData,
-	}
-	return d
-}
-
-func (d *device) getMeterData(ctx context.Context, meterClient meterpb.MeterApiClient) (map[string]json.RawMessage, error) {
-	result := make(map[string]json.RawMessage)
-
-	reading, err := meterClient.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{
-		Name: d.name,
-	})
-	if err != nil {
-		d.logger.Error("failed to get meter reading", zap.String("meter", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	// Marshal the meter reading to JSON using protojson
-	readingBytes, err := protojson.Marshal(reading)
-	if err != nil {
-		d.logger.Error("failed to marshal meter reading", zap.String("meter", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	result["meterReading"] = readingBytes
-
-	// Add meter reading info if available
-	info, ok := d.info[meterpb.TraitName].(*meterpb.MeterReadingSupport)
-	if ok && info != nil {
-		infoBytes, err := protojson.Marshal(info)
+// buildTelemetry fetches every collector's current points and merges them into a
+// single UDMI pointset event. ok is false when no points could be collected. The
+// event timestamp is the most recent reading instant across collectors.
+func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.Logger) (udmi.PointsetEvent, bool) {
+	merged := udmi.PointsEvent{}
+	var ts time.Time
+	for _, c := range d.collectors {
+		points, readingTime, err := c.points(ctx, now)
 		if err != nil {
-			d.logger.Error("failed to marshal meter reading info", zap.String("meter", d.name), zap.Error(err))
-		} else {
-			result["meterReadingInfo"] = infoBytes
+			logger.Warn("failed to fetch trait telemetry", zap.String("device", d.name), zap.Error(err))
+			continue
+		}
+		for name, v := range points {
+			merged[name] = v
+		}
+		if readingTime.After(ts) {
+			ts = readingTime
 		}
 	}
-
-	return result, nil
+	if len(merged) == 0 {
+		return udmi.PointsetEvent{}, false
+	}
+	if ts.IsZero() {
+		ts = now
+	}
+	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: merged}, true
 }
 
-func (d *device) getAirQualitySensorData(ctx context.Context, airQualityClient airqualitysensorpb.AirQualitySensorApiClient) (map[string]json.RawMessage, error) {
-	result := make(map[string]json.RawMessage)
-
-	airQuality, err := airQualityClient.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{
-		Name: d.name,
-	})
-	if err != nil {
-		d.logger.Error("failed to get air quality", zap.String("airQualitySensor", d.name), zap.Error(err))
-		return nil, err
+// buildDiscovery builds the UDMI device-metadata (discovery) event, merging the
+// declared point inventory across the device's collectors.
+func (d *device) buildDiscovery(now time.Time) udmi.MetadataEvent {
+	inv := map[string]udmi.MetadataPoint{}
+	for _, c := range d.collectors {
+		for name, p := range c.inventory() {
+			inv[name] = p
+		}
 	}
-
-	aq, err := protojson.Marshal(airQuality)
-	if err != nil {
-		d.logger.Error("failed to marshal air quality", zap.String("airQualitySensor", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	result["airQuality"] = aq
-	return result, nil
+	return discoveryEvent(d.metaData, inv, now)
 }
 
-func (d *device) getOccupancySensorData(ctx context.Context, occupancyClient occupancysensorpb.OccupancySensorApiClient) (map[string]json.RawMessage, error) {
-	result := make(map[string]json.RawMessage)
-
-	occupancy, err := occupancyClient.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{
-		Name: d.name,
-	})
-	if err != nil {
-		d.logger.Error("failed to get occupancy", zap.String("occupancySensor", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	o, err := protojson.Marshal(occupancy)
-	if err != nil {
-		d.logger.Error("failed to marshal occupancy", zap.String("occupancySensor", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	result["occupancy"] = o
-	return result, nil
+// meterCollector exports the smartcore.bos.Meter trait as UDMI usage/produced
+// points. support (fetched once at discovery) carries the units and production
+// capability; it may be nil if the info API is unavailable.
+type meterCollector struct {
+	name    string
+	client  meterpb.MeterApiClient
+	support *meterpb.MeterReadingSupport
 }
 
-func (d *device) getAirTemperatureData(ctx context.Context, client airtemperaturepb.AirTemperatureApiClient) (map[string]json.RawMessage, error) {
-	result := make(map[string]json.RawMessage)
-
-	airTemperature, err := client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{
-		Name: d.name,
-	})
+func (c *meterCollector) points(ctx context.Context, now time.Time) (udmi.PointsEvent, time.Time, error) {
+	r, err := c.client.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: c.name})
 	if err != nil {
-		d.logger.Error("failed to get air temperature", zap.String("airTemperatureSensor", d.name), zap.Error(err))
-		return nil, err
+		return nil, time.Time{}, err
 	}
+	ev := meterTelemetry(r, c.support, now)
+	return ev.Points, ev.Timestamp, nil
+}
 
-	at, err := protojson.Marshal(airTemperature)
-	if err != nil {
-		d.logger.Error("failed to marshal air temperature", zap.String("airTemperatureSensor", d.name), zap.Error(err))
-		return nil, err
-	}
-
-	result["airTemperature"] = at
-	return result, nil
+func (c *meterCollector) inventory() map[string]udmi.MetadataPoint {
+	return meterInventory(c.support)
 }
