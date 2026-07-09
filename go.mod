@@ -6,10 +6,12 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/eclipse/paho.golang v0.23.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/renameio/v2 v2.0.0
+	github.com/google/uuid v1.6.0
 	github.com/gopcua/opcua v0.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
@@ -18,6 +20,7 @@ require (
 	github.com/johnfercher/maroto/v2 v2.3.3
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mennanov/fmutils v0.1.1
+	github.com/mochi-mqtt/server/v2 v2.7.9
 	github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9
 	github.com/ncruces/go-sqlite3 v0.30.2
 	github.com/olebedev/emitter v0.0.0-20190110104742-e8d1457e6aee
@@ -47,6 +50,7 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -66,7 +70,6 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hhrutter/lzw v1.0.0 // indirect
@@ -96,6 +99,7 @@ require (
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/rs/xid v1.4.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.3 // indirect
@@ -127,7 +131,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.10 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 tool (

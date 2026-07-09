@@ -4898,6 +4898,22 @@
           }
         }
       }
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/scc-telemetry",
+      "type": "connecttelemetry",
+      "traits": ["smartcore.bos.Meter"],
+      "mqtt": {
+        "host": "tls://localhost:8883",
+        "topicPrefix": "tlm",
+        "clientId": "vanti-ugs-exporter",
+        "clientCertPath": "example/config/vanti-ugs/scc-certs/client.crt",
+        "clientKeyPath": "example/config/vanti-ugs/scc-certs/client.key",
+        "sendInterval": "* * * * *",
+        "metadataInterval": 1,
+        "qos": 1
+      },
+      "fetchTimeout": "5s"
     }
   ]
 }

@@ -24,9 +24,26 @@ type Services struct {
 	GRPCServices    grpc.ServiceRegistrar // for registering non-routed services
 	CohortManager   node.Remote
 	ClientTLSConfig *tls.Config
+	// CloudCredential provides the node's Connect leaf certificate for mTLS to the
+	// telemetry broker, plus the node identity. It is supplied by the node's cloud
+	// connection and is nil only when no cloud connection is configured; automations
+	// that need it must fall back or error clearly when it is absent (and its
+	// GetClientCertificate errors while the node is not yet enrolled).
+	CloudCredential CloudCredentialSource
 	Now             func() time.Time
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks
+}
+
+// CloudCredentialSource exposes the node's current Connect leaf certificate and
+// identity for authenticating to the Connect telemetry (Event Grid MQTT) broker.
+// It is satisfied by the node's cloud connection; GetClientCertificate reflects
+// credential renewals live so callers can install it directly as
+// tls.Config.GetClientCertificate.
+type CloudCredentialSource interface {
+	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
+	// NodeID returns the SCC node id (the leaf Subject CN), stable across renewals.
+	NodeID() string
 }
 
 // Factory constructs new automation instances.
