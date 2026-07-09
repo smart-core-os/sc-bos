@@ -1,6 +1,6 @@
 # Connect telemetry ingest — BOS publisher notes
 
-This document describes how the `sccexporter` automation (`pkg/auto/sccexporter/`) publishes
+This document describes how the `connecttelemetry` automation (`pkg/auto/connecttelemetry/`) publishes
 device telemetry and discovery to Smart Core Connect (SCC), and records the points still open
 with the Connect ingest side.
 

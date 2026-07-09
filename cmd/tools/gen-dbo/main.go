@@ -2,7 +2,7 @@
 // from a Smart Core node's meter devices. It dials a node, lists meter devices,
 // reads their reading support (for units/capability), and emits one DBO entity per
 // meter with an identity translation over the DBO standard field names the
-// sccexporter publishes. See .claude/plans/dbo-conformance-plan.md.
+// connecttelemetry publishes. See .claude/plans/dbo-conformance-plan.md.
 package main
 
 import (

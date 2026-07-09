@@ -1,4 +1,4 @@
-package sccexporter
+package connecttelemetry
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
 )
 
 // nodeIDProperty is the MQTT v5 user property carrying the publisher node id.

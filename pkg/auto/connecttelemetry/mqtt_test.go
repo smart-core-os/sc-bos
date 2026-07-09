@@ -1,4 +1,4 @@
-package sccexporter
+package connecttelemetry
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"

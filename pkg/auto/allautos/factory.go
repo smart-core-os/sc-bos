@@ -4,6 +4,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/azureiot"
 	"github.com/smart-core-os/sc-bos/pkg/auto/bms"
+	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry"
 	"github.com/smart-core-os/sc-bos/pkg/auto/export"
 	"github.com/smart-core-os/sc-bos/pkg/auto/exporthttp"
 	"github.com/smart-core-os/sc-bos/pkg/auto/healthbounds"
@@ -14,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto/occupancyemail"
 	"github.com/smart-core-os/sc-bos/pkg/auto/resetbrightness"
 	"github.com/smart-core-os/sc-bos/pkg/auto/resetenterleave"
-	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter"
 	"github.com/smart-core-os/sc-bos/pkg/auto/setpointhealth"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 )
@@ -33,7 +33,7 @@ func Factories() map[string]auto.Factory {
 		occupancyemail.AutoName:     occupancyemail.Factory,
 		resetbrightness.AutoName:    resetbrightness.Factory,
 		resetenterleave.AutoName:    resetenterleave.Factory,
-		sccexporter.AutoName:        sccexporter.Factory,
+		connecttelemetry.AutoName:   connecttelemetry.Factory,
 		setpointhealth.AutoName:     setpointhealth.Factory,
 		udmi.AutoType:               udmi.Factory,
 		exporthttp.AutoName:         exporthttp.Factory,

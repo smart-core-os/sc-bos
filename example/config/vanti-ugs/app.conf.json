@@ -4901,7 +4901,7 @@
     },
     {
       "name": "van/uk/brum/ugs/automation/scc-telemetry",
-      "type": "sccexporter",
+      "type": "connecttelemetry",
       "traits": ["smartcore.bos.Meter"],
       "mqtt": {
         "host": "tls://localhost:8883",

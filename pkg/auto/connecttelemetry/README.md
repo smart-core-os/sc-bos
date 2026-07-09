@@ -1,6 +1,6 @@
-# sccexporter automation
+# connecttelemetry automation
 
-The `sccexporter` automation streams device telemetry from an on-premise Smart Core
+The `connecttelemetry` automation streams device telemetry from an on-premise Smart Core
 instance to Smart Core Connect (SCC) as **UDMI**, over the Connect telemetry
 (Azure Event Grid) **MQTT v5** broker.
 
@@ -66,7 +66,7 @@ Two mutually-exclusive credential modes:
 
 ```json
 {
-  "type": "sccexporter",
+  "type": "connecttelemetry",
   "traits": ["smartcore.bos.Meter"],
   "fetchTimeout": "5s",
   "mqtt": {

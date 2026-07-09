@@ -10,7 +10,7 @@ import (
 func TestParseConfig(t *testing.T) {
 	t.Run("defaults with file-path certs", func(t *testing.T) {
 		root, err := ParseConfig([]byte(`{
-			"type": "sccexporter",
+			"type": "connecttelemetry",
 			"traits": ["smartcore.bos.Meter"],
 			"mqtt": {
 				"host": "tls://broker:8883",

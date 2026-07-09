@@ -1,4 +1,4 @@
-package sccexporter
+package connecttelemetry
 
 import (
 	"encoding/json"

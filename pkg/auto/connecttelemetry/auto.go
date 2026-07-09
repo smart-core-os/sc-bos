@@ -1,11 +1,11 @@
-// Package sccexporter exports device telemetry from an on-premise Smart Core
+// Package connecttelemetry exports device telemetry from an on-premise Smart Core
 // instance to Smart Core Connect (SCC). It discovers devices by trait, polls the
 // typed trait API on a schedule, and publishes each device's data to the Connect
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
 // periodic device-metadata (discovery). Only the Meter trait is supported today.
 //
 // See docs/connect-telemetry-ingest.md for the topic grammar and payload contract.
-package sccexporter
+package connecttelemetry
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
-	"github.com/smart-core-os/sc-bos/pkg/auto/sccexporter/config"
+	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -26,7 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-const AutoName = "sccexporter"
+const AutoName = "connecttelemetry"
 
 var Factory auto.Factory = factory{}
 
@@ -119,7 +119,7 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 		defer cancel()
 		pub.close(disconnectCtx)
 		if err != nil && !errors.Is(err, context.Canceled) {
-			a.Logger.Error("sccexporter automation stopped with error", zap.Error(err))
+			a.Logger.Error("connecttelemetry automation stopped with error", zap.Error(err))
 		}
 	}()
 
