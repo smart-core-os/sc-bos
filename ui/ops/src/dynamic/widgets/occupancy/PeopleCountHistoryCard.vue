@@ -26,16 +26,19 @@
             <v-list density="compact">
               <v-list-subheader title="Data"/>
               <period-chooser-rows v-model:start="_start" v-model:end="_end" v-model:offset="_offset"/>
-              <v-list-item title="Export CSV..."
+              <v-list-item title="Export chart data (CSV)..."
+                           @click="onDownloadAggregatedClick"
+                           v-tooltip:bottom="'Download the aggregated data shown on the chart'"/>
+              <v-list-item title="Export raw data (CSV)..."
                            @click="onDownloadClick"
-                           v-tooltip:bottom="'Download a CSV of the chart data'"/>
+                           v-tooltip:bottom="'Download a CSV of the raw device readings'"/>
             </v-list>
           </v-card>
         </v-menu>
       </v-btn>
     </v-toolbar>
     <v-card-text class="flex-grow-1 d-flex pt-0">
-      <people-count-history-chart class="flex-grow-1 ma-n2" v-bind="$attrs" :total-occupancy-name="totalOccupancyName"
+      <people-count-history-chart ref="chartRef" class="flex-grow-1 ma-n2" v-bind="$attrs" :total-occupancy-name="totalOccupancyName"
                                   :start="_start" :end="_end" :offset="_offset"
                                   :show-baseline="props.showBaseline" :baseline-shift="baselineShift"
                                   :chart-type="_chartType"/>
@@ -55,12 +58,13 @@
 
 <script setup>
 import {useDateScale} from '@/components/charts/date.js';
-import {triggerDownload} from '@/components/download/download.js';
+import {datePeriodString, triggerDownload} from '@/components/download/download.js';
 import PeriodChooserRows from '@/components/PeriodChooserRows.vue';
 import {useOccupancyNormalized, shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import PeopleCountHistoryChart from '@/dynamic/widgets/occupancy/PeopleCountHistoryChart.vue';
+import {downloadCSVRows} from '@/util/downloadCSV.js';
 import {useLocalProp} from '@/util/vue.js';
-import {computed, toRef} from 'vue';
+import {computed, ref, toRef} from 'vue';
 import * as vColors from 'vuetify/util/colors';
 
 const props = defineProps({
@@ -126,6 +130,8 @@ const {summaryPct} = useOccupancyNormalized(
   shiftFn
 );
 
+const chartRef = ref(null);
+
 const currentColor = vColors.blue.base;
 
 const priorPeriodTooltip = computed(() => {
@@ -133,6 +139,19 @@ const priorPeriodTooltip = computed(() => {
   const label = labels[props.baselineShift] ?? 'the prior period';
   return `Compared to ${label}`;
 });
+
+// Downloads the aggregated series currently shown on the chart (max people count
+// per auto-sized bucket) as a CSV, rather than the raw device readings.
+const onDownloadAggregatedClick = () => {
+  const chart = chartRef.value;
+  if (!chart) return;
+
+  const {rows, tickUnit} = chart.buildExportRows();
+  const slug = props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count';
+  const dateString = datePeriodString({startTime: startDate.value, endTime: endDate.value});
+  const filename = `${slug}-chart-${tickUnit}-${dateString}.csv`;
+  downloadCSVRows(filename, rows);
+};
 
 const onDownloadClick = async () => {
   if (!props.downloadEnterLeave) {

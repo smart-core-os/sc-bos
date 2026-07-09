@@ -232,6 +232,36 @@ watch(chartData, (data) => {
 }, {immediate: true});
 
 const showNoData = computed(() => !hasData.value && hasLoadedData.value);
+
+/**
+ * Builds CSV rows (header + one row per bucket) for the aggregated series that
+ * is currently displayed on the chart. Used by the parent card's "Export chart
+ * data" action so the CSV matches the graph exactly.
+ *
+ * @return {{rows: string[][], tickUnit: string}}
+ */
+function buildExportRows() {
+  const totals = totalOccupancyCounts.value;
+  const baseline = baselineCounts.value;
+  const includeBaseline = props.showBaseline;
+
+  const header = ['Time', 'People Count'];
+  if (includeBaseline) header.push('Prior Period People Count');
+
+  const fmt = (v) => (v === null || v === undefined) ? '' : String(v);
+
+  const rows = [header];
+  for (let i = 0; i < totals.length; i++) {
+    const t = totals[i];
+    const time = t.x instanceof Date ? t.x : new Date(t.x);
+    const row = [time.toISOString(), fmt(t.y)];
+    if (includeBaseline) row.push(fmt(baseline[i]?.y));
+    rows.push(row);
+  }
+  return {rows, tickUnit: tickUnit.value};
+}
+
+defineExpose({buildExportRows});
 </script>
 
 <style scoped lang="scss">
