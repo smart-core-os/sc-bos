@@ -201,3 +201,14 @@ assurance is MQTT QoS.
    node identity is known. **Nothing in Connect reads it today** (no local/plain-MQTT adapter
    exists); on the Event Grid path identity comes from enrichment. Kept only as a possible
    future/local-dev hook — not a read contract. Confirm if/when a local adapter needs it.
+
+## Known limitations
+
+- **Meter value precision (float32).** The Meter trait carries readings as `float32`, so the
+  exporter forwards them at that precision. For a cumulative accumulator this is a resolution
+  ceiling (~7 significant digits) once the running total gets large — reached sooner for meters
+  reporting in `Wh`. This is upstream of the exporter (the trait's field type); the fix is to
+  widen the Meter reading to `double` (or report deltas) at the trait level. Until then the
+  exporter keeps the value as `float32` on the wire deliberately: `encoding/json` emits the
+  shortest decimal that round-trips the float32, whereas widening to `float64` here would
+  surface the float32's binary artifacts instead of improving fidelity.

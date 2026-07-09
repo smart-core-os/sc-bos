@@ -46,6 +46,13 @@ func meterTelemetry(r *meterpb.MeterReading, support *meterpb.MeterReadingSuppor
 		ts = r.GetEndTime().AsTime()
 	}
 	points := udmi.PointsEvent{}
+	// Meter readings are float32 (the Meter trait's type). For a cumulative
+	// accumulator that is a resolution ceiling once the running total grows large
+	// (~7 significant digits; reached sooner for meters reporting in Wh) — a known,
+	// upstream-bound limitation tracked in docs/connect-telemetry-ingest.md.
+	// Deliberately kept as float32 rather than widened to float64: encoding/json
+	// emits the shortest decimal that round-trips the float32, whereas a float64
+	// conversion would surface the float32's binary artifacts on the wire.
 	for _, f := range dbo.MeterFields(support.GetUsageUnit(), support.GetProducedUnit()) {
 		value := r.GetUsage()
 		if f.Exported {
