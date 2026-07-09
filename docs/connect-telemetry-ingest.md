@@ -58,13 +58,14 @@ publishes each device's data as UDMI. The first rollout is **meter-only**.
 
 ### How kinds are distinguished
 
-Connect has **no `classifyKind` function or fixed subfolder rule**. `ingest.md` says a
-discovery announcement is "a distinct message *kind* the Pipeline's `layout` recognises" —
-i.e. the per-source layout decides, in practice from the payload shape (telemetry carries
-`points{…present_value}`; discovery carries `system{…}` + `pointset.points{…}`) and/or the
-topic. We publish telemetry and discovery on distinct subfolders (`events/pointset` vs our
-provisional `events/discovery`) so a layout *can* split on topic; the payload shapes also
-differ, so a body test works too. The chosen discriminator is Connect's to decide.
+Connect now has a `classifyKind` step plus a per-kind layout/match mechanism (shipped in
+SCC-592, merged 2026-07-06). A discovery announcement is "a distinct message *kind* the
+Pipeline's `layout` recognises" — the per-kind match decides, in practice from the payload
+shape (telemetry carries `points{…present_value}`; discovery carries `system{…}` +
+`pointset.points{…}`) and/or the topic. We publish telemetry and discovery on distinct
+subfolders (`events/pointset` vs our provisional `events/discovery`) so a layout can split on
+topic; the payload shapes also differ, so a body test works too. The exact match rule (topic
+vs body) is Connect's to configure — align the discriminator with `classifyKind`.
 
 ## Payloads
 
@@ -192,11 +193,10 @@ assurance is MQTT QoS.
    lives, and BOS discovery currently emits **no** device type (only `tags`/`floor`). Agree
    where the `type` selector should come from (a discovery field vs layout config) and whether
    BOS should emit one.
-4. **PR #890 (Connect leaf credential) has not landed.** `internal/cloud` is OAuth2-based
-   today; there is no X.509 `Credential`/`NodeID()`/`TLSCertificate()` surface. The exporter
-   defines the integration surface (`auto.CloudCredentialSource`) and MQTT v5 transport now,
-   and runs on file-path mTLS until #890 provides the credential to the automation
-   (`pkg/app/services.go` `startAutomations`).
+4. **Connect leaf credential — landed (PR #890).** `internal/cloud` now exposes the X.509
+   `Credential`/`NodeID()`/`TLSCertificate()` surface, wired to the automation via
+   `auto.CloudCredentialSource` (`pkg/app/services.go` `startAutomations`). The exporter uses
+   it in `useCloudCredential` mode; file-path mTLS remains the dev/test fallback.
 5. **`nodeId` MQTT v5 user property.** The publisher sets a `nodeId` v5 user property when the
    node identity is known. **Nothing in Connect reads it today** (no local/plain-MQTT adapter
    exists); on the Event Grid path identity comes from enrichment. Kept only as a possible
