@@ -100,7 +100,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 |-------|----------|---------|-------------|
 | `traits` | yes | — | Traits to export; only `smartcore.bos.Meter` is supported |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
-| `mqtt.host` | yes | — | MQTT v5 broker URL (`tls://…` / `mqtt://…`) |
+| `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
 | `mqtt.clientId` | no | node id | MQTT client id |
 | `mqtt.useCloudCredential` | no | `false` | Use the Connect leaf credential (mutually exclusive with file-path certs) |

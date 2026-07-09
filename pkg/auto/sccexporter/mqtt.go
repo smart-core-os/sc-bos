@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/eclipse/paho.golang/autopaho"
@@ -43,6 +44,17 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 	u, err := url.Parse(cfg.Host)
 	if err != nil {
 		return nil, fmt.Errorf("invalid mqtt host %q: %w", cfg.Host, err)
+	}
+
+	// autopaho selects the transport purely from the URL scheme: a non-TLS scheme
+	// (mqtt/tcp/ws) silently discards TlsCfg, so the client certificate is ignored
+	// and telemetry goes out in the clear. The exporter always presents a
+	// credential, so require a TLS-bearing scheme and fail closed otherwise.
+	switch strings.ToLower(u.Scheme) {
+	case "tls", "ssl", "mqtts", "wss":
+		// TLS-bearing scheme; TlsCfg is applied.
+	default:
+		return nil, fmt.Errorf("mqtt.host %q uses non-TLS scheme %q; use tls:// (or ssl://, mqtts://, wss://) so client certificates and encryption are applied", cfg.Host, u.Scheme)
 	}
 
 	var nodeID string

@@ -4904,7 +4904,7 @@
       "type": "sccexporter",
       "traits": ["smartcore.bos.Meter"],
       "mqtt": {
-        "host": "mqtt://localhost:1883",
+        "host": "tls://localhost:8883",
         "topicPrefix": "tlm",
         "clientId": "vanti-ugs-exporter",
         "clientCertPath": "example/config/vanti-ugs/scc-certs/client.crt",
