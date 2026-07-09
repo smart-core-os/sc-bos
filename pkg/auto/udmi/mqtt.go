@@ -27,9 +27,17 @@ func newMqttClient(cfg config.Root) (mqtt.Client, error) {
 // immediately on connect. retainAll (the auto's "retained" config) forces the
 // retained flag on for every topic, preserving the legacy retain-everything
 // behaviour.
-func mqttPublisher(client mqtt.Client, qos byte, retainAll bool) Publisher {
+//
+// QoS is decided by the same split: event topics publish at eventQoS (telemetry,
+// typically at-most-once) while state/metadata topics publish at stateQoS.
+func mqttPublisher(client mqtt.Client, eventQoS, stateQoS byte, retainAll bool) Publisher {
 	return PublisherFunc(func(ctx context.Context, topic string, payload any) error {
-		retained := retainAll || !isEventTopic(topic)
+		event := isEventTopic(topic)
+		qos := eventQoS
+		if !event {
+			qos = stateQoS
+		}
+		retained := retainAll || !event
 		token := client.Publish(topic, qos, retained, payload)
 		select {
 		case <-ctx.Done():

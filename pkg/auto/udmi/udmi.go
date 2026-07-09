@@ -51,6 +51,9 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	if cfg.QoS > 2 {
 		return fmt.Errorf("invalid qos %d: must be 0, 1, or 2", cfg.QoS)
 	}
+	if cfg.StateQoS > 2 {
+		return fmt.Errorf("invalid stateQos %d: must be 0, 1, or 2", cfg.StateQoS)
+	}
 
 	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
@@ -60,7 +63,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	pubSub := &PubSub{
-		Publisher:  mqttPublisher(client, cfg.QoS, cfg.Retained),
+		Publisher:  mqttPublisher(client, cfg.QoS, cfg.StateQoS, cfg.Retained),
 		Subscriber: mqttSubscriber(client, cfg.QoS),
 	}
 

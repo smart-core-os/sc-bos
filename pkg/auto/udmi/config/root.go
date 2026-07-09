@@ -20,7 +20,12 @@ type Root struct {
 	// topics are always published unretained so subscribers get real-time telemetry
 	// rather than a replayed stale value.
 	Retained bool `json:"retained,omitempty"`
-	// QoS is the MQTT Quality of Service level (0, 1, or 2) used for both
-	// publishing and subscribing. Defaults to 0 (at-most-once) when unset.
+	// QoS is the MQTT Quality of Service level (0, 1, or 2) used for publishing
+	// telemetry (pointset event topics) and for all subscriptions. Defaults to 0
+	// (at-most-once) when unset.
 	QoS byte `json:"qos,omitempty"`
+	// StateQoS is the MQTT QoS level used for publishing state and metadata topics
+	// (everything that is not an event topic). Defaults to 0 (matching QoS) when
+	// unset, preserving the previous single-QoS behaviour.
+	StateQoS byte `json:"stateQos,omitempty"`
 }
