@@ -3,6 +3,7 @@ package udmi
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -47,6 +48,10 @@ type udmiAuto struct {
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
+	if cfg.QoS > 2 {
+		return fmt.Errorf("invalid qos %d: must be 0, 1, or 2", cfg.QoS)
+	}
+
 	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
 	client, err := newMqttClient(cfg)
@@ -55,8 +60,8 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	pubSub := &PubSub{
-		Publisher:  mqttPublisher(client, 0, cfg.Retained),
-		Subscriber: mqttSubscriber(client, 0),
+		Publisher:  mqttPublisher(client, cfg.QoS, cfg.Retained),
+		Subscriber: mqttSubscriber(client, cfg.QoS),
 	}
 
 	connected := client.Connect()

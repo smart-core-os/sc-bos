@@ -20,4 +20,7 @@ type Root struct {
 	// topics are always published unretained so subscribers get real-time telemetry
 	// rather than a replayed stale value.
 	Retained bool `json:"retained,omitempty"`
+	// QoS is the MQTT Quality of Service level (0, 1, or 2) used for both
+	// publishing and subscribing. Defaults to 0 (at-most-once) when unset.
+	QoS byte `json:"qos,omitempty"`
 }
