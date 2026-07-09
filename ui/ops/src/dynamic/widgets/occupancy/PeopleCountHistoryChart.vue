@@ -261,7 +261,7 @@ function buildExportRows() {
   return {rows, tickUnit: tickUnit.value};
 }
 
-defineExpose({buildExportRows});
+defineExpose({buildExportRows, hasData});
 </script>
 
 <style scoped lang="scss">

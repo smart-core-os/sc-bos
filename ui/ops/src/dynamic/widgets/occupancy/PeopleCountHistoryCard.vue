@@ -27,6 +27,7 @@
               <v-list-subheader title="Data"/>
               <period-chooser-rows v-model:start="_start" v-model:end="_end" v-model:offset="_offset"/>
               <v-list-item title="Export chart data (CSV)..."
+                           :disabled="!canExport"
                            @click="onDownloadAggregatedClick"
                            v-tooltip:bottom="'Download the aggregated data shown on the chart'"/>
               <v-list-item title="Export raw data (CSV)..."
@@ -132,6 +133,12 @@ const {summaryPct} = useOccupancyNormalized(
 
 const chartRef = ref(null);
 
+// Slug used for download filenames; collapse whitespace runs to single dashes.
+const titleSlug = computed(() => (props.title?.trim() || 'people-count').toLowerCase().replace(/\s+/g, '-'));
+
+// Whether the chart currently has any data worth exporting.
+const canExport = computed(() => Boolean(chartRef.value?.hasData));
+
 const currentColor = vColors.blue.base;
 
 const priorPeriodTooltip = computed(() => {
@@ -147,16 +154,16 @@ const onDownloadAggregatedClick = () => {
   if (!chart) return;
 
   const {rows, tickUnit} = chart.buildExportRows();
-  const slug = props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count';
+  if (rows.length <= 1) return; // header only, nothing to export
   const dateString = datePeriodString({startTime: startDate.value, endTime: endDate.value});
-  const filename = `${slug}-chart-${tickUnit}-${dateString}.csv`;
+  const filename = `${titleSlug.value}-chart-${tickUnit}-${dateString}.csv`;
   downloadCSVRows(filename, rows);
 };
 
 const onDownloadClick = async () => {
   if (!props.downloadEnterLeave) {
     await triggerDownload(
-        props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count',
+        titleSlug.value,
         {conditionsList: [{field: 'name', stringEqual: props.totalOccupancyName}]},
         {startTime: startDate.value, endTime: endDate.value},
         {
@@ -173,7 +180,7 @@ const onDownloadClick = async () => {
   }
 
   await triggerDownload(
-      props.title?.toLowerCase()?.replace(' ', '-') ?? 'people-count-enter-leave',
+      titleSlug.value,
       {conditionsList: [{field: 'name', stringEqual: props.totalOccupancyName}]},
       {startTime: startDate.value, endTime: endDate.value},
       {
