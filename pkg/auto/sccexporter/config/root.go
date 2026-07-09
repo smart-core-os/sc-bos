@@ -107,6 +107,10 @@ func ParseConfig(data []byte) (Root, error) {
 	if root.Mqtt.MetadataInterval == nil {
 		interval := 100
 		root.Mqtt.MetadataInterval = &interval
+	} else if *root.Mqtt.MetadataInterval < 1 {
+		// A non-positive interval would divide-by-zero (iterationCount % N) in the
+		// publish loop, taking the controller down; reject it here.
+		return Root{}, fmt.Errorf("config parse failed, mqtt.metadataInterval must be a positive integer")
 	}
 	if root.FetchTimeout == nil || root.FetchTimeout.Duration == 0 {
 		root.FetchTimeout = &jsontypes.Duration{Duration: 5 * time.Second}
