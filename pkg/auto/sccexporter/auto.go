@@ -96,10 +96,14 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 			iterationCount++
 
 			if publishDiscovery {
-				clear(allDevices)
-				if err := a.refreshDevices(autoCtx, cfg.Traits, allDevices); err != nil {
-					a.Logger.Error("error refreshing device list", zap.Error(err))
-					continue
+				// Refresh into a fresh map and only swap on success, so a transient
+				// ListDevices failure retains the previous export set rather than
+				// blanking it until the next discovery cycle (potentially minutes away).
+				refreshed := make(map[string]*device)
+				if err := a.refreshDevices(autoCtx, cfg.Traits, refreshed); err != nil {
+					a.Logger.Error("error refreshing device list; retaining previous set", zap.Error(err))
+				} else {
+					allDevices = refreshed
 				}
 			}
 
