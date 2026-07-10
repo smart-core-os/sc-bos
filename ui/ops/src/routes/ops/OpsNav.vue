@@ -28,6 +28,7 @@
         v-for="(item, key) in externalNavItems"
         :href="item.href"
         :target="item.target ?? '_blank'"
+        rel="noopener noreferrer"
         :key="`external-${key}`">
       <template #prepend>
         <v-icon>{{ item.icon }}</v-icon>

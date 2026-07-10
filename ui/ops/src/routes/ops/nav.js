@@ -112,6 +112,28 @@ export function useEnabledNavItems() {
 }
 
 /**
+ * Checks whether an href is safe to render as an external link.
+ *
+ * Only http(s) URLs and root-relative paths are permitted. This rejects dangerous schemes
+ * such as javascript: and data:, which would otherwise execute in the Ops UI origin when
+ * clicked (the href comes from config, so this is defence-in-depth against a bad config).
+ *
+ * @param {string} href
+ * @return {boolean}
+ */
+function isSafeHref(href) {
+  if (typeof href !== 'string' || !href) return false;
+  // Root-relative paths (e.g. /-/ooh-ac-request/) are same-origin and safe.
+  if (href.startsWith('/')) return true;
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get a computed reference to the external navigation links defined in the UI config.
  *
  * These are deployment-specific links to other applications served alongside the Ops UI
@@ -125,6 +147,6 @@ export function useExternalNavItems() {
   return computed(() => {
     const items = uiConfig.getOrDefault('ops.externalLinks', []);
     if (!Array.isArray(items)) return [];
-    return items.filter(item => item && typeof item.href === 'string' && item.href);
+    return items.filter(item => item && isSafeHref(item.href));
   });
 }
