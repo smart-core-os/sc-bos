@@ -72,7 +72,7 @@ export function useDownloadLink(query, history = null) {
  * @param {Period.AsObject | {startTime: Date, endTime: Date} | null | undefined} period
  * @return {string}
  */
-function datePeriodString(period) {
+export function datePeriodString(period) {
   const toStr = (n) => n.toString().padStart(2, '0');
   if (period) {
     const start = timestampToDate(period.startTime);
