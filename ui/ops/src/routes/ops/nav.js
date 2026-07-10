@@ -12,6 +12,14 @@ import {computed} from 'vue';
  */
 
 /**
+ * @typedef {Object} ExternalNavItem
+ * @property {string} title - The title of the menu item
+ * @property {string} icon - The icon to display for the menu item
+ * @property {string} href - The external URL the item links to
+ * @property {'_self'|'_blank'} [target] - Where to open the link, defaults to '_blank'
+ */
+
+/**
  * Menu Items
  * This is the main list of items
  *
@@ -101,4 +109,22 @@ export function isRouteEnabled(item) {
  */
 export function useEnabledNavItems() {
   return computed(() => navItems.filter(item => isRouteEnabled(item)));
+}
+
+/**
+ * Get a computed reference to the external navigation links defined in the UI config.
+ *
+ * These are deployment-specific links to other applications served alongside the Ops UI
+ * (e.g. standalone SPAs on the same origin). They are not router paths, so they are gated
+ * purely by their presence in config rather than by pathEnabled().
+ *
+ * @return {ComputedRef<ExternalNavItem[]>}
+ */
+export function useExternalNavItems() {
+  const uiConfig = useUiConfigStore();
+  return computed(() => {
+    const items = uiConfig.getOrDefault('ops.externalLinks', []);
+    if (!Array.isArray(items)) return [];
+    return items.filter(item => item && typeof item.href === 'string' && item.href);
+  });
 }
