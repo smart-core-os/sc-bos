@@ -21,6 +21,14 @@
           <v-list-item-title>{{ props.item.title }}</v-list-item-title>
           <template #append>
             <v-btn
+                v-if="showExternalButton"
+                v-bind="externalAttrs"
+                @click.stop
+                variant="text"
+                size="x-small"
+                style="font-size: 120%"
+                icon="mdi-open-in-new"/>
+            <v-btn
                 @click.prevent.stop="_props.onClick"
                 variant="text"
                 size="x-small"
@@ -69,6 +77,15 @@
       </v-list-item-title>
     </template>
     <v-list-item-title>{{ props.item.title }}</v-list-item-title>
+    <template v-if="showExternalButton" #append>
+      <v-btn
+          v-bind="externalAttrs"
+          @click.stop
+          variant="text"
+          size="x-small"
+          style="font-size: 120%"
+          icon="mdi-open-in-new"/>
+    </template>
   </v-list-item>
 </template>
 
@@ -137,30 +154,60 @@ const toAreaLink = computed(() => `/ops/overview/${currentPath.value}`);
 const isExternal = computed(() => isSafeHref(props.item.href));
 
 /**
- * Whether the item has its own primary destination (an external href or an in-app layout),
+ * Whether the item has an in-app dashboard layout.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const hasLayout = computed(() => Boolean(props.item.layout));
+
+/**
+ * Whether the item has its own primary destination (an in-app layout or an external href),
  * as opposed to only expanding to reveal children. When true, the row navigates on click and
  * any children collapse to an appended chevron button.
  *
  * @type {import('vue').ComputedRef<boolean>}
  */
-const hasOwnPage = computed(() => isExternal.value || Boolean(props.item.layout));
+const hasOwnPage = computed(() => hasLayout.value || isExternal.value);
 
 /**
- * The link attributes to bind to the row's list item: an external anchor when the item has a
- * safe href, otherwise an in-app router link to the area.
+ * The anchor attributes for an external link (href + target + rel).
+ *
+ * @type {import('vue').ComputedRef<{href: string, target: string, rel: string}>}
+ */
+const externalAttrs = computed(() => ({
+  href: props.item.href,
+  target: props.item.target ?? '_blank',
+  rel: 'noopener noreferrer'
+}));
+
+/**
+ * The link attributes to bind to the row's list item. An in-app layout takes precedence and
+ * owns the row; a lone href (no layout) makes the row itself the external anchor. When both a
+ * layout and an href are present the layout owns the row and the href is surfaced as an appended
+ * button (see showExternalButton), so neither destination is silently unreachable.
  *
  * @type {import('vue').ComputedRef<Object>}
  */
 const linkAttrs = computed(() => {
-  if (isExternal.value) {
-    return {
-      href: props.item.href,
-      target: props.item.target ?? '_blank',
-      rel: 'noopener noreferrer'
-    };
-  }
+  if (isExternal.value && !hasLayout.value) return externalAttrs.value;
   return {to: toAreaLink.value};
 });
+
+/**
+ * Whether to surface the external link as an appended button. Happens when an item has both an
+ * in-app layout (which owns the row) and an href, so the external destination stays reachable.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const showExternalButton = computed(() => isExternal.value && hasLayout.value);
+
+// Warn about a configured href that is unsafe/invalid so the misconfiguration is visible rather
+// than silently degrading to a dead in-app link.
+if (props.item.href && !isSafeHref(props.item.href)) {
+  console.warn(
+      `Ops nav item "${props.item.title ?? props.item.path}" has an unsafe or invalid href and ` +
+      `will be ignored: ${props.item.href}`);
+}
 
 /**
  * Checks whether an href is safe to render as an external link.

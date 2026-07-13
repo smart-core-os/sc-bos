@@ -355,7 +355,7 @@
           "examples": ["builtin:LayoutMainSide"]
         },
         "href": {
-          "description": "An external link for the page instead of an in-app layout. Only http(s) URLs and root-relative paths are permitted. When set, the nav row links out to this URL rather than an in-app dashboard.",
+          "description": "An external link for the page. When set without a layout the nav row links out to this URL; when set alongside a layout the layout owns the row and the external link is shown as an appended button. Only http(s) URLs and root-relative paths are permitted; other schemes are ignored.",
           "type": "string",
           "examples": ["/-/ooh-ac-request/", "https://example.com/app"]
         },
