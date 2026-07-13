@@ -23,25 +23,13 @@
       </template>
       <v-list-item-title class="text-truncate">{{ item.title }}</v-list-item-title>
     </v-list-item>
-    <!-- External Links -->
-    <v-list-item
-        v-for="(item, key) in externalNavItems"
-        :href="item.href"
-        :target="item.target ?? '_blank'"
-        rel="noopener noreferrer"
-        :key="`external-${key}`">
-      <template #prepend>
-        <v-icon>{{ item.icon }}</v-icon>
-      </template>
-      <v-list-item-title class="text-truncate">{{ item.title }}</v-list-item-title>
-    </v-list-item>
   </v-list>
 </template>
 
 
 <script setup>
 import useAuthSetup from '@/composables/useAuthSetup';
-import {useEnabledNavItems, useExternalNavItems} from '@/routes/ops/nav.js';
+import {useEnabledNavItems} from '@/routes/ops/nav.js';
 import {useAlertMetadataStore} from '@/routes/ops/notifications/alertMetadata';
 import OpsNavListItems from '@/routes/ops/overview/OpsNavListItems.vue';
 import {useNavStore} from '@/stores/nav';
@@ -121,13 +109,6 @@ const badges = reactive({
  * } enabledMenuItems
  */
 const enabledMenuItems = useEnabledNavItems();
-
-/**
- * External links to other applications served alongside the Ops UI, defined in config.
- *
- * @type {import('vue').ComputedRef<import('@/routes/ops/nav.js').ExternalNavItem[]>}
- */
-const externalNavItems = useExternalNavItems();
 
 /**
  * Check if the notification area is enabled

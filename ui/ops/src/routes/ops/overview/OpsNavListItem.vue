@@ -2,13 +2,14 @@
   <v-list-group v-if="hasChildren" :value="props.item.title">
     <template #activator="{props: _props, isOpen: _isOpen}">
       <!--
-      Slightly different behaviour for containers that have their own pages, vs those that don't.
-      The first we expand on button click only, clicking the activator navs to the page.
+      Slightly different behaviour for containers that have their own destination (an in-app
+      layout or an external href), vs those that only expand.
+      The first we expand on button click only, clicking the activator navs to the destination.
       The second we expand on activator click, the button is just there for visual consistency.
       -->
-      <template v-if="props.item.layout">
+      <template v-if="hasOwnPage">
         <v-list-item
-            :to="toAreaLink"
+            v-bind="linkAttrs"
             :active="active"
             :class="{activeExact}">
           <template #prepend>
@@ -58,7 +59,7 @@
   </v-list-group>
   <v-list-item
       v-else
-      :to="toAreaLink"
+      v-bind="linkAttrs"
       :active="active"
       :class="{activeExact}">
     <template #prepend>
@@ -127,6 +128,61 @@ const active = computed(() => route.path === toAreaLink.value || route.path.star
  * @type {import('vue').ComputedRef<string>}
  */
 const toAreaLink = computed(() => `/ops/overview/${currentPath.value}`);
+
+/**
+ * Whether the item is an external link, i.e. it has a safe href.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const isExternal = computed(() => isSafeHref(props.item.href));
+
+/**
+ * Whether the item has its own primary destination (an external href or an in-app layout),
+ * as opposed to only expanding to reveal children. When true, the row navigates on click and
+ * any children collapse to an appended chevron button.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const hasOwnPage = computed(() => isExternal.value || Boolean(props.item.layout));
+
+/**
+ * The link attributes to bind to the row's list item: an external anchor when the item has a
+ * safe href, otherwise an in-app router link to the area.
+ *
+ * @type {import('vue').ComputedRef<Object>}
+ */
+const linkAttrs = computed(() => {
+  if (isExternal.value) {
+    return {
+      href: props.item.href,
+      target: props.item.target ?? '_blank',
+      rel: 'noopener noreferrer'
+    };
+  }
+  return {to: toAreaLink.value};
+});
+
+/**
+ * Checks whether an href is safe to render as an external link.
+ *
+ * Only http(s) URLs and root-relative paths are permitted. This rejects dangerous schemes
+ * such as javascript: and data:, which would otherwise execute in the Ops UI origin when
+ * clicked (the href comes from config, so this is defence-in-depth against a bad config).
+ *
+ * @param {string} href
+ * @return {boolean}
+ */
+function isSafeHref(href) {
+  if (typeof href !== 'string' || !href) return false;
+  // Root-relative paths (e.g. /-/ooh-ac-request/) are same-origin and safe.
+  if (href.startsWith('/')) return true;
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 </script>
 
 <style scoped>

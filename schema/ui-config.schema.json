@@ -354,6 +354,15 @@
           "type": "string",
           "examples": ["builtin:LayoutMainSide"]
         },
+        "href": {
+          "description": "An external link for the page instead of an in-app layout. Only http(s) URLs and root-relative paths are permitted. When set, the nav row links out to this URL rather than an in-app dashboard.",
+          "type": "string",
+          "examples": ["/-/ooh-ac-request/", "https://example.com/app"]
+        },
+        "target": {
+          "description": "Where to open the href, when set. Defaults to _blank (a new tab).",
+          "enum": ["_self", "_blank"]
+        },
         "children": {
           "description": "Sub pages to display as children to this dashboard page",
           "type": "array",
