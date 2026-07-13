@@ -22,11 +22,12 @@
           <template #append>
             <v-btn
                 v-if="showExternalButton"
-                v-bind="externalAttrs"
-                @click.stop
+                @click.prevent.stop="openExternal"
                 variant="text"
                 size="x-small"
-                style="font-size: 120%"
+                class="text-medium-emphasis"
+                :aria-label="`Open ${props.item.title} (external)`"
+                :title="props.item.href"
                 icon="mdi-open-in-new"/>
             <v-btn
                 @click.prevent.stop="_props.onClick"
@@ -79,11 +80,12 @@
     <v-list-item-title>{{ props.item.title }}</v-list-item-title>
     <template v-if="showExternalButton" #append>
       <v-btn
-          v-bind="externalAttrs"
-          @click.stop
+          @click.prevent.stop="openExternal"
           variant="text"
           size="x-small"
-          style="font-size: 120%"
+          class="text-medium-emphasis"
+          :aria-label="`Open ${props.item.title} (external)`"
+          :title="props.item.href"
           icon="mdi-open-in-new"/>
     </template>
   </v-list-item>
@@ -170,7 +172,8 @@ const hasLayout = computed(() => Boolean(props.item.layout));
 const hasOwnPage = computed(() => hasLayout.value || isExternal.value);
 
 /**
- * The anchor attributes for an external link (href + target + rel).
+ * The anchor attributes for an external link (href + target + rel), used when the row itself
+ * is the external anchor (href with no layout).
  *
  * @type {import('vue').ComputedRef<{href: string, target: string, rel: string}>}
  */
@@ -179,6 +182,19 @@ const externalAttrs = computed(() => ({
   target: props.item.target ?? '_blank',
   rel: 'noopener noreferrer'
 }));
+
+/**
+ * Opens the item's external href. Used by the appended button when a layout owns the row - a
+ * button rather than a nested anchor, as an <a> can't validly contain another <a> (the same
+ * pattern as the chevron, which is also a button inside the row).
+ */
+function openExternal() {
+  if ((props.item.target ?? '_blank') === '_self') {
+    window.location.assign(props.item.href);
+  } else {
+    window.open(props.item.href, '_blank', 'noopener,noreferrer');
+  }
+}
 
 /**
  * The link attributes to bind to the row's list item. An in-app layout takes precedence and
