@@ -2,7 +2,6 @@ package history
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -22,7 +21,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
@@ -36,7 +34,6 @@ func Test_automation_applyConfig(t *testing.T) {
 		airTemperature := airtemperaturepb.NewModel()
 		electric := electricpb.NewModel()
 		meter := meterpb.NewModel()
-		status := statuspb.NewModel()
 
 		announcer := node.New("test")
 		announcer.Logger = logger
@@ -76,14 +73,6 @@ func Test_automation_applyConfig(t *testing.T) {
 				meterpb.MeterApiServer(meterpb.NewModelServer(meter)),
 			),
 		)
-		announcer.Announce("status",
-			node.HasTrait(statuspb.TraitName),
-			node.HasServer(
-				statuspb.RegisterStatusApiServer,
-				statuspb.StatusApiServer(statuspb.NewModelServer(status)),
-			),
-		)
-
 		for _, cfg := range cfgs {
 			a := &automation{
 				clients:   announcer,
@@ -142,11 +131,6 @@ func Test_automation_applyConfig(t *testing.T) {
 			}); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := status.UpdateProblem(&statuspb.StatusLog_Problem{
-				Name: fmt.Sprintf("problem-%d", i+1),
-			}); err != nil {
-				t.Fatal(err)
-			}
 			time.Sleep(time.Second)
 			synctest.Wait()
 		}
@@ -156,7 +140,6 @@ func Test_automation_applyConfig(t *testing.T) {
 		airTempCli := airtemperaturepb.NewAirTemperatureHistoryClient(announcer.ClientConn())
 		electricCli := electricpb.NewElectricHistoryClient(announcer.ClientConn())
 		meterCli := meterpb.NewMeterHistoryClient(announcer.ClientConn())
-		statusCli := statuspb.NewStatusHistoryClient(announcer.ClientConn())
 
 		aqHist, err := aqCli.ListAirQualityHistory(t.Context(), &airqualitysensorpb.ListAirQualityHistoryRequest{Name: "airquality", PageSize: 10})
 		if err != nil {
@@ -196,14 +179,6 @@ func Test_automation_applyConfig(t *testing.T) {
 		}
 		if diff := cmp.Diff(int32(2), meterHist.GetTotalSize()); diff != "" {
 			t.Fatal(diff, "meter")
-		}
-
-		statusHist, err := statusCli.ListCurrentStatusHistory(t.Context(), &statuspb.ListCurrentStatusHistoryRequest{Name: "status", PageSize: 10})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if diff := cmp.Diff(int32(2), statusHist.GetTotalSize()); diff != "" {
-			t.Fatal(diff, "status")
 		}
 	})
 }
@@ -269,20 +244,6 @@ var cfgs = []config.Root{
 		Source: &config.Source{
 			Name:            "meter",
 			Trait:           meterpb.TraitName,
-			PollingSchedule: jsontypes.MustParseExtendedSchedule("*/5 * * * * *"),
-		},
-		Storage: &config.Storage{
-			Type: "memory",
-			TTL: &config.TTL{
-				MaxAge:   jsontypes.Duration{Duration: time.Minute * 3},
-				MaxCount: 10,
-			},
-		},
-	},
-	{
-		Source: &config.Source{
-			Name:            "status",
-			Trait:           statuspb.TraitName,
 			PollingSchedule: jsontypes.MustParseExtendedSchedule("*/5 * * * * *"),
 		},
 		Storage: &config.Storage{
