@@ -18,9 +18,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -39,9 +36,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -59,9 +53,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -80,9 +71,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.bos.EmergencyLight"
@@ -116,9 +104,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -137,9 +122,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -158,9 +140,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -179,9 +158,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -200,9 +176,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -221,9 +194,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -256,9 +226,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -277,9 +244,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -303,9 +267,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -325,9 +286,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -375,9 +333,6 @@
             },
             {
               "name": "smartcore.traits.Electric"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -399,9 +354,6 @@
               "more": {
                 "unit": "m\u00b3"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -429,9 +381,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -447,9 +396,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -465,9 +411,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -483,9 +426,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -501,9 +441,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -519,9 +456,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -537,9 +471,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -555,9 +486,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -573,9 +501,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -712,9 +637,6 @@
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]",
                 "openPercentAttributes": "{\"bounds\":{\"min\":0,\"max\":100},\"step\":25}"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -736,9 +658,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -760,9 +679,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -784,9 +700,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -808,9 +721,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -832,9 +742,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -862,9 +769,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -883,9 +787,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -904,9 +805,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -925,9 +823,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -946,9 +841,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -967,9 +859,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -988,9 +877,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1009,9 +895,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1030,9 +913,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1051,9 +931,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1072,9 +949,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.bos.EmergencyLight"
@@ -1108,9 +982,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1129,9 +1000,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1150,9 +1018,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1171,9 +1036,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1192,9 +1054,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1213,9 +1072,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1234,9 +1090,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1269,9 +1122,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -1291,9 +1141,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -1317,9 +1164,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -1339,9 +1183,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -1365,9 +1206,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -1387,9 +1225,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -1420,9 +1255,6 @@
             },
             {
               "name": "smartcore.traits.Electric"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1445,9 +1277,6 @@
             },
             {
               "name": "smartcore.traits.Electric"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1469,9 +1298,6 @@
             },
             {
               "name": "smartcore.traits.Electric"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1493,9 +1319,6 @@
               "more": {
                 "unit": "m\u00b3"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1523,9 +1346,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1541,9 +1361,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1559,9 +1376,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1577,9 +1391,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1595,9 +1406,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1613,9 +1421,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1631,9 +1436,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1649,9 +1451,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1667,9 +1466,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1685,9 +1481,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1703,9 +1496,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1721,9 +1511,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -1823,9 +1610,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1847,9 +1631,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1871,9 +1652,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1895,9 +1673,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1919,9 +1694,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1943,9 +1715,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1967,9 +1736,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -1991,9 +1757,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2015,9 +1778,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2054,9 +1814,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2075,9 +1832,6 @@
           "traits": [
             {
               "name": "smartcore.bos.Access"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2099,9 +1853,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2123,9 +1874,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2177,9 +1925,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2198,9 +1943,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2219,9 +1961,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.bos.EmergencyLight"
@@ -2255,9 +1994,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2276,9 +2012,6 @@
           "traits": [
             {
               "name": "smartcore.traits.Light"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2311,9 +2044,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -2333,9 +2063,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -2360,9 +2087,6 @@
               "name": "smartcore.traits.FanSpeed"
             },
             {
-              "name": "smartcore.bos.Status"
-            },
-            {
               "name": "smartcore.traits.OnOff"
             }
           ],
@@ -2383,9 +2107,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             },
             {
               "name": "smartcore.traits.OnOff"
@@ -2413,9 +2134,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2431,9 +2149,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2449,9 +2164,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2468,9 +2180,6 @@
           "traits": [
             {
               "name": "smartcore.traits.OccupancySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2487,9 +2196,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2505,9 +2211,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2523,9 +2226,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2541,9 +2241,6 @@
           "traits": [
             {
               "name": "smartcore.traits.AirQualitySensor"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "membership": {
@@ -2589,9 +2286,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2614,9 +2308,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2639,9 +2330,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2664,9 +2352,6 @@
               "more": {
                 "presets": "[{\"name\":\"closed\",\"title\":\"Closed\",\"positions\":{\"openPercent\":0}},{\"name\":\"ajar\",\"title\":\"Ajar\",\"positions\":{\"openPercent\":50}},{\"name\":\"opened\",\"title\":\"Opened\",\"positions\":{\"openPercent\":100}}]"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2698,9 +2383,6 @@
             },
             {
               "name": "smartcore.traits.FanSpeed"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2730,9 +2412,6 @@
             },
             {
               "name": "smartcore.traits.Electric"
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {
@@ -2833,9 +2512,6 @@
               "more": {
                 "type": "ev"
               }
-            },
-            {
-              "name": "smartcore.bos.Status"
             }
           ],
           "appearance": {

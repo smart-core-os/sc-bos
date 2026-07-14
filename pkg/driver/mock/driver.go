@@ -55,7 +55,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/speakerpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
@@ -443,11 +442,6 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(soundsensorpb.RegisterSoundSensorApiServer, soundsensorpb.SoundSensorApiServer(soundsensorpb.NewModelServer(model)))}, auto.SoundSensorAuto(model),
 			ctrl.Register(deviceName, traitMd.Name, forceJSON(func() *soundsensorpb.SoundLevel { return new(soundsensorpb.SoundLevel) },
 				func(v *soundsensorpb.SoundLevel, opts ...resource.WriteOption) error { _, err := model.UpdateSoundLevel(v, opts...); return err }))
-	case statuspb.TraitName:
-		model := statuspb.NewModel()
-		// set an initial value or Pull methods can hang
-		_, _ = model.UpdateProblem(&statuspb.StatusLog_Problem{Name: deviceName, Level: statuspb.StatusLog_NOMINAL})
-		return []node.Feature{node.HasServer(statuspb.RegisterStatusApiServer, statuspb.StatusApiServer(statuspb.NewModelServer(model)))}, auto.Status(model, deviceName), nil
 	case temperaturepb.TraitName:
 		model := temperaturepb.NewModel()
 		return []node.Feature{node.HasServer(temperaturepb.RegisterTemperatureApiServer, temperaturepb.TemperatureApiServer(temperaturepb.NewModelServer(model)))}, auto.TemperatureAuto(model),
