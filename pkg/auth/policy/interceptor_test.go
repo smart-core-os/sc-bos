@@ -168,6 +168,33 @@ func TestIsWriteMethod(t *testing.T) {
 	}
 }
 
+func TestIsAuditExcluded(t *testing.T) {
+	tests := []struct {
+		name    string
+		service string
+		method  string
+		want    bool
+	}{
+		// noisy RPCs that must be excluded from the audit log
+		{"reflection v1", "grpc.reflection.v1.ServerReflection", "ServerReflectionInfo", true},
+		{"reflection v1alpha", "grpc.reflection.v1alpha.ServerReflection", "ServerReflectionInfo", true},
+		{"hub test", "smartcore.bos.hub.v1.HubApi", "TestHubNode", true},
+		{"history create", "smartcore.bos.history.v1.HistoryAdminApi", "CreateHistoryRecord", true},
+		// legitimately-audited writes that must NOT be excluded
+		{"enrollment test", "smartcore.bos.enrollment.v1.EnrollmentApi", "TestEnrollment", false},
+		{"function test", "smartcore.bos.emergency.v1.EmergencyApi", "StartFunctionTest", false},
+		{"enroll hub node", "smartcore.bos.hub.v1.HubApi", "EnrollHubNode", false},
+		{"access grant", "smartcore.bos.tenants.v1.TenantApi", "CreateAccessGrant", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isAuditExcluded(tt.service, tt.method); got != tt.want {
+				t.Errorf("isAuditExcluded(%q, %q) = %v, want %v", tt.service, tt.method, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestInterceptor_AuditSink(t *testing.T) {
 	sink := &captureSink{}
 
