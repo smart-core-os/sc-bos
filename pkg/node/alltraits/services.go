@@ -50,7 +50,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/serviceticketpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/speakerpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -108,7 +107,6 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	securityeventpb.TraitName:  {securityeventpb.SecurityEventApi_ServiceDesc},
 	serviceticketpb.TraitName:  {serviceticketpb.ServiceTicketApi_ServiceDesc, serviceticketpb.ServiceTicketInfo_ServiceDesc},
 	soundsensorpb.TraitName:    {soundsensorpb.SoundSensorApi_ServiceDesc, soundsensorpb.SoundSensorInfo_ServiceDesc},
-	statuspb.TraitName:         {statuspb.StatusApi_ServiceDesc, statuspb.StatusHistory_ServiceDesc},
 	temperaturepb.TraitName:    {temperaturepb.TemperatureApi_ServiceDesc},
 	transportpb.TraitName:      {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
 	udmipb.TraitName:           {udmipb.UdmiService_ServiceDesc},
