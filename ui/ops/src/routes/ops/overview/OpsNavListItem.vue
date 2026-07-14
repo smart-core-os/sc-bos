@@ -2,13 +2,14 @@
   <v-list-group v-if="hasChildren" :value="props.item.title">
     <template #activator="{props: _props, isOpen: _isOpen}">
       <!--
-      Slightly different behaviour for containers that have their own pages, vs those that don't.
-      The first we expand on button click only, clicking the activator navs to the page.
+      Slightly different behaviour for containers that have their own destination (an in-app
+      layout or an external href), vs those that only expand.
+      The first we expand on button click only, clicking the activator navs to the destination.
       The second we expand on activator click, the button is just there for visual consistency.
       -->
-      <template v-if="props.item.layout">
+      <template v-if="hasOwnPage">
         <v-list-item
-            :to="toAreaLink"
+            v-bind="linkAttrs"
             :active="active"
             :class="{activeExact}">
           <template #prepend>
@@ -19,6 +20,15 @@
           </template>
           <v-list-item-title>{{ props.item.title }}</v-list-item-title>
           <template #append>
+            <v-btn
+                v-if="showExternalButton"
+                @click.prevent.stop="openExternal"
+                variant="text"
+                size="x-small"
+                class="text-medium-emphasis"
+                :aria-label="`Open ${props.item.title} (external)`"
+                :title="props.item.href"
+                icon="mdi-open-in-new"/>
             <v-btn
                 @click.prevent.stop="_props.onClick"
                 variant="text"
@@ -58,7 +68,7 @@
   </v-list-group>
   <v-list-item
       v-else
-      :to="toAreaLink"
+      v-bind="linkAttrs"
       :active="active"
       :class="{activeExact}">
     <template #prepend>
@@ -68,6 +78,16 @@
       </v-list-item-title>
     </template>
     <v-list-item-title>{{ props.item.title }}</v-list-item-title>
+    <template v-if="showExternalButton" #append>
+      <v-btn
+          @click.prevent.stop="openExternal"
+          variant="text"
+          size="x-small"
+          class="text-medium-emphasis"
+          :aria-label="`Open ${props.item.title} (external)`"
+          :title="props.item.href"
+          icon="mdi-open-in-new"/>
+    </template>
   </v-list-item>
 </template>
 
@@ -127,6 +147,105 @@ const active = computed(() => route.path === toAreaLink.value || route.path.star
  * @type {import('vue').ComputedRef<string>}
  */
 const toAreaLink = computed(() => `/ops/overview/${currentPath.value}`);
+
+/**
+ * Whether the item is an external link, i.e. it has a safe href.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const isExternal = computed(() => isSafeHref(props.item.href));
+
+/**
+ * Whether the item has an in-app dashboard layout.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const hasLayout = computed(() => Boolean(props.item.layout));
+
+/**
+ * Whether the item has its own primary destination (an in-app layout or an external href),
+ * as opposed to only expanding to reveal children. When true, the row navigates on click and
+ * any children collapse to an appended chevron button.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const hasOwnPage = computed(() => hasLayout.value || isExternal.value);
+
+/**
+ * The anchor attributes for an external link (href + target + rel), used when the row itself
+ * is the external anchor (href with no layout).
+ *
+ * @type {import('vue').ComputedRef<{href: string, target: string, rel: string}>}
+ */
+const externalAttrs = computed(() => ({
+  href: props.item.href,
+  target: props.item.target ?? '_blank',
+  rel: 'noopener noreferrer'
+}));
+
+/**
+ * Opens the item's external href. Used by the appended button when a layout owns the row - a
+ * button rather than a nested anchor, as an <a> can't validly contain another <a> (the same
+ * pattern as the chevron, which is also a button inside the row).
+ */
+function openExternal() {
+  if ((props.item.target ?? '_blank') === '_self') {
+    window.location.assign(props.item.href);
+  } else {
+    window.open(props.item.href, '_blank', 'noopener,noreferrer');
+  }
+}
+
+/**
+ * The link attributes to bind to the row's list item. An in-app layout takes precedence and
+ * owns the row; a lone href (no layout) makes the row itself the external anchor. When both a
+ * layout and an href are present the layout owns the row and the href is surfaced as an appended
+ * button (see showExternalButton), so neither destination is silently unreachable.
+ *
+ * @type {import('vue').ComputedRef<Object>}
+ */
+const linkAttrs = computed(() => {
+  if (isExternal.value && !hasLayout.value) return externalAttrs.value;
+  return {to: toAreaLink.value};
+});
+
+/**
+ * Whether to surface the external link as an appended button. Happens when an item has both an
+ * in-app layout (which owns the row) and an href, so the external destination stays reachable.
+ *
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const showExternalButton = computed(() => isExternal.value && hasLayout.value);
+
+// Warn about a configured href that is unsafe/invalid so the misconfiguration is visible rather
+// than silently degrading to a dead in-app link.
+if (props.item.href && !isSafeHref(props.item.href)) {
+  console.warn(
+      `Ops nav item "${props.item.title ?? props.item.path}" has an unsafe or invalid href and ` +
+      `will be ignored: ${props.item.href}`);
+}
+
+/**
+ * Checks whether an href is safe to render as an external link.
+ *
+ * Only http(s) URLs and root-relative paths are permitted. This rejects dangerous schemes
+ * such as javascript: and data:, which would otherwise execute in the Ops UI origin when
+ * clicked (the href comes from config, so this is defence-in-depth against a bad config).
+ *
+ * @param {string} href
+ * @return {boolean}
+ */
+function isSafeHref(href) {
+  if (typeof href !== 'string' || !href) return false;
+  // Root-relative paths (e.g. /-/ooh-ac-request/) are same-origin and safe.
+  if (href.startsWith('/')) return true;
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 </script>
 
 <style scoped>
