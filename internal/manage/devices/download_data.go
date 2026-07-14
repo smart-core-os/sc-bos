@@ -18,7 +18,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -128,17 +127,6 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 						return records, page.NextPageToken, nil
 					},
 				}
-			},
-		},
-		string(statuspb.TraitName): {
-			headers: []string{"status.level", "status.description", "status.recordtime"},
-			get: func(ctx context.Context, name string) (map[string]string, error) {
-				c := statuspb.NewStatusApiClient(s.m.ClientConn())
-				data, err := c.GetCurrentStatus(ctx, &statuspb.GetCurrentStatusRequest{Name: name})
-				if err != nil {
-					return nil, err
-				}
-				return statusLogToRow(data), nil
 			},
 		},
 		string(trait.AirQualitySensor): {
@@ -459,16 +447,6 @@ func meterReadingToRow(d *meterpb.MeterReading, unit string) map[string]string {
 		"meter.usage": fmt.Sprintf("%.3f", d.Usage),
 		"meter.unit":  unit,
 	}
-}
-
-func statusLogToRow(d *statuspb.StatusLog) map[string]string {
-	vals := make(map[string]string)
-	vals["status.level"] = d.GetLevel().String()
-	vals["status.description"] = d.GetDescription()
-	if d.RecordTime != nil {
-		vals["status.recordtime"] = d.GetRecordTime().AsTime().String()
-	}
-	return vals
 }
 
 func airQualityToRow(d *airqualitysensorpb.AirQuality) map[string]string {
