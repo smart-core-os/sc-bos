@@ -185,6 +185,9 @@ func TestIsAuditExcluded(t *testing.T) {
 		{"function test", "smartcore.bos.emergency.v1.EmergencyApi", "StartFunctionTest", false},
 		{"enroll hub node", "smartcore.bos.hub.v1.HubApi", "EnrollHubNode", false},
 		{"access grant", "smartcore.bos.tenants.v1.TenantApi", "CreateAccessGrant", false},
+		// same method name on a different service must NOT be excluded
+		{"other TestHubNode", "example.other.v1.OtherApi", "TestHubNode", false},
+		{"other CreateHistoryRecord", "example.other.v1.OtherApi", "CreateHistoryRecord", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

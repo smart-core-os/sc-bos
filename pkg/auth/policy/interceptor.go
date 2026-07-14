@@ -447,10 +447,11 @@ func isWriteMethod(method string) bool {
 
 // auditExcludedMethods are noisy, low-value RPCs that must never appear in the
 // audit log even though isWriteMethod would otherwise classify them as writes.
-// Matched on the short method name (see rpcutil.ServiceMethod).
+// Keyed on the fully-qualified "service/method" name (see rpcutil.ServiceMethod)
+// so an unrelated service reusing one of these method names is not excluded.
 var auditExcludedMethods = map[string]bool{
-	"TestHubNode":         true, // hub connectivity check, called frequently
-	"CreateHistoryRecord": true, // telemetry ingest, very noisy
+	"smartcore.bos.hub.v1.HubApi/TestHubNode":                      true, // hub connectivity check, called frequently
+	"smartcore.bos.history.v1.HistoryAdminApi/CreateHistoryRecord": true, // telemetry ingest, very noisy
 }
 
 // isAuditExcluded reports whether an RPC should be omitted from the audit log
@@ -460,7 +461,7 @@ func isAuditExcluded(service, method string) bool {
 	if strings.HasPrefix(service, "grpc.reflection.") {
 		return true
 	}
-	return auditExcludedMethods[method]
+	return auditExcludedMethods[service+"/"+method]
 }
 
 func isHTTPWriteMethod(method string) bool {
