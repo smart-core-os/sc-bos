@@ -34,7 +34,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/statuspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -340,8 +339,6 @@ func (a *automation) createCollector(store history.Store, traitName trait.Name) 
 		return node.HasServer(resourceusepb.RegisterResourceUseHistoryServer, resourceusepb.ResourceUseHistoryServer(historypb.NewResourceUseServer(store))), a.collectResourceUseChanges, nil
 	case soundsensorpb.TraitName:
 		return node.HasServer(soundsensorpb.RegisterSoundSensorHistoryServer, soundsensorpb.SoundSensorHistoryServer(historypb.NewSoundSensorServer(store))), a.collectSoundSensorChanges, nil
-	case statuspb.TraitName:
-		return node.HasServer(statuspb.RegisterStatusHistoryServer, statuspb.StatusHistoryServer(historypb.NewStatusServer(store))), a.collectCurrentStatusChanges, nil
 	case transportpb.TraitName:
 		return node.HasServer(transportpb.RegisterTransportHistoryServer, transportpb.TransportHistoryServer(historypb.NewTransportServer(store))), a.collectTransportChanges, nil
 	default:
