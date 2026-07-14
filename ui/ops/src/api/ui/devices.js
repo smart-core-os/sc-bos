@@ -165,6 +165,13 @@ function deviceQueryConditionFromObject(obj) {
     dst.setPresent(new Empty())
   }
   dst.setMatches(deviceQueryFromObject(obj.matches));
+  if (obj.anyOf) {
+    const list = new Device.Query.QueryList();
+    for (const q of (obj.anyOf.queriesList ?? [])) {
+      list.addQueries(deviceQueryFromObject(q));
+    }
+    dst.setAnyOf(list);
+  }
   return dst;
 }
 /**

@@ -120,6 +120,11 @@ message Device {
         // The condition matches when the value matches all conditions in the given query.
         // Fields in the sub-query are relative to the value this condition is matching against.
         Query matches = 50;
+
+        // The condition matches when the value matches any of the queries in the list.
+        // Each query is applied as an OR operation: the condition matches if at least one query matches.
+        // Fields in each sub-query are relative to the value this condition is matching against.
+        QueryList any_of = 51;
       }
 
       // Matcher describes how each value in the set of values contributes to the overall condition result.
@@ -138,6 +143,11 @@ message Device {
     // A list of strings, because oneof can't be repeated.
     message StringList {
       repeated string strings = 1;
+    }
+
+    // A list of queries, because oneof can't be repeated.
+    message QueryList {
+      repeated Query queries = 1;
     }
 
     // Conditions that must match for the device to be included in the results.

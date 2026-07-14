@@ -47,6 +47,9 @@ func conditionMatchesMessage(cond *devicespb.Device_Query_Condition, msg proto.M
 
 // valueMatchesQuery returns true if all the conditions in query match fields of v.
 func valueMatchesQuery(query *devicespb.Device_Query, v value) bool {
+	if query == nil {
+		return true
+	}
 	for _, condition := range query.Conditions {
 		if !conditionMatchesValue(condition, v) {
 			return false
@@ -226,6 +229,16 @@ func conditionToCmpFunc(cond *devicespb.Device_Query_Condition) func(value) bool
 	case *devicespb.Device_Query_Condition_Matches:
 		return func(v value) bool {
 			return valueMatchesQuery(c.Matches, v)
+		}
+
+	case *devicespb.Device_Query_Condition_AnyOf:
+		return func(v value) bool {
+			for _, q := range c.AnyOf.GetQueries() {
+				if valueMatchesQuery(q, v) {
+					return true
+				}
+			}
+			return false
 		}
 	}
 

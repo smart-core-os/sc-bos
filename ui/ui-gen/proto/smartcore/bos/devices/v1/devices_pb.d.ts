@@ -156,6 +156,11 @@ export namespace Device {
       hasMatches(): boolean;
       clearMatches(): Condition;
 
+      getAnyOf(): Device.Query.QueryList | undefined;
+      setAnyOf(value?: Device.Query.QueryList): Condition;
+      hasAnyOf(): boolean;
+      clearAnyOf(): Condition;
+
       getMatcher(): Device.Query.Condition.Matcher;
       setMatcher(value: Device.Query.Condition.Matcher): Condition;
 
@@ -191,6 +196,7 @@ export namespace Device {
         nameDescendantIncIn?: Device.Query.StringList.AsObject;
         present?: google_protobuf_empty_pb.Empty.AsObject;
         matches?: Device.Query.AsObject;
+        anyOf?: Device.Query.QueryList.AsObject;
         matcher: Device.Query.Condition.Matcher;
       };
 
@@ -221,6 +227,7 @@ export namespace Device {
         NAME_DESCENDANT_INC_IN = 33,
         PRESENT = 40,
         MATCHES = 50,
+        ANY_OF = 51,
       }
     }
 
@@ -242,6 +249,27 @@ export namespace Device {
     export namespace StringList {
       export type AsObject = {
         stringsList: Array<string>;
+      };
+    }
+
+
+    export class QueryList extends jspb.Message {
+      getQueriesList(): Array<Device.Query>;
+      setQueriesList(value: Array<Device.Query>): QueryList;
+      clearQueriesList(): QueryList;
+      addQueries(value?: Device.Query, index?: number): Device.Query;
+
+      serializeBinary(): Uint8Array;
+      toObject(includeInstance?: boolean): QueryList.AsObject;
+      static toObject(includeInstance: boolean, msg: QueryList): QueryList.AsObject;
+      static serializeBinaryToWriter(message: QueryList, writer: jspb.BinaryWriter): void;
+      static deserializeBinary(bytes: Uint8Array): QueryList;
+      static deserializeBinaryFromReader(message: QueryList, reader: jspb.BinaryReader): QueryList;
+    }
+
+    export namespace QueryList {
+      export type AsObject = {
+        queriesList: Array<Device.Query.AsObject>;
       };
     }
 

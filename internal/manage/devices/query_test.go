@@ -761,6 +761,99 @@ func Test_conditionToCmpFunc(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("any_of", func(t *testing.T) {
+		// Returns a value representing field prop of msg.
+		newField := func(prop string, msg *querypb.Result) value {
+			fd := resultFd(prop)
+			return value{
+				fd: fd,
+				v:  msg.ProtoReflect().Get(fd),
+			}
+		}
+		// Returns a value representing the r_result field containing msg as the sole element.
+		newVal := func(msg *querypb.Result) value {
+			return newField("r_result", &querypb.Result{RResult: []*querypb.Result{msg}})
+		}
+
+		containsQuery := func(s string) *devicespb.Device_Query {
+			return &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Value: &devicespb.Device_Query_Condition_StringContains{StringContains: s}},
+			}}
+		}
+		fieldContainsQuery := func(field, s string) *devicespb.Device_Query {
+			return &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{
+				{Field: field, Value: &devicespb.Device_Query_Condition_StringContains{StringContains: s}},
+			}}
+		}
+
+		tests := []struct {
+			name     string
+			queries  []*devicespb.Device_Query
+			positive []value
+			negative []value
+		}{
+			{
+				name:    "no queries never matches",
+				queries: nil,
+				negative: []value{
+					newVal(&querypb.Result{StringVal: "apple"}),
+				},
+			},
+			{
+				// a nil sub-query is treated as match-all, consistent with an empty query,
+				// and must not panic (see valueMatchesQuery's nil guard).
+				name:    "nil sub-query matches all",
+				queries: []*devicespb.Device_Query{nil},
+				positive: []value{
+					newVal(&querypb.Result{StringVal: "apple"}),
+					newVal(&querypb.Result{}),
+				},
+			},
+			{
+				name:    "matches if any query matches",
+				queries: []*devicespb.Device_Query{containsQuery("apple"), containsQuery("pie")},
+				positive: []value{
+					newVal(&querypb.Result{StringVal: "apple"}),
+					newVal(&querypb.Result{StringVal: "pie"}),
+					newVal(&querypb.Result{StringVal: "apple pie"}),
+				},
+				negative: []value{
+					newVal(&querypb.Result{}),
+					newVal(&querypb.Result{StringVal: "banana"}),
+				},
+			},
+			{
+				name:    "sub-query conditions are ANDed (OR of ANDs)",
+				queries: []*devicespb.Device_Query{fieldContainsQuery("string_val", "apple"), fieldContainsQuery("r_string", "pie")},
+				positive: []value{
+					newVal(&querypb.Result{StringVal: "apple"}),
+					newVal(&querypb.Result{RString: []string{"pie"}}),
+					newVal(&querypb.Result{StringVal: "apple", RString: []string{"pie"}}),
+				},
+				negative: []value{
+					newVal(&querypb.Result{}),
+					newVal(&querypb.Result{StringVal: "banana", RString: []string{"cake"}}),
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_AnyOf{AnyOf: &devicespb.Device_Query_QueryList{Queries: tt.queries}}})
+				for i, v := range tt.positive {
+					if !cmpFunc(v) {
+						t.Errorf("[%d] expected %+v to match any of %+v", i, v, tt.queries)
+					}
+				}
+				for i, v := range tt.negative {
+					if cmpFunc(v) {
+						t.Errorf("[%d] expected %+v to not match any of %+v", i, v, tt.queries)
+					}
+				}
+			})
+		}
+	})
 }
 
 func Example_healthyDevices() {
@@ -864,4 +957,65 @@ func Example_healthyDevices() {
 	//   Device01 matches: false
 	//   Device02 matches: true
 	//   Device03 matches: false
+}
+
+func Example_anyOfMatchesAbnormalOrUnreliable() {
+	// all checks normal and communicating - healthy
+	device01 := &devicespb.Device{
+		Name: "Device01",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_NORMAL, Reliability: &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_RELIABLE}},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_NORMAL},
+		},
+	}
+	// a value is out of range - a range issue
+	device02 := &devicespb.Device{
+		Name: "Device02",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_NORMAL, Reliability: &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_RELIABLE}},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_HIGH},
+		},
+	}
+	// normality is normal, but we can't talk to the device - a comms-only issue.
+	// This device is missed by a query that only looks at normality.
+	device03 := &devicespb.Device{
+		Name: "Device03",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Online", Normality: healthpb.HealthCheck_NORMAL, Reliability: &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_NO_RESPONSE}},
+			{Id: "Temperature", Normality: healthpb.HealthCheck_NORMAL},
+		},
+	}
+
+	// a device has an issue if ANY health check is abnormal OR unreliable.
+	// any_of lets us OR the two independent health dimensions in a single query.
+	unhealthyQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
+			{
+				Field: "health_checks",
+				// Matcher defaults to ANY: the device matches if any health check matches any_of.
+				Value: &devicespb.Device_Query_Condition_AnyOf{AnyOf: &devicespb.Device_Query_QueryList{Queries: []*devicespb.Device_Query{
+					{Conditions: []*devicespb.Device_Query_Condition{{
+						Field: "normality",
+						Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: []string{"ABNORMAL", "HIGH", "LOW"}}},
+					}}},
+					{Conditions: []*devicespb.Device_Query_Condition{{
+						Field: "reliability.state",
+						Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: []string{
+							"UNRELIABLE", "CONN_TRANSIENT_FAILURE", "SEND_FAILURE", "NO_RESPONSE", "BAD_RESPONSE", "NOT_FOUND", "PERMISSION_DENIED",
+						}}},
+					}}},
+				}}},
+			},
+		},
+	}
+	fmt.Println("Devices with any issue (abnormal or unreliable):")
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
+		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(unhealthyQuery, device))
+	}
+
+	// Output:
+	// Devices with any issue (abnormal or unreliable):
+	//   Device01 matches: false
+	//   Device02 matches: true
+	//   Device03 matches: true
 }
