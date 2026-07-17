@@ -2,18 +2,26 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"sync"
 	"time"
 )
 
+// ErrTagExists is returned by Group.Spawn when the group already contains a task
+// with the requested tag.
+var ErrTagExists = errors.New("tag already present")
+
 type Group struct {
 	m     sync.Mutex
 	tasks map[string]*GroupTask
 }
 
-func (g *Group) Spawn(ctx context.Context, tag string, task Task, options ...Option) *GroupTask {
+// Spawn starts task running under the given tag and tracks it in the group.
+// Tags must be unique within a group: if one is already present, Spawn does
+// nothing and returns an error wrapping ErrTagExists.
+func (g *Group) Spawn(ctx context.Context, tag string, task Task, options ...Option) (*GroupTask, error) {
 	g.m.Lock()
 	defer g.m.Unlock()
 
@@ -22,12 +30,11 @@ func (g *Group) Spawn(ctx context.Context, tag string, task Task, options ...Opt
 	}
 
 	if _, present := g.tasks[tag]; present {
-		// TODO: autogenerate an alternative name
-		panic("tag already present")
+		return nil, fmt.Errorf("spawn %q: %w", tag, ErrTagExists)
 	}
 	gt := spawnGroupTask(tag, ctx, NewRunner(task, options...))
 	g.tasks[tag] = gt
-	return gt
+	return gt, nil
 }
 
 func (g *Group) Tasks() map[string]*GroupTask {
