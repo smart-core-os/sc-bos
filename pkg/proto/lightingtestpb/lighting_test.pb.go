@@ -439,7 +439,7 @@ func (x *ListLightHealthResponse) GetNextPageToken() string {
 type ListLightEventsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // TODO: add filtering support
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -823,12 +823,12 @@ const file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDesc = "" +
 	"\n" +
 	"LAMP_FAULT\x10\x04\x12\x19\n" +
 	"\x15COMMUNICATION_FAILURE\x10\x05\x12\x0f\n" +
-	"\vOTHER_FAULT\x10\x062\xf9\x03\n" +
+	"\vOTHER_FAULT\x10\x062\xfe\x03\n" +
 	"\x0fLightingTestApi\x12r\n" +
 	"\x0eGetLightHealth\x124.smartcore.bos.lightingtest.v1.GetLightHealthRequest\x1a*.smartcore.bos.lightingtest.v1.LightHealth\x12\x80\x01\n" +
 	"\x0fListLightHealth\x125.smartcore.bos.lightingtest.v1.ListLightHealthRequest\x1a6.smartcore.bos.lightingtest.v1.ListLightHealthResponse\x12\x80\x01\n" +
 	"\x0fListLightEvents\x125.smartcore.bos.lightingtest.v1.ListLightEventsRequest\x1a6.smartcore.bos.lightingtest.v1.ListLightEventsResponse\x12l\n" +
-	"\fGetReportCSV\x122.smartcore.bos.lightingtest.v1.GetReportCSVRequest\x1a(.smartcore.bos.lightingtest.v1.ReportCSVB:Z8github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpbb\x06proto3"
+	"\fGetReportCSV\x122.smartcore.bos.lightingtest.v1.GetReportCSVRequest\x1a(.smartcore.bos.lightingtest.v1.ReportCSV\x1a\x03\x88\x02\x01B:Z8github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpbb\x06proto3"
 
 var (
 	file_smartcore_bos_lightingtest_v1_lighting_test_proto_rawDescOnce sync.Once

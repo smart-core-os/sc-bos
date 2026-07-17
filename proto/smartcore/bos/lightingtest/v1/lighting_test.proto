@@ -7,7 +7,11 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/lightingtestpb";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
+// Deprecated: LightingTestApi is deprecated; implement EmergencyLightApi instead.
+// It will be removed once downstream projects have migrated. See SCB-1391.
 service LightingTestApi {
+  option deprecated = true;
+
   rpc GetLightHealth(GetLightHealthRequest) returns (LightHealth);
   rpc ListLightHealth(ListLightHealthRequest) returns (ListLightHealthResponse);
 
@@ -83,7 +87,6 @@ message ListLightHealthResponse {
 message ListLightEventsRequest {
   int32 page_size = 1;
   string page_token = 2;
-  // TODO: add filtering support
 }
 message ListLightEventsResponse {
   repeated LightingEvent events = 1;
