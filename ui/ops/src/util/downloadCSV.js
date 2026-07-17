@@ -2,6 +2,25 @@ import {camelToSentence} from '@/util/string';
 import {toValue} from 'vue';
 
 /**
+ * Escapes a single field for RFC 4180 CSV output. Wraps the value in double
+ * quotes when it contains a comma, double-quote, CR or LF, doubling any
+ * embedded double-quotes. Nullish values become an empty field.
+ *
+ * Note: no spreadsheet formula-injection guard (prefixing =/+/-/@) is applied,
+ * as that would silently alter legitimate negative numeric values in exports.
+ *
+ * @param {*} field
+ * @return {string}
+ */
+function escapeCSVField(field) {
+  const str = field === null || field === undefined ? '' : String(field);
+  if (/[",\r\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+/**
  * Generates a function to download records as a CSV file based on specified properties.
  *
  * @template T
@@ -70,11 +89,11 @@ export const csvDownload = async (params) => {
 
     // Generate the data rows
     const rows = flattenedRecords.map(record =>
-      Object.keys(headerMap).map(key => record[key]).join(',')
+      Object.keys(headerMap).map(key => escapeCSVField(record[key])).join(',')
     );
 
     // Return the CSV string
-    return [header.join(',')].concat(rows).join('\n');
+    return [header.map(escapeCSVField).join(',')].concat(rows).join('\n');
   };
 
 
@@ -137,8 +156,7 @@ export const csvDownload = async (params) => {
  * @param {string[][]} data
  */
 export function downloadCSVRows(filename, data) {
-  // todo: escape ',' and '"' in data
-  const csvContent = data.map(e => e.join(',')).join('\n') + '\n';
+  const csvContent = data.map(e => e.map(escapeCSVField).join(',')).join('\n') + '\n';
   download(filename, csvContent, 'text/csv;charset=utf-8;');
 }
 
