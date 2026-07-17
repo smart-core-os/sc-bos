@@ -76,8 +76,8 @@ Skip empty categories silently. If the user declines a whole category (e.g., "sk
 
 ### Applying fixes
 
-- If a fix touches `.proto` files, regenerate the Go/JS afterwards (via WSL — see `.claude/CLAUDE.md`) and include the regenerated output.
-- Keep the change building as you go (`go build ./...`); UI changes should still pass `yarn --cwd ops lint:nofix` (run from `ui/`; on this host see `.claude/CLAUDE.md` for the WSL/node-direct route).
+- If a fix touches `.proto` files, regenerate the Go/JS afterwards (`bash scripts/gen-proto.sh`) and include the regenerated output.
+- Keep the change building as you go (`go build ./...`); UI changes should still pass `yarn --cwd ops lint:nofix` (run from `ui/`).
 
 ### Reply to threads
 
@@ -115,7 +115,7 @@ If any code changes were made, re-run the relevant pre-flight gate (mirrors CI):
 
 ```
 go build ./... && go vet -lostcancel=false ./... && go test ./...
-# for UI changes (run from ui/; see .claude/CLAUDE.md for the host's WSL/node-direct route):
+# for UI changes (run from ui/):
 (cd ui && yarn --cwd ops lint:nofix)
 ```
 

@@ -45,7 +45,7 @@ Act on the flags before doing anything else:
 - `nothing-to-raise-stop` — no commits ahead **and** no uncommitted work. Nothing to raise. Stop.
 - `rebase` — branch is behind base. Rebase onto `origin/<base>` now, before Phase 1, so confidence assessment and pre-flight operate on the final state (`git rebase origin/<base>`; stash first if there's uncommitted work). Resolve conflicts, then continue.
 - `skip-build` — pre-flight (Phase 2) can skip the Go build/test chain; see that phase for the fast path.
-- `proto-regen` — the diff touches `.proto` files. Confirm the generated code is up to date (regenerate via WSL — see `.claude/CLAUDE.md`) and that the regenerated output is committed, before proceeding.
+- `proto-regen` — the diff touches `.proto` files. Confirm the generated code is up to date (`bash scripts/gen-proto.sh`) and that the regenerated output is committed, before proceeding.
 
 ## Phase 1 — Confidence assessment
 
@@ -102,8 +102,6 @@ CI also runs `staticcheck ./...` (`honnef.co/go/tools/cmd/staticcheck@2026.1`). 
 
 - Run from `ui/` (the yarn workspace root, as CI does): `yarn --cwd ops lint:nofix` — exactly what CI runs per-workspace. (`yarn --cwd ui/ops …` from the repo root does **not** work — the repo root isn't a workspace, so the hoisted binaries don't resolve.)
 - For a build-affecting change, also `yarn --cwd ops build` (from `ui/`).
-
-> **Windows host note:** the ops UI deps are installed under WSL, so `yarn` lint/build fail natively (`'eslint' is not recognized`, rolldown `MODULE_NOT_FOUND`). Run them from WSL, or use the eslint node-direct fallback. See `.claude/CLAUDE.md` → "Linting / building the ops UI".
 
 Note: the `lint` script auto-fixes; `lint:nofix` only checks. If you run `lint` to auto-fix, review the resulting `git status` and include the fixes in the commit, then confirm `lint:nofix` passes.
 

@@ -128,10 +128,9 @@ The chosen option will almost always have follow-up details that need pinning do
 
 Branch state was already vetted in the Phase 1 pre-flight, so proceed directly to implementation. Follow the conventions already present in the code you're touching (match the surrounding package's style, error handling, and test patterns).
 
-- **Proto changes.** After editing any `.proto`, regenerate the Go/JS code. `protoc` is not installed on the Windows host — run the generator from WSL (see `.claude/CLAUDE.md`):
-  `wsl.exe -e bash -lc 'cd /mnt/c/Users/DeanRedfern/dev/sc-bos && bash scripts/gen-proto.sh'`
+- **Proto changes.** After editing any `.proto`, regenerate the Go/JS code with `bash scripts/gen-proto.sh` (it runs `go run ./cmd/tools/genproto`), and commit the regenerated output alongside the proto.
 - **Go.** Keep it building as you go: `go build ./...`. Add/adjust tests next to the code.
-- **Ops UI.** Lives under `ui/ops` (Vue 3 + Vuetify, Vite, yarn workspaces rooted at `ui/`). Lint from `ui/` (the workspace root, as CI does): `yarn --cwd ops lint`. On this Windows host the UI deps are WSL-installed, so run lint/build from WSL or via the eslint node-direct fallback — see `.claude/CLAUDE.md` → "Linting / building the ops UI".
+- **Ops UI.** Lives under `ui/ops` (Vue 3 + Vuetify, Vite, yarn workspaces rooted at `ui/`). Lint from `ui/` (the workspace root, as CI does): `yarn --cwd ops lint`.
 
 If the work turns out to be materially different from the chosen option (e.g. you discover a needed proto change mid-edit, or the change implies a new trait/domain that wasn't in the plan), stop and re-engage the user — don't quietly expand the scope. Bigger-than-expected is usually still Workable; only step out to a design pass if what you discovered genuinely crosses into a new product domain.
 
@@ -140,7 +139,7 @@ If the work turns out to be materially different from the chosen option (e.g. yo
 The ticket symptom should be **gone**, and **nothing adjacent should have regressed**. A green build alone is **not** validation — the change needs to be observed working. Consider driving this with the `/verify` skill.
 
 - **Same reproduction as Phase 2.** If you reproduced the bug via a Go test, re-run it. If via the ops UI, re-walk the same screen. The smoke must hit the same surface the ticket complained about.
-- **Adjacent surface.** Mirror what CI will run (see `/raise-pr` for the full gate): `go build ./...`, `go vet -lostcancel=false ./...`, `go test ./...`, and for UI changes `yarn --cwd ops lint:nofix` run from `ui/` (on this host see `.claude/CLAUDE.md` for the WSL/node-direct route). If the fix touched a shared helper, smoke-test the other callers. If it touched UI, click around related screens — visual regressions don't show up in unit tests, so observe the change rendered before claiming success.
+- **Adjacent surface.** Mirror what CI will run (see `/raise-pr` for the full gate): `go build ./...`, `go vet -lostcancel=false ./...`, `go test ./...`, and for UI changes `yarn --cwd ops lint:nofix` run from `ui/`. If the fix touched a shared helper, smoke-test the other callers. If it touched UI, click around related screens — visual regressions don't show up in unit tests, so observe the change rendered before claiming success.
 - **Driver / integration work.** Where the change touches a driver or external integration, exercise it against a mock or a real device as available, and say which you used.
 
 If you genuinely can't validate (no environment, missing hardware), say so explicitly rather than claiming success. Report results back to the user with a short summary: what you tested, what passed, anything you couldn't verify and why.
