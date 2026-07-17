@@ -12,6 +12,9 @@ podman-build-secret*
 .bin
 demo/vanti-ugs/.env
 
+# Node dependencies (e.g. scripts/ proto-gen tooling)
+node_modules/
+
 # sccexporter local demo artifacts (throwaway certs, broker config, generated DBO)
 example/config/vanti-ugs/scc-certs/
 /mosquitto.conf
