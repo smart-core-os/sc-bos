@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
@@ -30,25 +31,66 @@ func TestLifecycle_CurrentState(t *testing.T) {
 		lt.stopWithin(wait)
 		lt.assertCurrentState(StatusInactive, wait)
 	})
+	// start,configure and start,configure,stop observe the transient StatusLoading
+	// state that only exists while ApplyConfig is running. Racing that window with
+	// wall-clock waits is flaky (SCB-1373), so these run inside a synctest bubble:
+	// synctest.Wait settles all goroutines without advancing the fake clock, so the
+	// main loop parks inside ApplyConfig's sleep with the state held at Loading long
+	// enough to observe it deterministically.
 	t.Run("start,configure", func(t *testing.T) {
-		lt := newLifecycleTester(t)
-		lt.startWithin(wait)
-		lt.assertCurrentState(StatusActive, wait)
-		lt.applyConfigSleep(time.Millisecond)
-		lt.configureWithin("foo", wait)
-		lt.assertCurrentState(StatusLoading, wait)
-		lt.assertCurrentState(StatusActive, wait)
+		synctest.Test(t, func(t *testing.T) {
+			lt := newLifecycleTester(t)
+			if err := lt.Start(t.Context()); err != nil {
+				t.Fatalf("Start err: %s", err)
+			}
+			synctest.Wait()
+			lt.assertState(StatusActive)
+
+			lt.applyConfigSleep(time.Millisecond)
+			if err := lt.Configure([]byte("foo")); err != nil {
+				t.Fatalf("Configure err: %v", err)
+			}
+			synctest.Wait() // main loop parks inside ApplyConfig; state held at Loading
+			lt.assertState(StatusLoading)
+
+			time.Sleep(time.Millisecond) // advance the fake clock so ApplyConfig completes
+			synctest.Wait()
+			lt.assertState(StatusActive)
+
+			// Stop the main loop before the bubble ends, else synctest panics on the
+			// leaked goroutine.
+			if err := lt.Stop(); err != nil {
+				t.Fatalf("Stop err: %v", err)
+			}
+			synctest.Wait()
+		})
 	})
 	t.Run("start,configure,stop", func(t *testing.T) {
-		lt := newLifecycleTester(t)
-		lt.startWithin(wait)
-		lt.assertCurrentState(StatusActive, wait)
-		lt.applyConfigSleep(time.Millisecond)
-		lt.configureWithin("foo", wait)
-		lt.assertCurrentState(StatusLoading, wait)
-		lt.assertCurrentState(StatusActive, wait)
-		lt.stopWithin(wait)
-		lt.assertCurrentState(StatusInactive, wait)
+		synctest.Test(t, func(t *testing.T) {
+			lt := newLifecycleTester(t)
+			if err := lt.Start(t.Context()); err != nil {
+				t.Fatalf("Start err: %s", err)
+			}
+			synctest.Wait()
+			lt.assertState(StatusActive)
+
+			lt.applyConfigSleep(time.Millisecond)
+			if err := lt.Configure([]byte("foo")); err != nil {
+				t.Fatalf("Configure err: %v", err)
+			}
+			synctest.Wait() // main loop parks inside ApplyConfig; state held at Loading
+			lt.assertState(StatusLoading)
+
+			time.Sleep(time.Millisecond) // advance the fake clock so ApplyConfig completes
+			synctest.Wait()
+			lt.assertState(StatusActive)
+
+			if err := lt.Stop(); err != nil {
+				t.Fatalf("Stop err: %v", err)
+			}
+			synctest.Wait()
+			lt.assertState(StatusInactive)
+		})
 	})
 
 	t.Run("configure", func(t *testing.T) {
@@ -184,6 +226,15 @@ func (lt *lifecycleTester) stopWithin(wait time.Duration) {
 		return // success
 	case <-time.After(wait):
 		lt.Fatalf("Stop timeout after %s", wait)
+	}
+}
+
+// assertState checks the state synchronously, without waiting. Use inside a
+// synctest bubble after synctest.Wait, where the state has already settled.
+func (lt *lifecycleTester) assertState(want Status) {
+	lt.Helper()
+	if got := lt.Lifecycle.CurrentState(); got != want {
+		lt.Fatalf("CurrentState want %s, got %s", want, got)
 	}
 }
 
