@@ -2,7 +2,12 @@ import {timestampToDate} from '@/api/convpb.js';
 import {closeResource, newResourceCollection} from '@/api/resource.js';
 import {pullHealthChecks} from '@/api/sc/traits/health.js';
 import useFilterCtx from '@/components/filter/filterCtx.js';
-import {usePullDevicesMetadata, useDevicesMetadataField} from '@/composables/devices.js';
+import {
+  ABNORMAL_NORMALITIES,
+  UNRELIABLE_STATES,
+  usePullDevicesMetadata,
+  useDevicesMetadataField
+} from '@/composables/devices.js';
 import {format} from '@/util/number.js';
 import {hasOneOf} from '@/util/proto.js';
 import {toQueryObject, watchResource} from '@/util/traits.js';
@@ -216,6 +221,20 @@ export function useHealthCheckFilters(forcedFilters) {
       }
     }
 
+    if (!Object.hasOwn(forced, 'health_checks.issue_type')) {
+      filters.push({
+        key: 'health_checks.issue_type',
+        icon: 'mdi-alert-outline',
+        title: 'Issue Type',
+        type: 'list',
+        items: [
+          {title: 'Connectivity', value: 'connectivity'},
+          {title: 'Out of range', value: 'range'},
+          {title: 'Fault', value: 'fault'}
+        ]
+      });
+    }
+
     if (!Object.hasOwn(forced, 'health_checks.occupant_impact')) {
       filters.push({
         key: 'health_checks.occupant_impact',
@@ -277,6 +296,43 @@ export function useHealthCheckFilters(forcedFilters) {
         return {field: 'metadata.location.zone', stringEqualFold: value === NO_ZONE ? '' : value};
       case 'metadata.membership.subsystem':
         return {field: 'metadata.membership.subsystem', stringEqualFold: value === NO_SUBSYSTEM ? '' : value};
+      case 'health_checks.issue_type': {
+        // Each option narrows to a single kind of issue on a single health check.
+        // A nested `matches` (matcher ANY) applies the sub-conditions to the same
+        // check, so e.g. "Fault" means the same check both is a faults check and is
+        // currently abnormal. Only converter-supported matchers are used here
+        // (present / string_in / matches); see ui/api/ui/devices.js.
+        const token = value?.value ?? value;
+        switch (token) {
+          case 'connectivity':
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'reliability.state', stringIn: {stringsList: UNRELIABLE_STATES}}
+              ]}
+            };
+          case 'range':
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'bounds', present: {}},
+                {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITIES}}
+              ]}
+            };
+          case 'fault':
+            // Faults present always implies ABNORMAL (health.proto), so the normality
+            // clause simply excludes a faults check whose fault list is currently empty.
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'faults', present: {}},
+                {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITIES}}
+              ]}
+            };
+          default:
+            return null;
+        }
+      }
       case 'health_checks.occupant_impact': {
         const numVal = value?.value ?? value;
         const enumName = enumValueToName(HealthCheck.OccupantImpact, numVal);
