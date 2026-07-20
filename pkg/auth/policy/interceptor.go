@@ -225,7 +225,7 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 		)
 	}
 	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
-	if isWriteMethod(method) && !stream.Open {
+	if isWriteMethod(method) && !isAuditExcluded(service, method) && !stream.Open {
 		outcome := "allowed"
 		if err != nil {
 			outcome = "denied"
@@ -443,6 +443,25 @@ func isWriteMethod(method string) bool {
 		}
 	}
 	return true
+}
+
+// auditExcludedMethods are noisy, low-value RPCs that must never appear in the
+// audit log even though isWriteMethod would otherwise classify them as writes.
+// Keyed on the fully-qualified "service/method" name (see rpcutil.ServiceMethod)
+// so an unrelated service reusing one of these method names is not excluded.
+var auditExcludedMethods = map[string]bool{
+	"smartcore.bos.hub.v1.HubApi/TestHubNode":                      true, // hub connectivity check, called frequently
+	"smartcore.bos.history.v1.HistoryAdminApi/CreateHistoryRecord": true, // telemetry ingest, very noisy
+}
+
+// isAuditExcluded reports whether an RPC should be omitted from the audit log
+// regardless of whether it is a write method.
+func isAuditExcluded(service, method string) bool {
+	// gRPC server reflection (v1 and v1alpha) is not a meaningful audit event.
+	if strings.HasPrefix(service, "grpc.reflection.") {
+		return true
+	}
+	return auditExcludedMethods[service+"/"+method]
 }
 
 func isHTTPWriteMethod(method string) bool {
