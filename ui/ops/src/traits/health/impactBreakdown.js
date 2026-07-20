@@ -1,4 +1,5 @@
 import {usePullDevicesMetadata} from '@/composables/devices.js';
+import {ABNORMAL_NORMALITY_STATES} from '@/traits/health/health.js';
 import {useRollingHistory} from '@/traits/health/rollingHistory.js';
 import {computed, toValue} from 'vue';
 
@@ -121,7 +122,7 @@ function useImpactTable(conditions, opts) {
             // devices with health checks that are both abnormal and have the specified impact
             field: 'health_checks', matches: {
               conditionsList: [
-                {field: 'normality', stringIn: {stringsList: ['ABNORMAL', 'HIGH', 'LOW']}},
+                {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITY_STATES}},
                 {field: opts.impactField, stringIn: {stringsList: opts.fields.map(f => f.key)}}
               ]
             }
