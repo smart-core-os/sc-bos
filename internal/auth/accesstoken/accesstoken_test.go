@@ -186,3 +186,31 @@ func newTestSource(t *testing.T) *Source {
 		SignatureAlgorithms: []string{string(jose.HS256)},
 	}
 }
+
+func TestDefaultSignatureAlgorithms(t *testing.T) {
+	// This package always signs with HS256, so the permitted set must be exactly HS256.
+	if len(DefaultSignatureAlgorithms) != 1 || DefaultSignatureAlgorithms[0] != string(jose.HS256) {
+		t.Errorf("DefaultSignatureAlgorithms = %v, want [HS256]", DefaultSignatureAlgorithms)
+	}
+}
+
+func TestValidateAccessToken_rejectsDisallowedAlgorithm(t *testing.T) {
+	// A token signed with HS256 must be rejected when HS256 is not in the permitted set,
+	// even though the key would otherwise verify it. This is what lets a verifier with an
+	// asymmetric-only allow-list (e.g. the Keycloak path) safely reject symmetric tokens.
+	issuer := newTestSource(t) // signs HS256
+	tokenStr, err := issuer.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("GenerateAccessToken %v", err)
+	}
+
+	validator := &Source{
+		Key:                 issuer.Key,
+		Issuer:              issuer.Issuer,
+		Now:                 time.Now,
+		SignatureAlgorithms: []string{string(jose.RS256)}, // HS256 deliberately not permitted
+	}
+	if _, err := validator.ValidateAccessToken(t.Context(), tokenStr); err == nil {
+		t.Error("expected validation to fail when the token's algorithm is not permitted")
+	}
+}
