@@ -28,6 +28,11 @@ const (
 // LightingTestApiClient is the client API for LightingTestApi service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Deprecated: LightingTestApi is deprecated; implement EmergencyLightApi instead.
+// It will be removed once downstream projects have migrated. See SCB-1391.
+//
+// Deprecated: Do not use.
 type LightingTestApiClient interface {
 	GetLightHealth(ctx context.Context, in *GetLightHealthRequest, opts ...grpc.CallOption) (*LightHealth, error)
 	ListLightHealth(ctx context.Context, in *ListLightHealthRequest, opts ...grpc.CallOption) (*ListLightHealthResponse, error)
@@ -39,6 +44,7 @@ type lightingTestApiClient struct {
 	cc grpc.ClientConnInterface
 }
 
+// Deprecated: Do not use.
 func NewLightingTestApiClient(cc grpc.ClientConnInterface) LightingTestApiClient {
 	return &lightingTestApiClient{cc}
 }
@@ -86,6 +92,11 @@ func (c *lightingTestApiClient) GetReportCSV(ctx context.Context, in *GetReportC
 // LightingTestApiServer is the server API for LightingTestApi service.
 // All implementations must embed UnimplementedLightingTestApiServer
 // for forward compatibility.
+//
+// Deprecated: LightingTestApi is deprecated; implement EmergencyLightApi instead.
+// It will be removed once downstream projects have migrated. See SCB-1391.
+//
+// Deprecated: Do not use.
 type LightingTestApiServer interface {
 	GetLightHealth(context.Context, *GetLightHealthRequest) (*LightHealth, error)
 	ListLightHealth(context.Context, *ListLightHealthRequest) (*ListLightHealthResponse, error)
@@ -123,6 +134,7 @@ type UnsafeLightingTestApiServer interface {
 	mustEmbedUnimplementedLightingTestApiServer()
 }
 
+// Deprecated: Do not use.
 func RegisterLightingTestApiServer(s grpc.ServiceRegistrar, srv LightingTestApiServer) {
 	// If the following call pancis, it indicates UnimplementedLightingTestApiServer was
 	// embedded by pointer and is nil.  This will cause panics if an
