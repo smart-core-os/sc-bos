@@ -190,6 +190,8 @@ If code changed and the user is happy, recommend they invoke `/raise-pr`. Don't 
 
 The To Verify transition is tied to **PR publication**, not local validation — until the change is on GitHub for a teammate to look at, there's nothing for anyone to verify. Once `/raise-pr` has successfully published the PR (pushed, opened, and marked ready-for-review per that skill's flow), transition the ticket from In Progress to **"To Verify"** via `mcp__youtrack__update_issue`, using the project's exact state name as discovered in Phase 1.
 
+To Verify is the *in-review* state; the closing transition happens on **merge**, carried by the `#SCB-NNNN State Done` command `/raise-pr` puts in the PR body (processed by YouTrack's GitHub VCS integration). So don't set Done here — leave the merge to resolve it. If that integration isn't enabled, the ticket stays at To Verify after merge and someone closes it manually.
+
 Skip the transition if:
 
 - The user declined `/raise-pr` or `/raise-pr` did not complete (no published PR yet — state stays In Progress).

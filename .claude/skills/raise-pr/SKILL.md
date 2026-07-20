@@ -148,7 +148,7 @@ If push is rejected for "fetch first" — and sanity check didn't already prompt
 Resolve everything before invoking `gh pr create`:
 
 1. **Title** — already decided in Phase 3 (`area: summary (SCB-NNNN)`).
-2. **Body** — prose explaining *why*, not what. The diff explains what. End with a verification line stating how the change was exercised. If the work tracks a ticket, reference it (e.g. a `SCB-NNNN` line, or a link to the YouTrack issue) so reviewers can find it — the `/grab-ticket` flow owns the YouTrack state transition, so the PR body just needs to make the link discoverable.
+2. **Body** — prose explaining *why*, not what. The diff explains what. End with a verification line stating how the change was exercised. If the work tracks a ticket, end with a YouTrack command footer `#SCB-NNNN State Done` — this both links the ticket and, when the PR merges, transitions it to Done via YouTrack's GitHub VCS integration (the merge is the resolving event; a bare `SCB-NNNN` only links). If the integration isn't enabled the footer is harmless text and the ticket stays where `/grab-ticket` left it (To Verify), to be closed manually. Use the project's resolved-state command if it isn't `State Done`.
 3. **Base** — `$ARGUMENTS` or `main`.
 4. **Draft mode** — open as draft. CI still runs on drafts; mergeable status is computed regardless. Opening as draft keeps reviewers out of it until CI is green and the PR is mergeable — the flip and the reviewer request happen together in Phase 7.
 
@@ -171,7 +171,7 @@ Capture the PR number and URL from the output.
 
 Verified by <go test ./pkg/... / exercised cmd/bos with <config> / browser walk-through of <flow> / proto regenerated and built / ...>.
 
-SCB-NNNN
+#SCB-NNNN State Done
 ```
 
 Keep it short. Reviewers can read the diff. The body's job is to communicate intent, confirm the change was witnessed, and link the ticket.
