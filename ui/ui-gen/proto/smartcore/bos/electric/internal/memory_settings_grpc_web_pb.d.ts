@@ -1,8 +1,8 @@
 import * as grpcWeb from 'grpc-web';
 
 import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty_pb'; // proto import: "google/protobuf/empty.proto"
-import * as smartcore_bos_electric_v1_electric_pb from '../../../../smartcore/bos/electric/v1/electric_pb'; // proto import: "smartcore/bos/electric/v1/electric.proto"
 import * as smartcore_bos_electric_internal_memory_settings_pb from '../../../../smartcore/bos/electric/internal/memory_settings_pb'; // proto import: "smartcore/bos/electric/internal/memory_settings.proto"
+import * as smartcore_bos_electric_v1_electric_pb from '../../../../smartcore/bos/electric/v1/electric_pb'; // proto import: "smartcore/bos/electric/v1/electric.proto"
 
 
 export class MemorySettingsApiClient {

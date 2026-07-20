@@ -1,5 +1,5 @@
 /**
- * @fileoverview gRPC-Web generated client stub for smartcore.go.trait.electric
+ * @fileoverview gRPC-Web generated client stub for smartcore.bos.electric.internal
  * @enhanceable
  * @public
  */
@@ -27,9 +27,9 @@ var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/fie
 var smartcore_bos_electric_v1_electric_pb = require('../../../../smartcore/bos/electric/v1/electric_pb.js')
 const proto = {};
 proto.smartcore = {};
-proto.smartcore.go = {};
-proto.smartcore.go.trait = {};
-proto.smartcore.go.trait.electric = require('./memory_settings_pb.js');
+proto.smartcore.bos = {};
+proto.smartcore.bos.electric = {};
+proto.smartcore.bos.electric.internal = require('./memory_settings_pb.js');
 
 /**
  * @param {string} hostname
@@ -39,7 +39,7 @@ proto.smartcore.go.trait.electric = require('./memory_settings_pb.js');
  * @struct
  * @final
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiClient =
+proto.smartcore.bos.electric.internal.MemorySettingsApiClient =
     function(hostname, credentials, options) {
   if (!options) options = {};
   options.format = 'text';
@@ -65,7 +65,7 @@ proto.smartcore.go.trait.electric.MemorySettingsApiClient =
  * @struct
  * @final
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient =
+proto.smartcore.bos.electric.internal.MemorySettingsApiPromiseClient =
     function(hostname, credentials, options) {
   if (!options) options = {};
   options.format = 'text';
@@ -86,16 +86,16 @@ proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.go.trait.electric.UpdateDemandRequest,
+ *   !proto.smartcore.bos.electric.internal.UpdateDemandRequest,
  *   !proto.smartcore.bos.electric.v1.ElectricDemand>}
  */
 const methodDescriptor_MemorySettingsApi_UpdateDemand = new grpc.web.MethodDescriptor(
-  '/smartcore.go.trait.electric.MemorySettingsApi/UpdateDemand',
+  '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateDemand',
   grpc.web.MethodType.UNARY,
-  proto.smartcore.go.trait.electric.UpdateDemandRequest,
+  proto.smartcore.bos.electric.internal.UpdateDemandRequest,
   smartcore_bos_electric_v1_electric_pb.ElectricDemand,
   /**
-   * @param {!proto.smartcore.go.trait.electric.UpdateDemandRequest} request
+   * @param {!proto.smartcore.bos.electric.internal.UpdateDemandRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -106,7 +106,7 @@ const methodDescriptor_MemorySettingsApi_UpdateDemand = new grpc.web.MethodDescr
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.UpdateDemandRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.UpdateDemandRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -115,10 +115,10 @@ const methodDescriptor_MemorySettingsApi_UpdateDemand = new grpc.web.MethodDescr
  * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.electric.v1.ElectricDemand>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.updateDemand =
+proto.smartcore.bos.electric.internal.MemorySettingsApiClient.prototype.updateDemand =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/UpdateDemand',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateDemand',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_UpdateDemand,
@@ -127,17 +127,17 @@ proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.updateDemand
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.UpdateDemandRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.UpdateDemandRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!Promise<!proto.smartcore.bos.electric.v1.ElectricDemand>}
  *     Promise that resolves to the response
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.updateDemand =
+proto.smartcore.bos.electric.internal.MemorySettingsApiPromiseClient.prototype.updateDemand =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/UpdateDemand',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateDemand',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_UpdateDemand);
@@ -147,16 +147,16 @@ proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.updat
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.go.trait.electric.CreateModeRequest,
+ *   !proto.smartcore.bos.electric.internal.CreateModeRequest,
  *   !proto.smartcore.bos.electric.v1.ElectricMode>}
  */
 const methodDescriptor_MemorySettingsApi_CreateMode = new grpc.web.MethodDescriptor(
-  '/smartcore.go.trait.electric.MemorySettingsApi/CreateMode',
+  '/smartcore.bos.electric.internal.MemorySettingsApi/CreateMode',
   grpc.web.MethodType.UNARY,
-  proto.smartcore.go.trait.electric.CreateModeRequest,
+  proto.smartcore.bos.electric.internal.CreateModeRequest,
   smartcore_bos_electric_v1_electric_pb.ElectricMode,
   /**
-   * @param {!proto.smartcore.go.trait.electric.CreateModeRequest} request
+   * @param {!proto.smartcore.bos.electric.internal.CreateModeRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -167,7 +167,7 @@ const methodDescriptor_MemorySettingsApi_CreateMode = new grpc.web.MethodDescrip
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.CreateModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.CreateModeRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -176,10 +176,10 @@ const methodDescriptor_MemorySettingsApi_CreateMode = new grpc.web.MethodDescrip
  * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.electric.v1.ElectricMode>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.createMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiClient.prototype.createMode =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/CreateMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/CreateMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_CreateMode,
@@ -188,17 +188,17 @@ proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.createMode =
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.CreateModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.CreateModeRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!Promise<!proto.smartcore.bos.electric.v1.ElectricMode>}
  *     Promise that resolves to the response
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.createMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiPromiseClient.prototype.createMode =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/CreateMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/CreateMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_CreateMode);
@@ -208,16 +208,16 @@ proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.creat
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.go.trait.electric.UpdateModeRequest,
+ *   !proto.smartcore.bos.electric.internal.UpdateModeRequest,
  *   !proto.smartcore.bos.electric.v1.ElectricMode>}
  */
 const methodDescriptor_MemorySettingsApi_UpdateMode = new grpc.web.MethodDescriptor(
-  '/smartcore.go.trait.electric.MemorySettingsApi/UpdateMode',
+  '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateMode',
   grpc.web.MethodType.UNARY,
-  proto.smartcore.go.trait.electric.UpdateModeRequest,
+  proto.smartcore.bos.electric.internal.UpdateModeRequest,
   smartcore_bos_electric_v1_electric_pb.ElectricMode,
   /**
-   * @param {!proto.smartcore.go.trait.electric.UpdateModeRequest} request
+   * @param {!proto.smartcore.bos.electric.internal.UpdateModeRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -228,7 +228,7 @@ const methodDescriptor_MemorySettingsApi_UpdateMode = new grpc.web.MethodDescrip
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.UpdateModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.UpdateModeRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -237,10 +237,10 @@ const methodDescriptor_MemorySettingsApi_UpdateMode = new grpc.web.MethodDescrip
  * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.electric.v1.ElectricMode>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.updateMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiClient.prototype.updateMode =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/UpdateMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_UpdateMode,
@@ -249,17 +249,17 @@ proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.updateMode =
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.UpdateModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.UpdateModeRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!Promise<!proto.smartcore.bos.electric.v1.ElectricMode>}
  *     Promise that resolves to the response
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.updateMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiPromiseClient.prototype.updateMode =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/UpdateMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/UpdateMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_UpdateMode);
@@ -269,16 +269,16 @@ proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.updat
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.smartcore.go.trait.electric.DeleteModeRequest,
+ *   !proto.smartcore.bos.electric.internal.DeleteModeRequest,
  *   !proto.google.protobuf.Empty>}
  */
 const methodDescriptor_MemorySettingsApi_DeleteMode = new grpc.web.MethodDescriptor(
-  '/smartcore.go.trait.electric.MemorySettingsApi/DeleteMode',
+  '/smartcore.bos.electric.internal.MemorySettingsApi/DeleteMode',
   grpc.web.MethodType.UNARY,
-  proto.smartcore.go.trait.electric.DeleteModeRequest,
+  proto.smartcore.bos.electric.internal.DeleteModeRequest,
   google_protobuf_empty_pb.Empty,
   /**
-   * @param {!proto.smartcore.go.trait.electric.DeleteModeRequest} request
+   * @param {!proto.smartcore.bos.electric.internal.DeleteModeRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -289,7 +289,7 @@ const methodDescriptor_MemorySettingsApi_DeleteMode = new grpc.web.MethodDescrip
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.DeleteModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.DeleteModeRequest} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -298,10 +298,10 @@ const methodDescriptor_MemorySettingsApi_DeleteMode = new grpc.web.MethodDescrip
  * @return {!grpc.web.ClientReadableStream<!proto.google.protobuf.Empty>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.deleteMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiClient.prototype.deleteMode =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/DeleteMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/DeleteMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_DeleteMode,
@@ -310,22 +310,22 @@ proto.smartcore.go.trait.electric.MemorySettingsApiClient.prototype.deleteMode =
 
 
 /**
- * @param {!proto.smartcore.go.trait.electric.DeleteModeRequest} request The
+ * @param {!proto.smartcore.bos.electric.internal.DeleteModeRequest} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!Promise<!proto.google.protobuf.Empty>}
  *     Promise that resolves to the response
  */
-proto.smartcore.go.trait.electric.MemorySettingsApiPromiseClient.prototype.deleteMode =
+proto.smartcore.bos.electric.internal.MemorySettingsApiPromiseClient.prototype.deleteMode =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/smartcore.go.trait.electric.MemorySettingsApi/DeleteMode',
+      '/smartcore.bos.electric.internal.MemorySettingsApi/DeleteMode',
       request,
       metadata || {},
       methodDescriptor_MemorySettingsApi_DeleteMode);
 };
 
 
-module.exports = proto.smartcore.go.trait.electric;
+module.exports = proto.smartcore.bos.electric.internal;
 

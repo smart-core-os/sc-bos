@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-// TODO: find out if this package can change to reflect the new location in the codebase.
-package smartcore.go.trait.electric;
+package smartcore.bos.electric.internal;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/electricpb";
 
