@@ -1019,3 +1019,88 @@ func Example_anyOfMatchesAbnormalOrUnreliable() {
 	//   Device02 matches: true
 	//   Device03 matches: true
 }
+
+// Example_issueTypeFilters documents the health dashboard's "Issue Type" filter
+// (SCB-1377). Each option narrows to one kind of issue on a single health check
+// using a nested `matches` condition, so the sub-conditions apply to the same
+// check. Only present / string_in / matches matchers are used so the JS query
+// converter (ui/ops/src/api/ui/devices.js) can build them without change.
+func Example_issueTypeFilters() {
+	present := func(field string) *devicespb.Device_Query_Condition {
+		return &devicespb.Device_Query_Condition{Field: field, Value: &devicespb.Device_Query_Condition_Present{Present: &emptypb.Empty{}}}
+	}
+	stringIn := func(field string, ss ...string) *devicespb.Device_Query_Condition {
+		return &devicespb.Device_Query_Condition{Field: field, Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: ss}}}
+	}
+	// matchesCheck matches when any single health check satisfies all of conds.
+	matchesCheck := func(conds ...*devicespb.Device_Query_Condition) *devicespb.Device_Query {
+		return &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{{
+			Field: "health_checks",
+			Value: &devicespb.Device_Query_Condition_Matches{Matches: &devicespb.Device_Query{Conditions: conds}},
+		}}}
+	}
+	abnormal := []string{"ABNORMAL", "HIGH", "LOW"}
+	commsFailures := []string{"UNRELIABLE", "CONN_TRANSIENT_FAILURE", "SEND_FAILURE", "NO_RESPONSE", "BAD_RESPONSE", "NOT_FOUND", "PERMISSION_DENIED"}
+
+	connectivity := matchesCheck(stringIn("reliability.state", commsFailures...))
+	outOfRange := matchesCheck(present("bounds"), stringIn("normality", abnormal...))
+	fault := matchesCheck(present("faults"), stringIn("normality", abnormal...))
+
+	// A healthy device: reliable, in range, no faults.
+	healthy := &devicespb.Device{Name: "Healthy", HealthChecks: []*healthpb.HealthCheck{
+		{Id: "Online", Normality: healthpb.HealthCheck_NORMAL, Reliability: &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_RELIABLE}},
+		{Id: "Temperature", Normality: healthpb.HealthCheck_NORMAL, Check: &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{DisplayUnit: "°C"}}},
+	}}
+	// A bounds check reading out of range.
+	rangeDev := &devicespb.Device{Name: "Range", HealthChecks: []*healthpb.HealthCheck{
+		{Id: "Temperature", Normality: healthpb.HealthCheck_HIGH, Check: &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{DisplayUnit: "°C"}}},
+	}}
+	// A faults check reporting a current fault (always ABNORMAL per health.proto).
+	faultDev := &devicespb.Device{Name: "Fault", HealthChecks: []*healthpb.HealthCheck{
+		{Id: "Alarms", Normality: healthpb.HealthCheck_ABNORMAL, Check: &healthpb.HealthCheck_Faults_{Faults: &healthpb.HealthCheck_Faults{CurrentFaults: []*healthpb.HealthCheck_Error{{SummaryText: "door stuck"}}}}},
+	}}
+	// Normality is NORMAL, but we can't talk to the device - a comms-only issue.
+	commsDev := &devicespb.Device{Name: "Comms", HealthChecks: []*healthpb.HealthCheck{
+		{Id: "Online", Normality: healthpb.HealthCheck_NORMAL, Reliability: &healthpb.HealthCheck_Reliability{State: healthpb.HealthCheck_Reliability_NO_RESPONSE}},
+	}}
+	// A faults check that currently reports no faults - not an issue, and the
+	// normality clause is what keeps it out of the Fault results.
+	emptyFaultDev := &devicespb.Device{Name: "EmptyFault", HealthChecks: []*healthpb.HealthCheck{
+		{Id: "Alarms", Normality: healthpb.HealthCheck_NORMAL, Check: &healthpb.HealthCheck_Faults_{Faults: &healthpb.HealthCheck_Faults{}}},
+	}}
+
+	devices := []*devicespb.Device{healthy, rangeDev, faultDev, commsDev, emptyFaultDev}
+	for _, tc := range []struct {
+		name  string
+		query *devicespb.Device_Query
+	}{
+		{"Connectivity", connectivity},
+		{"Out of range", outOfRange},
+		{"Fault", fault},
+	} {
+		fmt.Printf("%s:\n", tc.name)
+		for _, device := range devices {
+			fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(tc.query, device))
+		}
+	}
+
+	// Output:
+	// Connectivity:
+	//   Healthy matches: false
+	//   Range matches: false
+	//   Fault matches: false
+	//   Comms matches: true
+	//   EmptyFault matches: false
+	// Out of range:
+	//   Healthy matches: false
+	//   Range matches: true
+	//   Fault matches: false
+	//   Comms matches: false
+	//   EmptyFault matches: false
+	// Fault:
+	//   Healthy matches: false
+	//   Range matches: false
+	//   Fault matches: true
+	//   Comms matches: false
+	//   EmptyFault matches: false
+}
