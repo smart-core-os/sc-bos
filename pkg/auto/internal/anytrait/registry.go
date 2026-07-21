@@ -3,6 +3,9 @@ package anytrait
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"sync"
 
 	"google.golang.org/grpc"
@@ -32,6 +35,16 @@ func (r *Resolver) FindByName(name trait.Name) (Trait, error) {
 		return Trait{}, ErrNotFound
 	}
 	return t, nil
+}
+
+// Names returns the sorted list of trait names known to the resolver.
+func (r *Resolver) Names() []trait.Name {
+	names := make([]trait.Name, 0, len(r.byName))
+	for name := range r.byName {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 func (r *Resolver) add(name trait.Name, resources ...Resource) {
@@ -98,6 +111,26 @@ var (
 func FindByName(name trait.Name) (Trait, error) {
 	initKnownTraits()
 	return knownTraits.FindByName(name)
+}
+
+// Names returns the sorted list of trait names supported by the registry.
+func Names() []trait.Name {
+	initKnownTraits()
+	return knownTraits.Names()
+}
+
+// Validate returns a descriptive error if name is not a trait supported by the registry.
+// The error lists the supported trait names.
+func Validate(name trait.Name) error {
+	if _, err := FindByName(name); err != nil {
+		names := Names()
+		supported := make([]string, 0, len(names))
+		for _, n := range names {
+			supported = append(supported, string(n))
+		}
+		return fmt.Errorf("%q is not a supported trait; supported traits are: %s", name, strings.Join(supported, ", "))
+	}
+	return nil
 }
 
 // reqPT forces the implementation of proto.Message to also have a pointer receiver.

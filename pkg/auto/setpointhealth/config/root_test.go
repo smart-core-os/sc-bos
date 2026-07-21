@@ -73,6 +73,15 @@ func TestRead(t *testing.T) {
 			wantError: true,
 		},
 		{
+			name: "unsupported trait",
+			config: `{
+				"type": "setpointhealth", "name": "fcu",
+				"source": {"trait": "smartcore.traits.NotATrait", "measured": "a", "setPoint": "b"},
+				"tolerance": 1.5, "duration": "1h"
+			}`,
+			wantError: true,
+		},
+		{
 			name: "maxDuration greater than duration",
 			config: `{
 				"type": "setpointhealth", "name": "fcu",
