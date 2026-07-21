@@ -35,3 +35,31 @@ func TestLocalKeySet_VerifySignature(t *testing.T) {
 		t.Errorf("verification didn't fail as expected: %s", err.Error())
 	}
 }
+
+// TestLocalKeySet_VerifySignature_rejectsDisallowedAlgorithm proves the security-hardening
+// property behind keycloak.DefaultPermittedSignatureAlgorithms: when only asymmetric
+// algorithms are permitted, an HS256-signed token is rejected before key verification, so
+// the RS256->HS256 key-confusion forgery vector is closed.
+func TestLocalKeySet_VerifySignature_rejectsDisallowedAlgorithm(t *testing.T) {
+	hmacKey := []byte("0123456789abcdef0123456789abcdef") // 32 bytes, valid for HS256
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: hmacKey}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signed, err := signer.Sign([]byte("hs256 payload"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hs256JWS, err := signed.CompactSerialize()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// permit only asymmetric algorithms, as the Keycloak verifier now does
+	jwks := jose.JSONWebKeySet{Keys: []jose.JSONWebKey{testJWK1.Public()}}
+	localKeySet := NewLocalKeySet(jwks, []jose.SignatureAlgorithm{jose.RS256, jose.ES256, jose.PS256})
+
+	if _, err := localKeySet.VerifySignature(context.Background(), hs256JWS); err == nil {
+		t.Error("expected an HS256-signed token to be rejected when only asymmetric algorithms are permitted")
+	}
+}

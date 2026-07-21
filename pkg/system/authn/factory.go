@@ -75,7 +75,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	var serveTokenEndpoint bool
 	tokenServerOpts := []accesstoken.ServerOption{
 		accesstoken.WithLogger(s.logger.Named("server")),
-		accesstoken.WithPermittedSignatureAlgorithms(keycloak.DefaultPermittedSignatureAlgorithms),
+		accesstoken.WithPermittedSignatureAlgorithms(accesstoken.DefaultSignatureAlgorithms),
 	}
 
 	if cfg.System != nil {

@@ -61,6 +61,11 @@ func (pa permissionAssignment) ToTokenPermissionAssignment() token.PermissionAss
 	}
 }
 
+// DefaultSignatureAlgorithms lists the algorithms permitted when validating tokens issued
+// by this package. Tokens are always HS256-signed (see generateKey / LoadOrGenerateSigningKey),
+// so only HS256 is permitted.
+var DefaultSignatureAlgorithms = []string{string(jose.HS256)}
+
 type Source struct {
 	Key                 jose.SigningKey
 	Issuer              string

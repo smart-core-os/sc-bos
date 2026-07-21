@@ -16,9 +16,12 @@ func (c *Config) Issuer() string {
 	return fmt.Sprintf("%s/realms/%s", c.URL, c.Realm)
 }
 
-// DefaultPermittedSignatureAlgorithms lists the signature algorithms permitted by default.
-// TODO: reduce the number of permitted signature algorithms for all keycloak installations
-// KeyCloak will select "a reasonable default" cipher suite if none is specified by the installation
+// DefaultPermittedSignatureAlgorithms lists the JWT signature algorithms permitted when
+// verifying tokens issued by Keycloak. Only asymmetric algorithms are permitted: Keycloak
+// signs tokens with an asymmetric key (the shipped realm uses RS256) and they are verified
+// against its published JWKS public keys. The symmetric HS256 is deliberately excluded —
+// permitting it on a path that verifies with public keys opens an RS256->HS256 key-confusion
+// forgery vector.
 var DefaultPermittedSignatureAlgorithms = []string{
 	string(jose.RS256),
 	string(jose.RS384),
@@ -29,5 +32,4 @@ var DefaultPermittedSignatureAlgorithms = []string{
 	string(jose.PS256),
 	string(jose.PS384),
 	string(jose.PS512),
-	string(jose.HS256),
 }
