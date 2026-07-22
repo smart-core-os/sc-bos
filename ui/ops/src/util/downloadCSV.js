@@ -6,14 +6,20 @@ import {toValue} from 'vue';
  * quotes when it contains a comma, double-quote, CR or LF, doubling any
  * embedded double-quotes. Nullish values become an empty field.
  *
- * Note: no spreadsheet formula-injection guard (prefixing =/+/-/@) is applied,
- * as that would silently alter legitimate negative numeric values in exports.
+ * Non-numeric values beginning with =, +, -, @, tab or CR are prefixed with a
+ * single quote to neutralise spreadsheet formula injection (e.g. `=HYPERLINK(…)`,
+ * `=cmd|…`) when the export is opened in Excel/Sheets. Numeric values such as
+ * `-5` are recognised and left intact, so numeric/timestamp exports are
+ * unaffected.
  *
  * @param {*} field
  * @return {string}
  */
 function escapeCSVField(field) {
-  const str = field === null || field === undefined ? '' : String(field);
+  let str = field === null || field === undefined ? '' : String(field);
+  if (/^[=+\-@\t\r]/.test(str) && isNaN(Number(str))) {
+    str = `'${str}`;
+  }
   if (/[",\r\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
