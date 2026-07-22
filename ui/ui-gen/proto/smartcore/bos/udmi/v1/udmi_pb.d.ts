@@ -1,5 +1,6 @@
 import * as jspb from 'google-protobuf'
 
+import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 
 
 export class PullControlTopicsRequest extends jspb.Message {
@@ -169,6 +170,90 @@ export namespace MqttMessage {
   export type AsObject = {
     topic: string;
     payload: string;
+  };
+}
+
+export class ListExportedPointsRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): ListExportedPointsRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListExportedPointsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListExportedPointsRequest): ListExportedPointsRequest.AsObject;
+  static serializeBinaryToWriter(message: ListExportedPointsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListExportedPointsRequest;
+  static deserializeBinaryFromReader(message: ListExportedPointsRequest, reader: jspb.BinaryReader): ListExportedPointsRequest;
+}
+
+export namespace ListExportedPointsRequest {
+  export type AsObject = {
+    name: string;
+  };
+}
+
+export class ListExportedPointsResponse extends jspb.Message {
+  getMessagesList(): Array<ExportedMessage>;
+  setMessagesList(value: Array<ExportedMessage>): ListExportedPointsResponse;
+  clearMessagesList(): ListExportedPointsResponse;
+  addMessages(value?: ExportedMessage, index?: number): ExportedMessage;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListExportedPointsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListExportedPointsResponse): ListExportedPointsResponse.AsObject;
+  static serializeBinaryToWriter(message: ListExportedPointsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListExportedPointsResponse;
+  static deserializeBinaryFromReader(message: ListExportedPointsResponse, reader: jspb.BinaryReader): ListExportedPointsResponse;
+}
+
+export namespace ListExportedPointsResponse {
+  export type AsObject = {
+    messagesList: Array<ExportedMessage.AsObject>;
+  };
+}
+
+export class ExportedMessage extends jspb.Message {
+  getSourceName(): string;
+  setSourceName(value: string): ExportedMessage;
+
+  getTopic(): string;
+  setTopic(value: string): ExportedMessage;
+
+  getMessageType(): string;
+  setMessageType(value: string): ExportedMessage;
+
+  getPayload(): string;
+  setPayload(value: string): ExportedMessage;
+
+  getFirstSeen(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setFirstSeen(value?: google_protobuf_timestamp_pb.Timestamp): ExportedMessage;
+  hasFirstSeen(): boolean;
+  clearFirstSeen(): ExportedMessage;
+
+  getLastSeen(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setLastSeen(value?: google_protobuf_timestamp_pb.Timestamp): ExportedMessage;
+  hasLastSeen(): boolean;
+  clearLastSeen(): ExportedMessage;
+
+  getCount(): number;
+  setCount(value: number): ExportedMessage;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExportedMessage.AsObject;
+  static toObject(includeInstance: boolean, msg: ExportedMessage): ExportedMessage.AsObject;
+  static serializeBinaryToWriter(message: ExportedMessage, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ExportedMessage;
+  static deserializeBinaryFromReader(message: ExportedMessage, reader: jspb.BinaryReader): ExportedMessage;
+}
+
+export namespace ExportedMessage {
+  export type AsObject = {
+    sourceName: string;
+    topic: string;
+    messageType: string;
+    payload: string;
+    firstSeen?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    lastSeen?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    count: number;
   };
 }
 

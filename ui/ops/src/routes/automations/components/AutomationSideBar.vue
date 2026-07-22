@@ -4,6 +4,7 @@
       <v-btn :to="editLink" icon="mdi-pencil" variant="plain" size="small"/>
     </template>
     <lights-config-card v-if="automationType === 'lights'"/>
+    <udmi-export-card v-if="automationType === 'udmi'"/>
     <edit-config-card/>
     <v-divider/>
     <logs-card/>
@@ -24,6 +25,7 @@ import {useErrorStore} from '@/components/ui-error/error';
 import useAuthSetup from '@/composables/useAuthSetup';
 import {useSidebarServiceRouterLink} from '@/dynamic/route.js';
 import LightsConfigCard from '@/routes/automations/components/config-cards/LightsConfigCard.vue';
+import UdmiExportCard from '@/routes/automations/components/config-cards/UdmiExportCard.vue';
 import EditConfigCard from '@/routes/system/components/service-cards/EditConfigCard.vue';
 import LogsCard from '@/routes/system/components/service-cards/LogsCard.vue';
 import {useSidebarStore} from '@/stores/sidebar';
