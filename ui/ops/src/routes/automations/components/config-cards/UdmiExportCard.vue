@@ -33,6 +33,7 @@
 import {newActionTracker} from '@/api/resource';
 import {listExportedPoints} from '@/api/ui/udmiExport';
 import {useErrorStore} from '@/components/ui-error/error';
+import {buildPointsCsv} from '@/routes/automations/pointsExport';
 import {useSidebarStore} from '@/stores/sidebar';
 import {downloadCSVRows} from '@/util/downloadCSV';
 import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
@@ -64,116 +65,11 @@ onUnmounted(() => {
 async function downloadPointsList() {
   if (!automationName.value) return;
   const res = await listExportedPoints({name: automationName.value}, tracker);
-  const messages = res?.messagesList ?? [];
-
-  const {header, rows} = mode.value === 'type' ? rowsByDeviceType(messages) : rowsByDevice(messages);
+  const rows = buildPointsCsv(res?.messagesList ?? [], mode.value);
 
   const dateString = new Date().toISOString().slice(0, 10);
   const kind = mode.value === 'type' ? 'points-list-by-type' : 'points-list';
-  downloadCSVRows(`${kind} - ${automationName.value} - ${dateString}.csv`, [header, ...rows]);
-}
-
-/**
- * Builds one row per device — `Source name, Topic, Point 1..N` — the row widening to hold
- * each device's point names.
- *
- * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
- * @return {{header: string[], rows: string[][]}}
- */
-function rowsByDevice(messages) {
-  let maxPoints = 0;
-  const rows = messages.map((msg) => {
-    const points = parsePoints(msg.payload);
-    maxPoints = Math.max(maxPoints, points.length);
-    return [msg.sourceName, msg.topic, ...points];
-  });
-  return {header: ['Source name', 'Topic', ...pointColumns(maxPoints)], rows};
-}
-
-/**
- * Builds one row per distinct point set within a device type — `Device type, Devices,
- * Point 1..N`. Devices of a type are grouped, but only those with an identical point set
- * are collapsed, so a subset/superset variant appears as its own (longer) row rather than
- * being silently merged. Types are sorted alphabetically; variants within a type by size.
- *
- * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
- * @return {{header: string[], rows: string[][]}}
- */
-function rowsByDeviceType(messages) {
-  // type -> (signature -> {points, count})
-  const byType = new Map();
-  for (const msg of messages) {
-    const type = deviceType(msg.sourceName);
-    const points = parsePoints(msg.payload);
-    const signature = JSON.stringify([...points].sort());
-    if (!byType.has(type)) byType.set(type, new Map());
-    const variants = byType.get(type);
-    const existing = variants.get(signature);
-    if (existing) existing.count++;
-    else variants.set(signature, {points, count: 1});
-  }
-
-  let maxPoints = 0;
-  const rows = [];
-  for (const type of [...byType.keys()].sort()) {
-    const variants = [...byType.get(type).values()].sort((a, b) => a.points.length - b.points.length);
-    for (const {points, count} of variants) {
-      maxPoints = Math.max(maxPoints, points.length);
-      rows.push([type, String(count), ...points]);
-    }
-  }
-  return {header: ['Device type', 'Devices', ...pointColumns(maxPoints)], rows};
-}
-
-/**
- * Returns `n` CSV column headers named "Point 1" .. "Point n".
- *
- * @param {number} n
- * @return {string[]}
- */
-function pointColumns(n) {
-  return Array.from({length: n}, (_, i) => `Point ${i + 1}`);
-}
-
-/**
- * Derives a device type from a Smart Core source name: the token before the first hyphen
- * of the last '/'-segment (e.g. "a/b/FCU-LN1-01" -> "FCU"). Falls back to the whole short
- * name when there is no hyphen.
- *
- * @param {string} sourceName
- * @return {string}
- */
-function deviceType(sourceName) {
-  return (sourceName.split('/').pop() ?? '').split('-')[0];
-}
-
-/**
- * Extracts the point names from a UDMI pointset payload. Handles both the conformant
- * envelope (`{points: {name: {...}}}`) and a bare points map (`{name: {present_value}}`,
- * as the mock driver emits). Returns an empty array for payloads that aren't a pointset
- * (state/metadata/other).
- *
- * @param {string} payload
- * @return {string[]}
- */
-function parsePoints(payload) {
-  let parsed;
-  try {
-    parsed = JSON.parse(payload);
-  } catch {
-    return [];
-  }
-  if (!parsed || typeof parsed !== 'object') return [];
-  // Prefer the conformant envelope; fall back to treating the whole object as the
-  // points map when its values look like point values (have a present_value).
-  let points = parsed.points;
-  if (!points || typeof points !== 'object') {
-    const looksLikePointsMap = Object.values(parsed).some(
-        (v) => v && typeof v === 'object' && Object.hasOwn(v, 'present_value'));
-    if (!looksLikePointsMap) return [];
-    points = parsed;
-  }
-  return Object.keys(points);
+  downloadCSVRows(`${kind} - ${automationName.value} - ${dateString}.csv`, rows);
 }
 </script>
 
