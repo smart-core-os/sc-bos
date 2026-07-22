@@ -1,6 +1,10 @@
 package pgxutil
 
-import "testing"
+import (
+	"context"
+	"strings"
+	"testing"
+)
 
 func TestRoleConfig_IsZero(t *testing.T) {
 	base := ConnectConfig{URI: "postgres://base"}
@@ -21,6 +25,21 @@ func TestRoleConfig_IsZero(t *testing.T) {
 				t.Errorf("IsZero() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestConnectRoles_partialOverrideNoBase(t *testing.T) {
+	// Only "read" set, no base uri: write and admin resolve to a zero config.
+	// ConnectRoles must reject this rather than let the empty configs fall through
+	// to libpq env defaults. The error should name the first unconfigured role and
+	// no connection should be attempted (the read uri is unreachable in tests).
+	rc := RoleConfig{Read: &ConnectConfig{URI: "postgres://read"}}
+	_, err := ConnectRoles(context.Background(), rc)
+	if err == nil {
+		t.Fatal("expected error for partial role override with no base, got nil")
+	}
+	if !strings.Contains(err.Error(), "write") {
+		t.Errorf("error should name the unconfigured write role, got: %v", err)
 	}
 }
 

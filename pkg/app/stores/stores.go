@@ -83,7 +83,6 @@ type postgresStore struct {
 
 	mu            sync.Mutex
 	pools         pgxutil.Pools
-	r, w, admin   *pgxpool.Pool
 	err           error
 	latestErrTime time.Time
 }
@@ -105,8 +104,8 @@ func (s *postgresStore) Postgres() (r, w, admin *pgxpool.Pool, _ error) {
 		return nil, nil, nil, s.err
 	}
 
-	if s.r != nil {
-		return s.r, s.w, s.admin, nil
+	if s.pools.Read != nil {
+		return s.pools.Read, s.pools.Write, s.pools.Admin, nil
 	}
 
 	if s.cfg == nil {
@@ -125,8 +124,7 @@ func (s *postgresStore) Postgres() (r, w, admin *pgxpool.Pool, _ error) {
 	}
 
 	s.pools = pools
-	s.r, s.w, s.admin = pools.Read, pools.Write, pools.Admin
-	return s.r, s.w, s.admin, nil
+	return s.pools.Read, s.pools.Write, s.pools.Admin, nil
 }
 
 // PostgresPoolsFor returns the postgres connection pools a subsystem should use
@@ -155,16 +153,13 @@ func (s *postgresStore) close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.err = fmt.Errorf("postgres: %w", ErrStoreClosed)
-	if s.r == nil {
+	if s.pools.Read == nil {
 		return nil
 	}
 
 	// Close each distinct pool once; roles may share an underlying pool.
 	s.pools.Close()
 	s.pools = pgxutil.Pools{}
-	s.r = nil
-	s.w = nil
-	s.admin = nil
 
 	return nil
 }

@@ -2,6 +2,7 @@ package pgxutil
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -81,6 +82,19 @@ func (p Pools) Close() {
 // pools already opened are closed and the error is returned.
 func ConnectRoles(ctx context.Context, rc RoleConfig) (Pools, error) {
 	read, write, admin := rc.resolve()
+
+	// A role whose effective config is empty would fall through to libpq env
+	// defaults (PGHOST, ...) rather than failing, which is almost never what the
+	// operator intended. This catches a partial override (e.g. only "read" set
+	// with no base uri), which RoleConfig.IsZero() can't since a role is set.
+	for _, role := range []struct {
+		name string
+		cc   ConnectConfig
+	}{{"read", read}, {"write", write}, {"admin", admin}} {
+		if role.cc.IsZero() {
+			return Pools{}, fmt.Errorf("%s role has no connection config: set a top-level uri or a %q override", role.name, role.name)
+		}
+	}
 
 	cache := make(map[ConnectConfig]*pgxpool.Pool, 3)
 	var opened []*pgxpool.Pool

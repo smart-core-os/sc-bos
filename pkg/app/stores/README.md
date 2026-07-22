@@ -76,3 +76,27 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON <table> TO sc_write;
 -- MAINTAIN privilege on PostgreSQL 16+)
 ALTER TABLE <table> OWNER TO sc_admin;
 ```
+
+Tables with a serial/identity column (currently `history`, whose `id` is
+`BIGSERIAL`) also need the write role to hold `USAGE` on the backing sequence —
+`INSERT ... RETURNING id` calls `nextval()`, which fails with `permission denied
+for sequence` otherwise. Grant it once for the schema so sequences created by
+later migrations are covered too:
+
+```sql
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO sc_write;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO sc_write;
+```
+
+(UUID-keyed tables need nothing extra — `uuid_generate_v4()` is
+`PUBLIC`-executable.)
+
+### Connection sizing
+
+Each role with a distinct config opens its own `pgxpool` pool, and each pool
+defaults to a max of `max(4, numCPU)` connections. Splitting one shared pool
+into `read`/`write`/`admin` therefore multiplies the peak connection count to
+the database by up to three. Size each pool explicitly with the
+`pool_max_conns` query parameter on its `uri` (e.g.
+`postgres://sc_read@host/smart_core?pool_max_conns=4`) so the combined total
+stays within the database's `max_connections`.
