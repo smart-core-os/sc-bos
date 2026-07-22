@@ -17,7 +17,7 @@ import {shiftFnFromStr} from '@/dynamic/widgets/occupancy/baseline.js';
 import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
 import {useLocalProp} from '@/util/vue.js';
 import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip} from 'chart.js'
-import {startOfDay, startOfYear} from 'date-fns';
+import {format, startOfDay, startOfYear} from 'date-fns';
 import {computed, ref, toRef, toValue, watch} from 'vue';
 import {Bar} from 'vue-chartjs';
 import 'chartjs-adapter-date-fns';
@@ -238,6 +238,13 @@ const showNoData = computed(() => !hasData.value && hasLoadedData.value);
  * is currently displayed on the chart. Used by the parent card's "Export chart
  * data" action so the CSV matches the graph exactly.
  *
+ * Timestamps are emitted in the viewer's local time as ISO-8601 with an explicit
+ * UTC offset (e.g. 2026-07-09T00:00:00+01:00). The chart's buckets and axis
+ * labels come from useDateScale, which works in local time, so local timestamps
+ * line up cell-for-cell with the on-screen labels; the offset keeps them
+ * unambiguous. Note this deliberately differs from the raw-data export
+ * (triggerDownload), whose timestamps are formatted server-side in UTC.
+ *
  * @return {{rows: string[][], tickUnit: string}}
  */
 function buildExportRows() {
@@ -254,7 +261,7 @@ function buildExportRows() {
   for (let i = 0; i < totals.length; i++) {
     const t = totals[i];
     const time = t.x instanceof Date ? t.x : new Date(t.x);
-    const row = [time.toISOString(), fmt(t.y)];
+    const row = [format(time, "yyyy-MM-dd'T'HH:mm:ssxxx"), fmt(t.y)];
     if (includeBaseline) row.push(fmt(baseline[i]?.y));
     rows.push(row);
   }
