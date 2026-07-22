@@ -37,7 +37,7 @@ type Root struct {
 	WriteCacheExpiry *jsontypes.Duration `json:"writeCacheExpiry,omitempty"` // Defaults to no expiry.
 	// If processing fails, how long to wait before trying again.
 	// This is the base delay; consecutive failures back off exponentially (with jitter) up to WriteRetryMaxDelay.
-	WriteRetryDelay *jsontypes.Duration `json:"WriteRetryDelay,omitempty"` // Defaults to 1m.
+	WriteRetryDelay *jsontypes.Duration `json:"writeRetryDelay,omitempty"` // Defaults to 1m.
 	// The maximum delay between retries when processing keeps failing.
 	// Backoff grows from WriteRetryDelay and is capped at this value.
 	WriteRetryMaxDelay *jsontypes.Duration `json:"writeRetryMaxDelay,omitempty"` // Defaults to 15m.
