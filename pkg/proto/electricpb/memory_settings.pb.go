@@ -4,8 +4,6 @@
 // 	protoc        v7.35.1
 // source: smartcore/bos/electric/internal/memory_settings.proto
 
-// TODO: find out if this package can change to reflect the new location in the codebase.
-
 package electricpb
 
 import (
@@ -274,7 +272,7 @@ var File_smartcore_bos_electric_internal_memory_settings_proto protoreflect.File
 
 const file_smartcore_bos_electric_internal_memory_settings_proto_rawDesc = "" +
 	"\n" +
-	"5smartcore/bos/electric/internal/memory_settings.proto\x12\x1bsmartcore.go.trait.electric\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a(smartcore/bos/electric/v1/electric.proto\"\xa9\x01\n" +
+	"5smartcore/bos/electric/internal/memory_settings.proto\x12\x1fsmartcore.bos.electric.internal\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a(smartcore/bos/electric/v1/electric.proto\"\xa9\x01\n" +
 	"\x13UpdateDemandRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12A\n" +
 	"\x06demand\x18\x02 \x01(\v2).smartcore.bos.electric.v1.ElectricDemandR\x06demand\x12;\n" +
@@ -291,15 +289,15 @@ const file_smartcore_bos_electric_internal_memory_settings_proto_rawDesc = "" +
 	"\x11DeleteModeRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12#\n" +
-	"\rallow_missing\x18\x03 \x01(\bR\fallowMissing2\xa4\x03\n" +
-	"\x11MemorySettingsApi\x12k\n" +
-	"\fUpdateDemand\x120.smartcore.go.trait.electric.UpdateDemandRequest\x1a).smartcore.bos.electric.v1.ElectricDemand\x12e\n" +
+	"\rallow_missing\x18\x03 \x01(\bR\fallowMissing2\xb4\x03\n" +
+	"\x11MemorySettingsApi\x12o\n" +
+	"\fUpdateDemand\x124.smartcore.bos.electric.internal.UpdateDemandRequest\x1a).smartcore.bos.electric.v1.ElectricDemand\x12i\n" +
 	"\n" +
-	"CreateMode\x12..smartcore.go.trait.electric.CreateModeRequest\x1a'.smartcore.bos.electric.v1.ElectricMode\x12e\n" +
+	"CreateMode\x122.smartcore.bos.electric.internal.CreateModeRequest\x1a'.smartcore.bos.electric.v1.ElectricMode\x12i\n" +
 	"\n" +
-	"UpdateMode\x12..smartcore.go.trait.electric.UpdateModeRequest\x1a'.smartcore.bos.electric.v1.ElectricMode\x12T\n" +
+	"UpdateMode\x122.smartcore.bos.electric.internal.UpdateModeRequest\x1a'.smartcore.bos.electric.v1.ElectricMode\x12X\n" +
 	"\n" +
-	"DeleteMode\x12..smartcore.go.trait.electric.DeleteModeRequest\x1a\x16.google.protobuf.EmptyB6Z4github.com/smart-core-os/sc-bos/pkg/proto/electricpbb\x06proto3"
+	"DeleteMode\x122.smartcore.bos.electric.internal.DeleteModeRequest\x1a\x16.google.protobuf.EmptyB6Z4github.com/smart-core-os/sc-bos/pkg/proto/electricpbb\x06proto3"
 
 var (
 	file_smartcore_bos_electric_internal_memory_settings_proto_rawDescOnce sync.Once
@@ -315,29 +313,29 @@ func file_smartcore_bos_electric_internal_memory_settings_proto_rawDescGZIP() []
 
 var file_smartcore_bos_electric_internal_memory_settings_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_smartcore_bos_electric_internal_memory_settings_proto_goTypes = []any{
-	(*UpdateDemandRequest)(nil),   // 0: smartcore.go.trait.electric.UpdateDemandRequest
-	(*CreateModeRequest)(nil),     // 1: smartcore.go.trait.electric.CreateModeRequest
-	(*UpdateModeRequest)(nil),     // 2: smartcore.go.trait.electric.UpdateModeRequest
-	(*DeleteModeRequest)(nil),     // 3: smartcore.go.trait.electric.DeleteModeRequest
+	(*UpdateDemandRequest)(nil),   // 0: smartcore.bos.electric.internal.UpdateDemandRequest
+	(*CreateModeRequest)(nil),     // 1: smartcore.bos.electric.internal.CreateModeRequest
+	(*UpdateModeRequest)(nil),     // 2: smartcore.bos.electric.internal.UpdateModeRequest
+	(*DeleteModeRequest)(nil),     // 3: smartcore.bos.electric.internal.DeleteModeRequest
 	(*ElectricDemand)(nil),        // 4: smartcore.bos.electric.v1.ElectricDemand
 	(*fieldmaskpb.FieldMask)(nil), // 5: google.protobuf.FieldMask
 	(*ElectricMode)(nil),          // 6: smartcore.bos.electric.v1.ElectricMode
 	(*emptypb.Empty)(nil),         // 7: google.protobuf.Empty
 }
 var file_smartcore_bos_electric_internal_memory_settings_proto_depIdxs = []int32{
-	4, // 0: smartcore.go.trait.electric.UpdateDemandRequest.demand:type_name -> smartcore.bos.electric.v1.ElectricDemand
-	5, // 1: smartcore.go.trait.electric.UpdateDemandRequest.update_mask:type_name -> google.protobuf.FieldMask
-	6, // 2: smartcore.go.trait.electric.CreateModeRequest.mode:type_name -> smartcore.bos.electric.v1.ElectricMode
-	6, // 3: smartcore.go.trait.electric.UpdateModeRequest.mode:type_name -> smartcore.bos.electric.v1.ElectricMode
-	5, // 4: smartcore.go.trait.electric.UpdateModeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0, // 5: smartcore.go.trait.electric.MemorySettingsApi.UpdateDemand:input_type -> smartcore.go.trait.electric.UpdateDemandRequest
-	1, // 6: smartcore.go.trait.electric.MemorySettingsApi.CreateMode:input_type -> smartcore.go.trait.electric.CreateModeRequest
-	2, // 7: smartcore.go.trait.electric.MemorySettingsApi.UpdateMode:input_type -> smartcore.go.trait.electric.UpdateModeRequest
-	3, // 8: smartcore.go.trait.electric.MemorySettingsApi.DeleteMode:input_type -> smartcore.go.trait.electric.DeleteModeRequest
-	4, // 9: smartcore.go.trait.electric.MemorySettingsApi.UpdateDemand:output_type -> smartcore.bos.electric.v1.ElectricDemand
-	6, // 10: smartcore.go.trait.electric.MemorySettingsApi.CreateMode:output_type -> smartcore.bos.electric.v1.ElectricMode
-	6, // 11: smartcore.go.trait.electric.MemorySettingsApi.UpdateMode:output_type -> smartcore.bos.electric.v1.ElectricMode
-	7, // 12: smartcore.go.trait.electric.MemorySettingsApi.DeleteMode:output_type -> google.protobuf.Empty
+	4, // 0: smartcore.bos.electric.internal.UpdateDemandRequest.demand:type_name -> smartcore.bos.electric.v1.ElectricDemand
+	5, // 1: smartcore.bos.electric.internal.UpdateDemandRequest.update_mask:type_name -> google.protobuf.FieldMask
+	6, // 2: smartcore.bos.electric.internal.CreateModeRequest.mode:type_name -> smartcore.bos.electric.v1.ElectricMode
+	6, // 3: smartcore.bos.electric.internal.UpdateModeRequest.mode:type_name -> smartcore.bos.electric.v1.ElectricMode
+	5, // 4: smartcore.bos.electric.internal.UpdateModeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0, // 5: smartcore.bos.electric.internal.MemorySettingsApi.UpdateDemand:input_type -> smartcore.bos.electric.internal.UpdateDemandRequest
+	1, // 6: smartcore.bos.electric.internal.MemorySettingsApi.CreateMode:input_type -> smartcore.bos.electric.internal.CreateModeRequest
+	2, // 7: smartcore.bos.electric.internal.MemorySettingsApi.UpdateMode:input_type -> smartcore.bos.electric.internal.UpdateModeRequest
+	3, // 8: smartcore.bos.electric.internal.MemorySettingsApi.DeleteMode:input_type -> smartcore.bos.electric.internal.DeleteModeRequest
+	4, // 9: smartcore.bos.electric.internal.MemorySettingsApi.UpdateDemand:output_type -> smartcore.bos.electric.v1.ElectricDemand
+	6, // 10: smartcore.bos.electric.internal.MemorySettingsApi.CreateMode:output_type -> smartcore.bos.electric.v1.ElectricMode
+	6, // 11: smartcore.bos.electric.internal.MemorySettingsApi.UpdateMode:output_type -> smartcore.bos.electric.v1.ElectricMode
+	7, // 12: smartcore.bos.electric.internal.MemorySettingsApi.DeleteMode:output_type -> google.protobuf.Empty
 	9, // [9:13] is the sub-list for method output_type
 	5, // [5:9] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name

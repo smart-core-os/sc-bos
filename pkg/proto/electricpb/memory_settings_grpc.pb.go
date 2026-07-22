@@ -4,8 +4,6 @@
 // - protoc             v7.35.1
 // source: smartcore/bos/electric/internal/memory_settings.proto
 
-// TODO: find out if this package can change to reflect the new location in the codebase.
-
 package electricpb
 
 import (
@@ -22,10 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MemorySettingsApi_UpdateDemand_FullMethodName = "/smartcore.go.trait.electric.MemorySettingsApi/UpdateDemand"
-	MemorySettingsApi_CreateMode_FullMethodName   = "/smartcore.go.trait.electric.MemorySettingsApi/CreateMode"
-	MemorySettingsApi_UpdateMode_FullMethodName   = "/smartcore.go.trait.electric.MemorySettingsApi/UpdateMode"
-	MemorySettingsApi_DeleteMode_FullMethodName   = "/smartcore.go.trait.electric.MemorySettingsApi/DeleteMode"
+	MemorySettingsApi_UpdateDemand_FullMethodName = "/smartcore.bos.electric.internal.MemorySettingsApi/UpdateDemand"
+	MemorySettingsApi_CreateMode_FullMethodName   = "/smartcore.bos.electric.internal.MemorySettingsApi/CreateMode"
+	MemorySettingsApi_UpdateMode_FullMethodName   = "/smartcore.bos.electric.internal.MemorySettingsApi/UpdateMode"
+	MemorySettingsApi_DeleteMode_FullMethodName   = "/smartcore.bos.electric.internal.MemorySettingsApi/DeleteMode"
 )
 
 // MemorySettingsApiClient is the client API for MemorySettingsApi service.
@@ -231,7 +229,7 @@ func _MemorySettingsApi_DeleteMode_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MemorySettingsApi_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "smartcore.go.trait.electric.MemorySettingsApi",
+	ServiceName: "smartcore.bos.electric.internal.MemorySettingsApi",
 	HandlerType: (*MemorySettingsApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
