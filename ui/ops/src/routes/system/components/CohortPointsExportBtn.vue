@@ -5,15 +5,9 @@
         icon="mdi-format-list-bulleted"
         size="small"
         :loading="loading"
-        v-tooltip:bottom="'Download points list'">
+        v-tooltip:bottom="'Download points list'"
+        @click="download">
       <v-icon size="24"/>
-      <v-menu activator="parent" location="bottom end">
-        <v-list density="compact">
-          <v-list-subheader>Points list (CSV)</v-list-subheader>
-          <v-list-item title="Per device" @click="download('device')"/>
-          <v-list-item title="Per device type" @click="download('type')"/>
-        </v-list>
-      </v-menu>
     </v-btn>
     <v-snackbar v-model="showIncomplete" color="warning" timeout="5000">
       Some nodes could not be reached; the points list may be incomplete.
@@ -35,20 +29,18 @@ const showIncomplete = ref(false);
 
 /**
  * Fans out ListExportedPoints across every udmi automation in the cohort, merges the
- * results, and downloads them as a CSV points list in the given grouping mode.
+ * results, and downloads them as a CSV points list (one row per device).
  *
- * @param {'device'|'type'} mode
  * @return {Promise<void>}
  */
-async function download(mode) {
+async function download() {
   loading.value = true;
   try {
     const {messages, errors} = await collectCohortMessages(cohortNodes.value);
     showIncomplete.value = errors.length > 0;
-    const rows = buildPointsCsv(messages, mode);
+    const rows = buildPointsCsv(messages);
     const dateString = new Date().toISOString().slice(0, 10);
-    const kind = mode === 'type' ? 'points-list-by-type' : 'points-list';
-    downloadCSVRows(`${kind} - building - ${dateString}.csv`, rows);
+    downloadCSVRows(`points-list - building - ${dateString}.csv`, rows);
   } finally {
     loading.value = false;
   }

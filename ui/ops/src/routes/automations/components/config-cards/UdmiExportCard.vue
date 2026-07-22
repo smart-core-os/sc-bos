@@ -8,12 +8,6 @@
           as a CSV points list.
         </v-list-item-subtitle>
       </v-list-item>
-      <v-list-item>
-        <v-btn-toggle v-model="mode" density="compact" variant="outlined" divided mandatory>
-          <v-btn value="device" size="small" text="Per device"/>
-          <v-btn value="type" size="small" text="Per device type"/>
-        </v-btn-toggle>
-      </v-list-item>
       <v-card-actions class="justify-end px-4">
         <v-btn
             color="primary"
@@ -36,16 +30,12 @@ import {useErrorStore} from '@/components/ui-error/error';
 import {buildPointsCsv} from '@/routes/automations/pointsExport';
 import {useSidebarStore} from '@/stores/sidebar';
 import {downloadCSVRows} from '@/util/downloadCSV';
-import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
+import {computed, onMounted, onUnmounted, reactive} from 'vue';
 
 const sidebar = useSidebarStore();
 const tracker = reactive(/** @type {ActionTracker<ListExportedPointsResponse.AsObject>} */ newActionTracker());
 
 const automationName = computed(() => sidebar.data?.config?.name ?? '');
-
-// Export grouping mode: 'device' = one row per device; 'type' = one row per distinct
-// point set within a device type (name prefix before the first hyphen).
-const mode = ref('device');
 
 const errorStore = useErrorStore();
 let unwatchError;
@@ -57,19 +47,17 @@ onUnmounted(() => {
 });
 
 /**
- * Fetches the exported messages and downloads them as a CSV points list. The rows are
- * built either per device or per device type depending on the selected mode.
+ * Fetches the exported messages and downloads them as a CSV points list (one row per device).
  *
  * @return {Promise<void>}
  */
 async function downloadPointsList() {
   if (!automationName.value) return;
   const res = await listExportedPoints({name: automationName.value}, tracker);
-  const rows = buildPointsCsv(res?.messagesList ?? [], mode.value);
+  const rows = buildPointsCsv(res?.messagesList ?? []);
 
   const dateString = new Date().toISOString().slice(0, 10);
-  const kind = mode.value === 'type' ? 'points-list-by-type' : 'points-list';
-  downloadCSVRows(`${kind} - ${automationName.value} - ${dateString}.csv`, rows);
+  downloadCSVRows(`points-list - ${automationName.value} - ${dateString}.csv`, rows);
 }
 </script>
 

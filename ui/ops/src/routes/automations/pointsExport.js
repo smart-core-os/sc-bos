@@ -31,15 +31,19 @@ export function parsePoints(payload) {
 }
 
 /**
- * Derives a device type from a Smart Core source name: the token before the first hyphen
- * of the last '/'-segment (e.g. "a/b/FCU-LN1-01" -> "FCU"). Falls back to the whole short
- * name when there is no hyphen.
+ * Extracts the BDNS functional asset name from an MQTT topic: the single path segment
+ * immediately before "/event/pointset/points"
+ * (e.g. "site/.../devices/FCU-LN1-01/event/pointset/points" -> "FCU-LN1-01"). Returns an
+ * empty string when the topic has no such suffix.
  *
- * @param {string} sourceName
+ * @param {string} topic
  * @return {string}
  */
-export function deviceType(sourceName) {
-  return (sourceName.split('/').pop() ?? '').split('-')[0];
+export function bdnsAssetName(topic) {
+  const marker = '/event/pointset/points';
+  const i = topic.indexOf(marker);
+  if (i < 0) return '';
+  return topic.slice(0, i).split('/').pop() ?? '';
 }
 
 /**
@@ -53,66 +57,21 @@ function pointColumns(n) {
 }
 
 /**
- * Builds one row per message — `Source name, Topic, Point 1..N` — the row widening to hold
+ * Builds the full CSV rows (header first): one row per device (message) —
+ * `Source name, Topic, BDNS functional asset name, Point 1..N` — the row widening to hold
  * each device's point names.
  *
  * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
- * @return {{header: string[], rows: string[][]}}
+ * @return {string[][]}
  */
-export function rowsByDevice(messages) {
+export function buildPointsCsv(messages) {
   let maxPoints = 0;
   const rows = messages.map((msg) => {
     const points = parsePoints(msg.payload);
     maxPoints = Math.max(maxPoints, points.length);
-    return [msg.sourceName, msg.topic, ...points];
+    return [msg.sourceName, msg.topic, bdnsAssetName(msg.topic), ...points];
   });
-  return {header: ['Source name', 'Topic', ...pointColumns(maxPoints)], rows};
-}
-
-/**
- * Builds one row per distinct point set within a device type — `Device type, Devices,
- * Point 1..N`. Devices of a type are grouped, but only those with an identical point set
- * are collapsed, so a subset/superset variant appears as its own (longer) row rather than
- * being silently merged. Types are sorted alphabetically; variants within a type by size.
- *
- * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
- * @return {{header: string[], rows: string[][]}}
- */
-export function rowsByDeviceType(messages) {
-  // type -> (signature -> {points, count})
-  const byType = new Map();
-  for (const msg of messages) {
-    const type = deviceType(msg.sourceName);
-    const points = parsePoints(msg.payload);
-    const signature = JSON.stringify([...points].sort());
-    if (!byType.has(type)) byType.set(type, new Map());
-    const variants = byType.get(type);
-    const existing = variants.get(signature);
-    if (existing) existing.count++;
-    else variants.set(signature, {points, count: 1});
-  }
-
-  let maxPoints = 0;
-  const rows = [];
-  for (const type of [...byType.keys()].sort()) {
-    const variants = [...byType.get(type).values()].sort((a, b) => a.points.length - b.points.length);
-    for (const {points, count} of variants) {
-      maxPoints = Math.max(maxPoints, points.length);
-      rows.push([type, String(count), ...points]);
-    }
-  }
-  return {header: ['Device type', 'Devices', ...pointColumns(maxPoints)], rows};
-}
-
-/**
- * Builds the full CSV rows (header first) for the given messages and grouping mode.
- *
- * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
- * @param {'device'|'type'} mode
- * @return {string[][]}
- */
-export function buildPointsCsv(messages, mode) {
-  const {header, rows} = mode === 'type' ? rowsByDeviceType(messages) : rowsByDevice(messages);
+  const header = ['Source name', 'Topic', 'BDNS functional asset name', ...pointColumns(maxPoints)];
   return [header, ...rows];
 }
 
