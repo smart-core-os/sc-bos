@@ -1,14 +1,15 @@
 <template>
   <div>
     <v-btn
-        color="primary"
-        variant="flat"
-        prepend-icon="mdi-download"
-        append-icon="mdi-menu-down"
-        :loading="loading">
-      Download points list
+        class="mt-2"
+        icon="mdi-format-list-bulleted"
+        size="small"
+        :loading="loading"
+        v-tooltip:bottom="'Download points list'">
+      <v-icon size="24"/>
       <v-menu activator="parent" location="bottom end">
         <v-list density="compact">
+          <v-list-subheader>Points list (CSV)</v-list-subheader>
           <v-list-item title="Per device" @click="download('device')"/>
           <v-list-item title="Per device type" @click="download('type')"/>
         </v-list>
