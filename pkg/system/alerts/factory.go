@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
@@ -67,18 +64,12 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	switch cfg.Storage.Type {
 	case config.StorageTypePostgres:
-		var pool *pgxpool.Pool
-		var err error
-		if cfg.Storage.ConnectConfig.IsZero() {
-			_, _, pool, err = s.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, cfg.Storage.ConnectConfig)
-		}
+		pools, err := s.stores.PostgresPoolsFor(ctx, cfg.Storage.RoleConfig)
 		if err != nil {
 			return fmt.Errorf("connect: %w", err)
 		}
 
-		server, err := pgxalerts.NewServerFromPool(ctx, pool)
+		server, err := pgxalerts.NewServerFromPools(ctx, pools)
 		if err != nil {
 			return fmt.Errorf("init: %w", err)
 		}

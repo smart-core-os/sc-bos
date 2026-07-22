@@ -50,7 +50,7 @@ const (
 
 type Storage struct {
 	Type StorageType `json:"type,omitempty"`
-	pgxutil.ConnectConfig
+	pgxutil.RoleConfig
 }
 
 var (

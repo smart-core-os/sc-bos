@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
+	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/alertpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
@@ -43,15 +44,24 @@ func NewServer(ctx context.Context, connStr string) (*Server, error) {
 	return NewServerFromPool(ctx, pool)
 }
 
+// NewServerFromPool returns a Server backed by a single pool used for reads,
+// writes, and admin (schema) operations.
 func NewServerFromPool(ctx context.Context, pool *pgxpool.Pool) (*Server, error) {
-	err := SetupDB(ctx, pool)
+	return NewServerFromPools(ctx, pgxutil.SamePool(pool))
+}
+
+// NewServerFromPools returns a Server that sets up its schema via pools.Admin
+// and routes reads to pools.Read and writes to pools.Write.
+func NewServerFromPools(ctx context.Context, pools pgxutil.Pools) (*Server, error) {
+	err := SetupDB(ctx, pools.Admin)
 	if err != nil {
 		return nil, fmt.Errorf("setup %w", err)
 	}
 
 	return &Server{
-		pool: pool,
-		bus:  &minibus.Bus[*alertpb.PullAlertsResponse_Change]{},
+		read:  pools.Read,
+		write: pools.Write,
+		bus:   &minibus.Bus[*alertpb.PullAlertsResponse_Change]{},
 		Severity: []alertpb.Alert_Severity{
 			alertpb.Alert_INFO,
 			alertpb.Alert_WARNING,
@@ -74,8 +84,9 @@ type Server struct {
 	// Subsystems, if set, is used to pre-populate AlertMetadata with zero values for cases when no alerts appear in a subsystem.
 	Subsystems []string
 
-	pool *pgxpool.Pool
-	bus  *minibus.Bus[*alertpb.PullAlertsResponse_Change]
+	read  *pgxpool.Pool
+	write *pgxpool.Pool
+	bus   *minibus.Bus[*alertpb.PullAlertsResponse_Change]
 
 	// to support alert metadata
 	mdMu   sync.Mutex      // guards the following md fields
@@ -114,7 +125,7 @@ func (s *Server) CreateAlert(ctx context.Context, request *alertpb.CreateAlertRe
 }
 
 func (s *Server) createNewAlert(ctx context.Context, name string, alert *alertpb.Alert) (*alertpb.Alert, error) {
-	alert, err := insertAlert(ctx, s.pool, alert)
+	alert, err := insertAlert(ctx, s.write, alert)
 	if err != nil {
 		return nil, dbErrToStatus(err)
 	}
@@ -126,7 +137,7 @@ func (s *Server) createNewAlert(ctx context.Context, name string, alert *alertpb
 
 func (s *Server) mergeSourceAlert(ctx context.Context, name string, alert *alertpb.Alert) (*alertpb.Alert, error) {
 	var oldAlert, newAlert *alertpb.Alert
-	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		args := []any{
 			alert.Source,
 		}
@@ -242,7 +253,7 @@ func (s *Server) UpdateAlert(ctx context.Context, request *alertpb.UpdateAlertRe
 	original := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
 
-	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// record the original value which will be used for event notifications
 		if err := readAlertById(ctx, tx, alert.Id, original); err != nil {
 			return err
@@ -308,7 +319,7 @@ func (s *Server) ResolveAlert(ctx context.Context, request *alertpb.ResolveAlert
 
 	switch {
 	case alert.Id != "":
-		return respond(pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+		return respond(pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 			// record the original value which will be used for event notifications
 			if err := readAlertById(ctx, tx, alert.Id, original); err != nil {
 				return err
@@ -321,7 +332,7 @@ func (s *Server) ResolveAlert(ctx context.Context, request *alertpb.ResolveAlert
 			return setResolveTime(ctx, tx, alert.Id)
 		}))
 	case alert.Source != "":
-		return respond(pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+		return respond(pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 			args := []any{alert.Source}
 			querySql := selectAlertSQL + ` WHERE source=$1`
 			if alert.Federation != "" {
@@ -350,7 +361,7 @@ func (s *Server) DeleteAlert(ctx context.Context, request *alertpb.DeleteAlertRe
 		return nil, status.Error(codes.InvalidArgument, "id empty")
 	}
 	existing := &alertpb.Alert{}
-	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		// We do extra work to get the old value so we can include it in bus events.
 		// Without this any filtered PullAlerts call wouldn't be able to correctly include the event in responses.
 		err := readAlertById(ctx, tx, request.Id, existing)
@@ -480,7 +491,7 @@ func (s *Server) ListAlerts(ctx context.Context, request *alertpb.ListAlertsRequ
 	pageSize := normalizePageSize(request.PageSize)
 	sql += fmt.Sprintf(" LIMIT %d", pageSize+1)
 
-	rows, err := s.pool.Query(ctx, sql, args...)
+	rows, err := s.read.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, dbErrToStatus(err)
 	}
@@ -552,7 +563,7 @@ func (s *Server) AcknowledgeAlert(ctx context.Context, request *alertpb.Acknowle
 
 	existing := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
-	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
 			return err
@@ -611,7 +622,7 @@ func (s *Server) UnacknowledgeAlert(ctx context.Context, request *alertpb.Acknow
 
 	existing := &alertpb.Alert{}
 	updated := &alertpb.Alert{}
-	err := pgx.BeginTxFunc(ctx, s.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
+	err := pgx.BeginTxFunc(ctx, s.write, pgx.TxOptions{}, func(tx pgx.Tx) error {
 		err := readAlertById(ctx, tx, request.Id, existing)
 		if err != nil {
 			return err

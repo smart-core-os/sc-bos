@@ -41,6 +41,11 @@ backend by configuring the system to point to an existing postgres database:
 }
 ```
 
+The `storage` block accepts the same connection options as the shared node
+store, including the optional `read`/`write`/`admin` sub-blocks for connecting
+each privilege level as a distinct, least-privilege database user. See the
+[stores README](../../app/stores/README.md) for details and suggested grants.
+
 For development, you can use the same postgres database setup via the [docker-compose.yaml](../../../docker-compose.yml)
 file located at the root of the project. See the [dev guide](../../../docs/install/dev.md) for more info.
 

@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/tenantpb"
@@ -34,7 +32,7 @@ func NewSystem(services system.Services) *System {
 		logger:  services.Logger.Named("tenants"),
 	}
 	s.Service = service.New(
-		s.applyConfig,
+		service.MonoApply(s.applyConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
 			logContext.LogTo("applyConfig", s.logger)
 		})),
@@ -76,18 +74,12 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			return fmt.Errorf("can't create proxied TenantApi service: %w", err)
 		}
 	case config.StorageTypePostgres:
-		var pool *pgxpool.Pool
-		var err error
-		if cfg.Storage.ConnectConfig.IsZero() {
-			_, _, pool, err = s.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, cfg.Storage.ConnectConfig)
-		}
+		pools, err := s.stores.PostgresPoolsFor(ctx, cfg.Storage.RoleConfig)
 		if err != nil {
 			return fmt.Errorf("connect: %w", err)
 		}
 
-		server, err := pgxtenants.NewServerFromPool(ctx, pool, pgxtenants.WithLogger(s.logger))
+		server, err := pgxtenants.NewServerFromPools(ctx, pools, pgxtenants.WithLogger(s.logger))
 		if err != nil {
 			return fmt.Errorf("init: %w", err)
 		}

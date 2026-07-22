@@ -21,7 +21,7 @@ const (
 
 type Storage struct {
 	Type StorageType `json:"type,omitempty"`
-	pgxutil.ConnectConfig
+	pgxutil.RoleConfig
 	// TTL is the time-to-live for records. Zero-value (not-specified) means "forever".
 	TTL *TTL `json:"ttl,omitempty"`
 }

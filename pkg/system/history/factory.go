@@ -7,11 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/internal/util/pgxutil"
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/history"
 	"github.com/smart-core-os/sc-bos/pkg/history/boltstore"
@@ -72,18 +70,12 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	switch cfg.Storage.Type {
 	case config.StorageTypePostgres:
-		var pool *pgxpool.Pool
-		var err error
-		if cfg.Storage.ConnectConfig.IsZero() {
-			_, _, pool, err = s.stores.Postgres()
-		} else {
-			pool, err = pgxutil.Connect(ctx, cfg.Storage.ConnectConfig)
-		}
+		pools, err := s.stores.PostgresPoolsFor(ctx, cfg.Storage.RoleConfig)
 		if err != nil {
 			return fmt.Errorf("connect: %w", err)
 		}
 
-		if err := pgxstore.SetupDB(ctx, pool); err != nil {
+		if err := pgxstore.SetupDB(ctx, pools.Admin); err != nil {
 			return fmt.Errorf("setup: %w", err)
 		}
 
@@ -99,7 +91,7 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 			}
 		}
 		store = func(source string) history.Store {
-			return pgxstore.NewStoreFromPool(source, pool, opts...)
+			return pgxstore.NewStoreFromPools(source, pools, opts...)
 		}
 	case config.StorageTypeBolt:
 		storeCollection := make(map[string]history.Store)
