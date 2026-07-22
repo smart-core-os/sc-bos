@@ -30,20 +30,24 @@ export function parsePoints(payload) {
   return Object.keys(points);
 }
 
+// Matches the pointset-event portion of a UDMI topic, covering both the UDMI standard
+// suffix ".../event/pointset/points" and the shorter ".../events/pointset" some drivers use.
+const POINTSET_EVENT_RE = /\/events?\/pointset/;
+
 /**
- * Extracts the BDNS functional asset name from an MQTT topic: the single path segment
- * immediately before "/event/pointset/points"
- * (e.g. "site/.../devices/FCU-LN1-01/event/pointset/points" -> "FCU-LN1-01"). Returns an
- * empty string when the topic has no such suffix.
+ * Extracts the BDNS functional asset name from a pointset event topic: the single path
+ * segment immediately before the "/event(s)/pointset" portion
+ * (e.g. "JLL/GB-LON-1BG/AV/AMP-109151/events/pointset" -> "AMP-109151";
+ * "site/.../FCU-LN1-01/event/pointset/points" -> "FCU-LN1-01"). Returns an empty string
+ * when the topic isn't a pointset event topic.
  *
  * @param {string} topic
  * @return {string}
  */
 export function bdnsAssetName(topic) {
-  const marker = '/event/pointset/points';
-  const i = topic.indexOf(marker);
-  if (i < 0) return '';
-  return topic.slice(0, i).split('/').pop() ?? '';
+  const m = POINTSET_EVENT_RE.exec(topic);
+  if (!m) return '';
+  return topic.slice(0, m.index).split('/').pop() ?? '';
 }
 
 /**
@@ -59,14 +63,16 @@ function pointColumns(n) {
 /**
  * Builds the full CSV rows (header first): one row per device (message) —
  * `Source name, Topic, BDNS functional asset name, Point 1..N` — the row widening to hold
- * each device's point names.
+ * each device's point names. Only pointset event topics are included; state, metadata and
+ * other topics are excluded.
  *
  * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
  * @return {string[][]}
  */
 export function buildPointsCsv(messages) {
+  const pointsetMessages = (messages ?? []).filter((msg) => POINTSET_EVENT_RE.test(msg.topic));
   let maxPoints = 0;
-  const rows = messages.map((msg) => {
+  const rows = pointsetMessages.map((msg) => {
     const points = parsePoints(msg.payload);
     maxPoints = Math.max(maxPoints, points.length);
     return [msg.sourceName, msg.topic, bdnsAssetName(msg.topic), ...points];
