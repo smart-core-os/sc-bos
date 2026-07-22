@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -55,6 +56,7 @@ type Auto struct {
 	clientActions func(clientConner node.ClientConner) Actions
 	newTimer      func(duration time.Duration) (<-chan time.Time, func() bool)
 	processDone   func(readState *ReadState, writeState *WriteState, ttl time.Duration, err error)
+	randFloat     func() float64 // returns a value in [0.0,1.0), used to jitter retry backoff
 }
 
 func (a *Auto) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -138,17 +140,17 @@ func (a *Auto) processReadStates(ctx context.Context, readStates <-chan *ReadSta
 	var ttlExpired <-chan time.Time
 	cancelTtlTimer := func() bool { return false }
 
-	var retryFailedProcessing <-chan time.Time
-	cancelRetryTimer := func() bool { return false }
-
 	// writeState is only accessed from this go routine.
 	writeState := NewWriteState()
 	writeState.Now = a.now
 
+	// consecutiveFailures counts how many times processing has failed in a row.
+	// It grows the retry backoff and resets to 0 on the next successful process.
+	var consecutiveFailures int
+
 	var lastProcessedState *ReadState
 	processStateFn := func(readState *ReadState) error {
 		cancelTtlTimer()
-		cancelRetryTimer()
 		logger := a.logger.With(zap.String("auto", readState.Config.Name))
 
 		if readState.Config.LogReads {
@@ -176,12 +178,20 @@ func (a *Auto) processReadStates(ctx context.Context, readStates <-chan *ReadSta
 		case ctx.Err() != nil:
 			return ctx.Err()
 		case err != nil:
-			// TODO: add backoff etc.
-			ttl = readState.Config.WriteRetryDelay.Or(config.DefaultWriteRetryDelay)
-		case refreshEvery > 0 && (ttl <= 0 || ttl > refreshEvery):
-			// ensure it's not too long before we wake up,
-			// so external changes don't stick around forever
-			ttl = refreshEvery
+			// Back off exponentially (with jitter) while processing keeps failing,
+			// so an unreachable device isn't hammered at a constant rate.
+			consecutiveFailures++
+			base := readState.Config.WriteRetryDelay.Or(config.DefaultWriteRetryDelay)
+			maxDelay := readState.Config.WriteRetryMaxDelay.Or(config.DefaultWriteRetryMaxDelay)
+			ttl = nextRetryDelay(base, maxDelay, consecutiveFailures, a.randFloat())
+		default:
+			// processing succeeded, reset the backoff
+			consecutiveFailures = 0
+			if refreshEvery > 0 && (ttl <= 0 || ttl > refreshEvery) {
+				// ensure it's not too long before we wake up,
+				// so external changes don't stick around forever
+				ttl = refreshEvery
+			}
 		}
 
 		// Setup ttl for the transformed model.
@@ -216,13 +226,44 @@ func (a *Auto) processReadStates(ctx context.Context, readStates <-chan *ReadSta
 			if err != nil {
 				return err
 			}
-		case <-retryFailedProcessing:
-			err := processStateFn(lastReadState)
-			if err != nil {
-				return err
-			}
 		}
 	}
+}
+
+// nextRetryDelay computes the delay before the next retry after attempt consecutive failures.
+// The delay grows exponentially from base (attempt 1 == base, attempt 2 == 2*base, ...),
+// is capped at max, and then has "equal jitter" applied: the returned value lies in
+// [d/2, d) where d is the capped exponential delay. jitter must be in [0.0,1.0).
+func nextRetryDelay(base, maxDelay time.Duration, attempt int, jitter float64) time.Duration {
+	if base <= 0 {
+		base = config.DefaultWriteRetryDelay
+	}
+	if attempt < 1 {
+		attempt = 1
+	}
+
+	d := base
+	for i := 1; i < attempt; i++ {
+		if maxDelay > 0 && d >= maxDelay {
+			d = maxDelay
+			break
+		}
+		d *= 2
+		if d <= 0 { // overflow, treat as unbounded and clamp below
+			d = maxDelay
+			break
+		}
+	}
+	if maxDelay > 0 && d > maxDelay {
+		d = maxDelay
+	}
+	if d <= 0 {
+		d = base
+	}
+
+	// equal jitter: keep half the delay fixed, randomise the other half.
+	half := d / 2
+	return half + time.Duration(jitter*float64(half))
 }
 
 func (a *Auto) setTestHelperFuncs() {
@@ -241,5 +282,8 @@ func (a *Auto) setTestHelperFuncs() {
 	if a.processDone == nil {
 		a.processDone = func(readState *ReadState, writeState *WriteState, ttl time.Duration, err error) {
 		}
+	}
+	if a.randFloat == nil {
+		a.randFloat = rand.Float64
 	}
 }

@@ -36,7 +36,11 @@ type Root struct {
 	// How long should a past write affect future writes.
 	WriteCacheExpiry *jsontypes.Duration `json:"writeCacheExpiry,omitempty"` // Defaults to no expiry.
 	// If processing fails, how long to wait before trying again.
-	WriteRetryDelay *jsontypes.Duration `json:"WriteRetryDelay,omitempty"` // Defaults to 1m.
+	// This is the base delay; consecutive failures back off exponentially (with jitter) up to WriteRetryMaxDelay.
+	WriteRetryDelay *jsontypes.Duration `json:"writeRetryDelay,omitempty"` // Defaults to 1m.
+	// The maximum delay between retries when processing keeps failing.
+	// Backoff grows from WriteRetryDelay and is capped at this value.
+	WriteRetryMaxDelay *jsontypes.Duration `json:"writeRetryMaxDelay,omitempty"` // Defaults to 15m.
 	// Reprocess state at least this often.
 	WriteEvery *jsontypes.Duration `json:"writeEvery,omitempty"` // Defaults to never.
 	// How long do we allow for writes to be picked up as reads.
@@ -88,6 +92,7 @@ var (
 	DefaultDeadbandModeTarget   = SwitchMode{Key: "deadband", On: "comfort", Off: "eco"}
 	DefaultWriteCacheExpiry     = 0 * time.Second
 	DefaultWriteRetryDelay      = time.Minute
+	DefaultWriteRetryMaxDelay   = 15 * time.Minute
 	DefaultWriteEvery           = 0 * time.Second
 	DefaultWriteReadPropagation = 5 * time.Second
 	DefaultUnoccupiedDelay      = 15 * time.Minute
