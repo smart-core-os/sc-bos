@@ -16,7 +16,7 @@ import (
 
 // tasksForSource returns an array of tasks to run for each UdmiService source/name
 // all of these need to be run for the implementation to work
-func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub) []task.Task {
+func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub, collector *exportCollector) []task.Task {
 	var tasks []task.Task
 
 	tasks = append(tasks, func(ctx context.Context) (task.Next, error) {
@@ -41,7 +41,7 @@ func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceCl
 			return pullMessages(ctx, name, logger, client, messageChanges)
 		})
 		grp.Go(func() error {
-			return handleMessages(ctx, messageChanges, pubsub.Publisher)
+			return handleMessages(ctx, name, messageChanges, pubsub.Publisher, collector)
 		})
 		err := grp.Wait() // this waits for all go routines to finish, so we are safe to then close the channel
 		return task.Normal, err
@@ -116,8 +116,9 @@ func pullMessages(ctx context.Context, name string, logger *zap.Logger, client u
 }
 
 // handleMessages waits for messages on the given channel and sends them to the publisher
-// ultimately these end up getting sent as MQTT messages
-func handleMessages(ctx context.Context, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher) error {
+// ultimately these end up getting sent as MQTT messages. Each message is also recorded
+// in the collector (when non-nil) so it can be exported as a points list.
+func handleMessages(ctx context.Context, name string, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector) error {
 	for change := range changes {
 		if change.Message == nil {
 			continue
@@ -125,6 +126,11 @@ func handleMessages(ctx context.Context, changes <-chan *udmipb.PullExportMessag
 		err := publisher.Publish(ctx, change.Message.Topic, change.Message.Payload)
 		if err != nil {
 			return err
+		}
+		// Record only after a successful publish so the export reflects messages that were
+		// actually published, and count doesn't inflate on publish failure + task retry.
+		if collector != nil {
+			collector.Record(name, change.Message.Topic, change.Message.Payload)
 		}
 	}
 	return nil

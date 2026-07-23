@@ -19,6 +19,8 @@
 const grpc = {};
 grpc.web = require('grpc-web');
 
+
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 const proto = {};
 proto.smartcore = {};
 proto.smartcore.bos = {};
@@ -308,6 +310,119 @@ proto.smartcore.bos.udmi.v1.UdmiServicePromiseClient.prototype.getExportMessage 
       request,
       metadata || {},
       methodDescriptor_UdmiService_GetExportMessage);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.smartcore.bos.udmi.v1.UdmiExportApiClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.smartcore.bos.udmi.v1.UdmiExportApiPromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.smartcore.bos.udmi.v1.ListExportedPointsRequest,
+ *   !proto.smartcore.bos.udmi.v1.ListExportedPointsResponse>}
+ */
+const methodDescriptor_UdmiExportApi_ListExportedPoints = new grpc.web.MethodDescriptor(
+  '/smartcore.bos.udmi.v1.UdmiExportApi/ListExportedPoints',
+  grpc.web.MethodType.UNARY,
+  proto.smartcore.bos.udmi.v1.ListExportedPointsRequest,
+  proto.smartcore.bos.udmi.v1.ListExportedPointsResponse,
+  /**
+   * @param {!proto.smartcore.bos.udmi.v1.ListExportedPointsRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.smartcore.bos.udmi.v1.ListExportedPointsRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.smartcore.bos.udmi.v1.ListExportedPointsResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.smartcore.bos.udmi.v1.ListExportedPointsResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.smartcore.bos.udmi.v1.UdmiExportApiClient.prototype.listExportedPoints =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/smartcore.bos.udmi.v1.UdmiExportApi/ListExportedPoints',
+      request,
+      metadata || {},
+      methodDescriptor_UdmiExportApi_ListExportedPoints,
+      callback);
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.udmi.v1.ListExportedPointsRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.smartcore.bos.udmi.v1.ListExportedPointsResponse>}
+ *     Promise that resolves to the response
+ */
+proto.smartcore.bos.udmi.v1.UdmiExportApiPromiseClient.prototype.listExportedPoints =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/smartcore.bos.udmi.v1.UdmiExportApi/ListExportedPoints',
+      request,
+      metadata || {},
+      methodDescriptor_UdmiExportApi_ListExportedPoints);
 };
 
 

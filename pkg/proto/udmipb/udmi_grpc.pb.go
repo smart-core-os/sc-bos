@@ -264,3 +264,125 @@ var UdmiService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Metadata: "smartcore/bos/udmi/v1/udmi.proto",
 }
+
+const (
+	UdmiExportApi_ListExportedPoints_FullMethodName = "/smartcore.bos.udmi.v1.UdmiExportApi/ListExportedPoints"
+)
+
+// UdmiExportApiClient is the client API for UdmiExportApi service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// UdmiExportApi exposes the distinct messages the UDMI automation has published to
+// the MQTT broker, so a caller can build a full points list export.
+//
+// Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
+// implemented by the udmi automation itself: it observes every payload flowing through
+// the automation's publish path, regardless of the source driver, and is announced
+// against the automation's configured name.
+type UdmiExportApiClient interface {
+	// ListExportedPoints returns the most recent payload published for each distinct
+	// MQTT topic since the automation last (re)started, keyed by source and topic.
+	ListExportedPoints(ctx context.Context, in *ListExportedPointsRequest, opts ...grpc.CallOption) (*ListExportedPointsResponse, error)
+}
+
+type udmiExportApiClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewUdmiExportApiClient(cc grpc.ClientConnInterface) UdmiExportApiClient {
+	return &udmiExportApiClient{cc}
+}
+
+func (c *udmiExportApiClient) ListExportedPoints(ctx context.Context, in *ListExportedPointsRequest, opts ...grpc.CallOption) (*ListExportedPointsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListExportedPointsResponse)
+	err := c.cc.Invoke(ctx, UdmiExportApi_ListExportedPoints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UdmiExportApiServer is the server API for UdmiExportApi service.
+// All implementations must embed UnimplementedUdmiExportApiServer
+// for forward compatibility.
+//
+// UdmiExportApi exposes the distinct messages the UDMI automation has published to
+// the MQTT broker, so a caller can build a full points list export.
+//
+// Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
+// implemented by the udmi automation itself: it observes every payload flowing through
+// the automation's publish path, regardless of the source driver, and is announced
+// against the automation's configured name.
+type UdmiExportApiServer interface {
+	// ListExportedPoints returns the most recent payload published for each distinct
+	// MQTT topic since the automation last (re)started, keyed by source and topic.
+	ListExportedPoints(context.Context, *ListExportedPointsRequest) (*ListExportedPointsResponse, error)
+	mustEmbedUnimplementedUdmiExportApiServer()
+}
+
+// UnimplementedUdmiExportApiServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedUdmiExportApiServer struct{}
+
+func (UnimplementedUdmiExportApiServer) ListExportedPoints(context.Context, *ListExportedPointsRequest) (*ListExportedPointsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListExportedPoints not implemented")
+}
+func (UnimplementedUdmiExportApiServer) mustEmbedUnimplementedUdmiExportApiServer() {}
+func (UnimplementedUdmiExportApiServer) testEmbeddedByValue()                       {}
+
+// UnsafeUdmiExportApiServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UdmiExportApiServer will
+// result in compilation errors.
+type UnsafeUdmiExportApiServer interface {
+	mustEmbedUnimplementedUdmiExportApiServer()
+}
+
+func RegisterUdmiExportApiServer(s grpc.ServiceRegistrar, srv UdmiExportApiServer) {
+	// If the following call pancis, it indicates UnimplementedUdmiExportApiServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&UdmiExportApi_ServiceDesc, srv)
+}
+
+func _UdmiExportApi_ListExportedPoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListExportedPointsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UdmiExportApiServer).ListExportedPoints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UdmiExportApi_ListExportedPoints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UdmiExportApiServer).ListExportedPoints(ctx, req.(*ListExportedPointsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// UdmiExportApi_ServiceDesc is the grpc.ServiceDesc for UdmiExportApi service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UdmiExportApi_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "smartcore.bos.udmi.v1.UdmiExportApi",
+	HandlerType: (*UdmiExportApiServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListExportedPoints",
+			Handler:    _UdmiExportApi_ListExportedPoints_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "smartcore/bos/udmi/v1/udmi.proto",
+}

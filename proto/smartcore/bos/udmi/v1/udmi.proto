@@ -4,6 +4,8 @@ package smartcore.bos.udmi.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/udmipb";
 
+import "google/protobuf/timestamp.proto";
+
 // UdmiService defines the service needed to add UDMI support to a driver or system.
 // The implementer is responsible for message payloads and topic definitions. This will not be validated.
 service UdmiService {
@@ -58,4 +60,45 @@ message GetExportMessageRequest {
 message MqttMessage {
   string topic = 1;
   string payload = 2;  // JSON payload
+}
+
+// UdmiExportApi exposes the distinct messages the UDMI automation has published to
+// the MQTT broker, so a caller can build a full points list export.
+//
+// Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
+// implemented by the udmi automation itself: it observes every payload flowing through
+// the automation's publish path, regardless of the source driver, and is announced
+// against the automation's configured name.
+service UdmiExportApi {
+  // ListExportedPoints returns the most recent payload published for each distinct
+  // MQTT topic since the automation last (re)started, keyed by source and topic.
+  rpc ListExportedPoints(ListExportedPointsRequest) returns (ListExportedPointsResponse);
+}
+
+message ListExportedPointsRequest {
+  // name identifies the udmi automation to query.
+  string name = 1;
+}
+
+message ListExportedPointsResponse {
+  repeated ExportedMessage messages = 1;
+}
+
+// ExportedMessage is the most recent payload published for a single MQTT topic,
+// together with the Smart Core source that produced it and basic bookkeeping.
+message ExportedMessage {
+  // source_name is the Smart Core name of the UdmiService source that produced the message.
+  string source_name = 1;
+  // topic is the MQTT topic the message was published to.
+  string topic = 2;
+  // message_type classifies the topic: "event", "state", "metadata" or "other".
+  string message_type = 3;
+  // payload is the most recent JSON payload published for this topic.
+  string payload = 4;
+  // first_seen is when a message for this topic was first published since the automation (re)started.
+  google.protobuf.Timestamp first_seen = 5;
+  // last_seen is when the most recent message for this topic was published.
+  google.protobuf.Timestamp last_seen = 6;
+  // count is the number of messages published for this topic since the automation (re)started.
+  int64 count = 7;
 }

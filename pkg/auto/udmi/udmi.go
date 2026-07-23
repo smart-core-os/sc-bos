@@ -12,6 +12,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi/config"
+	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -31,7 +32,10 @@ func (factory) New(services auto.Services) service.Lifecycle {
 
 func NewUDMI(services auto.Services) service.Lifecycle {
 	logger := services.Logger.Named(AutoType)
-	e := &udmiAuto{services: services}
+	e := &udmiAuto{
+		services:  services,
+		announcer: node.NewReplaceAnnouncer(services.Node),
+	}
 	e.Service = service.New(
 		service.MonoApply(e.applyConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
@@ -44,7 +48,8 @@ func NewUDMI(services auto.Services) service.Lifecycle {
 
 type udmiAuto struct {
 	*service.Service[config.Root]
-	services auto.Services
+	services  auto.Services
+	announcer *node.ReplaceAnnouncer
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -79,10 +84,20 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 		client.Disconnect(5000)
 	}()
 
+	// collector records every payload published below so it can be exported as a
+	// points list via UdmiExportApi. A fresh collector per config generation means a
+	// reconfigure resets the captured points (drivers may declare points statically,
+	// so a new config can change a device's points).
+	collector := newExportCollector(e.services.Now)
+	announce := e.announcer.Replace(ctx)
+	if cfg.Name != "" {
+		announce.Announce(cfg.Name, node.HasServer(udmipb.RegisterUdmiExportApiServer, udmipb.UdmiExportApiServer(&exportServer{collector: collector})))
+	}
+
 	var tasks namedTasks
 	pullFrom := func(name string) {
 		logger := e.services.Logger.With(zap.String("name", name))
-		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub),
+		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, collector),
 			task.WithRetry(task.RetryUnlimited), task.WithBackoff(time.Millisecond*100, time.Second*10))
 		if errors.Is(err, ErrAlreadyRunning) {
 			// cool, I guess someone else beat us to it
