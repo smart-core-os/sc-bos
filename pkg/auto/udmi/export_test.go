@@ -93,6 +93,9 @@ func TestMessageType(t *testing.T) {
 		"site/dev1/state":                 "state",
 		"site/dev1/metadata.json":         "metadata",
 		"site/dev1/something":             "other",
+		// segments that merely contain the keywords as substrings must not be misclassified
+		"site/event-log-1/state":     "state",
+		"metadata-panel/dev1/config": "other",
 	}
 	for topic, want := range cases {
 		if got := messageType(topic); got != want {

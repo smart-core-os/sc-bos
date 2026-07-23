@@ -20,6 +20,9 @@
         </v-btn>
       </v-card-actions>
     </v-list>
+    <v-snackbar v-model="showEmpty" color="info" timeout="5000">
+      No points found to export.
+    </v-snackbar>
   </v-card>
 </template>
 
@@ -29,11 +32,13 @@ import {listExportedPoints} from '@/api/ui/udmiExport';
 import {useErrorStore} from '@/components/ui-error/error';
 import {buildPointsCsv} from '@/routes/automations/pointsExport';
 import {useSidebarStore} from '@/stores/sidebar';
+import {dateStamp} from '@/util/date';
 import {downloadCSVRows} from '@/util/downloadCSV';
-import {computed, onMounted, onUnmounted, reactive} from 'vue';
+import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
 
 const sidebar = useSidebarStore();
 const tracker = reactive(/** @type {ActionTracker<ListExportedPointsResponse.AsObject>} */ newActionTracker());
+const showEmpty = ref(false);
 
 const automationName = computed(() => sidebar.data?.config?.name ?? '');
 
@@ -53,11 +58,19 @@ onUnmounted(() => {
  */
 async function downloadPointsList() {
   if (!automationName.value) return;
-  const res = await listExportedPoints({name: automationName.value}, tracker);
-  const rows = buildPointsCsv(res?.messagesList ?? []);
-
-  const dateString = new Date().toISOString().slice(0, 10);
-  downloadCSVRows(`points-list - ${automationName.value} - ${dateString}.csv`, rows);
+  try {
+    const res = await listExportedPoints({name: automationName.value}, tracker);
+    const rows = buildPointsCsv(res?.messagesList ?? []);
+    // rows always contains the header row; a length of 1 means nothing was exported.
+    if (rows.length <= 1) {
+      showEmpty.value = true;
+      return;
+    }
+    downloadCSVRows(`points-list - ${automationName.value} - ${dateStamp()}.csv`, rows);
+  } catch {
+    // listExportedPoints failures are surfaced via the error store (tracker registered in
+    // onMounted); swallow here so the @click handler doesn't raise an unhandled rejection.
+  }
 }
 </script>
 

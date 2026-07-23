@@ -17,17 +17,18 @@ export function parsePoints(payload) {
   } catch {
     return [];
   }
-  if (!parsed || typeof parsed !== 'object') return [];
-  // Prefer the conformant envelope; fall back to treating the whole object as the
-  // points map when its values look like point values (have a present_value).
-  let points = parsed.points;
-  if (!points || typeof points !== 'object') {
-    const looksLikePointsMap = Object.values(parsed).some(
-        (v) => v && typeof v === 'object' && Object.hasOwn(v, 'present_value'));
-    if (!looksLikePointsMap) return [];
-    points = parsed;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
+  // Prefer the conformant envelope `{points: {name: {...}}}` — every key under it is a point.
+  const envelope = parsed.points;
+  if (envelope && typeof envelope === 'object' && !Array.isArray(envelope)) {
+    return Object.keys(envelope);
   }
-  return Object.keys(points);
+  // Fall back to a bare points map `{name: {present_value}}` (as the mock driver emits):
+  // return only the keys whose value looks like a point value, so sibling metadata keys
+  // (timestamp, version, ...) alongside points are not mistaken for point names.
+  return Object.entries(parsed)
+      .filter(([, v]) => v && typeof v === 'object' && Object.hasOwn(v, 'present_value'))
+      .map(([k]) => k);
 }
 
 // Matches the pointset-event portion of a UDMI topic, covering both the UDMI standard
@@ -64,13 +65,21 @@ function pointColumns(n) {
  * Builds the full CSV rows (header first): one row per device (message) —
  * `Source name, Topic, BDNS functional asset name, Point 1..N` — the row widening to hold
  * each device's point names. Only pointset event topics are included; state, metadata and
- * other topics are excluded.
+ * other topics are excluded. Rows are de-duplicated by source+topic so a device exported by
+ * more than one udmi automation (e.g. a gateway and the node it proxies) appears once.
  *
  * @param {Array<{sourceName: string, topic: string, payload: string}>} messages
  * @return {string[][]}
  */
 export function buildPointsCsv(messages) {
-  const pointsetMessages = (messages ?? []).filter((msg) => POINTSET_EVENT_RE.test(msg.topic));
+  const seen = new Set();
+  const pointsetMessages = (messages ?? []).filter((msg) => {
+    if (!POINTSET_EVENT_RE.test(msg.topic)) return false;
+    const key = JSON.stringify([msg.sourceName, msg.topic]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   let maxPoints = 0;
   const rows = pointsetMessages.map((msg) => {
     const points = parsePoints(msg.payload);
@@ -99,8 +108,14 @@ export async function collectCohortMessages(nodes) {
   const perNode = await Promise.all((nodes ?? []).map(async (node) => {
     let services;
     try {
-      const res = await listServices({name: node.name + '/' + ServiceNames.Automations, pageSize: 1000});
-      services = (res?.servicesList ?? []).filter((s) => s.type === 'udmi');
+      services = [];
+      let pageToken = '';
+      do {
+        const res = await listServices(
+            {name: node.name + '/' + ServiceNames.Automations, pageSize: 1000, pageToken});
+        services.push(...(res?.servicesList ?? []).filter((s) => s.type === 'udmi'));
+        pageToken = res?.nextPageToken ?? '';
+      } while (pageToken);
     } catch (error) {
       errors.push({node: node.name, error});
       return [];
@@ -113,7 +128,11 @@ export async function collectCohortMessages(nodes) {
       } catch {
         name = undefined;
       }
-      if (!name) return [];
+      if (!name) {
+        // Record rather than silently drop, so the caller's "may be incomplete" warning fires.
+        errors.push({node: node.name, automation: service.id, error: new Error('udmi automation has no configured name')});
+        return [];
+      }
       try {
         const out = await listExportedPoints({name});
         return out?.messagesList ?? [];

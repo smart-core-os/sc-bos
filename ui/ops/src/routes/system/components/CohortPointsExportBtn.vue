@@ -9,8 +9,8 @@
         @click="download">
       <v-icon size="24"/>
     </v-btn>
-    <v-snackbar v-model="showIncomplete" color="warning" timeout="5000">
-      Some nodes could not be reached; the points list may be incomplete.
+    <v-snackbar v-model="showMessage" :color="messageColor" timeout="5000">
+      {{ message }}
     </v-snackbar>
   </div>
 </template>
@@ -18,14 +18,27 @@
 <script setup>
 import {useCohortStore} from '@/stores/cohort';
 import {buildPointsCsv, collectCohortMessages} from '@/routes/automations/pointsExport';
+import {dateStamp} from '@/util/date';
 import {downloadCSVRows} from '@/util/downloadCSV';
 import {storeToRefs} from 'pinia';
 import {ref} from 'vue';
 
-const {cohortNodes} = storeToRefs(useCohortStore());
+const {cohortNodes, serverNode} = storeToRefs(useCohortStore());
 
 const loading = ref(false);
-const showIncomplete = ref(false);
+const showMessage = ref(false);
+const message = ref('');
+const messageColor = ref('warning');
+
+/**
+ * @param {string} text
+ * @param {string} color - Vuetify colour token
+ */
+function notify(text, color) {
+  message.value = text;
+  messageColor.value = color;
+  showMessage.value = true;
+}
 
 /**
  * Fans out ListExportedPoints across every udmi automation in the cohort, merges the
@@ -37,10 +50,17 @@ async function download() {
   loading.value = true;
   try {
     const {messages, errors} = await collectCohortMessages(cohortNodes.value);
-    showIncomplete.value = errors.length > 0;
     const rows = buildPointsCsv(messages);
-    const dateString = new Date().toISOString().slice(0, 10);
-    downloadCSVRows(`points-list - building - ${dateString}.csv`, rows);
+    // rows always contains the header row; a length of 1 means nothing was exported.
+    if (rows.length <= 1) {
+      notify('No points found to export.', 'info');
+      return;
+    }
+    const label = (serverNode.value?.name || 'cohort').replaceAll('/', '_');
+    downloadCSVRows(`points-list - ${label} - ${dateStamp()}.csv`, rows);
+    if (errors.length > 0) {
+      notify('Some data could not be retrieved; the points list may be incomplete.', 'warning');
+    }
   } finally {
     loading.value = false;
   }

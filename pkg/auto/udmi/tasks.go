@@ -123,12 +123,14 @@ func handleMessages(ctx context.Context, name string, changes <-chan *udmipb.Pul
 		if change.Message == nil {
 			continue
 		}
-		if collector != nil {
-			collector.Record(name, change.Message.Topic, change.Message.Payload)
-		}
 		err := publisher.Publish(ctx, change.Message.Topic, change.Message.Payload)
 		if err != nil {
 			return err
+		}
+		// Record only after a successful publish so the export reflects messages that were
+		// actually published, and count doesn't inflate on publish failure + task retry.
+		if collector != nil {
+			collector.Record(name, change.Message.Topic, change.Message.Payload)
 		}
 	}
 	return nil
