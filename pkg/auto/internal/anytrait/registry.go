@@ -3,6 +3,7 @@ package anytrait
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"google.golang.org/grpc"
@@ -98,6 +99,14 @@ var (
 func FindByName(name trait.Name) (Trait, error) {
 	initKnownTraits()
 	return knownTraits.FindByName(name)
+}
+
+// Validate returns an error if name is not a trait supported by the registry.
+func Validate(name trait.Name) error {
+	if _, err := FindByName(name); err != nil {
+		return fmt.Errorf("%q is not a supported trait", name)
+	}
+	return nil
 }
 
 // reqPT forces the implementation of proto.Message to also have a pointer receiver.

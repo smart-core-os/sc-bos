@@ -13,6 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/internal/anytrait"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -184,6 +185,9 @@ func Validate(cfg *Root) error {
 	}
 	if cfg.Source.Trait == "" {
 		return fmt.Errorf("source.trait is required")
+	}
+	if err := anytrait.Validate(cfg.Source.Trait); err != nil {
+		return fmt.Errorf("source.trait: %w", err)
 	}
 	return nil
 }

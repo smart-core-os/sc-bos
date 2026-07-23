@@ -13,6 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/protobuf/protopath2"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/auto/internal/anytrait"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -82,7 +83,8 @@ func (h *HealthCheck) MarshalJSON() ([]byte, error) {
 // Source configures which property of a device is checked by a health check.
 type Source struct {
 	// Trait is the fully qualified name of a trait implemented by monitored devices.
-	// TODO: Only some traits are supported, see internal/anytrait/registry.go for the list of supported traits.
+	// The trait must be registered in the shared trait registry (pkg/auto/internal/anytrait);
+	// unsupported traits are rejected at config-load time by Validate.
 	Trait    trait.Name `json:"trait"`
 	Resource Resource   `json:"resource,omitempty"`
 	Value    Value      `json:"value,omitempty"`
@@ -131,7 +133,25 @@ func Read(data []byte) (Root, error) {
 	if err != nil {
 		return Root{}, err
 	}
+	if err := Validate(&cfg); err != nil {
+		return Root{}, err
+	}
 	return cfg, err
+}
+
+// Validate checks that the config is internally consistent.
+// Path validity against the trait resource is checked later, once the trait is resolved.
+func Validate(cfg *Root) error {
+	if cfg == nil {
+		return fmt.Errorf("config is nil")
+	}
+	if cfg.Source.Trait == "" {
+		return fmt.Errorf("source.trait is required")
+	}
+	if err := anytrait.Validate(cfg.Source.Trait); err != nil {
+		return fmt.Errorf("source.trait: %w", err)
+	}
+	return nil
 }
 
 // Hydrate fills in additional details in the config that are not specified directly in JSON.
