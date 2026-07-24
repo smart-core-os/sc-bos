@@ -31,6 +31,7 @@ goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.CheckCase', null, g
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.ComplianceImpact', null, global);
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution', null, global);
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard', null, global);
+goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.Deviation', null, global);
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.EquipmentImpact', null, global);
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.Error', null, global);
 goog.exportSymbol('proto.smartcore.bos.health.v1.HealthCheck.Error.Code', null, global);
@@ -592,6 +593,7 @@ reliability: (f = msg.getReliability()) && proto.smartcore.bos.health.v1.HealthC
 normality: jspb.Message.getFieldWithDefault(msg, 21, 0),
 normalTime: (f = msg.getNormalTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 abnormalTime: (f = msg.getAbnormalTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
+deviation: jspb.Message.getFieldWithDefault(msg, 24, 0),
 bounds: (f = msg.getBounds()) && proto.smartcore.bos.health.v1.HealthCheck.Bounds.toObject(includeInstance, f),
 faults: (f = msg.getFaults()) && proto.smartcore.bos.health.v1.HealthCheck.Faults.toObject(includeInstance, f)
   };
@@ -678,6 +680,10 @@ proto.smartcore.bos.health.v1.HealthCheck.deserializeBinaryFromReader = function
       var value = new google_protobuf_timestamp_pb.Timestamp;
       reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
       msg.setAbnormalTime(value);
+      break;
+    case 24:
+      var value = /** @type {!proto.smartcore.bos.health.v1.HealthCheck.Deviation} */ (reader.readEnum());
+      msg.setDeviation(value);
       break;
     case 30:
       var value = new proto.smartcore.bos.health.v1.HealthCheck.Bounds;
@@ -800,6 +806,13 @@ proto.smartcore.bos.health.v1.HealthCheck.serializeBinaryToWriter = function(mes
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
+  f = message.getDeviation();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      24,
+      f
+    );
+  }
   f = message.getBounds();
   if (f != null) {
     writer.writeMessage(
@@ -851,6 +864,16 @@ proto.smartcore.bos.health.v1.HealthCheck.Normality = {
   ABNORMAL: 2,
   LOW: 3,
   HIGH: 4
+};
+
+/**
+ * @enum {number}
+ */
+proto.smartcore.bos.health.v1.HealthCheck.Deviation = {
+  DEVIATION_UNSPECIFIED: 0,
+  MINOR: 1,
+  MODERATE: 2,
+  MAJOR: 3
 };
 
 
@@ -4209,6 +4232,24 @@ proto.smartcore.bos.health.v1.HealthCheck.prototype.clearAbnormalTime = function
  */
 proto.smartcore.bos.health.v1.HealthCheck.prototype.hasAbnormalTime = function() {
   return jspb.Message.getField(this, 23) != null;
+};
+
+
+/**
+ * optional Deviation deviation = 24;
+ * @return {!proto.smartcore.bos.health.v1.HealthCheck.Deviation}
+ */
+proto.smartcore.bos.health.v1.HealthCheck.prototype.getDeviation = function() {
+  return /** @type {!proto.smartcore.bos.health.v1.HealthCheck.Deviation} */ (jspb.Message.getFieldWithDefault(this, 24, 0));
+};
+
+
+/**
+ * @param {!proto.smartcore.bos.health.v1.HealthCheck.Deviation} value
+ * @return {!proto.smartcore.bos.health.v1.HealthCheck} returns this
+ */
+proto.smartcore.bos.health.v1.HealthCheck.prototype.setDeviation = function(value) {
+  return jspb.Message.setProto3EnumField(this, 24, value);
 };
 
 

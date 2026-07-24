@@ -216,6 +216,66 @@ func (HealthCheck_Normality) EnumDescriptor() ([]byte, []int) {
 	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 2}
 }
 
+// Deviation describes how far a measured value is from its expected range,
+// bucketed so it can be filtered without exposing the measured value itself.
+// It is only meaningful for range (normal_range) bounds checks; it is
+// DEVIATION_UNSPECIFIED when the value is within range, or for equality and
+// value-set checks, which have no magnitude.
+type HealthCheck_Deviation int32
+
+const (
+	HealthCheck_DEVIATION_UNSPECIFIED HealthCheck_Deviation = 0
+	// The value is only slightly outside its expected range.
+	HealthCheck_MINOR HealthCheck_Deviation = 1
+	// The value is moderately outside its expected range.
+	HealthCheck_MODERATE HealthCheck_Deviation = 2
+	// The value is far outside its expected range.
+	HealthCheck_MAJOR HealthCheck_Deviation = 3
+)
+
+// Enum value maps for HealthCheck_Deviation.
+var (
+	HealthCheck_Deviation_name = map[int32]string{
+		0: "DEVIATION_UNSPECIFIED",
+		1: "MINOR",
+		2: "MODERATE",
+		3: "MAJOR",
+	}
+	HealthCheck_Deviation_value = map[string]int32{
+		"DEVIATION_UNSPECIFIED": 0,
+		"MINOR":                 1,
+		"MODERATE":              2,
+		"MAJOR":                 3,
+	}
+)
+
+func (x HealthCheck_Deviation) Enum() *HealthCheck_Deviation {
+	p := new(HealthCheck_Deviation)
+	*p = x
+	return p
+}
+
+func (x HealthCheck_Deviation) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HealthCheck_Deviation) Descriptor() protoreflect.EnumDescriptor {
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[3].Descriptor()
+}
+
+func (HealthCheck_Deviation) Type() protoreflect.EnumType {
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[3]
+}
+
+func (x HealthCheck_Deviation) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HealthCheck_Deviation.Descriptor instead.
+func (HealthCheck_Deviation) EnumDescriptor() ([]byte, []int) {
+	return file_smartcore_bos_health_v1_health_proto_rawDescGZIP(), []int{0, 3}
+}
+
 // Contribution describes how this check contributes to compliance with the standard.
 type HealthCheck_ComplianceImpact_Contribution int32
 
@@ -261,11 +321,11 @@ func (x HealthCheck_ComplianceImpact_Contribution) String() string {
 }
 
 func (HealthCheck_ComplianceImpact_Contribution) Descriptor() protoreflect.EnumDescriptor {
-	return file_smartcore_bos_health_v1_health_proto_enumTypes[3].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[4].Descriptor()
 }
 
 func (HealthCheck_ComplianceImpact_Contribution) Type() protoreflect.EnumType {
-	return &file_smartcore_bos_health_v1_health_proto_enumTypes[3]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[4]
 }
 
 func (x HealthCheck_ComplianceImpact_Contribution) Number() protoreflect.EnumNumber {
@@ -340,11 +400,11 @@ func (x HealthCheck_Reliability_State) String() string {
 }
 
 func (HealthCheck_Reliability_State) Descriptor() protoreflect.EnumDescriptor {
-	return file_smartcore_bos_health_v1_health_proto_enumTypes[4].Descriptor()
+	return file_smartcore_bos_health_v1_health_proto_enumTypes[5].Descriptor()
 }
 
 func (HealthCheck_Reliability_State) Type() protoreflect.EnumType {
-	return &file_smartcore_bos_health_v1_health_proto_enumTypes[4]
+	return &file_smartcore_bos_health_v1_health_proto_enumTypes[5]
 }
 
 func (x HealthCheck_Reliability_State) Number() protoreflect.EnumNumber {
@@ -410,6 +470,8 @@ type HealthCheck struct {
 	NormalTime *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=normal_time,json=normalTime,proto3" json:"normal_time,omitempty"`
 	// The time when normality last entered a non-NORMAL state.
 	AbnormalTime *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=abnormal_time,json=abnormalTime,proto3" json:"abnormal_time,omitempty"`
+	// Deviation is the bucketed magnitude of a range-check excursion.
+	Deviation HealthCheck_Deviation `protobuf:"varint,24,opt,name=deviation,proto3,enum=smartcore.bos.health.v1.HealthCheck_Deviation" json:"deviation,omitempty"`
 	// Details about the check being performed.
 	// Optional, but strongly recommended.
 	// HealthChecks should not change their type of check after creation.
@@ -528,6 +590,13 @@ func (x *HealthCheck) GetAbnormalTime() *timestamppb.Timestamp {
 		return x.AbnormalTime
 	}
 	return nil
+}
+
+func (x *HealthCheck) GetDeviation() HealthCheck_Deviation {
+	if x != nil {
+		return x.Deviation
+	}
+	return HealthCheck_DEVIATION_UNSPECIFIED
 }
 
 func (x *HealthCheck) GetCheck() isHealthCheck_Check {
@@ -2123,7 +2192,7 @@ var File_smartcore_bos_health_v1_health_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\x90\x1f\n" +
+	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\xaa \n" +
 	"\vHealthCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
@@ -2138,7 +2207,8 @@ const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\tnormality\x18\x15 \x01(\x0e2..smartcore.bos.health.v1.HealthCheck.NormalityR\tnormality\x12;\n" +
 	"\vnormal_time\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"normalTime\x12?\n" +
-	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12E\n" +
+	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12L\n" +
+	"\tdeviation\x18\x18 \x01(\x0e2..smartcore.bos.health.v1.HealthCheck.DeviationR\tdeviation\x12E\n" +
 	"\x06bounds\x18\x1e \x01(\v2+.smartcore.bos.health.v1.HealthCheck.BoundsH\x00R\x06bounds\x12E\n" +
 	"\x06faults\x18\x1f \x01(\v2+.smartcore.bos.health.v1.HealthCheck.FaultsH\x00R\x06faults\x1a\xdb\x03\n" +
 	"\x10ComplianceImpact\x12Z\n" +
@@ -2240,7 +2310,12 @@ const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\x06NORMAL\x10\x01\x12\f\n" +
 	"\bABNORMAL\x10\x02\x12\a\n" +
 	"\x03LOW\x10\x03\x12\b\n" +
-	"\x04HIGH\x10\x04B\a\n" +
+	"\x04HIGH\x10\x04\"J\n" +
+	"\tDeviation\x12\x19\n" +
+	"\x15DEVIATION_UNSPECIFIED\x10\x00\x12\t\n" +
+	"\x05MINOR\x10\x01\x12\f\n" +
+	"\bMODERATE\x10\x02\x12\t\n" +
+	"\x05MAJOR\x10\x03B\a\n" +
 	"\x05check\"\xa2\x01\n" +
 	"\x17ListHealthChecksRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
@@ -2300,101 +2375,103 @@ func file_smartcore_bos_health_v1_health_proto_rawDescGZIP() []byte {
 	return file_smartcore_bos_health_v1_health_proto_rawDescData
 }
 
-var file_smartcore_bos_health_v1_health_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_smartcore_bos_health_v1_health_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
 var file_smartcore_bos_health_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_smartcore_bos_health_v1_health_proto_goTypes = []any{
 	(HealthCheck_OccupantImpact)(0),                // 0: smartcore.bos.health.v1.HealthCheck.OccupantImpact
 	(HealthCheck_EquipmentImpact)(0),               // 1: smartcore.bos.health.v1.HealthCheck.EquipmentImpact
 	(HealthCheck_Normality)(0),                     // 2: smartcore.bos.health.v1.HealthCheck.Normality
-	(HealthCheck_ComplianceImpact_Contribution)(0), // 3: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
-	(HealthCheck_Reliability_State)(0),             // 4: smartcore.bos.health.v1.HealthCheck.Reliability.State
-	(*HealthCheck)(nil),                            // 5: smartcore.bos.health.v1.HealthCheck
-	(*ListHealthChecksRequest)(nil),                // 6: smartcore.bos.health.v1.ListHealthChecksRequest
-	(*ListHealthChecksResponse)(nil),               // 7: smartcore.bos.health.v1.ListHealthChecksResponse
-	(*PullHealthChecksRequest)(nil),                // 8: smartcore.bos.health.v1.PullHealthChecksRequest
-	(*PullHealthChecksResponse)(nil),               // 9: smartcore.bos.health.v1.PullHealthChecksResponse
-	(*GetHealthCheckRequest)(nil),                  // 10: smartcore.bos.health.v1.GetHealthCheckRequest
-	(*PullHealthCheckRequest)(nil),                 // 11: smartcore.bos.health.v1.PullHealthCheckRequest
-	(*PullHealthCheckResponse)(nil),                // 12: smartcore.bos.health.v1.PullHealthCheckResponse
-	(*HealthCheck_ComplianceImpact)(nil),           // 13: smartcore.bos.health.v1.HealthCheck.ComplianceImpact
-	(*HealthCheck_Error)(nil),                      // 14: smartcore.bos.health.v1.HealthCheck.Error
-	(*HealthCheck_Reliability)(nil),                // 15: smartcore.bos.health.v1.HealthCheck.Reliability
-	(*HealthCheck_Value)(nil),                      // 16: smartcore.bos.health.v1.HealthCheck.Value
-	(*HealthCheck_ValueRange)(nil),                 // 17: smartcore.bos.health.v1.HealthCheck.ValueRange
-	(*HealthCheck_Values)(nil),                     // 18: smartcore.bos.health.v1.HealthCheck.Values
-	(*HealthCheck_Bounds)(nil),                     // 19: smartcore.bos.health.v1.HealthCheck.Bounds
-	(*HealthCheck_Faults)(nil),                     // 20: smartcore.bos.health.v1.HealthCheck.Faults
-	(*HealthCheck_ComplianceImpact_Standard)(nil),  // 21: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
-	(*HealthCheck_Error_Code)(nil),                 // 22: smartcore.bos.health.v1.HealthCheck.Error.Code
-	(*HealthCheck_Reliability_Cause)(nil),          // 23: smartcore.bos.health.v1.HealthCheck.Reliability.Cause
-	(*HealthCheck_Reliability_Effects)(nil),        // 24: smartcore.bos.health.v1.HealthCheck.Reliability.Effects
-	(*PullHealthChecksResponse_Change)(nil),        // 25: smartcore.bos.health.v1.PullHealthChecksResponse.Change
-	(*PullHealthCheckResponse_Change)(nil),         // 26: smartcore.bos.health.v1.PullHealthCheckResponse.Change
-	(*timestamppb.Timestamp)(nil),                  // 27: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),                  // 28: google.protobuf.FieldMask
-	(*durationpb.Duration)(nil),                    // 29: google.protobuf.Duration
-	(typespb.ChangeType)(0),                        // 30: smartcore.bos.types.v1.ChangeType
+	(HealthCheck_Deviation)(0),                     // 3: smartcore.bos.health.v1.HealthCheck.Deviation
+	(HealthCheck_ComplianceImpact_Contribution)(0), // 4: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
+	(HealthCheck_Reliability_State)(0),             // 5: smartcore.bos.health.v1.HealthCheck.Reliability.State
+	(*HealthCheck)(nil),                            // 6: smartcore.bos.health.v1.HealthCheck
+	(*ListHealthChecksRequest)(nil),                // 7: smartcore.bos.health.v1.ListHealthChecksRequest
+	(*ListHealthChecksResponse)(nil),               // 8: smartcore.bos.health.v1.ListHealthChecksResponse
+	(*PullHealthChecksRequest)(nil),                // 9: smartcore.bos.health.v1.PullHealthChecksRequest
+	(*PullHealthChecksResponse)(nil),               // 10: smartcore.bos.health.v1.PullHealthChecksResponse
+	(*GetHealthCheckRequest)(nil),                  // 11: smartcore.bos.health.v1.GetHealthCheckRequest
+	(*PullHealthCheckRequest)(nil),                 // 12: smartcore.bos.health.v1.PullHealthCheckRequest
+	(*PullHealthCheckResponse)(nil),                // 13: smartcore.bos.health.v1.PullHealthCheckResponse
+	(*HealthCheck_ComplianceImpact)(nil),           // 14: smartcore.bos.health.v1.HealthCheck.ComplianceImpact
+	(*HealthCheck_Error)(nil),                      // 15: smartcore.bos.health.v1.HealthCheck.Error
+	(*HealthCheck_Reliability)(nil),                // 16: smartcore.bos.health.v1.HealthCheck.Reliability
+	(*HealthCheck_Value)(nil),                      // 17: smartcore.bos.health.v1.HealthCheck.Value
+	(*HealthCheck_ValueRange)(nil),                 // 18: smartcore.bos.health.v1.HealthCheck.ValueRange
+	(*HealthCheck_Values)(nil),                     // 19: smartcore.bos.health.v1.HealthCheck.Values
+	(*HealthCheck_Bounds)(nil),                     // 20: smartcore.bos.health.v1.HealthCheck.Bounds
+	(*HealthCheck_Faults)(nil),                     // 21: smartcore.bos.health.v1.HealthCheck.Faults
+	(*HealthCheck_ComplianceImpact_Standard)(nil),  // 22: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
+	(*HealthCheck_Error_Code)(nil),                 // 23: smartcore.bos.health.v1.HealthCheck.Error.Code
+	(*HealthCheck_Reliability_Cause)(nil),          // 24: smartcore.bos.health.v1.HealthCheck.Reliability.Cause
+	(*HealthCheck_Reliability_Effects)(nil),        // 25: smartcore.bos.health.v1.HealthCheck.Reliability.Effects
+	(*PullHealthChecksResponse_Change)(nil),        // 26: smartcore.bos.health.v1.PullHealthChecksResponse.Change
+	(*PullHealthCheckResponse_Change)(nil),         // 27: smartcore.bos.health.v1.PullHealthCheckResponse.Change
+	(*timestamppb.Timestamp)(nil),                  // 28: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),                  // 29: google.protobuf.FieldMask
+	(*durationpb.Duration)(nil),                    // 30: google.protobuf.Duration
+	(typespb.ChangeType)(0),                        // 31: smartcore.bos.types.v1.ChangeType
 }
 var file_smartcore_bos_health_v1_health_proto_depIdxs = []int32{
-	27, // 0: smartcore.bos.health.v1.HealthCheck.create_time:type_name -> google.protobuf.Timestamp
+	28, // 0: smartcore.bos.health.v1.HealthCheck.create_time:type_name -> google.protobuf.Timestamp
 	0,  // 1: smartcore.bos.health.v1.HealthCheck.occupant_impact:type_name -> smartcore.bos.health.v1.HealthCheck.OccupantImpact
 	1,  // 2: smartcore.bos.health.v1.HealthCheck.equipment_impact:type_name -> smartcore.bos.health.v1.HealthCheck.EquipmentImpact
-	13, // 3: smartcore.bos.health.v1.HealthCheck.compliance_impacts:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact
-	15, // 4: smartcore.bos.health.v1.HealthCheck.reliability:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability
+	14, // 3: smartcore.bos.health.v1.HealthCheck.compliance_impacts:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact
+	16, // 4: smartcore.bos.health.v1.HealthCheck.reliability:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability
 	2,  // 5: smartcore.bos.health.v1.HealthCheck.normality:type_name -> smartcore.bos.health.v1.HealthCheck.Normality
-	27, // 6: smartcore.bos.health.v1.HealthCheck.normal_time:type_name -> google.protobuf.Timestamp
-	27, // 7: smartcore.bos.health.v1.HealthCheck.abnormal_time:type_name -> google.protobuf.Timestamp
-	19, // 8: smartcore.bos.health.v1.HealthCheck.bounds:type_name -> smartcore.bos.health.v1.HealthCheck.Bounds
-	20, // 9: smartcore.bos.health.v1.HealthCheck.faults:type_name -> smartcore.bos.health.v1.HealthCheck.Faults
-	28, // 10: smartcore.bos.health.v1.ListHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
-	5,  // 11: smartcore.bos.health.v1.ListHealthChecksResponse.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
-	28, // 12: smartcore.bos.health.v1.PullHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
-	25, // 13: smartcore.bos.health.v1.PullHealthChecksResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthChecksResponse.Change
-	28, // 14: smartcore.bos.health.v1.GetHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
-	28, // 15: smartcore.bos.health.v1.PullHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
-	26, // 16: smartcore.bos.health.v1.PullHealthCheckResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthCheckResponse.Change
-	21, // 17: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.standard:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
-	3,  // 18: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.contribution:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
-	22, // 19: smartcore.bos.health.v1.HealthCheck.Error.code:type_name -> smartcore.bos.health.v1.HealthCheck.Error.Code
-	4,  // 20: smartcore.bos.health.v1.HealthCheck.Reliability.state:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.State
-	27, // 21: smartcore.bos.health.v1.HealthCheck.Reliability.reliable_time:type_name -> google.protobuf.Timestamp
-	27, // 22: smartcore.bos.health.v1.HealthCheck.Reliability.unreliable_time:type_name -> google.protobuf.Timestamp
-	14, // 23: smartcore.bos.health.v1.HealthCheck.Reliability.last_error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
-	23, // 24: smartcore.bos.health.v1.HealthCheck.Reliability.cause:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Cause
-	24, // 25: smartcore.bos.health.v1.HealthCheck.Reliability.effects:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Effects
-	27, // 26: smartcore.bos.health.v1.HealthCheck.Value.timestamp_value:type_name -> google.protobuf.Timestamp
-	29, // 27: smartcore.bos.health.v1.HealthCheck.Value.duration_value:type_name -> google.protobuf.Duration
-	16, // 28: smartcore.bos.health.v1.HealthCheck.ValueRange.low:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 29: smartcore.bos.health.v1.HealthCheck.ValueRange.high:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 30: smartcore.bos.health.v1.HealthCheck.ValueRange.deadband:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 31: smartcore.bos.health.v1.HealthCheck.Values.values:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 32: smartcore.bos.health.v1.HealthCheck.Bounds.current_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 33: smartcore.bos.health.v1.HealthCheck.Bounds.normal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	16, // 34: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
-	17, // 35: smartcore.bos.health.v1.HealthCheck.Bounds.normal_range:type_name -> smartcore.bos.health.v1.HealthCheck.ValueRange
-	18, // 36: smartcore.bos.health.v1.HealthCheck.Bounds.normal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
-	18, // 37: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
-	14, // 38: smartcore.bos.health.v1.HealthCheck.Faults.current_faults:type_name -> smartcore.bos.health.v1.HealthCheck.Error
-	14, // 39: smartcore.bos.health.v1.HealthCheck.Reliability.Cause.error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
-	30, // 40: smartcore.bos.health.v1.PullHealthChecksResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
-	5,  // 41: smartcore.bos.health.v1.PullHealthChecksResponse.Change.new_value:type_name -> smartcore.bos.health.v1.HealthCheck
-	5,  // 42: smartcore.bos.health.v1.PullHealthChecksResponse.Change.old_value:type_name -> smartcore.bos.health.v1.HealthCheck
-	27, // 43: smartcore.bos.health.v1.PullHealthChecksResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	5,  // 44: smartcore.bos.health.v1.PullHealthCheckResponse.Change.health_check:type_name -> smartcore.bos.health.v1.HealthCheck
-	27, // 45: smartcore.bos.health.v1.PullHealthCheckResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	6,  // 46: smartcore.bos.health.v1.HealthApi.ListHealthChecks:input_type -> smartcore.bos.health.v1.ListHealthChecksRequest
-	8,  // 47: smartcore.bos.health.v1.HealthApi.PullHealthChecks:input_type -> smartcore.bos.health.v1.PullHealthChecksRequest
-	10, // 48: smartcore.bos.health.v1.HealthApi.GetHealthCheck:input_type -> smartcore.bos.health.v1.GetHealthCheckRequest
-	11, // 49: smartcore.bos.health.v1.HealthApi.PullHealthCheck:input_type -> smartcore.bos.health.v1.PullHealthCheckRequest
-	7,  // 50: smartcore.bos.health.v1.HealthApi.ListHealthChecks:output_type -> smartcore.bos.health.v1.ListHealthChecksResponse
-	9,  // 51: smartcore.bos.health.v1.HealthApi.PullHealthChecks:output_type -> smartcore.bos.health.v1.PullHealthChecksResponse
-	5,  // 52: smartcore.bos.health.v1.HealthApi.GetHealthCheck:output_type -> smartcore.bos.health.v1.HealthCheck
-	12, // 53: smartcore.bos.health.v1.HealthApi.PullHealthCheck:output_type -> smartcore.bos.health.v1.PullHealthCheckResponse
-	50, // [50:54] is the sub-list for method output_type
-	46, // [46:50] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	28, // 6: smartcore.bos.health.v1.HealthCheck.normal_time:type_name -> google.protobuf.Timestamp
+	28, // 7: smartcore.bos.health.v1.HealthCheck.abnormal_time:type_name -> google.protobuf.Timestamp
+	3,  // 8: smartcore.bos.health.v1.HealthCheck.deviation:type_name -> smartcore.bos.health.v1.HealthCheck.Deviation
+	20, // 9: smartcore.bos.health.v1.HealthCheck.bounds:type_name -> smartcore.bos.health.v1.HealthCheck.Bounds
+	21, // 10: smartcore.bos.health.v1.HealthCheck.faults:type_name -> smartcore.bos.health.v1.HealthCheck.Faults
+	29, // 11: smartcore.bos.health.v1.ListHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
+	6,  // 12: smartcore.bos.health.v1.ListHealthChecksResponse.health_checks:type_name -> smartcore.bos.health.v1.HealthCheck
+	29, // 13: smartcore.bos.health.v1.PullHealthChecksRequest.read_mask:type_name -> google.protobuf.FieldMask
+	26, // 14: smartcore.bos.health.v1.PullHealthChecksResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthChecksResponse.Change
+	29, // 15: smartcore.bos.health.v1.GetHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
+	29, // 16: smartcore.bos.health.v1.PullHealthCheckRequest.read_mask:type_name -> google.protobuf.FieldMask
+	27, // 17: smartcore.bos.health.v1.PullHealthCheckResponse.changes:type_name -> smartcore.bos.health.v1.PullHealthCheckResponse.Change
+	22, // 18: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.standard:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Standard
+	4,  // 19: smartcore.bos.health.v1.HealthCheck.ComplianceImpact.contribution:type_name -> smartcore.bos.health.v1.HealthCheck.ComplianceImpact.Contribution
+	23, // 20: smartcore.bos.health.v1.HealthCheck.Error.code:type_name -> smartcore.bos.health.v1.HealthCheck.Error.Code
+	5,  // 21: smartcore.bos.health.v1.HealthCheck.Reliability.state:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.State
+	28, // 22: smartcore.bos.health.v1.HealthCheck.Reliability.reliable_time:type_name -> google.protobuf.Timestamp
+	28, // 23: smartcore.bos.health.v1.HealthCheck.Reliability.unreliable_time:type_name -> google.protobuf.Timestamp
+	15, // 24: smartcore.bos.health.v1.HealthCheck.Reliability.last_error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	24, // 25: smartcore.bos.health.v1.HealthCheck.Reliability.cause:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Cause
+	25, // 26: smartcore.bos.health.v1.HealthCheck.Reliability.effects:type_name -> smartcore.bos.health.v1.HealthCheck.Reliability.Effects
+	28, // 27: smartcore.bos.health.v1.HealthCheck.Value.timestamp_value:type_name -> google.protobuf.Timestamp
+	30, // 28: smartcore.bos.health.v1.HealthCheck.Value.duration_value:type_name -> google.protobuf.Duration
+	17, // 29: smartcore.bos.health.v1.HealthCheck.ValueRange.low:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 30: smartcore.bos.health.v1.HealthCheck.ValueRange.high:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 31: smartcore.bos.health.v1.HealthCheck.ValueRange.deadband:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 32: smartcore.bos.health.v1.HealthCheck.Values.values:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 33: smartcore.bos.health.v1.HealthCheck.Bounds.current_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 34: smartcore.bos.health.v1.HealthCheck.Bounds.normal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	17, // 35: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_value:type_name -> smartcore.bos.health.v1.HealthCheck.Value
+	18, // 36: smartcore.bos.health.v1.HealthCheck.Bounds.normal_range:type_name -> smartcore.bos.health.v1.HealthCheck.ValueRange
+	19, // 37: smartcore.bos.health.v1.HealthCheck.Bounds.normal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
+	19, // 38: smartcore.bos.health.v1.HealthCheck.Bounds.abnormal_values:type_name -> smartcore.bos.health.v1.HealthCheck.Values
+	15, // 39: smartcore.bos.health.v1.HealthCheck.Faults.current_faults:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	15, // 40: smartcore.bos.health.v1.HealthCheck.Reliability.Cause.error:type_name -> smartcore.bos.health.v1.HealthCheck.Error
+	31, // 41: smartcore.bos.health.v1.PullHealthChecksResponse.Change.type:type_name -> smartcore.bos.types.v1.ChangeType
+	6,  // 42: smartcore.bos.health.v1.PullHealthChecksResponse.Change.new_value:type_name -> smartcore.bos.health.v1.HealthCheck
+	6,  // 43: smartcore.bos.health.v1.PullHealthChecksResponse.Change.old_value:type_name -> smartcore.bos.health.v1.HealthCheck
+	28, // 44: smartcore.bos.health.v1.PullHealthChecksResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	6,  // 45: smartcore.bos.health.v1.PullHealthCheckResponse.Change.health_check:type_name -> smartcore.bos.health.v1.HealthCheck
+	28, // 46: smartcore.bos.health.v1.PullHealthCheckResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	7,  // 47: smartcore.bos.health.v1.HealthApi.ListHealthChecks:input_type -> smartcore.bos.health.v1.ListHealthChecksRequest
+	9,  // 48: smartcore.bos.health.v1.HealthApi.PullHealthChecks:input_type -> smartcore.bos.health.v1.PullHealthChecksRequest
+	11, // 49: smartcore.bos.health.v1.HealthApi.GetHealthCheck:input_type -> smartcore.bos.health.v1.GetHealthCheckRequest
+	12, // 50: smartcore.bos.health.v1.HealthApi.PullHealthCheck:input_type -> smartcore.bos.health.v1.PullHealthCheckRequest
+	8,  // 51: smartcore.bos.health.v1.HealthApi.ListHealthChecks:output_type -> smartcore.bos.health.v1.ListHealthChecksResponse
+	10, // 52: smartcore.bos.health.v1.HealthApi.PullHealthChecks:output_type -> smartcore.bos.health.v1.PullHealthChecksResponse
+	6,  // 53: smartcore.bos.health.v1.HealthApi.GetHealthCheck:output_type -> smartcore.bos.health.v1.HealthCheck
+	13, // 54: smartcore.bos.health.v1.HealthApi.PullHealthCheck:output_type -> smartcore.bos.health.v1.PullHealthCheckResponse
+	51, // [51:55] is the sub-list for method output_type
+	47, // [47:51] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_health_v1_health_proto_init() }
@@ -2427,7 +2504,7 @@ func file_smartcore_bos_health_v1_health_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_health_v1_health_proto_rawDesc), len(file_smartcore_bos_health_v1_health_proto_rawDesc)),
-			NumEnums:      5,
+			NumEnums:      6,
 			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,

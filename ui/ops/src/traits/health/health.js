@@ -247,6 +247,22 @@ export function useHealthCheckFilters(forcedFilters) {
       });
     }
 
+    if (!Object.hasOwn(forced, 'health_checks.deviation')) {
+      // The chosen bucket is treated as a minimum: selecting Moderate also matches
+      // Major (see toCondition), so users can hide barely-out-of-range checks.
+      filters.push({
+        key: 'health_checks.deviation',
+        icon: 'mdi-arrow-expand-vertical',
+        title: 'Deviation',
+        type: 'list',
+        items: [
+          {title: 'Minor', value: HealthCheck.Deviation.MINOR},
+          {title: 'Moderate', value: HealthCheck.Deviation.MODERATE},
+          {title: 'Major', value: HealthCheck.Deviation.MAJOR}
+        ]
+      });
+    }
+
     return {filters, defaults};
   });
 
@@ -270,6 +286,31 @@ export function useHealthCheckFilters(forcedFilters) {
         const numVal = value?.value ?? value;
         const enumName = enumValueToName(HealthCheck.EquipmentImpact, numVal);
         return {field: 'health_checks.equipment_impact', stringEqual: enumName};
+      }
+      case 'health_checks.deviation': {
+        // Minimum deviation: match the chosen bucket and every more-severe one.
+        const numVal = value?.value ?? value;
+        const stringsList = [
+          HealthCheck.Deviation.MINOR,
+          HealthCheck.Deviation.MODERATE,
+          HealthCheck.Deviation.MAJOR
+        ]
+            .filter(v => v >= numVal)
+            .map(v => enumValueToName(HealthCheck.Deviation, v));
+        // Deviation only exists for range checks, which report HIGH/LOW; equality
+        // and value-set faults report ABNORMAL with no deviation. Match, per health
+        // check, either a sufficient range excursion OR a hard ABNORMAL fault, so
+        // filtering by deviation narrows the range excursions shown without ever
+        // hiding a genuinely-abnormal device that has no range check.
+        return {
+          field: 'health_checks',
+          anyOf: {
+            queriesList: [
+              {conditionsList: [{field: 'deviation', stringIn: {stringsList}}]},
+              {conditionsList: [{field: 'normality', stringEqual: 'ABNORMAL'}]}
+            ]
+          }
+        };
       }
       default:
         return {field: field, stringEqualFold: value};
