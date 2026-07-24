@@ -8,7 +8,10 @@
       <reliability-time-text :model-value="props.modelValue"/>
     </td>
     <td>
-      <bounds-text v-if="hasBounds" :model-value="props.modelValue" class="ml-1"/>
+      <template v-if="hasBounds">
+        <bounds-text :model-value="props.modelValue" class="ml-1"/>
+        <deviation-text :model-value="props.modelValue" class="ml-2"/>
+      </template>
       <faults-text v-else-if="hasFaults" :model-value="props.modelValue"/>
       <template v-else-if="lastErrorSummary">
         <div class="text-caption text-medium-emphasis">{{ lastErrorSummary }}</div>
@@ -23,6 +26,7 @@
 
 <script setup>
 import BoundsText from '@/traits/health/BoundsText.vue';
+import DeviationText from '@/traits/health/DeviationText.vue';
 import FaultsText from '@/traits/health/FaultsText.vue';
 import ImpactsText from '@/traits/health/ImpactsText.vue';
 import NormalityTimeText from '@/traits/health/NormalityTimeText.vue';

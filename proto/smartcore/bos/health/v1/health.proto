@@ -306,6 +306,23 @@ message HealthCheck {
   // The time when normality last entered a non-NORMAL state.
   google.protobuf.Timestamp abnormal_time = 23;
 
+  // Deviation describes how far a measured value is from its expected range,
+  // bucketed so it can be filtered without exposing the measured value itself.
+  // It is only meaningful for range (normal_range) bounds checks; it is
+  // DEVIATION_UNSPECIFIED when the value is within range, or for equality and
+  // value-set checks, which have no magnitude.
+  enum Deviation {
+    DEVIATION_UNSPECIFIED = 0;
+    // The value is only slightly outside its expected range.
+    MINOR = 1;
+    // The value is moderately outside its expected range.
+    MODERATE = 2;
+    // The value is far outside its expected range.
+    MAJOR = 3;
+  }
+  // Deviation is the bucketed magnitude of a range-check excursion.
+  Deviation deviation = 24;
+
   // Bounds describes a check that compares a measured value against expected values or ranges.
   message Bounds {
     // The measured value.
