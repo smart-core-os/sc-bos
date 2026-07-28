@@ -1,8 +1,15 @@
 package config
 
 import (
+	"time"
+
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
+
+// DefaultHeartbeatInterval is how long a pointset event topic may stay quiet before
+// the auto republishes its last message.
+const DefaultHeartbeatInterval = 4 * time.Hour
 
 type Root struct {
 	auto.Config
@@ -28,4 +35,10 @@ type Root struct {
 	// (everything that is not an event topic). Defaults to 0 (matching QoS) when
 	// unset, preserving the previous single-QoS behaviour.
 	StateQoS byte `json:"stateQos,omitempty"`
+	// HeartbeatInterval is the longest a pointset event topic may go without a publish.
+	// Once a topic has been quiet for this long its last message is republished, with
+	// the timestamp refreshed, so consumers can tell a stable device from a dead one.
+	// Sources only emit on change, so a device whose readings never move is otherwise
+	// silent indefinitely. Defaults to 4h; set "0s" to disable.
+	HeartbeatInterval *jsontypes.Duration `json:"heartbeatInterval,omitempty,omitzero"`
 }
