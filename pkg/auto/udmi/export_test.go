@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
@@ -120,7 +122,9 @@ func TestHandleMessages_RecordsToCollector(t *testing.T) {
 		return nil
 	})
 
-	if err := handleMessages(context.Background(), "dev", changes, pub, c); err != nil {
+	// A zero interval disables the heartbeat, so this exercises collection alone.
+	hb := newHeartbeat(0, zap.NewNop())
+	if err := handleMessages(context.Background(), "dev", changes, pub, c, hb); err != nil {
 		t.Fatalf("handleMessages: %v", err)
 	}
 	if published != 2 {
