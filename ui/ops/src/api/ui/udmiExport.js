@@ -5,7 +5,8 @@ import {UdmiExportApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/sma
 import {ListExportedPointsRequest} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/udmi/v1/udmi_pb';
 
 /**
- * Lists the distinct messages a node's udmi automations have published, for a points list export.
+ * Lists the points each device has published via a node's udmi automations, for a points
+ * list export.
  *
  * @param {Partial<ListExportedPointsRequest.AsObject>} request - must have a name (the node name)
  * @param {ActionTracker<ListExportedPointsResponse.AsObject>?} tracker

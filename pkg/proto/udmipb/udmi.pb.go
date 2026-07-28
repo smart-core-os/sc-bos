@@ -9,7 +9,6 @@ package udmipb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -461,8 +460,9 @@ func (x *ListExportedPointsRequest) GetName() string {
 }
 
 type ListExportedPointsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*ExportedMessage     `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// devices are ordered by topic then source_name.
+	Devices       []*DevicePoints `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -497,49 +497,45 @@ func (*ListExportedPointsResponse) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *ListExportedPointsResponse) GetMessages() []*ExportedMessage {
+func (x *ListExportedPointsResponse) GetDevices() []*DevicePoints {
 	if x != nil {
-		return x.Messages
+		return x.Devices
 	}
 	return nil
 }
 
-// ExportedMessage is the most recent payload published for a single MQTT topic,
-// together with the Smart Core source that produced it and basic bookkeeping.
-type ExportedMessage struct {
+// DevicePoints is the set of points a single device carried in the most recent pointset
+// event published for it, one row of a points list export.
+type DevicePoints struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// source_name is the Smart Core name of the UdmiService source that produced the message.
+	// source_name is the Smart Core name of the UdmiService source that produced the event.
 	SourceName string `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
-	// topic is the MQTT topic the message was published to.
+	// topic is the MQTT topic the pointset event was published to.
 	Topic string `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
-	// message_type classifies the topic: "event", "state", "metadata" or "other".
-	MessageType string `protobuf:"bytes,3,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
-	// payload is the most recent JSON payload published for this topic.
-	Payload string `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	// first_seen is when a message for this topic was first published since the automation (re)started.
-	FirstSeen *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=first_seen,json=firstSeen,proto3" json:"first_seen,omitempty"`
-	// last_seen is when the most recent message for this topic was published.
-	LastSeen *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	// count is the number of messages published for this topic since the automation (re)started.
-	Count         int64 `protobuf:"varint,7,opt,name=count,proto3" json:"count,omitempty"`
+	// asset_name is the BDNS functional asset name taken from topic: the path segment
+	// immediately before the "/event(s)/pointset" portion, e.g. "AMP-109151" for
+	// "JLL/GB-LON-1BG/AV/AMP-109151/events/pointset".
+	AssetName string `protobuf:"bytes,3,opt,name=asset_name,json=assetName,proto3" json:"asset_name,omitempty"`
+	// points are the names of the points the event carried, sorted.
+	Points        []string `protobuf:"bytes,4,rep,name=points,proto3" json:"points,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ExportedMessage) Reset() {
-	*x = ExportedMessage{}
+func (x *DevicePoints) Reset() {
+	*x = DevicePoints{}
 	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExportedMessage) String() string {
+func (x *DevicePoints) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExportedMessage) ProtoMessage() {}
+func (*DevicePoints) ProtoMessage() {}
 
-func (x *ExportedMessage) ProtoReflect() protoreflect.Message {
+func (x *DevicePoints) ProtoReflect() protoreflect.Message {
 	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -551,65 +547,44 @@ func (x *ExportedMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExportedMessage.ProtoReflect.Descriptor instead.
-func (*ExportedMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use DevicePoints.ProtoReflect.Descriptor instead.
+func (*DevicePoints) Descriptor() ([]byte, []int) {
 	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *ExportedMessage) GetSourceName() string {
+func (x *DevicePoints) GetSourceName() string {
 	if x != nil {
 		return x.SourceName
 	}
 	return ""
 }
 
-func (x *ExportedMessage) GetTopic() string {
+func (x *DevicePoints) GetTopic() string {
 	if x != nil {
 		return x.Topic
 	}
 	return ""
 }
 
-func (x *ExportedMessage) GetMessageType() string {
+func (x *DevicePoints) GetAssetName() string {
 	if x != nil {
-		return x.MessageType
+		return x.AssetName
 	}
 	return ""
 }
 
-func (x *ExportedMessage) GetPayload() string {
+func (x *DevicePoints) GetPoints() []string {
 	if x != nil {
-		return x.Payload
-	}
-	return ""
-}
-
-func (x *ExportedMessage) GetFirstSeen() *timestamppb.Timestamp {
-	if x != nil {
-		return x.FirstSeen
+		return x.Points
 	}
 	return nil
-}
-
-func (x *ExportedMessage) GetLastSeen() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastSeen
-	}
-	return nil
-}
-
-func (x *ExportedMessage) GetCount() int64 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
 }
 
 var File_smartcore_bos_udmi_v1_udmi_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_udmi_v1_udmi_proto_rawDesc = "" +
 	"\n" +
-	" smartcore/bos/udmi/v1/udmi.proto\x12\x15smartcore.bos.udmi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\".\n" +
+	" smartcore/bos/udmi/v1/udmi.proto\x12\x15smartcore.bos.udmi.v1\".\n" +
 	"\x18PullControlTopicsRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"G\n" +
 	"\x19PullControlTopicsResponse\x12\x12\n" +
@@ -632,19 +607,16 @@ const file_smartcore_bos_udmi_v1_udmi_proto_rawDesc = "" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\tR\apayload\"/\n" +
 	"\x19ListExportedPointsRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"`\n" +
-	"\x1aListExportedPointsResponse\x12B\n" +
-	"\bmessages\x18\x01 \x03(\v2&.smartcore.bos.udmi.v1.ExportedMessageR\bmessages\"\x8f\x02\n" +
-	"\x0fExportedMessage\x12\x1f\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"[\n" +
+	"\x1aListExportedPointsResponse\x12=\n" +
+	"\adevices\x18\x01 \x03(\v2#.smartcore.bos.udmi.v1.DevicePointsR\adevices\"|\n" +
+	"\fDevicePoints\x12\x1f\n" +
 	"\vsource_name\x18\x01 \x01(\tR\n" +
 	"sourceName\x12\x14\n" +
-	"\x05topic\x18\x02 \x01(\tR\x05topic\x12!\n" +
-	"\fmessage_type\x18\x03 \x01(\tR\vmessageType\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\tR\apayload\x129\n" +
+	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x1d\n" +
 	"\n" +
-	"first_seen\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tfirstSeen\x127\n" +
-	"\tlast_seen\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x12\x14\n" +
-	"\x05count\x18\a \x01(\x03R\x05count2\xcc\x03\n" +
+	"asset_name\x18\x03 \x01(\tR\tassetName\x12\x16\n" +
+	"\x06points\x18\x04 \x03(\tR\x06points2\xcc\x03\n" +
 	"\vUdmiService\x12x\n" +
 	"\x11PullControlTopics\x12/.smartcore.bos.udmi.v1.PullControlTopicsRequest\x1a0.smartcore.bos.udmi.v1.PullControlTopicsResponse0\x01\x12^\n" +
 	"\tOnMessage\x12'.smartcore.bos.udmi.v1.OnMessageRequest\x1a(.smartcore.bos.udmi.v1.OnMessageResponse\x12{\n" +
@@ -677,30 +649,27 @@ var file_smartcore_bos_udmi_v1_udmi_proto_goTypes = []any{
 	(*MqttMessage)(nil),                // 7: smartcore.bos.udmi.v1.MqttMessage
 	(*ListExportedPointsRequest)(nil),  // 8: smartcore.bos.udmi.v1.ListExportedPointsRequest
 	(*ListExportedPointsResponse)(nil), // 9: smartcore.bos.udmi.v1.ListExportedPointsResponse
-	(*ExportedMessage)(nil),            // 10: smartcore.bos.udmi.v1.ExportedMessage
-	(*timestamppb.Timestamp)(nil),      // 11: google.protobuf.Timestamp
+	(*DevicePoints)(nil),               // 10: smartcore.bos.udmi.v1.DevicePoints
 }
 var file_smartcore_bos_udmi_v1_udmi_proto_depIdxs = []int32{
 	7,  // 0: smartcore.bos.udmi.v1.OnMessageRequest.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
 	7,  // 1: smartcore.bos.udmi.v1.PullExportMessagesResponse.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
-	10, // 2: smartcore.bos.udmi.v1.ListExportedPointsResponse.messages:type_name -> smartcore.bos.udmi.v1.ExportedMessage
-	11, // 3: smartcore.bos.udmi.v1.ExportedMessage.first_seen:type_name -> google.protobuf.Timestamp
-	11, // 4: smartcore.bos.udmi.v1.ExportedMessage.last_seen:type_name -> google.protobuf.Timestamp
-	0,  // 5: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:input_type -> smartcore.bos.udmi.v1.PullControlTopicsRequest
-	2,  // 6: smartcore.bos.udmi.v1.UdmiService.OnMessage:input_type -> smartcore.bos.udmi.v1.OnMessageRequest
-	4,  // 7: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:input_type -> smartcore.bos.udmi.v1.PullExportMessagesRequest
-	6,  // 8: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:input_type -> smartcore.bos.udmi.v1.GetExportMessageRequest
-	8,  // 9: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:input_type -> smartcore.bos.udmi.v1.ListExportedPointsRequest
-	1,  // 10: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:output_type -> smartcore.bos.udmi.v1.PullControlTopicsResponse
-	3,  // 11: smartcore.bos.udmi.v1.UdmiService.OnMessage:output_type -> smartcore.bos.udmi.v1.OnMessageResponse
-	5,  // 12: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:output_type -> smartcore.bos.udmi.v1.PullExportMessagesResponse
-	7,  // 13: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:output_type -> smartcore.bos.udmi.v1.MqttMessage
-	9,  // 14: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:output_type -> smartcore.bos.udmi.v1.ListExportedPointsResponse
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	10, // 2: smartcore.bos.udmi.v1.ListExportedPointsResponse.devices:type_name -> smartcore.bos.udmi.v1.DevicePoints
+	0,  // 3: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:input_type -> smartcore.bos.udmi.v1.PullControlTopicsRequest
+	2,  // 4: smartcore.bos.udmi.v1.UdmiService.OnMessage:input_type -> smartcore.bos.udmi.v1.OnMessageRequest
+	4,  // 5: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:input_type -> smartcore.bos.udmi.v1.PullExportMessagesRequest
+	6,  // 6: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:input_type -> smartcore.bos.udmi.v1.GetExportMessageRequest
+	8,  // 7: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:input_type -> smartcore.bos.udmi.v1.ListExportedPointsRequest
+	1,  // 8: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:output_type -> smartcore.bos.udmi.v1.PullControlTopicsResponse
+	3,  // 9: smartcore.bos.udmi.v1.UdmiService.OnMessage:output_type -> smartcore.bos.udmi.v1.OnMessageResponse
+	5,  // 10: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:output_type -> smartcore.bos.udmi.v1.PullExportMessagesResponse
+	7,  // 11: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:output_type -> smartcore.bos.udmi.v1.MqttMessage
+	9,  // 12: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:output_type -> smartcore.bos.udmi.v1.ListExportedPointsResponse
+	8,  // [8:13] is the sub-list for method output_type
+	3,  // [3:8] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_udmi_v1_udmi_proto_init() }

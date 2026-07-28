@@ -1,6 +1,5 @@
 import * as jspb from 'google-protobuf'
 
-import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb'; // proto import: "google/protobuf/timestamp.proto"
 
 
 export class PullControlTopicsRequest extends jspb.Message {
@@ -192,10 +191,10 @@ export namespace ListExportedPointsRequest {
 }
 
 export class ListExportedPointsResponse extends jspb.Message {
-  getMessagesList(): Array<ExportedMessage>;
-  setMessagesList(value: Array<ExportedMessage>): ListExportedPointsResponse;
-  clearMessagesList(): ListExportedPointsResponse;
-  addMessages(value?: ExportedMessage, index?: number): ExportedMessage;
+  getDevicesList(): Array<DevicePoints>;
+  setDevicesList(value: Array<DevicePoints>): ListExportedPointsResponse;
+  clearDevicesList(): ListExportedPointsResponse;
+  addDevices(value?: DevicePoints, index?: number): DevicePoints;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListExportedPointsResponse.AsObject;
@@ -207,53 +206,39 @@ export class ListExportedPointsResponse extends jspb.Message {
 
 export namespace ListExportedPointsResponse {
   export type AsObject = {
-    messagesList: Array<ExportedMessage.AsObject>;
+    devicesList: Array<DevicePoints.AsObject>;
   };
 }
 
-export class ExportedMessage extends jspb.Message {
+export class DevicePoints extends jspb.Message {
   getSourceName(): string;
-  setSourceName(value: string): ExportedMessage;
+  setSourceName(value: string): DevicePoints;
 
   getTopic(): string;
-  setTopic(value: string): ExportedMessage;
+  setTopic(value: string): DevicePoints;
 
-  getMessageType(): string;
-  setMessageType(value: string): ExportedMessage;
+  getAssetName(): string;
+  setAssetName(value: string): DevicePoints;
 
-  getPayload(): string;
-  setPayload(value: string): ExportedMessage;
-
-  getFirstSeen(): google_protobuf_timestamp_pb.Timestamp | undefined;
-  setFirstSeen(value?: google_protobuf_timestamp_pb.Timestamp): ExportedMessage;
-  hasFirstSeen(): boolean;
-  clearFirstSeen(): ExportedMessage;
-
-  getLastSeen(): google_protobuf_timestamp_pb.Timestamp | undefined;
-  setLastSeen(value?: google_protobuf_timestamp_pb.Timestamp): ExportedMessage;
-  hasLastSeen(): boolean;
-  clearLastSeen(): ExportedMessage;
-
-  getCount(): number;
-  setCount(value: number): ExportedMessage;
+  getPointsList(): Array<string>;
+  setPointsList(value: Array<string>): DevicePoints;
+  clearPointsList(): DevicePoints;
+  addPoints(value: string, index?: number): DevicePoints;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ExportedMessage.AsObject;
-  static toObject(includeInstance: boolean, msg: ExportedMessage): ExportedMessage.AsObject;
-  static serializeBinaryToWriter(message: ExportedMessage, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ExportedMessage;
-  static deserializeBinaryFromReader(message: ExportedMessage, reader: jspb.BinaryReader): ExportedMessage;
+  toObject(includeInstance?: boolean): DevicePoints.AsObject;
+  static toObject(includeInstance: boolean, msg: DevicePoints): DevicePoints.AsObject;
+  static serializeBinaryToWriter(message: DevicePoints, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DevicePoints;
+  static deserializeBinaryFromReader(message: DevicePoints, reader: jspb.BinaryReader): DevicePoints;
 }
 
-export namespace ExportedMessage {
+export namespace DevicePoints {
   export type AsObject = {
     sourceName: string;
     topic: string;
-    messageType: string;
-    payload: string;
-    firstSeen?: google_protobuf_timestamp_pb.Timestamp.AsObject;
-    lastSeen?: google_protobuf_timestamp_pb.Timestamp.AsObject;
-    count: number;
+    assetName: string;
+    pointsList: Array<string>;
   };
 }
 

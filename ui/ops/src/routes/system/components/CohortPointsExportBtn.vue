@@ -17,7 +17,7 @@
 
 <script setup>
 import {useCohortStore} from '@/stores/cohort';
-import {buildPointsCsv, collectCohortMessages} from '@/routes/automations/pointsExport';
+import {buildPointsCsv, collectCohortDevices} from '@/routes/system/components/pointsExport';
 import {dateStamp} from '@/util/date';
 import {downloadCSVRows} from '@/util/downloadCSV';
 import {storeToRefs} from 'pinia';
@@ -49,8 +49,8 @@ function notify(text, color) {
 async function download() {
   loading.value = true;
   try {
-    const {messages, errors} = await collectCohortMessages(cohortNodes.value);
-    const rows = buildPointsCsv(messages);
+    const {devices, errors} = await collectCohortDevices(cohortNodes.value);
+    const rows = buildPointsCsv(devices);
     // rows always contains the header row; a length of 1 means nothing was exported.
     if (rows.length <= 1) {
       notify('No points found to export.', 'info');

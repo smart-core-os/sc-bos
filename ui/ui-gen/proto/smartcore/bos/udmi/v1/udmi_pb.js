@@ -15,9 +15,7 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = globalThis;
 
-var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
-goog.object.extend(proto, google_protobuf_timestamp_pb);
-goog.exportSymbol('proto.smartcore.bos.udmi.v1.ExportedMessage', null, global);
+goog.exportSymbol('proto.smartcore.bos.udmi.v1.DevicePoints', null, global);
 goog.exportSymbol('proto.smartcore.bos.udmi.v1.GetExportMessageRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.udmi.v1.ListExportedPointsRequest', null, global);
 goog.exportSymbol('proto.smartcore.bos.udmi.v1.ListExportedPointsResponse', null, global);
@@ -248,16 +246,16 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+proto.smartcore.bos.udmi.v1.DevicePoints = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.smartcore.bos.udmi.v1.DevicePoints.repeatedFields_, null);
 };
-goog.inherits(proto.smartcore.bos.udmi.v1.ExportedMessage, jspb.Message);
+goog.inherits(proto.smartcore.bos.udmi.v1.DevicePoints, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
   /**
    * @public
    * @override
    */
-  proto.smartcore.bos.udmi.v1.ExportedMessage.displayName = 'proto.smartcore.bos.udmi.v1.ExportedMessage';
+  proto.smartcore.bos.udmi.v1.DevicePoints.displayName = 'proto.smartcore.bos.udmi.v1.DevicePoints';
 }
 
 
@@ -1686,8 +1684,8 @@ proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.toObject = func
  */
 proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-messagesList: jspb.Message.toObjectList(msg.getMessagesList(),
-    proto.smartcore.bos.udmi.v1.ExportedMessage.toObject, includeInstance)
+devicesList: jspb.Message.toObjectList(msg.getDevicesList(),
+    proto.smartcore.bos.udmi.v1.DevicePoints.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -1725,9 +1723,9 @@ proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.deserializeBinaryFromRead
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.smartcore.bos.udmi.v1.ExportedMessage;
-      reader.readMessage(value,proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinaryFromReader);
-      msg.addMessages(value);
+      var value = new proto.smartcore.bos.udmi.v1.DevicePoints;
+      reader.readMessage(value,proto.smartcore.bos.udmi.v1.DevicePoints.deserializeBinaryFromReader);
+      msg.addDevices(value);
       break;
     default:
       reader.skipField();
@@ -1758,43 +1756,43 @@ proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.serializeBinary
  */
 proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getMessagesList();
+  f = message.getDevicesList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
       1,
       f,
-      proto.smartcore.bos.udmi.v1.ExportedMessage.serializeBinaryToWriter
+      proto.smartcore.bos.udmi.v1.DevicePoints.serializeBinaryToWriter
     );
   }
 };
 
 
 /**
- * repeated ExportedMessage messages = 1;
- * @return {!Array<!proto.smartcore.bos.udmi.v1.ExportedMessage>}
+ * repeated DevicePoints devices = 1;
+ * @return {!Array<!proto.smartcore.bos.udmi.v1.DevicePoints>}
  */
-proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.getMessagesList = function() {
-  return /** @type{!Array<!proto.smartcore.bos.udmi.v1.ExportedMessage>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.smartcore.bos.udmi.v1.ExportedMessage, 1));
+proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.getDevicesList = function() {
+  return /** @type{!Array<!proto.smartcore.bos.udmi.v1.DevicePoints>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.smartcore.bos.udmi.v1.DevicePoints, 1));
 };
 
 
 /**
- * @param {!Array<!proto.smartcore.bos.udmi.v1.ExportedMessage>} value
+ * @param {!Array<!proto.smartcore.bos.udmi.v1.DevicePoints>} value
  * @return {!proto.smartcore.bos.udmi.v1.ListExportedPointsResponse} returns this
 */
-proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.setMessagesList = function(value) {
+proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.setDevicesList = function(value) {
   return jspb.Message.setRepeatedWrapperField(this, 1, value);
 };
 
 
 /**
- * @param {!proto.smartcore.bos.udmi.v1.ExportedMessage=} opt_value
+ * @param {!proto.smartcore.bos.udmi.v1.DevicePoints=} opt_value
  * @param {number=} opt_index
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage}
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints}
  */
-proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.addMessages = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.smartcore.bos.udmi.v1.ExportedMessage, opt_index);
+proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.addDevices = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.smartcore.bos.udmi.v1.DevicePoints, opt_index);
 };
 
 
@@ -1802,11 +1800,18 @@ proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.addMessages = f
  * Clears the list making it empty but non-null.
  * @return {!proto.smartcore.bos.udmi.v1.ListExportedPointsResponse} returns this
  */
-proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.clearMessagesList = function() {
-  return this.setMessagesList([]);
+proto.smartcore.bos.udmi.v1.ListExportedPointsResponse.prototype.clearDevicesList = function() {
+  return this.setDevicesList([]);
 };
 
 
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.smartcore.bos.udmi.v1.DevicePoints.repeatedFields_ = [4];
 
 
 
@@ -1823,8 +1828,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
  *     http://goto/soy-param-migration
  * @return {!Object}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.toObject = function(opt_includeInstance) {
-  return proto.smartcore.bos.udmi.v1.ExportedMessage.toObject(opt_includeInstance, this);
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.toObject = function(opt_includeInstance) {
+  return proto.smartcore.bos.udmi.v1.DevicePoints.toObject(opt_includeInstance, this);
 };
 
 
@@ -1833,19 +1838,16 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.toObject = function(opt_in
  * @param {boolean|undefined} includeInstance Deprecated. Whether to include
  *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
- * @param {!proto.smartcore.bos.udmi.v1.ExportedMessage} msg The msg instance to transform.
+ * @param {!proto.smartcore.bos.udmi.v1.DevicePoints} msg The msg instance to transform.
  * @return {!Object}
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.toObject = function(includeInstance, msg) {
+proto.smartcore.bos.udmi.v1.DevicePoints.toObject = function(includeInstance, msg) {
   var f, obj = {
 sourceName: jspb.Message.getFieldWithDefault(msg, 1, ""),
 topic: jspb.Message.getFieldWithDefault(msg, 2, ""),
-messageType: jspb.Message.getFieldWithDefault(msg, 3, ""),
-payload: jspb.Message.getFieldWithDefault(msg, 4, ""),
-firstSeen: (f = msg.getFirstSeen()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-lastSeen: (f = msg.getLastSeen()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-count: jspb.Message.getFieldWithDefault(msg, 7, 0)
+assetName: jspb.Message.getFieldWithDefault(msg, 3, ""),
+pointsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -1859,23 +1861,23 @@ count: jspb.Message.getFieldWithDefault(msg, 7, 0)
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.binary.bytesource.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage}
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinary = function(bytes) {
+proto.smartcore.bos.udmi.v1.DevicePoints.deserializeBinary = function(bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.smartcore.bos.udmi.v1.ExportedMessage;
-  return proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinaryFromReader(msg, reader);
+  var msg = new proto.smartcore.bos.udmi.v1.DevicePoints;
+  return proto.smartcore.bos.udmi.v1.DevicePoints.deserializeBinaryFromReader(msg, reader);
 };
 
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
  * given reader into the given message object.
- * @param {!proto.smartcore.bos.udmi.v1.ExportedMessage} msg The message object to deserialize into.
+ * @param {!proto.smartcore.bos.udmi.v1.DevicePoints} msg The message object to deserialize into.
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage}
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinaryFromReader = function(msg, reader) {
+proto.smartcore.bos.udmi.v1.DevicePoints.deserializeBinaryFromReader = function(msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
@@ -1892,25 +1894,11 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinaryFromReader = functi
       break;
     case 3:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
-      msg.setMessageType(value);
+      msg.setAssetName(value);
       break;
     case 4:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
-      msg.setPayload(value);
-      break;
-    case 5:
-      var value = new google_protobuf_timestamp_pb.Timestamp;
-      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
-      msg.setFirstSeen(value);
-      break;
-    case 6:
-      var value = new google_protobuf_timestamp_pb.Timestamp;
-      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
-      msg.setLastSeen(value);
-      break;
-    case 7:
-      var value = /** @type {number} */ (reader.readInt64());
-      msg.setCount(value);
+      msg.addPoints(value);
       break;
     default:
       reader.skipField();
@@ -1925,9 +1913,9 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.deserializeBinaryFromReader = functi
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.serializeBinary = function() {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.serializeBinary = function() {
   var writer = new jspb.BinaryWriter();
-  proto.smartcore.bos.udmi.v1.ExportedMessage.serializeBinaryToWriter(this, writer);
+  proto.smartcore.bos.udmi.v1.DevicePoints.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
 
@@ -1935,11 +1923,11 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.serializeBinary = function
 /**
  * Serializes the given message to binary data (in protobuf wire
  * format), writing to the given BinaryWriter.
- * @param {!proto.smartcore.bos.udmi.v1.ExportedMessage} message
+ * @param {!proto.smartcore.bos.udmi.v1.DevicePoints} message
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.serializeBinaryToWriter = function(message, writer) {
+proto.smartcore.bos.udmi.v1.DevicePoints.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getSourceName();
   if (f.length > 0) {
@@ -1955,40 +1943,17 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.serializeBinaryToWriter = function(m
       f
     );
   }
-  f = message.getMessageType();
+  f = message.getAssetName();
   if (f.length > 0) {
     writer.writeString(
       3,
       f
     );
   }
-  f = message.getPayload();
+  f = message.getPointsList();
   if (f.length > 0) {
-    writer.writeString(
+    writer.writeRepeatedString(
       4,
-      f
-    );
-  }
-  f = message.getFirstSeen();
-  if (f != null) {
-    writer.writeMessage(
-      5,
-      f,
-      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
-    );
-  }
-  f = message.getLastSeen();
-  if (f != null) {
-    writer.writeMessage(
-      6,
-      f,
-      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
-    );
-  }
-  f = message.getCount();
-  if (f !== 0) {
-    writer.writeInt64(
-      7,
       f
     );
   }
@@ -1999,16 +1964,16 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.serializeBinaryToWriter = function(m
  * optional string source_name = 1;
  * @return {string}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getSourceName = function() {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.getSourceName = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
  * @param {string} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setSourceName = function(value) {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.setSourceName = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
@@ -2017,145 +1982,72 @@ proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setSourceName = function(v
  * optional string topic = 2;
  * @return {string}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getTopic = function() {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.getTopic = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
 /**
  * @param {string} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setTopic = function(value) {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.setTopic = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
 /**
- * optional string message_type = 3;
+ * optional string asset_name = 3;
  * @return {string}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getMessageType = function() {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.getAssetName = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
 
 /**
  * @param {string} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setMessageType = function(value) {
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.setAssetName = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
 /**
- * optional string payload = 4;
- * @return {string}
+ * repeated string points = 4;
+ * @return {!Array<string>}
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getPayload = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.getPointsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 4));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
+ */
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.setPointsList = function(value) {
+  return jspb.Message.setField(this, 4, value || []);
 };
 
 
 /**
  * @param {string} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
+ * @param {number=} opt_index
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setPayload = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.addPoints = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 4, value, opt_index);
 };
 
 
 /**
- * optional google.protobuf.Timestamp first_seen = 5;
- * @return {?proto.google.protobuf.Timestamp}
+ * Clears the list making it empty but non-null.
+ * @return {!proto.smartcore.bos.udmi.v1.DevicePoints} returns this
  */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getFirstSeen = function() {
-  return /** @type{?proto.google.protobuf.Timestamp} */ (
-    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 5));
-};
-
-
-/**
- * @param {?proto.google.protobuf.Timestamp|undefined} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
-*/
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setFirstSeen = function(value) {
-  return jspb.Message.setWrapperField(this, 5, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.clearFirstSeen = function() {
-  return this.setFirstSeen(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.hasFirstSeen = function() {
-  return jspb.Message.getField(this, 5) != null;
-};
-
-
-/**
- * optional google.protobuf.Timestamp last_seen = 6;
- * @return {?proto.google.protobuf.Timestamp}
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getLastSeen = function() {
-  return /** @type{?proto.google.protobuf.Timestamp} */ (
-    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 6));
-};
-
-
-/**
- * @param {?proto.google.protobuf.Timestamp|undefined} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
-*/
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setLastSeen = function(value) {
-  return jspb.Message.setWrapperField(this, 6, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.clearLastSeen = function() {
-  return this.setLastSeen(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.hasLastSeen = function() {
-  return jspb.Message.getField(this, 6) != null;
-};
-
-
-/**
- * optional int64 count = 7;
- * @return {number}
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.getCount = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
-};
-
-
-/**
- * @param {number} value
- * @return {!proto.smartcore.bos.udmi.v1.ExportedMessage} returns this
- */
-proto.smartcore.bos.udmi.v1.ExportedMessage.prototype.setCount = function(value) {
-  return jspb.Message.setProto3IntField(this, 7, value);
+proto.smartcore.bos.udmi.v1.DevicePoints.prototype.clearPointsList = function() {
+  return this.setPointsList([]);
 };
 
 

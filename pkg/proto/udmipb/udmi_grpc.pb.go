@@ -273,8 +273,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// UdmiExportApi exposes the distinct messages the UDMI automation has published to
-// the MQTT broker, so a caller can build a full points list export.
+// UdmiExportApi exposes the points the UDMI automation has published to the MQTT
+// broker, so a caller can render a points list export.
 //
 // Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
 // implemented by the udmi automation itself: it observes every payload flowing through
@@ -282,8 +282,8 @@ const (
 // the node's name, so a node running more than one udmi automation reports the points of
 // all of them together.
 type UdmiExportApiClient interface {
-	// ListExportedPoints returns the most recent payload published for each distinct
-	// MQTT topic since the automation last (re)started, keyed by source and topic.
+	// ListExportedPoints returns the points carried by the most recent pointset event
+	// published for each device since the automation last (re)started.
 	ListExportedPoints(ctx context.Context, in *ListExportedPointsRequest, opts ...grpc.CallOption) (*ListExportedPointsResponse, error)
 }
 
@@ -309,8 +309,8 @@ func (c *udmiExportApiClient) ListExportedPoints(ctx context.Context, in *ListEx
 // All implementations must embed UnimplementedUdmiExportApiServer
 // for forward compatibility.
 //
-// UdmiExportApi exposes the distinct messages the UDMI automation has published to
-// the MQTT broker, so a caller can build a full points list export.
+// UdmiExportApi exposes the points the UDMI automation has published to the MQTT
+// broker, so a caller can render a points list export.
 //
 // Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
 // implemented by the udmi automation itself: it observes every payload flowing through
@@ -318,8 +318,8 @@ func (c *udmiExportApiClient) ListExportedPoints(ctx context.Context, in *ListEx
 // the node's name, so a node running more than one udmi automation reports the points of
 // all of them together.
 type UdmiExportApiServer interface {
-	// ListExportedPoints returns the most recent payload published for each distinct
-	// MQTT topic since the automation last (re)started, keyed by source and topic.
+	// ListExportedPoints returns the points carried by the most recent pointset event
+	// published for each device since the automation last (re)started.
 	ListExportedPoints(context.Context, *ListExportedPointsRequest) (*ListExportedPointsResponse, error)
 	mustEmbedUnimplementedUdmiExportApiServer()
 }

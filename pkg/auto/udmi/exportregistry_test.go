@@ -18,13 +18,13 @@ func TestExportRegistry_Add(t *testing.T) {
 	const nodeName = "van/uk/brum/ugs"
 	n := node.New(nodeName)
 	client := udmipb.NewUdmiExportApiClient(n.ClientConn())
-	list := func(t *testing.T) []*udmipb.ExportedMessage {
+	list := func(t *testing.T) []*udmipb.DevicePoints {
 		t.Helper()
 		res, err := client.ListExportedPoints(t.Context(), &udmipb.ListExportedPointsRequest{Name: nodeName})
 		if err != nil {
 			t.Fatalf("ListExportedPoints: %v", err)
 		}
-		return res.Messages
+		return res.Devices
 	}
 
 	r := &exportRegistry{}
@@ -44,7 +44,7 @@ func TestExportRegistry_Add(t *testing.T) {
 
 	got := list(t)
 	if len(got) != 2 {
-		t.Fatalf("after second automation: %d messages, want 2", len(got))
+		t.Fatalf("after second automation: %d devices, want 2", len(got))
 	}
 	if got[0].SourceName != "dev1" || got[1].SourceName != "dev2" {
 		t.Errorf("sources = %q, %q; want dev1, dev2", got[0].SourceName, got[1].SourceName)
@@ -83,7 +83,7 @@ func TestExportRegistry_Readd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListExportedPoints after re-add: %v", err)
 	}
-	if len(res.Messages) != 1 {
-		t.Fatalf("got %d messages, want 1", len(res.Messages))
+	if len(res.Devices) != 1 {
+		t.Fatalf("got %d devices, want 1", len(res.Devices))
 	}
 }

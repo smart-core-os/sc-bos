@@ -4,8 +4,6 @@ package smartcore.bos.udmi.v1;
 
 option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/udmipb";
 
-import "google/protobuf/timestamp.proto";
-
 // UdmiService defines the service needed to add UDMI support to a driver or system.
 // The implementer is responsible for message payloads and topic definitions. This will not be validated.
 service UdmiService {
@@ -62,8 +60,8 @@ message MqttMessage {
   string payload = 2;  // JSON payload
 }
 
-// UdmiExportApi exposes the distinct messages the UDMI automation has published to
-// the MQTT broker, so a caller can build a full points list export.
+// UdmiExportApi exposes the points the UDMI automation has published to the MQTT
+// broker, so a caller can render a points list export.
 //
 // Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
 // implemented by the udmi automation itself: it observes every payload flowing through
@@ -71,8 +69,8 @@ message MqttMessage {
 // the node's name, so a node running more than one udmi automation reports the points of
 // all of them together.
 service UdmiExportApi {
-  // ListExportedPoints returns the most recent payload published for each distinct
-  // MQTT topic since the automation last (re)started, keyed by source and topic.
+  // ListExportedPoints returns the points carried by the most recent pointset event
+  // published for each device since the automation last (re)started.
   rpc ListExportedPoints(ListExportedPointsRequest) returns (ListExportedPointsResponse);
 }
 
@@ -82,24 +80,21 @@ message ListExportedPointsRequest {
 }
 
 message ListExportedPointsResponse {
-  repeated ExportedMessage messages = 1;
+  // devices are ordered by topic then source_name.
+  repeated DevicePoints devices = 1;
 }
 
-// ExportedMessage is the most recent payload published for a single MQTT topic,
-// together with the Smart Core source that produced it and basic bookkeeping.
-message ExportedMessage {
-  // source_name is the Smart Core name of the UdmiService source that produced the message.
+// DevicePoints is the set of points a single device carried in the most recent pointset
+// event published for it, one row of a points list export.
+message DevicePoints {
+  // source_name is the Smart Core name of the UdmiService source that produced the event.
   string source_name = 1;
-  // topic is the MQTT topic the message was published to.
+  // topic is the MQTT topic the pointset event was published to.
   string topic = 2;
-  // message_type classifies the topic: "event", "state", "metadata" or "other".
-  string message_type = 3;
-  // payload is the most recent JSON payload published for this topic.
-  string payload = 4;
-  // first_seen is when a message for this topic was first published since the automation (re)started.
-  google.protobuf.Timestamp first_seen = 5;
-  // last_seen is when the most recent message for this topic was published.
-  google.protobuf.Timestamp last_seen = 6;
-  // count is the number of messages published for this topic since the automation (re)started.
-  int64 count = 7;
+  // asset_name is the BDNS functional asset name taken from topic: the path segment
+  // immediately before the "/event(s)/pointset" portion, e.g. "AMP-109151" for
+  // "JLL/GB-LON-1BG/AV/AMP-109151/events/pointset".
+  string asset_name = 3;
+  // points are the names of the points the event carried, sorted.
+  repeated string points = 4;
 }

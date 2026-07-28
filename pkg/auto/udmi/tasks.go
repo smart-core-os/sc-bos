@@ -116,8 +116,8 @@ func pullMessages(ctx context.Context, name string, logger *zap.Logger, client u
 }
 
 // handleMessages waits for messages on the given channel and sends them to the publisher
-// ultimately these end up getting sent as MQTT messages. Each message is also recorded
-// in the collector (when non-nil) so it can be exported as a points list.
+// ultimately these end up getting sent as MQTT messages. Each message is also offered to
+// the collector (when non-nil), which keeps the pointset events for the points list export.
 func handleMessages(ctx context.Context, name string, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector) error {
 	for change := range changes {
 		if change.Message == nil {
@@ -127,8 +127,8 @@ func handleMessages(ctx context.Context, name string, changes <-chan *udmipb.Pul
 		if err != nil {
 			return err
 		}
-		// Record only after a successful publish so the export reflects messages that were
-		// actually published, and count doesn't inflate on publish failure + task retry.
+		// Record only after a successful publish so the export reflects what was actually
+		// sent to the broker rather than what we tried to send.
 		if collector != nil {
 			collector.Record(name, change.Message.Topic, change.Message.Payload)
 		}
