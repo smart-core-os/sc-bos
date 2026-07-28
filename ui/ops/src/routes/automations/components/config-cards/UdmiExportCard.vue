@@ -4,8 +4,8 @@
       <v-list-subheader class="text-title-caps-large text-neutral-lighten-3">Points list</v-list-subheader>
       <v-list-item>
         <v-list-item-subtitle class="text-wrap">
-          Download the distinct messages this automation has published since it last (re)started,
-          as a CSV points list.
+          Download the distinct messages this node has published since its udmi automations last
+          (re)started, as a CSV points list.
         </v-list-item-subtitle>
       </v-list-item>
       <v-card-actions class="justify-end px-4">
@@ -14,7 +14,7 @@
             variant="flat"
             prepend-icon="mdi-download"
             :loading="tracker.loading"
-            :disabled="!automationName"
+            :disabled="!nodeName"
             @click="downloadPointsList">
           Download points list
         </v-btn>
@@ -31,16 +31,17 @@ import {newActionTracker} from '@/api/resource';
 import {listExportedPoints} from '@/api/ui/udmiExport';
 import {useErrorStore} from '@/components/ui-error/error';
 import {buildPointsCsv} from '@/routes/automations/pointsExport';
-import {useSidebarStore} from '@/stores/sidebar';
+import {useUserConfig} from '@/stores/userConfig.js';
 import {dateStamp} from '@/util/date';
 import {downloadCSVRows} from '@/util/downloadCSV';
 import {computed, onMounted, onUnmounted, reactive, ref} from 'vue';
 
-const sidebar = useSidebarStore();
+const userConfig = useUserConfig();
 const tracker = reactive(/** @type {ActionTracker<ListExportedPointsResponse.AsObject>} */ newActionTracker());
 const showEmpty = ref(false);
 
-const automationName = computed(() => sidebar.data?.config?.name ?? '');
+// UdmiExportApi is announced against the node's name and covers every udmi automation on it.
+const nodeName = computed(() => userConfig.node?.name ?? '');
 
 const errorStore = useErrorStore();
 let unwatchError;
@@ -57,16 +58,16 @@ onUnmounted(() => {
  * @return {Promise<void>}
  */
 async function downloadPointsList() {
-  if (!automationName.value) return;
+  if (!nodeName.value) return;
   try {
-    const res = await listExportedPoints({name: automationName.value}, tracker);
+    const res = await listExportedPoints({name: nodeName.value}, tracker);
     const rows = buildPointsCsv(res?.messagesList ?? []);
     // rows always contains the header row; a length of 1 means nothing was exported.
     if (rows.length <= 1) {
       showEmpty.value = true;
       return;
     }
-    downloadCSVRows(`points-list - ${automationName.value} - ${dateStamp()}.csv`, rows);
+    downloadCSVRows(`points-list - ${nodeName.value.replaceAll('/', '_')} - ${dateStamp()}.csv`, rows);
   } catch {
     // listExportedPoints failures are surfaced via the error store (tracker registered in
     // onMounted); swallow here so the @click handler doesn't raise an unhandled rejection.

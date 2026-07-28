@@ -417,7 +417,7 @@ func (x *MqttMessage) GetPayload() string {
 
 type ListExportedPointsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// name identifies the udmi automation to query.
+	// name identifies the node to query.
 	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

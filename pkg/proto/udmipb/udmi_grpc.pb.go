@@ -278,8 +278,9 @@ const (
 //
 // Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
 // implemented by the udmi automation itself: it observes every payload flowing through
-// the automation's publish path, regardless of the source driver, and is announced
-// against the automation's configured name.
+// the automation's publish path, regardless of the source driver. It is announced against
+// the node's name, so a node running more than one udmi automation reports the points of
+// all of them together.
 type UdmiExportApiClient interface {
 	// ListExportedPoints returns the most recent payload published for each distinct
 	// MQTT topic since the automation last (re)started, keyed by source and topic.
@@ -313,8 +314,9 @@ func (c *udmiExportApiClient) ListExportedPoints(ctx context.Context, in *ListEx
 //
 // Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
 // implemented by the udmi automation itself: it observes every payload flowing through
-// the automation's publish path, regardless of the source driver, and is announced
-// against the automation's configured name.
+// the automation's publish path, regardless of the source driver. It is announced against
+// the node's name, so a node running more than one udmi automation reports the points of
+// all of them together.
 type UdmiExportApiServer interface {
 	// ListExportedPoints returns the most recent payload published for each distinct
 	// MQTT topic since the automation last (re)started, keyed by source and topic.

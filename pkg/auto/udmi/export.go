@@ -2,13 +2,13 @@ package udmi
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
@@ -54,10 +54,6 @@ type recordKey struct {
 // source and MQTT topic, so they can be exported as a points list. It keeps the latest
 // payload per (source, topic) along with first/last-seen times and a message count. It is
 // safe for concurrent use.
-//
-// A fresh collector is created for each config generation so that reconfiguring the
-// automation resets the captured points: some drivers declare their points
-// statically, so a new config can change which points a device exposes.
 type exportCollector struct {
 	now func() time.Time
 
@@ -89,6 +85,17 @@ func (c *exportCollector) Record(sourceName, topic, payload string) {
 	rec.count++
 }
 
+// Reset discards every collected record.
+//
+// The automation calls this each time it applies a config so that reconfiguring resets the
+// captured points: some drivers declare their points statically, so a new config can
+// change which points a device exposes.
+func (c *exportCollector) Reset() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.byKey = make(map[recordKey]*exportRecord)
+}
+
 // Snapshot returns a copy of the collected records, ordered by topic then source.
 func (c *exportCollector) Snapshot() []*exportRecord {
 	c.mu.Lock()
@@ -107,18 +114,45 @@ func (c *exportCollector) Snapshot() []*exportRecord {
 	return out
 }
 
-// exportServer implements udmipb.UdmiExportApiServer, exposing an exportCollector's
-// snapshot over gRPC. The request name is used only for node routing.
+// exportServer implements udmipb.UdmiExportApiServer, exposing the merged snapshots of one
+// or more exportCollectors over gRPC. The request name is used only for node routing.
+//
+// A server has a collector per udmi automation announced against the same node, so its
+// snapshot covers everything the node publishes. It is safe for concurrent use.
 type exportServer struct {
 	udmipb.UnimplementedUdmiExportApiServer
-	collector *exportCollector
+
+	mu         sync.Mutex
+	collectors []*exportCollector
+}
+
+func (s *exportServer) addCollector(c *exportCollector) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.collectors = append(s.collectors, c)
+}
+
+// removeCollector drops the first entry equal to c, reporting how many collectors remain.
+func (s *exportServer) removeCollector(c *exportCollector) (remaining int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.collectors {
+		if existing == c {
+			s.collectors = append(s.collectors[:i], s.collectors[i+1:]...)
+			break
+		}
+	}
+	return len(s.collectors)
+}
+
+func (s *exportServer) snapshot() []*exportCollector {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Clone(s.collectors)
 }
 
 func (s *exportServer) ListExportedPoints(_ context.Context, _ *udmipb.ListExportedPointsRequest) (*udmipb.ListExportedPointsResponse, error) {
-	if s.collector == nil {
-		return nil, status.Error(codes.Unavailable, "no messages collected")
-	}
-	records := s.collector.Snapshot()
+	records := mergeRecords(s.snapshot())
 	messages := make([]*udmipb.ExportedMessage, 0, len(records))
 	for _, rec := range records {
 		messages = append(messages, &udmipb.ExportedMessage{
@@ -132,4 +166,44 @@ func (s *exportServer) ListExportedPoints(_ context.Context, _ *udmipb.ListExpor
 		})
 	}
 	return &udmipb.ListExportedPointsResponse{Messages: messages}, nil
+}
+
+// mergeRecords combines the snapshots of collectors into a single set of records ordered by
+// topic then source, as exportCollector.Snapshot orders its own.
+//
+// Two collectors report the same (source, topic) when a node publishes the same device to
+// more than one broker. ExportedMessage has no broker field, so the brokers can't be told
+// apart in the response either way: the records are merged, keeping the most recent payload
+// and spanning both collectors' first/last-seen and counts.
+func mergeRecords(collectors []*exportCollector) []*exportRecord {
+	if len(collectors) == 1 {
+		return collectors[0].Snapshot() // already merged and ordered
+	}
+	byKey := make(map[recordKey]*exportRecord)
+	for _, c := range collectors {
+		for _, rec := range c.Snapshot() {
+			key := recordKey{source: rec.sourceName, topic: rec.topic}
+			existing, ok := byKey[key]
+			if !ok {
+				byKey[key] = rec // Snapshot already returns copies we own
+				continue
+			}
+			if rec.lastSeen.After(existing.lastSeen) {
+				existing.payload = rec.payload
+				existing.lastSeen = rec.lastSeen
+			}
+			if rec.firstSeen.Before(existing.firstSeen) {
+				existing.firstSeen = rec.firstSeen
+			}
+			existing.count += rec.count
+		}
+	}
+	out := slices.Collect(maps.Values(byKey))
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].topic != out[j].topic {
+			return out[i].topic < out[j].topic
+		}
+		return out[i].sourceName < out[j].sourceName
+	})
+	return out
 }

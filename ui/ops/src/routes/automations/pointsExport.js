@@ -1,4 +1,3 @@
-import {listServices, ServiceNames} from '@/api/ui/services';
 import {listExportedPoints} from '@/api/ui/udmiExport';
 
 /**
@@ -91,57 +90,27 @@ export function buildPointsCsv(messages) {
 }
 
 /**
- * Collects exported messages from every udmi automation across the given cohort nodes.
+ * Collects exported messages from every node in the given cohort.
  *
- * For each node it lists that node's automations, keeps the ones of type "udmi", reads the
- * automation's configured name from its configRaw, and calls ListExportedPoints for it.
- * All requests go over the single grpc-web endpoint and are routed by name. Best-effort:
- * a node or automation that fails is skipped and recorded in `errors`, so one unreachable
- * node never fails the whole export.
+ * UdmiExportApi is announced against each node's name and covers every udmi automation on
+ * that node, so this is one request per node. All requests go over the single grpc-web
+ * endpoint and are routed by name. Best-effort: a node that fails is skipped and recorded
+ * in `errors`, so one unreachable node never fails the whole export.
  *
  * @param {import('@/stores/cohort.js').CohortNode[]} nodes
- * @return {Promise<{messages: Array<{sourceName: string, topic: string, payload: string}>, errors: Array<{node: string, automation?: string, error: *}>}>}
+ * @return {Promise<{messages: Array<{sourceName: string, topic: string, payload: string}>, errors: Array<{node: string, error: *}>}>}
  */
 export async function collectCohortMessages(nodes) {
   const errors = [];
 
   const perNode = await Promise.all((nodes ?? []).map(async (node) => {
-    let services;
     try {
-      services = [];
-      let pageToken = '';
-      do {
-        const res = await listServices(
-            {name: node.name + '/' + ServiceNames.Automations, pageSize: 1000, pageToken});
-        services.push(...(res?.servicesList ?? []).filter((s) => s.type === 'udmi'));
-        pageToken = res?.nextPageToken ?? '';
-      } while (pageToken);
+      const res = await listExportedPoints({name: node.name});
+      return res?.messagesList ?? [];
     } catch (error) {
       errors.push({node: node.name, error});
       return [];
     }
-
-    const perAutomation = await Promise.all(services.map(async (service) => {
-      let name;
-      try {
-        name = service.configRaw ? JSON.parse(service.configRaw).name : undefined;
-      } catch {
-        name = undefined;
-      }
-      if (!name) {
-        // Record rather than silently drop, so the caller's "may be incomplete" warning fires.
-        errors.push({node: node.name, automation: service.id, error: new Error('udmi automation has no configured name')});
-        return [];
-      }
-      try {
-        const out = await listExportedPoints({name});
-        return out?.messagesList ?? [];
-      } catch (error) {
-        errors.push({node: node.name, automation: name, error});
-        return [];
-      }
-    }));
-    return perAutomation.flat();
   }));
 
   return {messages: perNode.flat(), errors};

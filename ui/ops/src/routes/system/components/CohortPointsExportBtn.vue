@@ -41,8 +41,8 @@ function notify(text, color) {
 }
 
 /**
- * Fans out ListExportedPoints across every udmi automation in the cohort, merges the
- * results, and downloads them as a CSV points list (one row per device).
+ * Fans out ListExportedPoints across every node in the cohort, merges the results, and
+ * downloads them as a CSV points list (one row per device).
  *
  * @return {Promise<void>}
  */

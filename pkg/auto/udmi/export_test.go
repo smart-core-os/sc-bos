@@ -48,6 +48,65 @@ func TestExportCollector_Record(t *testing.T) {
 	}
 }
 
+func TestExportCollector_Reset(t *testing.T) {
+	c := newExportCollector(func() time.Time { return time.Unix(1000, 0) })
+	c.Record("dev1", "site/dev1/event/pointset/points", `{"points":{"a":{"present_value":1}}}`)
+	c.Reset()
+
+	if snap := c.Snapshot(); len(snap) != 0 {
+		t.Fatalf("Reset left %d records, want none", len(snap))
+	}
+	// the collector must still be usable afterwards
+	c.Record("dev1", "site/dev1/event/pointset/points", `{"points":{"b":{"present_value":2}}}`)
+	snap := c.Snapshot()
+	if len(snap) != 1 {
+		t.Fatalf("captured %d records after Reset, want 1", len(snap))
+	}
+	if snap[0].count != 1 {
+		t.Errorf("count = %d, want 1 — Reset should clear the previous count", snap[0].count)
+	}
+}
+
+func TestMergeRecords(t *testing.T) {
+	const sharedTopic = "site/dev1/event/pointset/points"
+
+	// c1 and c2 stand in for two udmi automations publishing dev1 to different brokers,
+	// while c2 alone publishes dev2.
+	c1 := newExportCollector(func() time.Time { return time.Unix(1000, 0) })
+	c1.Record("dev1", sharedTopic, `{"points":{"a":{"present_value":1}}}`)
+
+	c2 := newExportCollector(func() time.Time { return time.Unix(2000, 0) })
+	c2.Record("dev1", sharedTopic, `{"points":{"a":{"present_value":9}}}`)
+	c2.Record("dev2", "site/dev2/event/pointset/points", `{"points":{"b":{"present_value":2}}}`)
+
+	got := mergeRecords([]*exportCollector{c1, c2})
+	if len(got) != 2 {
+		t.Fatalf("merged to %d records, want 2 (dev1 deduped, dev2 kept)", len(got))
+	}
+	// ordered by topic, so dev1's topic ("site/dev1/...") sorts first
+	dev1, dev2 := got[0], got[1]
+	if dev1.sourceName != "dev1" || dev2.sourceName != "dev2" {
+		t.Fatalf("unexpected order: %q then %q", dev1.sourceName, dev2.sourceName)
+	}
+	if dev1.payload != `{"points":{"a":{"present_value":9}}}` {
+		t.Errorf("payload = %q, want the most recently seen payload", dev1.payload)
+	}
+	if !dev1.firstSeen.Equal(time.Unix(1000, 0)) {
+		t.Errorf("firstSeen = %v, want the earliest across both collectors", dev1.firstSeen)
+	}
+	if !dev1.lastSeen.Equal(time.Unix(2000, 0)) {
+		t.Errorf("lastSeen = %v, want the latest across both collectors", dev1.lastSeen)
+	}
+	if dev1.count != 2 {
+		t.Errorf("count = %d, want 2 (summed across both collectors)", dev1.count)
+	}
+
+	// merging must not disturb the collectors it read from
+	if snap := c1.Snapshot(); snap[0].count != 1 {
+		t.Errorf("c1 record count = %d after merge, want 1", snap[0].count)
+	}
+}
+
 func TestHandleMessages_RecordsToCollector(t *testing.T) {
 	c := newExportCollector(func() time.Time { return time.Unix(3000, 0) })
 
@@ -109,8 +168,9 @@ func TestExportServer_ListExportedPoints(t *testing.T) {
 	c := newExportCollector(func() time.Time { return now })
 	c.Record("dev1", "site/dev1/state", `{"system":{}}`)
 
-	srv := &exportServer{collector: c}
-	resp, err := srv.ListExportedPoints(context.Background(), &udmipb.ListExportedPointsRequest{Name: "udmi"})
+	srv := &exportServer{}
+	srv.addCollector(c)
+	resp, err := srv.ListExportedPoints(context.Background(), &udmipb.ListExportedPointsRequest{Name: "van/uk/brum/ugs"})
 	if err != nil {
 		t.Fatalf("ListExportedPoints: %v", err)
 	}
