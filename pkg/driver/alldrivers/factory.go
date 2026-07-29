@@ -9,6 +9,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/hikcentral"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock"
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua"
+	"github.com/smart-core-os/sc-bos/pkg/driver/paxton"
 	"github.com/smart-core-os/sc-bos/pkg/driver/pestsense"
 	"github.com/smart-core-os/sc-bos/pkg/driver/proxy"
 	seWiserKnx "github.com/smart-core-os/sc-bos/pkg/driver/se/wiser-knx"
@@ -28,6 +29,7 @@ func Factories() map[string]driver.Factory {
 		hikcentral.DriverName: hikcentral.Factory,
 		mock.DriverName:       mock.Factory,
 		opcua.DriverName:      opcua.Factory,
+		paxton.DriverName:     paxton.Factory,
 		pestsense.DriverName:  pestsense.Factory,
 		proxy.DriverName:      proxy.Factory,
 		seWiserKnx.DriverName: seWiserKnx.Factory,
