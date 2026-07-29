@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -40,6 +41,12 @@ const (
 	DefaultMetadataTopicSuffix = "/metadata.json"
 )
 
+// maxLoggedUnknownPoints caps how many stale pointUnits keys are named in the
+// startup warning. A trait can configure hundreds of points, and a generator fault
+// tends to break all of them at once; the count tells you the scale, the examples
+// tell you where to look.
+const maxLoggedUnknownPoints = 10
+
 type UdmiMergeConfig struct {
 	config.Trait
 	TopicPrefix string `json:"topicPrefix,omitempty"`
@@ -59,6 +66,21 @@ type UdmiMergeConfig struct {
 	// Hardware overrides the make/model reported in state.system.hardware.
 	Hardware *UdmiHardware                  `json:"hardware,omitempty"`
 	Points   map[string]*config.ValueSource `json:"points"`
+	// PointUnits declares the engineering unit of each point, published as
+	// metadata.pointset.points.<name>.units. This is the only place UDMI carries a
+	// unit: events_pointset.json allows only present_value/status per point, so
+	// telemetry cannot describe itself.
+	//
+	// Keys must be point names from Points; a key naming anything else is dropped
+	// (and logged once at startup) so a stale entry cannot advertise a point the
+	// trait no longer publishes. Points absent from the map, or mapped to "",
+	// declare no units.
+	//
+	// Values are published verbatim. model_pointset_point.json declares units as a
+	// free-form string with no enum, so a misspelling is caught nowhere downstream —
+	// spell them as the consumer expects. Note that a point whose ValueSource sets
+	// Scale must declare the unit of the scaled value, not the raw BACnet one.
+	PointUnits map[string]string `json:"pointUnits,omitempty"`
 }
 
 // UdmiHardware configures the state.system.hardware make/model of a device.
@@ -105,6 +127,45 @@ func (c UdmiMergeConfig) hardware() udmi.SystemHardware {
 		}
 	}
 	return h
+}
+
+// pointset returns the metadata.pointset point inventory declared by PointUnits,
+// or nil when nothing is declared — an empty inventory would serialise as
+// "pointset":{"points":{}}, which asserts the device has no points rather than
+// that it declares no units.
+//
+// Entries are skipped when they carry no unit, or when the key isn't a configured
+// point (see unknownPointUnits, which reports those at startup).
+func (c UdmiMergeConfig) pointset() *udmi.MetadataPointset {
+	points := make(map[string]udmi.MetadataPoint, len(c.PointUnits))
+	for name, units := range c.PointUnits {
+		if units == "" {
+			continue
+		}
+		if _, ok := c.Points[name]; !ok {
+			continue
+		}
+		points[name] = udmi.MetadataPoint{Units: units}
+	}
+	if len(points) == 0 {
+		return nil
+	}
+	return &udmi.MetadataPointset{Points: points}
+}
+
+// unknownPointUnits returns, sorted, the PointUnits keys that don't name a
+// configured point. These declare no units; they're reported so a generator that
+// drifts out of step with the points it emits is visible, rather than silently
+// producing a device with no units at all.
+func (c UdmiMergeConfig) unknownPointUnits() []string {
+	var unknown []string
+	for name := range c.PointUnits {
+		if _, ok := c.Points[name]; !ok {
+			unknown = append(unknown, name)
+		}
+	}
+	slices.Sort(unknown)
+	return unknown
 }
 
 // EmitEnvelope reports whether pointset payloads should be wrapped in the UDMI
@@ -156,6 +217,13 @@ func newUdmiMerge(client *gobacnet.Client, devices known.Context, faultCheck *he
 	cfg, err := readUdmiMergeConfig(config.Raw)
 	if err != nil {
 		return nil, err
+	}
+	// Warn here rather than in pointset(): metadata is rebuilt for every subscriber
+	// (see PullExportMessages), so warning there would repeat on each reconnect.
+	if unknown := cfg.unknownPointUnits(); len(unknown) > 0 {
+		logger.Warn("pointUnits names points this trait doesn't publish; they declare no units",
+			zap.Int("count", len(unknown)),
+			zap.Strings("examples", unknown[:min(len(unknown), maxLoggedUnknownPoints)]))
 	}
 	f := &udmiMerge{
 		client:     client,
@@ -439,6 +507,7 @@ func (f *udmiMerge) metadataMessage() (*udmipb.MqttMessage, error) {
 		Timestamp: time.Now().UTC(),
 		Version:   f.config.Version(),
 		System:    sys,
+		Pointset:  f.config.pointset(),
 	})
 	if err != nil {
 		return nil, err
