@@ -6,5 +6,8 @@
     "space",
     "signage",
     "ui-gen"
-  ]
+  ],
+  "resolutions": {
+    "vite": "8.0.10"
+  }
 }
