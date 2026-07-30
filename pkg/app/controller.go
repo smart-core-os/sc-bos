@@ -213,6 +213,13 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	c.Defer(manager.Close)
 	c.Defer(store.Close)
+	// db is nil if bolthold.Open failed above, which is only warned about.
+	if db != nil {
+		c.Defer(db.Close)
+	}
+	if accountStore != nil {
+		c.Defer(accountStore.Close)
+	}
 	c.Defer(closeHealthStore)
 	c.Defer(ci.DataRoot.Close)
 	if ai.Interceptor != nil {
