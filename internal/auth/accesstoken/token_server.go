@@ -97,6 +97,9 @@ func WithSigningKey(key jose.SigningKey) ServerOption {
 	}
 }
 
+// WithPermittedSignatureAlgorithms sets the signature algorithms accepted when validating tokens.
+// When not set, DefaultSignatureAlgorithms is used, which covers every key this server can sign with.
+// Pass a wider list only to accept tokens signed elsewhere.
 func WithPermittedSignatureAlgorithms(algs []string) ServerOption {
 	return func(ts *Server) {
 		ts.tokens.SignatureAlgorithms = algs

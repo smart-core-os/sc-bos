@@ -61,11 +61,35 @@ func (pa permissionAssignment) ToTokenPermissionAssignment() token.PermissionAss
 	}
 }
 
+// DefaultSignatureAlgorithms lists the signature algorithms a Source permits when
+// SignatureAlgorithms is not set.
+//
+// It contains only HS256 because that is the only algorithm this package ever signs with:
+// generateKey and LoadOrGenerateSigningKey both produce HS256 keys, and WithSigningKey rejects
+// anything that isn't the []byte an HMAC key needs. A Source therefore only ever verifies its
+// own HS256 tokens, so this is the narrowest list that still works rather than a lax fallback.
+//
+// jwt.ParseSigned takes the permitted algorithms as a required argument and fails when handed an
+// empty list, so without this default a Source built without WithPermittedSignatureAlgorithms
+// would issue tokens happily and then reject every single one of them.
+var DefaultSignatureAlgorithms = []string{string(jose.HS256)}
+
 type Source struct {
-	Key                 jose.SigningKey
-	Issuer              string
-	Now                 func() time.Time
+	Key    jose.SigningKey
+	Issuer string
+	Now    func() time.Time
+	// SignatureAlgorithms are the signature algorithms permitted when validating tokens.
+	// When empty, DefaultSignatureAlgorithms is used.
 	SignatureAlgorithms []string
+}
+
+// permittedAlgorithms returns the signature algorithms to accept when validating a token,
+// falling back to DefaultSignatureAlgorithms when none were configured.
+func (ts *Source) permittedAlgorithms() []string {
+	if len(ts.SignatureAlgorithms) == 0 {
+		return DefaultSignatureAlgorithms
+	}
+	return ts.SignatureAlgorithms
 }
 
 func (ts *Source) GenerateAccessToken(data SecretData, validity time.Duration) (token string, err error) {
@@ -108,7 +132,7 @@ func (ts *Source) GenerateAccessToken(data SecretData, validity time.Duration) (
 }
 
 func (ts *Source) ValidateAccessToken(_ context.Context, tokenStr string) (*token.Claims, error) {
-	tok, err := jwt.ParseSigned(tokenStr, joseUtils.ConvertToNativeJose(ts.SignatureAlgorithms))
+	tok, err := jwt.ParseSigned(tokenStr, joseUtils.ConvertToNativeJose(ts.permittedAlgorithms()))
 	if err != nil {
 		return nil, err
 	}

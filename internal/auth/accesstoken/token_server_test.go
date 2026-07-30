@@ -173,6 +173,51 @@ func TestTokenServer(t *testing.T) {
 	}
 }
 
+// A Server built without WithPermittedSignatureAlgorithms must still accept the tokens it issues.
+// jwt.ParseSigned rejects everything when handed an empty algorithm list, so before
+// DefaultSignatureAlgorithms existed this server would hand out a token over HTTP and then refuse
+// that very token — see SCB-1393.
+func TestTokenServer_validatesOwnTokensWithoutPermittedAlgorithms(t *testing.T) {
+	var services testMemoryVerifier
+	services.add(t, SecretData{TenantID: "service1", SystemRoles: []string{"admin"}}, "secret1")
+
+	// deliberately no WithPermittedSignatureAlgorithms
+	server, err := NewServer("test",
+		WithLogger(zap.NewNop()),
+		WithClientCredentialFlow(&services, 10*time.Minute),
+	)
+	if err != nil {
+		t.Fatalf("NewServer %v", err)
+	}
+	httpServer := httptest.NewServer(server)
+	defer httpServer.Close()
+
+	resp, err := httpServer.Client().PostForm(httpServer.URL, url.Values{
+		"grant_type":    {"client_credentials"},
+		"client_id":     {"service1"},
+		"client_secret": {"secret1"},
+	})
+	if err != nil {
+		t.Fatalf("PostForm %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+	var issued tokenSuccessResponse
+	if err := json.NewDecoder(resp.Body).Decode(&issued); err != nil {
+		t.Fatalf("Decode success response %v", err)
+	}
+
+	claims, err := server.TokenValidator().ValidateAccessToken(t.Context(), issued.AccessToken)
+	if err != nil {
+		t.Fatalf("ValidateAccessToken rejected a token this server issued: %v", err)
+	}
+	if claims.Subject != "service1" {
+		t.Errorf("Subject = %q, want %q", claims.Subject, "service1")
+	}
+}
+
 type testMemoryVerifier struct {
 	MemoryVerifier
 }

@@ -2,6 +2,7 @@ package accesstoken
 
 import (
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +22,43 @@ func TestTokenSource_createAndVerify(t *testing.T) {
 	_, err = ts.ValidateAccessToken(t.Context(), token)
 	if err != nil {
 		t.Fatalf("ValidateAccessToken %v", err)
+	}
+}
+
+func TestTokenSource_createAndVerifyWithoutSignatureAlgorithms(t *testing.T) {
+	ts := newTestSource(t)
+	ts.SignatureAlgorithms = nil // fall back to DefaultSignatureAlgorithms
+
+	token, err := ts.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("GenerateAccessToken %v", err)
+	}
+	if _, err := ts.ValidateAccessToken(t.Context(), token); err != nil {
+		t.Fatalf("ValidateAccessToken %v", err)
+	}
+}
+
+// The default must only fill an absent list, never widen a configured one.
+func TestTokenSource_configuredSignatureAlgorithmsArePreserved(t *testing.T) {
+	ts := newTestSource(t)
+	// this Source signs with HS256, so restricting it to RS256 makes its own tokens unacceptable
+	ts.SignatureAlgorithms = []string{string(jose.RS256)}
+
+	token, err := ts.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("GenerateAccessToken %v", err)
+	}
+	_, err = ts.ValidateAccessToken(t.Context(), token)
+	if err == nil {
+		t.Fatal("ValidateAccessToken accepted an HS256 token from a source permitting only RS256")
+	}
+	// pin the reason, so the test can't pass because validation failed for some unrelated cause
+	var algErr *jose.ErrUnexpectedSignatureAlgorithm
+	if !errors.As(err, &algErr) {
+		t.Fatalf("error = %v, want ErrUnexpectedSignatureAlgorithm", err)
+	}
+	if algErr.Got != jose.HS256 {
+		t.Errorf("rejected algorithm = %q, want %q", algErr.Got, jose.HS256)
 	}
 }
 
