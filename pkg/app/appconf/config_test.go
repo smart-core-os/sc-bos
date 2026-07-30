@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 	"testing"
 	"testing/fstest"
 
@@ -82,25 +82,25 @@ func TestLoadLocalConfig(t *testing.T) {
 		{
 			name: "single file",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{"name": "my-config"}`),
 				},
 			},
 			dir:    "data",
 			file:   "base.json",
-			config: &Config{Name: "my-config", FilePath: filepath.Join("data", "base.json")},
+			config: &Config{Name: "my-config", FilePath: path.Join("data", "base.json")},
 		},
 		{
 			name: "with include",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{
 						"name": "my-config",
 						"includes": ["part-1.json"],
 						"drivers": [{"name": "driver-1"}]
 					}`),
 				},
-				filepath.Join("data", "part-1.json"): {
+				path.Join("data", "part-1.json"): {
 					Data: []byte(`{
 						"name": "ignored",
 						"drivers": [{"name": "driver-part-1"}]
@@ -116,7 +116,7 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverNamed("driver-1"),
 					driverNamed("driver-part-1"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
@@ -148,27 +148,27 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverNamed("driver-part-2b"),
 					driverNamed("driver-part-3a"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
 			name: "avoids includes loop",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{
 						"name": "my-config",
 						"includes": ["part-1.json"],
 						"drivers": [{"name": "driver-1"}]
 					}`),
 				},
-				filepath.Join("data", "part-1.json"): {
+				path.Join("data", "part-1.json"): {
 					Data: []byte(`{
 						"name": "ignored",
 						"includes": ["part-1a.json"],
 						"drivers": [{"name": "driver-part-1"}]
 					}`),
 				},
-				filepath.Join("data", "part-1a.json"): {
+				path.Join("data", "part-1a.json"): {
 					Data: []byte(`{
 						"includes": ["part-1.json"],
 						"drivers": [{"name": "driver-part-1a"}]
@@ -188,20 +188,20 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverNamed("driver-part-1"),
 					driverNamed("driver-part-1a"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
 			name: "duplicate driver ignored",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{
 						"name": "my-config",
 						"includes": ["part-1.json"],
 						"drivers": [{"name": "driver-1", "type": "d-1"}]
 					}`),
 				},
-				filepath.Join("data", "part-1.json"): {
+				path.Join("data", "part-1.json"): {
 					Data: []byte(`{
 						"name": "ignored",
 						"drivers": [{"name": "driver-1", "type": "d-2"}]
@@ -216,26 +216,26 @@ func TestLoadLocalConfig(t *testing.T) {
 				Drivers: []driver.RawConfig{
 					driverWithType("driver-1", "d-1"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
 			name: "first dup driver takes precendence",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{
 						"name": "my-config",
 						"includes": ["part-1.json","part-2.json"],
 						"drivers": [{"name": "driver-1", "type": "d-1"}]
 					}`),
 				},
-				filepath.Join("data", "part-1.json"): {
+				path.Join("data", "part-1.json"): {
 					Data: []byte(`{
 						"name": "ignored",
 						"drivers": [{"name": "driver-2", "type": "d-1a"}]
 					}`),
 				},
-				filepath.Join("data", "part-2.json"): {
+				path.Join("data", "part-2.json"): {
 					Data: []byte(`{
 						"name": "ignored",
 						"drivers": [{"name": "driver-2", "type": "d-2"}]
@@ -251,7 +251,7 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverWithType("driver-1", "d-1"),
 					driverWithType("driver-2", "d-1a"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
@@ -268,7 +268,7 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverWithType("dir2", "dir2"),
 					driverWithType("dir/more1", "dir/more1"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
@@ -286,16 +286,16 @@ func TestLoadLocalConfig(t *testing.T) {
 					driverWithType("dir2/1", "dir2/1"),
 					driverWithType("file2", "file2"),
 				},
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 		{
 			name: "include non-json file",
 			fs: fstest.MapFS{
-				filepath.Join("data", "base.json"): {
+				path.Join("data", "base.json"): {
 					Data: []byte(`{"name": "base", "include": ["file.txt"]}`),
 				},
-				filepath.Join("data", "file.txt"): {
+				path.Join("data", "file.txt"): {
 					Data: []byte(`this is not a json file`),
 				},
 			},
@@ -303,7 +303,7 @@ func TestLoadLocalConfig(t *testing.T) {
 			file: "base.json",
 			config: &Config{
 				Name:     "base",
-				FilePath: filepath.Join("data", "base.json"),
+				FilePath: path.Join("data", "base.json"),
 			},
 		},
 	}
