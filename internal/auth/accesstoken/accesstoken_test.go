@@ -1,6 +1,7 @@
 package accesstoken
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"os"
@@ -25,9 +26,14 @@ func TestTokenSource_createAndVerify(t *testing.T) {
 	}
 }
 
-func TestTokenSource_createAndVerifyWithoutSignatureAlgorithms(t *testing.T) {
-	ts := newTestSource(t)
-	ts.SignatureAlgorithms = nil // fall back to DefaultSignatureAlgorithms
+// A Source needs no algorithm configuration beyond its key: the permitted algorithm is read off
+// Key.Algorithm, so there is no list to leave empty and no way to reject its own tokens (SCB-1393).
+func TestTokenSource_createAndVerifyNeedsNoAlgorithmConfig(t *testing.T) {
+	key, err := generateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := &Source{Key: key, Issuer: "test", Now: time.Now}
 
 	token, err := ts.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
 	if err != nil {
@@ -38,27 +44,37 @@ func TestTokenSource_createAndVerifyWithoutSignatureAlgorithms(t *testing.T) {
 	}
 }
 
-// The default must only fill an absent list, never widen a configured one.
-func TestTokenSource_configuredSignatureAlgorithmsArePreserved(t *testing.T) {
+// A Source only ever permits the algorithm it signs with, so a token carrying any other algorithm
+// is refused even though the key itself would verify the signature.
+func TestTokenSource_rejectsForeignAlgorithm(t *testing.T) {
 	ts := newTestSource(t)
-	// this Source signs with HS256, so restricting it to RS256 makes its own tokens unacceptable
-	ts.SignatureAlgorithms = []string{string(jose.RS256)}
-
-	token, err := ts.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
+	// HS512 needs a 64-byte secret, so this signer carries its own key; the algorithm is rejected
+	// during parsing, before the signature is ever checked, so the differing key is immaterial
+	secret := make([]byte, 64)
+	if _, err := rand.Read(secret); err != nil {
+		t.Fatal(err)
+	}
+	foreign := &Source{
+		Key:    jose.SigningKey{Algorithm: jose.HS512, Key: secret},
+		Issuer: ts.Issuer,
+		Now:    ts.Now,
+	}
+	token, err := foreign.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken %v", err)
 	}
+
 	_, err = ts.ValidateAccessToken(t.Context(), token)
 	if err == nil {
-		t.Fatal("ValidateAccessToken accepted an HS256 token from a source permitting only RS256")
+		t.Fatal("ValidateAccessToken accepted an HS512 token from an HS256 source")
 	}
 	// pin the reason, so the test can't pass because validation failed for some unrelated cause
 	var algErr *jose.ErrUnexpectedSignatureAlgorithm
 	if !errors.As(err, &algErr) {
 		t.Fatalf("error = %v, want ErrUnexpectedSignatureAlgorithm", err)
 	}
-	if algErr.Got != jose.HS256 {
-		t.Errorf("rejected algorithm = %q, want %q", algErr.Got, jose.HS256)
+	if algErr.Got != jose.HS512 {
+		t.Errorf("rejected algorithm = %q, want %q", algErr.Got, jose.HS512)
 	}
 }
 
@@ -218,9 +234,8 @@ func newTestSource(t *testing.T) *Source {
 		t.Fatal(err)
 	}
 	return &Source{
-		Key:                 key,
-		Issuer:              "test",
-		Now:                 time.Now,
-		SignatureAlgorithms: []string{string(jose.HS256)},
+		Key:    key,
+		Issuer: "test",
+		Now:    time.Now,
 	}
 }
