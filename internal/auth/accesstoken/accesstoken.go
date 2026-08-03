@@ -17,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/internal/auth/permission"
-	joseUtils "github.com/smart-core-os/sc-bos/internal/util/jose"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accountpb"
 )
@@ -61,11 +60,13 @@ func (pa permissionAssignment) ToTokenPermissionAssignment() token.PermissionAss
 	}
 }
 
+// Source issues and validates access tokens, both signed with Key.
 type Source struct {
-	Key                 jose.SigningKey
-	Issuer              string
-	Now                 func() time.Time
-	SignatureAlgorithms []string
+	// Key.Algorithm is the only algorithm Source will issue with or accept, so a Source can
+	// neither be configured to permit an algorithm it could never issue nor to reject its own tokens.
+	Key    jose.SigningKey
+	Issuer string
+	Now    func() time.Time
 }
 
 func (ts *Source) GenerateAccessToken(data SecretData, validity time.Duration) (token string, err error) {
@@ -108,7 +109,7 @@ func (ts *Source) GenerateAccessToken(data SecretData, validity time.Duration) (
 }
 
 func (ts *Source) ValidateAccessToken(_ context.Context, tokenStr string) (*token.Claims, error) {
-	tok, err := jwt.ParseSigned(tokenStr, joseUtils.ConvertToNativeJose(ts.SignatureAlgorithms))
+	tok, err := jwt.ParseSigned(tokenStr, []jose.SignatureAlgorithm{ts.Key.Algorithm})
 	if err != nil {
 		return nil, err
 	}

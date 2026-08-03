@@ -1,6 +1,7 @@
 package accesstoken
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
 	"go.uber.org/zap"
 
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
@@ -170,6 +172,82 @@ func TestTokenServer(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// A Server must accept the tokens it issues: the permitted algorithm is read off the signing key,
+// so issuing and validation cannot drift apart (SCB-1393).
+func TestTokenServer_validatesOwnTokens(t *testing.T) {
+	var services testMemoryVerifier
+	services.add(t, SecretData{TenantID: "service1", SystemRoles: []string{"admin"}}, "secret1")
+
+	server, err := NewServer("test",
+		WithLogger(zap.NewNop()),
+		WithClientCredentialFlow(&services, 10*time.Minute),
+	)
+	if err != nil {
+		t.Fatalf("NewServer %v", err)
+	}
+	httpServer := httptest.NewServer(server)
+	defer httpServer.Close()
+
+	resp, err := httpServer.Client().PostForm(httpServer.URL, url.Values{
+		"grant_type":    {"client_credentials"},
+		"client_id":     {"service1"},
+		"client_secret": {"secret1"},
+	})
+	if err != nil {
+		t.Fatalf("PostForm %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+	var issued tokenSuccessResponse
+	if err := json.NewDecoder(resp.Body).Decode(&issued); err != nil {
+		t.Fatalf("Decode success response %v", err)
+	}
+
+	claims, err := server.TokenValidator().ValidateAccessToken(t.Context(), issued.AccessToken)
+	if err != nil {
+		t.Fatalf("ValidateAccessToken rejected a token this server issued: %v", err)
+	}
+	if claims.Subject != "service1" {
+		t.Errorf("Subject = %q, want %q", claims.Subject, "service1")
+	}
+}
+
+// The signing key decides which algorithm tokens are issued and validated with, so NewServer only
+// accepts a key it can actually use: a non-empty []byte secret carrying HS256.
+func TestNewServer_rejectsUnusableSigningKey(t *testing.T) {
+	secret := make([]byte, 32)
+	if _, err := rand.Read(secret); err != nil {
+		t.Fatal(err)
+	}
+
+	for name, key := range map[string]jose.SigningKey{
+		"asymmetric algorithm": {Algorithm: jose.RS256, Key: secret},
+		"other hmac algorithm": {Algorithm: jose.HS512, Key: secret},
+		"missing algorithm":    {Key: secret},
+		"wrong key type":       {Algorithm: jose.HS256, Key: "not-bytes"},
+		"empty key":            {Algorithm: jose.HS256, Key: []byte{}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := NewServer("test", WithSigningKey(key)); err == nil {
+				t.Error("NewServer accepted a signing key it cannot issue tokens with")
+			}
+		})
+	}
+}
+
+// The generated fallback key must satisfy the same validation the caller's key is held to.
+func TestNewServer_generatesUsableKeyWhenUnset(t *testing.T) {
+	server, err := NewServer("test")
+	if err != nil {
+		t.Fatalf("NewServer %v", err)
+	}
+	if got := server.tokens.Key.Algorithm; got != jose.HS256 {
+		t.Errorf("generated key algorithm = %q, want %q", got, jose.HS256)
 	}
 }
 
