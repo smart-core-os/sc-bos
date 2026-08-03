@@ -61,15 +61,9 @@ func (pa permissionAssignment) ToTokenPermissionAssignment() token.PermissionAss
 }
 
 // Source issues and validates access tokens, both signed with Key.
-//
-// Key must hold a []byte secret and an HMAC algorithm it is long enough for: a []byte is the only
-// key type go-jose signs symmetrically with. generateKey and LoadOrGenerateSigningKey both produce
-// HS256, and NewServer requires HS256 specifically.
-//
-// Key.Algorithm is the single source of truth for both operations: GenerateAccessToken signs with
-// it and ValidateAccessToken permits it and nothing else. A Source therefore cannot be configured
-// to accept an algorithm it could never issue, nor to reject its own tokens.
 type Source struct {
+	// Key.Algorithm is the only algorithm Source will issue with or accept, so a Source can
+	// neither be configured to permit an algorithm it could never issue nor to reject its own tokens.
 	Key    jose.SigningKey
 	Issuer string
 	Now    func() time.Time

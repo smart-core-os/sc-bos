@@ -56,6 +56,8 @@ func NewServer(name string, opts ...ServerOption) (*Server, error) {
 		}
 		s.tokens.Key = key
 	} else {
+		// go-jose signs symmetrically only with a []byte secret, and BOS has no use for the larger
+		// HMAC sizes or the asymmetric families, so a Server is pinned to HS256.
 		keyBytes, ok := s.tokens.Key.Key.([]byte)
 		if !ok || len(keyBytes) == 0 {
 			return nil, fmt.Errorf("WithSigningKey: key must be a non-empty []byte, got %T", s.tokens.Key.Key)

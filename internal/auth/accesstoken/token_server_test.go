@@ -175,10 +175,8 @@ func TestTokenServer(t *testing.T) {
 	}
 }
 
-// A Server must accept the tokens it issues. jwt.ParseSigned rejects everything when handed an
-// empty algorithm list, so while the permitted algorithms were configured separately from the key
-// a caller could build a server that handed out a token over HTTP and then refused that very
-// token — see SCB-1393.
+// A Server must accept the tokens it issues: the permitted algorithm is read off the signing key,
+// so issuing and validation cannot drift apart (SCB-1393).
 func TestTokenServer_validatesOwnTokens(t *testing.T) {
 	var services testMemoryVerifier
 	services.add(t, SecretData{TenantID: "service1", SystemRoles: []string{"admin"}}, "secret1")

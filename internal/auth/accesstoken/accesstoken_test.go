@@ -26,24 +26,6 @@ func TestTokenSource_createAndVerify(t *testing.T) {
 	}
 }
 
-// A Source needs no algorithm configuration beyond its key: the permitted algorithm is read off
-// Key.Algorithm, so there is no list to leave empty and no way to reject its own tokens (SCB-1393).
-func TestTokenSource_createAndVerifyNeedsNoAlgorithmConfig(t *testing.T) {
-	key, err := generateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	ts := &Source{Key: key, Issuer: "test", Now: time.Now}
-
-	token, err := ts.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
-	if err != nil {
-		t.Fatalf("GenerateAccessToken %v", err)
-	}
-	if _, err := ts.ValidateAccessToken(t.Context(), token); err != nil {
-		t.Fatalf("ValidateAccessToken %v", err)
-	}
-}
-
 // A Source only ever permits the algorithm it signs with, so a token carrying any other algorithm
 // is refused even though the key itself would verify the signature.
 func TestTokenSource_rejectsForeignAlgorithm(t *testing.T) {
