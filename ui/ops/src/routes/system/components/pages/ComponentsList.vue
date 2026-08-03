@@ -4,6 +4,7 @@
       <h3 class="text-h3 pt-2 pb-6">Components</h3>
       <v-spacer/>
       <div class="d-flex align-start" style="gap: 8px">
+        <cohort-points-export-btn/>
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <v-btn
@@ -58,6 +59,7 @@
 
 <script setup>
 import CohortNodeCard from '@/routes/system/components/CohortNodeCard.vue';
+import CohortPointsExportBtn from '@/routes/system/components/CohortPointsExportBtn.vue';
 import EnrollHubNodeModal from '@/routes/system/components/EnrollHubNodeModal.vue';
 import KeycloakCard from '@/routes/system/components/KeycloakCard.vue';
 import DatabaseCard from '@/routes/system/components/DatabaseCard.vue';

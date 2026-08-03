@@ -172,3 +172,73 @@ export namespace MqttMessage {
   };
 }
 
+export class ListExportedPointsRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): ListExportedPointsRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListExportedPointsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListExportedPointsRequest): ListExportedPointsRequest.AsObject;
+  static serializeBinaryToWriter(message: ListExportedPointsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListExportedPointsRequest;
+  static deserializeBinaryFromReader(message: ListExportedPointsRequest, reader: jspb.BinaryReader): ListExportedPointsRequest;
+}
+
+export namespace ListExportedPointsRequest {
+  export type AsObject = {
+    name: string;
+  };
+}
+
+export class ListExportedPointsResponse extends jspb.Message {
+  getDevicesList(): Array<DevicePoints>;
+  setDevicesList(value: Array<DevicePoints>): ListExportedPointsResponse;
+  clearDevicesList(): ListExportedPointsResponse;
+  addDevices(value?: DevicePoints, index?: number): DevicePoints;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListExportedPointsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListExportedPointsResponse): ListExportedPointsResponse.AsObject;
+  static serializeBinaryToWriter(message: ListExportedPointsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListExportedPointsResponse;
+  static deserializeBinaryFromReader(message: ListExportedPointsResponse, reader: jspb.BinaryReader): ListExportedPointsResponse;
+}
+
+export namespace ListExportedPointsResponse {
+  export type AsObject = {
+    devicesList: Array<DevicePoints.AsObject>;
+  };
+}
+
+export class DevicePoints extends jspb.Message {
+  getSourceName(): string;
+  setSourceName(value: string): DevicePoints;
+
+  getTopic(): string;
+  setTopic(value: string): DevicePoints;
+
+  getAssetName(): string;
+  setAssetName(value: string): DevicePoints;
+
+  getPointsList(): Array<string>;
+  setPointsList(value: Array<string>): DevicePoints;
+  clearPointsList(): DevicePoints;
+  addPoints(value: string, index?: number): DevicePoints;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DevicePoints.AsObject;
+  static toObject(includeInstance: boolean, msg: DevicePoints): DevicePoints.AsObject;
+  static serializeBinaryToWriter(message: DevicePoints, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DevicePoints;
+  static deserializeBinaryFromReader(message: DevicePoints, reader: jspb.BinaryReader): DevicePoints;
+}
+
+export namespace DevicePoints {
+  export type AsObject = {
+    sourceName: string;
+    topic: string;
+    assetName: string;
+    pointsList: Array<string>;
+  };
+}
+

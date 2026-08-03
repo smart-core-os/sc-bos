@@ -31,7 +31,10 @@ func (factory) New(services auto.Services) service.Lifecycle {
 
 func NewUDMI(services auto.Services) service.Lifecycle {
 	logger := services.Logger.Named(AutoType)
-	e := &udmiAuto{services: services}
+	e := &udmiAuto{
+		services:  services,
+		collector: newExportCollector(services.Now),
+	}
 	e.Service = service.New(
 		service.MonoApply(e.applyConfig),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logContext service.RetryContext) {
@@ -45,6 +48,9 @@ func NewUDMI(services auto.Services) service.Lifecycle {
 type udmiAuto struct {
 	*service.Service[config.Root]
 	services auto.Services
+	// collector records every payload published below so it can be exported as a points
+	// list via UdmiExportApi.
+	collector *exportCollector
 }
 
 func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
@@ -74,15 +80,19 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 	e.services.Logger.Debug("connected")
 
+	e.collector.Reset()
+	removeExport := nodeExports.Add(e.services.Node, e.collector)
+
 	go func() {
 		<-ctx.Done()
 		client.Disconnect(5000)
+		removeExport()
 	}()
 
 	var tasks namedTasks
 	pullFrom := func(name string) {
 		logger := e.services.Logger.With(zap.String("name", name))
-		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub),
+		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector),
 			task.WithRetry(task.RetryUnlimited), task.WithBackoff(time.Millisecond*100, time.Second*10))
 		if errors.Is(err, ErrAlreadyRunning) {
 			// cool, I guess someone else beat us to it

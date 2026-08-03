@@ -260,6 +260,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -283,6 +286,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -307,6 +313,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -331,6 +340,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -3778,6 +3790,14 @@
     }
   ],
   "automation": [
+    {
+      "name": "van/uk/brum/ugs/automation/udmi-export",
+      "type": "udmi",
+      "broker": {
+        "host": "tcp://localhost:1883"
+      },
+      "discoverSources": true
+    },
     {
       "name": "van/uk/brum/ugs/automation/electric-history/EMT-LN1-01",
       "type": "history",
