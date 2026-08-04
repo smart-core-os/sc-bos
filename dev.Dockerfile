@@ -31,8 +31,8 @@ RUN chmod +x install-node.sh && \
 
 # Install protobuf tools
 COPY scripts/dev-container/install-protoc.sh install-protoc.sh
-RUN chmod +x install-protoc.sh && ./install-protoc.sh --protoc 34.0
-RUN ./install-protoc.sh --protoc-gen-js 4.0.1
+RUN chmod +x install-protoc.sh && ./install-protoc.sh --protoc 35.1
+RUN ./install-protoc.sh --protoc-gen-js 4.0.2
 RUN ./install-protoc.sh --protoc-gen-grpc-web 2.0.2
 RUN ./install-protoc.sh --protoc-gen-go 1.36.11
 RUN ./install-protoc.sh --protoc-gen-go-grpc 1.5.1
