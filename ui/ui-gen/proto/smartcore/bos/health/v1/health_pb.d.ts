@@ -50,8 +50,8 @@ export class HealthCheck extends jspb.Message {
   hasAbnormalTime(): boolean;
   clearAbnormalTime(): HealthCheck;
 
-  getDeviation(): HealthCheck.Deviation;
-  setDeviation(value: HealthCheck.Deviation): HealthCheck;
+  getDeviation(): number;
+  setDeviation(value: number): HealthCheck;
 
   getBounds(): HealthCheck.Bounds | undefined;
   setBounds(value?: HealthCheck.Bounds): HealthCheck;
@@ -86,7 +86,7 @@ export namespace HealthCheck {
     normality: HealthCheck.Normality;
     normalTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     abnormalTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
-    deviation: HealthCheck.Deviation;
+    deviation: number;
     bounds?: HealthCheck.Bounds.AsObject;
     faults?: HealthCheck.Faults.AsObject;
   };
@@ -554,13 +554,6 @@ export namespace HealthCheck {
     ABNORMAL = 2,
     LOW = 3,
     HIGH = 4,
-  }
-
-  export enum Deviation {
-    DEVIATION_UNSPECIFIED = 0,
-    MINOR = 1,
-    MODERATE = 2,
-    MAJOR = 3,
   }
 
   export enum CheckCase {

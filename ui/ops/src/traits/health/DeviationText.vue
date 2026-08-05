@@ -1,6 +1,6 @@
 <template>
   <v-chip
-      v-if="label"
+      v-if="deviation > 0"
       :color="color"
       size="x-small"
       variant="tonal"
@@ -10,7 +10,6 @@
 </template>
 
 <script setup>
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -21,30 +20,17 @@ const props = defineProps({
   }
 });
 
-const label = computed(() => {
-  switch (props.modelValue?.deviation ?? 0) {
-    case HealthCheck.Deviation.MINOR:
-      return 'Minor';
-    case HealthCheck.Deviation.MODERATE:
-      return 'Moderate';
-    case HealthCheck.Deviation.MAJOR:
-      return 'Major';
-    default:
-      return '';
-  }
-});
+/** @type {import('vue').ComputedRef<number>} deviation as a fraction of the range width */
+const deviation = computed(() => props.modelValue?.deviation ?? 0);
 
+const label = computed(() => `${Math.round(deviation.value * 100)}% out`);
+
+// Colour bands are a reading aid only. The wire format carries the measured
+// fraction, so where these sit is a presentation choice, not a contract.
 const color = computed(() => {
-  switch (props.modelValue?.deviation ?? 0) {
-    case HealthCheck.Deviation.MINOR:
-      return 'info';
-    case HealthCheck.Deviation.MODERATE:
-      return 'warning';
-    case HealthCheck.Deviation.MAJOR:
-      return 'error';
-    default:
-      return undefined;
-  }
+  if (deviation.value >= 0.25) return 'error';
+  if (deviation.value >= 0.1) return 'warning';
+  return 'info';
 });
 </script>
 

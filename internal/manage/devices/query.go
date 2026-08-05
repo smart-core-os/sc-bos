@@ -115,6 +115,15 @@ func conditionToCmpFunc(cond *devicespb.Device_Query_Condition) func(value) bool
 			return f(t)
 		}
 	}
+	floatCmp := func(f func(float64) bool) func(value) bool {
+		return func(v value) bool {
+			n, ok := v.toFloat()
+			if !ok {
+				return false
+			}
+			return f(n)
+		}
+	}
 	descendantCmp := func(f func(string) bool) func(v value) bool {
 		return strCmp(func(s string) bool {
 			if strings.HasSuffix(s, "/") {
@@ -167,6 +176,23 @@ func conditionToCmpFunc(cond *devicespb.Device_Query_Condition) func(value) bool
 		return strCmp(func(v string) bool {
 			_, ok := set[strings.ToLower(v)]
 			return ok
+		})
+
+	case *devicespb.Device_Query_Condition_FloatGt:
+		return floatCmp(func(n float64) bool {
+			return n > c.FloatGt
+		})
+	case *devicespb.Device_Query_Condition_FloatGte:
+		return floatCmp(func(n float64) bool {
+			return n >= c.FloatGte
+		})
+	case *devicespb.Device_Query_Condition_FloatLt:
+		return floatCmp(func(n float64) bool {
+			return n < c.FloatLt
+		})
+	case *devicespb.Device_Query_Condition_FloatLte:
+		return floatCmp(func(n float64) bool {
+			return n <= c.FloatLte
 		})
 
 	case *devicespb.Device_Query_Condition_TimestampEqual:
@@ -695,6 +721,28 @@ func (v value) toString() (string, bool) {
 		}
 		// unsupported kinds
 		return "", false
+	}
+}
+
+// toFloat converts the value into a float64 if it holds a number.
+// Enums are excluded: their numeric value is an encoding detail, and they are
+// compared by name via toString.
+func (v value) toFloat() (float64, bool) {
+	if v.fd == nil {
+		return 0, false
+	}
+	switch v.fd.Kind() {
+	case protoreflect.FloatKind, protoreflect.DoubleKind:
+		return v.v.Float(), true
+	case protoreflect.Int32Kind, protoreflect.Int64Kind,
+		protoreflect.Sint32Kind, protoreflect.Sint64Kind,
+		protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
+		return float64(v.v.Int()), true
+	case protoreflect.Uint32Kind, protoreflect.Uint64Kind,
+		protoreflect.Fixed32Kind, protoreflect.Fixed64Kind:
+		return float64(v.v.Uint()), true
+	default:
+		return 0, false
 	}
 }
 

@@ -92,6 +92,10 @@ type Device struct {
 	// Use the HealthApi to collect this information.
 	// These values can change frequently without affecting the checks
 	// normality or reliability and are omitted to reduce churn.
+	//
+	// Derived summaries of those values are kept where they are stable enough to
+	// be worth querying on. HealthCheck.deviation is quantised, so it only changes
+	// when an excursion meaningfully changes, not on every sample.
 	HealthChecks  []*healthpb.HealthCheck `protobuf:"bytes,3,rep,name=health_checks,json=healthChecks,proto3" json:"health_checks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -863,6 +867,10 @@ type Device_Query_Condition struct {
 	//	*Device_Query_Condition_StringInFold
 	//	*Device_Query_Condition_StringNotEqual
 	//	*Device_Query_Condition_StringNotEqualFold
+	//	*Device_Query_Condition_FloatGt
+	//	*Device_Query_Condition_FloatGte
+	//	*Device_Query_Condition_FloatLt
+	//	*Device_Query_Condition_FloatLte
 	//	*Device_Query_Condition_TimestampEqual
 	//	*Device_Query_Condition_TimestampGt
 	//	*Device_Query_Condition_TimestampGte
@@ -996,6 +1004,42 @@ func (x *Device_Query_Condition) GetStringNotEqualFold() string {
 		}
 	}
 	return ""
+}
+
+func (x *Device_Query_Condition) GetFloatGt() float64 {
+	if x != nil {
+		if x, ok := x.Value.(*Device_Query_Condition_FloatGt); ok {
+			return x.FloatGt
+		}
+	}
+	return 0
+}
+
+func (x *Device_Query_Condition) GetFloatGte() float64 {
+	if x != nil {
+		if x, ok := x.Value.(*Device_Query_Condition_FloatGte); ok {
+			return x.FloatGte
+		}
+	}
+	return 0
+}
+
+func (x *Device_Query_Condition) GetFloatLt() float64 {
+	if x != nil {
+		if x, ok := x.Value.(*Device_Query_Condition_FloatLt); ok {
+			return x.FloatLt
+		}
+	}
+	return 0
+}
+
+func (x *Device_Query_Condition) GetFloatLte() float64 {
+	if x != nil {
+		if x, ok := x.Value.(*Device_Query_Condition_FloatLte); ok {
+			return x.FloatLte
+		}
+	}
+	return 0
 }
 
 func (x *Device_Query_Condition) GetTimestampEqual() *timestamppb.Timestamp {
@@ -1169,6 +1213,29 @@ type Device_Query_Condition_StringNotEqualFold struct {
 	StringNotEqualFold string `protobuf:"bytes,9,opt,name=string_not_equal_fold,json=stringNotEqualFold,proto3,oneof"`
 }
 
+type Device_Query_Condition_FloatGt struct {
+	// The condition matches if the value is greater than this number.
+	// Only numeric values are comparable; anything else never matches.
+	// There is no float_equal because comparing floats for equality rarely does
+	// what you want; use string_equal, which stringifies numbers, if you need it.
+	FloatGt float64 `protobuf:"fixed64,10,opt,name=float_gt,json=floatGt,proto3,oneof"`
+}
+
+type Device_Query_Condition_FloatGte struct {
+	// The condition matches if the value is greater than or equal to this number.
+	FloatGte float64 `protobuf:"fixed64,11,opt,name=float_gte,json=floatGte,proto3,oneof"`
+}
+
+type Device_Query_Condition_FloatLt struct {
+	// The condition matches if the value is less than this number.
+	FloatLt float64 `protobuf:"fixed64,12,opt,name=float_lt,json=floatLt,proto3,oneof"`
+}
+
+type Device_Query_Condition_FloatLte struct {
+	// The condition matches if the value is less than or equal to this number.
+	FloatLte float64 `protobuf:"fixed64,13,opt,name=float_lte,json=floatLte,proto3,oneof"`
+}
+
 type Device_Query_Condition_TimestampEqual struct {
 	// The condition matches if the value is equal to this timestamp.
 	TimestampEqual *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=timestamp_equal,json=timestampEqual,proto3,oneof"`
@@ -1259,6 +1326,14 @@ func (*Device_Query_Condition_StringInFold) isDevice_Query_Condition_Value() {}
 func (*Device_Query_Condition_StringNotEqual) isDevice_Query_Condition_Value() {}
 
 func (*Device_Query_Condition_StringNotEqualFold) isDevice_Query_Condition_Value() {}
+
+func (*Device_Query_Condition_FloatGt) isDevice_Query_Condition_Value() {}
+
+func (*Device_Query_Condition_FloatGte) isDevice_Query_Condition_Value() {}
+
+func (*Device_Query_Condition_FloatLt) isDevice_Query_Condition_Value() {}
+
+func (*Device_Query_Condition_FloatLte) isDevice_Query_Condition_Value() {}
 
 func (*Device_Query_Condition_TimestampEqual) isDevice_Query_Condition_Value() {}
 
@@ -1730,15 +1805,15 @@ var File_smartcore_bos_devices_v1_devices_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\n" +
-	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a(smartcore/bos/types/time/v1/period.proto\x1a#smartcore/bos/types/v1/change.proto\"\xae\x0e\n" +
+	"&smartcore/bos/devices/v1/devices.proto\x12\x18smartcore.bos.devices.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$smartcore/bos/health/v1/health.proto\x1a(smartcore/bos/metadata/v1/metadata.proto\x1a(smartcore/bos/types/time/v1/period.proto\x1a#smartcore/bos/types/v1/change.proto\"\xa6\x0f\n" +
 	"\x06Device\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
 	"\bmetadata\x18\x02 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12I\n" +
-	"\rhealth_checks\x18\x03 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x1a\x83\r\n" +
+	"\rhealth_checks\x18\x03 \x03(\v2$.smartcore.bos.health.v1.HealthCheckR\fhealthChecks\x1a\xfb\r\n" +
 	"\x05Query\x12P\n" +
 	"\n" +
 	"conditions\x18\x01 \x03(\v20.smartcore.bos.devices.v1.Device.Query.ConditionR\n" +
-	"conditions\x1a\xb0\v\n" +
+	"conditions\x1a\xa8\f\n" +
 	"\tCondition\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12#\n" +
 	"\fstring_equal\x18\x02 \x01(\tH\x00R\vstringEqual\x12,\n" +
@@ -1748,7 +1823,12 @@ const file_smartcore_bos_devices_v1_devices_proto_rawDesc = "" +
 	"\tstring_in\x18\x06 \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\bstringIn\x12Y\n" +
 	"\x0estring_in_fold\x18\a \x01(\v21.smartcore.bos.devices.v1.Device.Query.StringListH\x00R\fstringInFold\x12*\n" +
 	"\x10string_not_equal\x18\b \x01(\tH\x00R\x0estringNotEqual\x123\n" +
-	"\x15string_not_equal_fold\x18\t \x01(\tH\x00R\x12stringNotEqualFold\x12E\n" +
+	"\x15string_not_equal_fold\x18\t \x01(\tH\x00R\x12stringNotEqualFold\x12\x1b\n" +
+	"\bfloat_gt\x18\n" +
+	" \x01(\x01H\x00R\afloatGt\x12\x1d\n" +
+	"\tfloat_gte\x18\v \x01(\x01H\x00R\bfloatGte\x12\x1b\n" +
+	"\bfloat_lt\x18\f \x01(\x01H\x00R\afloatLt\x12\x1d\n" +
+	"\tfloat_lte\x18\r \x01(\x01H\x00R\bfloatLte\x12E\n" +
 	"\x0ftimestamp_equal\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0etimestampEqual\x12?\n" +
 	"\ftimestamp_gt\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\vtimestampGt\x12A\n" +
 	"\rtimestamp_gte\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\ftimestampGte\x12?\n" +
@@ -1973,6 +2053,10 @@ func file_smartcore_bos_devices_v1_devices_proto_init() {
 		(*Device_Query_Condition_StringInFold)(nil),
 		(*Device_Query_Condition_StringNotEqual)(nil),
 		(*Device_Query_Condition_StringNotEqualFold)(nil),
+		(*Device_Query_Condition_FloatGt)(nil),
+		(*Device_Query_Condition_FloatGte)(nil),
+		(*Device_Query_Condition_FloatLt)(nil),
+		(*Device_Query_Condition_FloatLte)(nil),
 		(*Device_Query_Condition_TimestampEqual)(nil),
 		(*Device_Query_Condition_TimestampGt)(nil),
 		(*Device_Query_Condition_TimestampGte)(nil),

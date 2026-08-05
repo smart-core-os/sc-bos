@@ -9,13 +9,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Deviation buckets are assigned by how far a measured value sits outside its
-// expected range, as a fraction of the range width (or of the crossed bound's
-// magnitude for open-ended ranges). A value at or above deviationMajorRatio is
-// MAJOR, at or above deviationModerateRatio is MODERATE, otherwise MINOR.
+// deviationSteps is the grid deviations are quantised onto, as a divisor: 100
+// gives two decimal places, so a deviation only changes once the excursion moves
+// by 1% of the range width. Deviation is derived from the measured value and
+// travels with the check into the DevicesApi, where an unquantised value would
+// change on every sample and defeat pull deduplication.
 const (
-	deviationModerateRatio = 0.10
-	deviationMajorRatio    = 0.25
+	deviationSteps   = 100
+	deviationEpsilon = 1e-9
 )
 
 // ValidateValueRange checks that a value range is well-formed.
@@ -195,10 +196,10 @@ func (c *BoundsCheck) prepareChecker(b *HealthCheck_Bounds) (boundsChecker, erro
 // boundsChecker compares a value against a normal state, returning the appropriate check state.
 type boundsChecker interface {
 	valueToState(v *HealthCheck_Value, current *HealthCheck) HealthCheck_Normality
-	// valueToDeviation buckets how far v sits outside the expected bounds, given
+	// valueToDeviation measures how far v sits outside the expected bounds, given
 	// the state just computed by valueToState. Checks without a meaningful
-	// magnitude (equality and value-set checks) return DEVIATION_UNSPECIFIED.
-	valueToDeviation(v *HealthCheck_Value, state HealthCheck_Normality) HealthCheck_Deviation
+	// magnitude (equality and value-set checks) return 0.
+	valueToDeviation(v *HealthCheck_Value, state HealthCheck_Normality) float64
 }
 
 func newNormalValueCheck(v, nv *HealthCheck_Value) (*valueCheck, error) {
@@ -230,10 +231,10 @@ func (c *valueCheck) valueToState(v *HealthCheck_Value, _ *HealthCheck) HealthCh
 	return c.neq
 }
 
-// valueToDeviation always returns DEVIATION_UNSPECIFIED: equality checks are
-// either equal or not, with no magnitude to bucket.
-func (c *valueCheck) valueToDeviation(_ *HealthCheck_Value, _ HealthCheck_Normality) HealthCheck_Deviation {
-	return HealthCheck_DEVIATION_UNSPECIFIED
+// valueToDeviation always returns 0: equality checks are either equal or not,
+// with no magnitude to measure.
+func (c *valueCheck) valueToDeviation(_ *HealthCheck_Value, _ HealthCheck_Normality) float64 {
+	return 0
 }
 
 func newNormalRangeCheck(v *HealthCheck_Value, r *HealthCheck_ValueRange) (*normalRangeCheck, error) {
@@ -259,13 +260,13 @@ func (c *normalRangeCheck) valueToState(v *HealthCheck_Value, current *HealthChe
 	return checkRangeState(c.bounds, v, current.GetNormality())
 }
 
-// valueToDeviation buckets how far v sits below low (state LOW) or above high
+// valueToDeviation measures how far v sits below low (state LOW) or above high
 // (state HIGH), as a fraction of the range width. For open-ended ranges (only
 // one bound set) it falls back to the magnitude of the crossed bound. Non-numeric
-// values, and states other than LOW/HIGH, yield DEVIATION_UNSPECIFIED. A value
-// that has returned within the bounds while the state is held out of NORMAL by
-// deadband hysteresis also yields DEVIATION_UNSPECIFIED: there is no excursion.
-func (c *normalRangeCheck) valueToDeviation(v *HealthCheck_Value, state HealthCheck_Normality) HealthCheck_Deviation {
+// values, and states other than LOW/HIGH, yield 0. A value that has returned
+// within the bounds while the state is held out of NORMAL by deadband hysteresis
+// also yields 0: there is no excursion.
+func (c *normalRangeCheck) valueToDeviation(v *HealthCheck_Value, state HealthCheck_Normality) float64 {
 	var bound *HealthCheck_Value
 	switch state {
 	case HealthCheck_LOW:
@@ -273,28 +274,28 @@ func (c *normalRangeCheck) valueToDeviation(v *HealthCheck_Value, state HealthCh
 	case HealthCheck_HIGH:
 		bound = c.bounds.GetHigh()
 	default:
-		return HealthCheck_DEVIATION_UNSPECIFIED
+		return 0
 	}
 	val, okV := valueAsFloat(v)
 	boundF, okB := valueAsFloat(bound)
 	if !okV || !okB {
-		return HealthCheck_DEVIATION_UNSPECIFIED
+		return 0
 	}
 	// Measure the excursion in the direction the state implies. The state can be
 	// held out of NORMAL by deadband hysteresis while v has already returned
 	// inside the range, so a non-positive overshoot means there is nothing to
-	// bucket.
+	// measure.
 	overshoot := val - boundF // HIGH: positive when v is above the high bound
 	if state == HealthCheck_LOW {
 		overshoot = -overshoot // LOW: positive when v is below the low bound
 	}
 	if overshoot <= 0 {
-		return HealthCheck_DEVIATION_UNSPECIFIED
+		return 0
 	}
 
 	// Prefer the range width as the denominator; fall back to the crossed bound's
 	// magnitude for open-ended ranges. If neither yields a positive scale there is
-	// no meaningful ratio to bucket.
+	// no meaningful ratio to report.
 	denom := 0.0
 	if low, high := c.bounds.GetLow(), c.bounds.GetHigh(); low != nil && high != nil {
 		lf, okL := valueAsFloat(low)
@@ -307,21 +308,19 @@ func (c *normalRangeCheck) valueToDeviation(v *HealthCheck_Value, state HealthCh
 		// Fall back to the crossed bound's magnitude, but only where that magnitude
 		// is a meaningful scale. Timestamps are measured from an arbitrary epoch, so
 		// |bound| (Unix nanoseconds) is not usable: an open-ended timestamp range has
-		// no width and no natural scale, so it stays unbucketed.
+		// no width and no natural scale, so it stays unmeasured.
 		denom = math.Abs(boundF)
 	}
 	if denom == 0 {
-		return HealthCheck_DEVIATION_UNSPECIFIED
+		return 0
 	}
 
-	switch ratio := overshoot / denom; {
-	case ratio >= deviationMajorRatio:
-		return HealthCheck_MAJOR
-	case ratio >= deviationModerateRatio:
-		return HealthCheck_MODERATE
-	default:
-		return HealthCheck_MINOR
-	}
+	// Round away from zero so that a real excursion never quantises down to 0,
+	// which would be indistinguishable from being in range. The epsilon absorbs
+	// binary representation error, so an excursion of exactly one step doesn't
+	// land a hair above it and round up to two.
+	steps := math.Ceil(overshoot/denom*deviationSteps - deviationEpsilon)
+	return max(steps, 1) / deviationSteps
 }
 
 func newNormalValuesCheck(v *HealthCheck_Value, vs []*HealthCheck_Value) (*valuesCheck, error) {
@@ -348,10 +347,10 @@ func (c *valuesCheck) valueToState(v *HealthCheck_Value, _ *HealthCheck) HealthC
 	return valuesToState(v, c.values, c.in, c.nin)
 }
 
-// valueToDeviation always returns DEVIATION_UNSPECIFIED: value-set checks are
-// membership tests, with no magnitude to bucket.
-func (c *valuesCheck) valueToDeviation(_ *HealthCheck_Value, _ HealthCheck_Normality) HealthCheck_Deviation {
-	return HealthCheck_DEVIATION_UNSPECIFIED
+// valueToDeviation always returns 0: value-set checks are membership tests, with
+// no magnitude to measure.
+func (c *valuesCheck) valueToDeviation(_ *HealthCheck_Value, _ HealthCheck_Normality) float64 {
+	return 0
 }
 
 // validateValuesCheck returns an error if any value in vs is inconsistent with the others, and with v (if set).

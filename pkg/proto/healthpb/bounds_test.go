@@ -145,50 +145,53 @@ func TestNormalRangeCheck_valueToDeviation(t *testing.T) {
 		r     *HealthCheck_ValueRange
 		v     *HealthCheck_Value
 		state HealthCheck_Normality
-		want  HealthCheck_Deviation
+		want  float64
 	}{
 		// closed range [30,60], width 30 -> ratio = overshoot/30
-		{"high tiny -> minor", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(60.2), HealthCheck_HIGH, HealthCheck_MINOR},
-		{"high 10% -> moderate", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(63), HealthCheck_HIGH, HealthCheck_MODERATE},
-		{"high 25% -> major", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(67.5), HealthCheck_HIGH, HealthCheck_MAJOR},
-		{"low 10% -> moderate", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(27), HealthCheck_LOW, HealthCheck_MODERATE},
-		{"low 25% -> major", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(22.5), HealthCheck_LOW, HealthCheck_MAJOR},
+		{"high 0.67% rounds up to one step", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(60.2), HealthCheck_HIGH, 0.01},
+		{"high 10%", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(63), HealthCheck_HIGH, 0.1},
+		{"high 25%", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(67.5), HealthCheck_HIGH, 0.25},
+		{"low 10%", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(27), HealthCheck_LOW, 0.1},
+		{"low 25%", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(22.5), HealthCheck_LOW, 0.25},
 
-		// bucket boundaries on [10,20], width 10
-		{"just under 10% -> minor", &HealthCheck_ValueRange{Low: IntValue(10), High: IntValue(20)}, FloatValue(20.9), HealthCheck_HIGH, HealthCheck_MINOR},
-		{"exactly 10% -> moderate", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(21), HealthCheck_HIGH, HealthCheck_MODERATE},
-		{"just under 25% -> moderate", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(22.4), HealthCheck_HIGH, HealthCheck_MODERATE},
-		{"exactly 25% -> major", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(22.5), HealthCheck_HIGH, HealthCheck_MAJOR},
+		// on [10,20], width 10, the ratio lands exactly on the quantisation grid
+		{"9%", &HealthCheck_ValueRange{Low: IntValue(10), High: IntValue(20)}, FloatValue(20.9), HealthCheck_HIGH, 0.09},
+		{"10%", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(21), HealthCheck_HIGH, 0.1},
+		{"24%", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(22.4), HealthCheck_HIGH, 0.24},
+		{"25%", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(22.5), HealthCheck_HIGH, 0.25},
+
+		// between grid steps -> up to the next step
+		{"23.5% rounds up to 24%", &HealthCheck_ValueRange{Low: FloatValue(10), High: FloatValue(20)}, FloatValue(22.35), HealthCheck_HIGH, 0.24},
 
 		// int values
-		{"int major", &HealthCheck_ValueRange{Low: IntValue(10), High: IntValue(20)}, IntValue(25), HealthCheck_HIGH, HealthCheck_MAJOR},
+		{"int 50%", &HealthCheck_ValueRange{Low: IntValue(10), High: IntValue(20)}, IntValue(25), HealthCheck_HIGH, 0.5},
 
 		// duration range [10s,20s], width 10s
-		{"duration major", &HealthCheck_ValueRange{Low: DurationValue(10 * time.Second), High: DurationValue(20 * time.Second)}, DurationValue(25 * time.Second), HealthCheck_HIGH, HealthCheck_MAJOR},
+		{"duration 50%", &HealthCheck_ValueRange{Low: DurationValue(10 * time.Second), High: DurationValue(20 * time.Second)}, DurationValue(25 * time.Second), HealthCheck_HIGH, 0.5},
 
-		// closed timestamp range [t0, t0+10s], width 10s -> 3s over = 30% -> major
-		{"timestamp closed major", &HealthCheck_ValueRange{Low: TimestampValue(tsBase), High: TimestampValue(tsBase.Add(10 * time.Second))}, TimestampValue(tsBase.Add(13 * time.Second)), HealthCheck_HIGH, HealthCheck_MAJOR},
-		// open-ended timestamp range has no meaningful scale (arbitrary epoch) -> unspecified
-		{"timestamp open-ended -> unspecified", &HealthCheck_ValueRange{High: TimestampValue(tsBase)}, TimestampValue(tsBase.Add(time.Hour)), HealthCheck_HIGH, HealthCheck_DEVIATION_UNSPECIFIED},
+		// closed timestamp range [t0, t0+10s], width 10s -> 3s over = 30%
+		{"timestamp closed 30%", &HealthCheck_ValueRange{Low: TimestampValue(tsBase), High: TimestampValue(tsBase.Add(10 * time.Second))}, TimestampValue(tsBase.Add(13 * time.Second)), HealthCheck_HIGH, 0.3},
+		// open-ended timestamp range has no meaningful scale (arbitrary epoch)
+		{"timestamp open-ended", &HealthCheck_ValueRange{High: TimestampValue(tsBase)}, TimestampValue(tsBase.Add(time.Hour)), HealthCheck_HIGH, 0},
 
 		// open-ended ranges fall back to |crossed bound|
-		{"high-only minor", &HealthCheck_ValueRange{High: FloatValue(20)}, FloatValue(21), HealthCheck_HIGH, HealthCheck_MINOR},
-		{"high-only major", &HealthCheck_ValueRange{High: FloatValue(20)}, FloatValue(25), HealthCheck_HIGH, HealthCheck_MAJOR},
-		{"low-only moderate", &HealthCheck_ValueRange{Low: FloatValue(100)}, FloatValue(80), HealthCheck_LOW, HealthCheck_MODERATE},
+		{"high-only 5%", &HealthCheck_ValueRange{High: FloatValue(20)}, FloatValue(21), HealthCheck_HIGH, 0.05},
+		{"high-only 25%", &HealthCheck_ValueRange{High: FloatValue(20)}, FloatValue(25), HealthCheck_HIGH, 0.25},
+		{"low-only 20%", &HealthCheck_ValueRange{Low: FloatValue(100)}, FloatValue(80), HealthCheck_LOW, 0.2},
 
 		// zero-width closed range falls back to |bound|
-		{"zero width", &HealthCheck_ValueRange{Low: FloatValue(5), High: FloatValue(5)}, FloatValue(6), HealthCheck_HIGH, HealthCheck_MODERATE},
+		{"zero width", &HealthCheck_ValueRange{Low: FloatValue(5), High: FloatValue(5)}, FloatValue(6), HealthCheck_HIGH, 0.2},
 
 		// state held out of NORMAL by deadband hysteresis while the value is back
-		// inside the range -> no excursion -> unspecified
-		{"high held by deadband, value in range", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(58), HealthCheck_HIGH, HealthCheck_DEVIATION_UNSPECIFIED},
-		{"high state, value at bound", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(60), HealthCheck_HIGH, HealthCheck_DEVIATION_UNSPECIFIED},
-		{"low held by deadband, value in range", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(35), HealthCheck_LOW, HealthCheck_DEVIATION_UNSPECIFIED},
+		// inside the range -> no excursion
+		{"high held by deadband, value in range", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(58), HealthCheck_HIGH, 0},
+		{"high state, value at bound", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(60), HealthCheck_HIGH, 0},
+		{"low held by deadband, value in range", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(35), HealthCheck_LOW, 0},
 
-		// no meaningful scale / magnitude -> unspecified
-		{"zero bound open-ended", &HealthCheck_ValueRange{High: FloatValue(0)}, FloatValue(5), HealthCheck_HIGH, HealthCheck_DEVIATION_UNSPECIFIED},
-		{"string bounds", &HealthCheck_ValueRange{Low: StringValue("a"), High: StringValue("z")}, StringValue("~"), HealthCheck_HIGH, HealthCheck_DEVIATION_UNSPECIFIED},
-		{"normal -> unspecified", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(45), HealthCheck_NORMAL, HealthCheck_DEVIATION_UNSPECIFIED},
+		// no meaningful scale / magnitude
+		{"zero bound open-ended", &HealthCheck_ValueRange{High: FloatValue(0)}, FloatValue(5), HealthCheck_HIGH, 0},
+		{"string bounds", &HealthCheck_ValueRange{Low: StringValue("a"), High: StringValue("z")}, StringValue("~"), HealthCheck_HIGH, 0},
+		{"normal", &HealthCheck_ValueRange{Low: FloatValue(30), High: FloatValue(60)}, FloatValue(45), HealthCheck_NORMAL, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -201,14 +204,14 @@ func TestNormalRangeCheck_valueToDeviation(t *testing.T) {
 }
 
 func TestValueCheck_valueToDeviation(t *testing.T) {
-	// equality and value-set checks have no magnitude -> always unspecified
+	// equality and value-set checks have no magnitude -> always zero
 	vc := &valueCheck{value: IntValue(1), eq: HealthCheck_NORMAL, neq: HealthCheck_ABNORMAL}
-	if got := vc.valueToDeviation(IntValue(99), HealthCheck_ABNORMAL); got != HealthCheck_DEVIATION_UNSPECIFIED {
-		t.Errorf("valueCheck.valueToDeviation() = %v, want DEVIATION_UNSPECIFIED", got)
+	if got := vc.valueToDeviation(IntValue(99), HealthCheck_ABNORMAL); got != 0 {
+		t.Errorf("valueCheck.valueToDeviation() = %v, want 0", got)
 	}
 	vsc := &valuesCheck{values: []*HealthCheck_Value{IntValue(1)}, in: HealthCheck_NORMAL, nin: HealthCheck_ABNORMAL}
-	if got := vsc.valueToDeviation(IntValue(99), HealthCheck_ABNORMAL); got != HealthCheck_DEVIATION_UNSPECIFIED {
-		t.Errorf("valuesCheck.valueToDeviation() = %v, want DEVIATION_UNSPECIFIED", got)
+	if got := vsc.valueToDeviation(IntValue(99), HealthCheck_ABNORMAL); got != 0 {
+		t.Errorf("valuesCheck.valueToDeviation() = %v, want 0", got)
 	}
 }
 

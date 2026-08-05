@@ -521,6 +521,86 @@ func Test_conditionToCmpFunc(t *testing.T) {
 		}
 	})
 
+	t.Run("numbers", func(t *testing.T) {
+		tests := []struct {
+			cond               *devicespb.Device_Query_Condition
+			positive, negative []float64
+		}{
+			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatGt{FloatGt: 0.1}},
+				positive: []float64{0.11, 0.25, 1, 100},
+				negative: []float64{0.1, 0.09, 0, -1},
+			},
+			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatGte{FloatGte: 0.1}},
+				positive: []float64{0.1, 0.11, 0.25, 1, 100},
+				negative: []float64{0.09, 0, -1},
+			},
+			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatLt{FloatLt: 0.1}},
+				positive: []float64{0.09, 0, -1},
+				negative: []float64{0.1, 0.11, 1},
+			},
+			{
+				cond:     &devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatLte{FloatLte: 0.1}},
+				positive: []float64{0.1, 0.09, 0, -1},
+				negative: []float64{0.11, 1},
+			},
+		}
+
+		doubleLeaf := func(val float64) value {
+			md := (&querypb.Result{}).ProtoReflect().Descriptor()
+			return value{
+				fd: md.Fields().ByName("double_val"),
+				v:  protoreflect.ValueOfFloat64(val),
+			}
+		}
+
+		// the integer kinds compare on their numeric value, not their string form
+		t.Run("integer kinds", func(t *testing.T) {
+			md := (&querypb.Result{}).ProtoReflect().Descriptor()
+			cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatGt{FloatGt: 9}})
+			signed := value{md.Fields().ByName("int32_val"), protoreflect.ValueOfInt32(10)}
+			if !cmpFunc(signed) {
+				t.Errorf("expected int32 10 to match float_gt 9")
+			}
+			unsigned := value{md.Fields().ByName("uint64_val"), protoreflect.ValueOfUint64(10)}
+			if !cmpFunc(unsigned) {
+				t.Errorf("expected uint64 10 to match float_gt 9")
+			}
+		})
+
+		// enums and strings are compared by name elsewhere; they are not numbers here
+		t.Run("not a number", func(t *testing.T) {
+			md := (&querypb.Result{}).ProtoReflect().Descriptor()
+			cmpFunc := conditionToCmpFunc(&devicespb.Device_Query_Condition{Value: &devicespb.Device_Query_Condition_FloatGte{FloatGte: 0}})
+			str := value{md.Fields().ByName("string_val"), protoreflect.ValueOfString("10")}
+			if cmpFunc(str) {
+				t.Errorf("expected condition to not match string value, got true")
+			}
+			enum := value{md.Fields().ByName("enum_val"), protoreflect.ValueOfEnum(querypb.ResultEnum_RESULT_ENUM_B.Number())}
+			if cmpFunc(enum) {
+				t.Errorf("expected condition to not match enum value, got true")
+			}
+		})
+
+		for _, tt := range tests {
+			t.Run(condTestName(tt.cond), func(t *testing.T) {
+				cmpFunc := conditionToCmpFunc(tt.cond)
+				for _, n := range tt.positive {
+					if !cmpFunc(doubleLeaf(n)) {
+						t.Errorf("expected %v to match condition %s", n, tt.cond)
+					}
+				}
+				for _, n := range tt.negative {
+					if cmpFunc(doubleLeaf(n)) {
+						t.Errorf("expected %v to not match condition %s", n, tt.cond)
+					}
+				}
+			})
+		}
+	})
+
 	t.Run("names", func(t *testing.T) {
 		tests := []struct {
 			cond     *devicespb.Device_Query_Condition
