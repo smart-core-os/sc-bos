@@ -128,7 +128,7 @@ import {useDateScale} from '@/components/charts/date.js';
 import {useRollingValue} from '@/composables/rollingValue.js';
 import {usePeriod} from '@/composables/time.js';
 import {useMaxPeopleCount} from '@/dynamic/widgets/occupancy/occupancy.js';
-import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
+import {useDescribeMeterReading, useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
 import {format} from '@/util/number.js';
 import {formatTrend, getTrendColor, getTrendIcon} from '@/util/trend.js';
 import {isNull} from '@/util/types.js';
@@ -151,7 +151,9 @@ const props = defineProps({
   },
   meterUnit: {
     type: String,
-    default: 'kWh' // TODO(get meter unit from DescribeMeterReading)
+    // Optional override. When unset, the consumption meter's own reported unit is
+    // used (see _meterUnit), falling back to kWh.
+    default: ''
   },
   occupancy: {
     type: [
@@ -187,7 +189,11 @@ const props = defineProps({
   }
 });
 
-const _unit = computed(() => `${props.meterUnit} per person per day`);
+// Prefer an explicitly configured meterUnit; otherwise use the unit the meter
+// reports via MeterInfo.DescribeMeterReading; fall back to kWh when neither is set.
+const {response: meterInfo} = useDescribeMeterReading(() => props.name || null);
+const _meterUnit = computed(() => props.meterUnit || meterInfo.value?.usageUnit || 'kWh');
+const _unit = computed(() => `${_meterUnit.value} per person per day`);
 
 // Gauge max: the last finite threshold, or 2 as a sensible default
 const densityGaugeMax = computed(() => {
