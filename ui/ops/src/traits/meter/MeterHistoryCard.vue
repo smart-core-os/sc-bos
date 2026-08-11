@@ -48,6 +48,9 @@ const p = defineProps({
 const optionalFields = [
   {name: 'meter.usage', title: 'Usage'},
   {name: 'meter.unit', title: 'Unit'},
+  // only populated for meters that produce, so these columns come through empty for consumption-only meters
+  {name: 'meter.produced', title: 'Produced'},
+  {name: 'meter.producedunit', title: 'Produced Unit'},
 ];
 
 const dateRange = ref([]);
