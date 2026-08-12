@@ -23,8 +23,9 @@ import (
 
 type meterConfig struct {
 	config.Trait
-	Usage *config.ValueSource `json:"usage,omitempty"`
-	Unit  string              `json:"unit,omitempty"`
+	Production *config.ValueSource `json:"production,omitempty"`
+	Usage      *config.ValueSource `json:"usage,omitempty"`
+	Unit       string              `json:"unit,omitempty"`
 }
 
 func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
@@ -65,14 +66,26 @@ func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *health
 	return t, nil
 }
 
+// meterReadingSupport describes what this meter reports, based on which value sources are configured.
+// Production and usage share the configured unit, a meter measures import and export in the same commodity.
+// The produced unit is left empty unless production is read: consumers, dbo.MeterFields among them, use its
+// presence to decide whether the meter reports export at all, and a spurious unit yields a constant-zero series.
+func meterReadingSupport(cfg meterConfig) *meterpb.MeterReadingSupport {
+	support := &meterpb.MeterReadingSupport{
+		ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
+		UsageUnit:       cfg.Unit,
+	}
+	if cfg.Production != nil {
+		support.ProducedUnit = cfg.Unit
+	}
+	return support
+}
+
 func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
 	return a.Announce(t.config.Name,
 		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(t)),
 		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{
-			MeterReading: &meterpb.MeterReadingSupport{
-				ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
-				UsageUnit:       t.config.Unit,
-			},
+			MeterReading: meterReadingSupport(t.config),
 		})),
 		node.HasTrait(meterpb.TraitName),
 	)
@@ -96,7 +109,7 @@ func (t *meterTrait) PullMeterReadings(request *meterpb.PullMeterReadingsRequest
 	timeoutCtx, cleanup := context.WithTimeout(server.Context(), t.config.PollTimeoutDuration())
 	defer cleanup()
 	for change := range t.model.PullMeterReadings(timeoutCtx) {
-		if change.Value.Usage != 0 {
+		if change.Value.Usage != 0 || change.Value.Produced != 0 {
 			break
 		}
 	}
@@ -112,18 +125,43 @@ func (t *meterTrait) startPoll(init context.Context) (stop task.StopFn, err erro
 }
 
 func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error) {
-	responses := comm.ReadProperties(ctx, t.client, t.known, *t.config.Usage)
+	data := &meterpb.MeterReading{}
+	var readValues []config.ValueSource
+	var resProcessors []func(response any) error
+
+	if t.config.Usage != nil {
+		readValues = append(readValues, *t.config.Usage)
+		resProcessors = append(resProcessors, func(response any) error {
+			usage, err := comm.Float32Value(response)
+			if err != nil {
+				return comm.ErrReadProperty{Prop: "usage", Cause: err}
+			}
+			data.Usage = usage
+			return nil
+		})
+	}
+	if t.config.Production != nil {
+		readValues = append(readValues, *t.config.Production)
+		resProcessors = append(resProcessors, func(response any) error {
+			produced, err := comm.Float32Value(response)
+			if err != nil {
+				return comm.ErrReadProperty{Prop: "production", Cause: err}
+			}
+			data.Produced = produced
+			return nil
+		})
+	}
+
+	responses := comm.ReadProperties(ctx, t.client, t.known, readValues...)
 	var errs []error
-	usage, err := comm.Float32Value(responses[0])
-	if err != nil {
-		errs = append(errs, comm.ErrReadProperty{Prop: "usage", Cause: err})
+	for i, response := range responses {
+		if err := resProcessors[i](response); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Meter, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
-	}
-	data := &meterpb.MeterReading{
-		Usage: usage,
 	}
 	return t.model.UpdateMeterReading(data)
 }
