@@ -1,0 +1,120 @@
+{
+  "airquality": {
+    "config": {
+      "_templateNote": "Example config. Every value below is a placeholder: replace the site name, coordinates, meter names, areas, postcode and all energy figures with the ones for the building being deployed. The numeric figures here are illustrative round numbers, not any building's assessment output.",
+      "title": "Example Tenant",
+      "towers": [
+        {
+          "name": "Tower 1",
+          "floors": [
+            {"label": "Floor 1", "sensorName": "devices/floor-1-air-quality"},
+            {"label": "Floor 2", "sensorName": "devices/floor-2-air-quality"}
+          ]
+        }
+      ],
+      "openWeatherMapApiKey": "YOUR_API_KEY_HERE",
+      "username": "admin",
+      "password": "YOUR_PASSWORD_HERE",
+      "_locationNote": "Where outdoor air quality and weather are fetched for. Required — there is no default, because a guessed location would quietly report another city's air alongside the building's own sensors.",
+      "latitude": 51.50722,
+      "longitude": -0.12750,
+      "_nabersTenancySource": "Tenancy rating inputs come from the fitout's tenant energy calculation: NIA in m², operating hours per week, and full-occupancy workstation count. Star thresholds are NOT configured — they are computed from the tenancy benchmark in src/util/nabersRating.js, which differs from the base building one (benchmark 72, hours constant 0.51, an occupancy-density adjustment, and no climate correction).",
+      "nabersEnabled": true,
+      "nabersNIA": 2000,
+      "nabersRatedHours": 50,
+      "nabersOccupiedWorkstations": 120,
+      "nabersLightingMeterNames": ["example-site/floors/02/tenancy/lighting"],
+      "nabersEquipmentMeterNames": ["example-site/floors/02/tenancy/equipment"],
+      "nabersOperatingHoursEnd": 17,
+      "nabersCarbonFactor": 0.177,
+      "_nabersEstimationNote": "Gap filling for missing meter readings, permitted by NABERS provided the estimation is disclosed — which the dashboard, the monthly report and the CSV export all do. IMPORTANT: the history automation records a meter reading only when it changes, so a silent meter is usually an IDLE meter, not an offline one, and its consumption is genuinely zero. A gap bounded by a real reading either side is interpolated linearly, which apportions energy between months without changing their total. A trailing gap is only projected forward — at the meter's own mean rate, inflated by extrapolationUpliftPct so a substituted value cannot understate consumption — when the meter fails a live read and is therefore known to be offline; a reachable meter's silence is reported as zero consumption. A gap with no reading before it is refused outright rather than guessed. gapThresholdHours is the widest bracket still treated as ordinary reporting jitter. materialSharePct is the share of an interval's energy below which estimation is not badged, so bridging an idle meter's one-tick silence does not label the month estimated. idleToleranceKwh is only a fallback now: the movement below which there is nothing to estimate is measured per meter from runs of consecutive records, because meters tick at different quanta — some every 1 kWh, some every 16 — and one configured number cannot serve both. tickSampleCount is how many consecutive readings each probe returns for that measurement (no extra queries, just a wider page), and tickCapSharePct caps a measured resolution at that share of the meter's own period movement so a bad measurement cannot dismiss a real outage. The reasoning behind the threshold either way: the accumulator is monotonic, so if it reads the same at both ends its value everywhere between them is that same value, known exactly however many weeks separate the two records. Elapsed time carries no information once the readings agree, which is why meters on lightly used circuits — and devices that restart and write a fresh record of an unchanged value — must not be reported as faulty. Set enabled to false to restore the pre-estimation behaviour, where any gap withholds the figure entirely. Applies to the tenancy boundary; the base building boundary has its own block under nabersBaseBuilding.",
+      "nabersEstimation": {
+        "enabled": true,
+        "gapThresholdHours": 3,
+        "searchWindowDays": 45,
+        "extrapolationUpliftPct": 10,
+        "materialSharePct": 0.5,
+        "idleToleranceKwh": 1,
+        "tickSampleCount": 5,
+        "tickCapSharePct": 2
+      },
+      "nabersBenchmarks": {
+        "lighting": 10.0,
+        "equipment": 45.0,
+        "total": 55.0,
+        "baseline": 38.0
+      },
+      "nabersScenarios": [
+        {"id": "S03", "label": "Equipment standby",        "kwhPerM2": 42.0},
+        {"id": "S01", "label": "Extended hours",           "kwhPerM2": 44.0},
+        {"id": "S02", "label": "Full occupancy",           "kwhPerM2": 53.5},
+        {"id": "S04", "label": "Full occupancy + standby", "kwhPerM2": 61.0}
+      ],
+      "nabersBaseBuilding": {
+        "_source": "Rating inputs, DfP targets and off-axis scenarios are transcribed from the building's Design for Performance assessment report. Star thresholds are NOT configured: they are computed from postcode, ratedHours and the NABERS UK constants in src/util/nabersRating.js. Set dfpTargetLabel if the figures come from a stage other than Stage 4, so the chart and stat card name the stage the numbers actually came from.",
+        "enabled": true,
+        "nia": 12000,
+        "postcode": "SW1A 1AA",
+        "ratedHours": 60,
+        "serverRoomAdj": 0,
+        "carbonFactor": 0.177,
+        "_opsLinkNote": "Optional. Puts a link in the base building breakdown widget's header, for readers who want the detailed energy view rather than more figures on an already-full screen. Point it at the relevant ops UI page. Must be an http(s) URL, or a bare path if the ops UI is served from this same origin; anything else is ignored and no link is drawn. Omit both keys to leave the widget as it was. Opens in a new tab, so the dashboard is left as it was rather than navigated away from.",
+        "opsUrl": "https://scos.example.uk/ops/overview/nabers",
+        "opsLinkLabel": "Detailed energy view",
+        "_monthlyReportLinkNote": "Optional, and independent of opsUrl above. Puts the same kind of link in the monthly NABERS data widget's header, beside its Export CSV button. Separate from opsUrl because the page worth reaching from a twelve-month table is rarely the page worth reaching from an end-use breakdown — a half-hourly consumption view, a utility portal, or the folder an assessor works from. Same rules as opsUrl: http(s) URL, or a bare path when served from this origin; anything else draws no link (src/util/externalLink.js). Opens in a new tab, since this is a fullscreen dashboard with no in-app way back. Omit both keys to leave the widget as it was; omit only the label to get 'View details'.",
+        "monthlyReportUrl": "https://scos.example.uk/ops/overview/nabers/monthly",
+        "monthlyReportLinkLabel": "Half-hourly view",
+        "_estimationNote": "See _nabersEstimationNote above; this block is the base building boundary's copy. Defaults live in src/util/meterEstimation.js, so omitting it entirely still enables gap filling.",
+        "_dropoutNote": "maxDropoutSamples governs the filter for a DROPOUT: a bad read, usually a bare 0, in the middle of an otherwise healthy series. It is neither negative nor above the meter's current value, so the plausibility filter cannot see it, and it does more damage than a spike because it does not look like corruption - it looks like a reset, so the month around it is withheld and a working board is reported as faulty. A reading is discarded when the very next one recovers to where the register was, because for the 0 to be real the meter would have had to consume its entire lifetime total again between two records. That recovery, not the size of the fall, is what makes it impossible. A genuine reset does NOT recover - the register climbs from near zero over weeks - so it survives the filter and is still reported; maxDropoutSamples bounds how many consecutive bad reads count as one dropout, which stops a reset's slow climb being read backwards as a long dropout. THIS IS A FILTER, NOT AN ESTIMATE: with the impossible reading gone the boundaries either side are real recorded values, the span is exact, and there is nothing to disclose. Discards are counted per meter in the Meter data quality panel. Set to 0 to disable it and read every dropout as a reset again.",
+        "_regressionNote": "regressionSharePct and regressionToleranceKwh govern what happens when a register goes BACKWARDS, which a cumulative accumulator is not supposed to do at all. A step down of no more than regressionSharePct of the reading it fell from, floored at regressionToleranceKwh, is treated as a correction - a re-registration after a device swap, a driver writing a stale value, a read landing mid-update - and the affected span reports zero consumption for that meter, disclosed as estimated and named per board. Anything larger is treated as a reset: everything the register had counted is gone, the span's consumption is genuinely unrecoverable from two cumulative points, so the figure is withheld and the board named. The two are separated by orders of magnitude rather than by a fine judgement - a reset is essentially 100% of the register, and observed corrections are a fraction of one percent - and elapsed time is deliberately not part of the test, since a register that fell by 150 kWh fell by 150 kWh whether it did so over an hour or a month. IMPORTANT: reporting zero UNDERSTATES by whatever the meter genuinely consumed, which is the direction the NABERS method forbids of a substituted value. It exists because the strict one-unknown-meter-nulls-the-pool rule meant a 150 kWh step on one heat pump withheld a whole month metered across 58 boards, on a dashboard whose other artefacts showed figures for every meter. It is the right trade for an INDICATIVE dashboard on a building still commissioning its metering, and the wrong one for a lodgeable rating: for an affected month, take the figure from verified BMS readings instead. Set both to 0, or estimation.enabled to false, to restore the refuse-everything behaviour.",
+        "estimation": {
+          "enabled": true,
+          "gapThresholdHours": 3,
+          "searchWindowDays": 45,
+          "extrapolationUpliftPct": 10,
+          "materialSharePct": 0.5,
+          "idleToleranceKwh": 1,
+          "tickSampleCount": 5,
+          "tickCapSharePct": 2,
+          "regressionSharePct": 1,
+          "regressionToleranceKwh": 1,
+          "maxDropoutSamples": 2
+        },
+        "meterNames": {
+          "hvac":               [],
+          "lifts":              [],
+          "commonAreaLighting": [],
+          "exteriorLighting":   [],
+          "carPark":            [],
+          "smallPower":         [],
+          "pvGeneration":       [],
+          "pvExport":           []
+        },
+        "_dfpTargetsNote": "Gross intensities (before the PV offset), aggregated from the assessment's base building end-use table and divided by the rated NIA. hvac bundles central AHU/MVHR, FCU/DX and extract fans, VRF/DX heating and cooling, electric heating, DHW and pumps, since reports typically carry no separate DHW bucket. commonAreaLighting carries a single combined lighting line where the report does not split common from exterior lighting; where the report has no car park line, leave that target absent rather than estimating it — a missing key draws no reference bar, an invented one draws a wrong bar. total is net of PV and includes any diesel; totalGross is before the PV offset. Only the end uses a building can actually meter separately belong here: the live category set is the union of this object's keys and meterNames', in this order.",
+        "dfpTargets": {
+          "hvac":               42.0,
+          "lifts":              5.5,
+          "commonAreaLighting": 7.0,
+          "smallPower":         2.0,
+          "total":              55.0,
+          "totalGross":         59.0
+        },
+        "_scenariosNote": "Energy intensities from the assessment's off-axis scenario tables, cross-checked against each scenario's published margin relative to the 5.0 and 4.5 star thresholds.",
+        "scenarios": [
+          {"id": "S01",  "label": "Extreme weather file",                  "kwhPerM2": 54.0},
+          {"id": "S02",  "label": "Failure of heat recovery",              "kwhPerM2": 58.5},
+          {"id": "S04",  "label": "Increased infiltration",                "kwhPerM2": 59.0},
+          {"id": "S05",  "label": "Increased occupancy density",           "kwhPerM2": 60.0},
+          {"id": "S03",  "label": "Failure of CO₂ sensors",                "kwhPerM2": 64.5},
+          {"id": "COMB", "label": "Combined off-axis (S02+S03+S04+S05)",   "kwhPerM2": 74.0}
+        ],
+        "_occupancyNote": "buildingType 'newBuild' applies the NABERS rating-period start gate (earliest of 75% of office NLA occupied, or two years after the occupancy certificate). 'existing' buildings face no such gate — they are rateable from one day's occupancy, and vacancy is handled by reducing the rated area. nlaLetPct is the occupied proportion of office net lettable area; a static stand-in until the occupancy series is modelled.",
+        "buildingType":             "newBuild",
+        "nlaLetPct":                null,
+        "occupancyCertificateDate": "",
+        "ratingPeriodStart":        "",
+        "certificateIssueDate":     ""
+      }
+    }
+  }
+}
