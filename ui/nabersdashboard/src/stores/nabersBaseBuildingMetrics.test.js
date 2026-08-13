@@ -1,7 +1,54 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {ref} from 'vue';
 import {setActivePinia, createPinia} from 'pinia';
 import {intensityForStars} from '@/util/nabersRating.js';
+import {tick} from '@/util/clock.js';
+
+/**
+ * The instant every test in this file runs at.
+ *
+ * The clock is pinned because the fixtures and the store disagree about what
+ * "when" means unless it is. Fixtures place their history relative to *now* —
+ * they have to, since the boundary reader only looks `searchWindowDays` either
+ * side of an instant, so a fixture on a fixed calendar date drifts out of reach
+ * as the suite ages. But the store samples *month boundaries*, and a rating
+ * period is anchored to a calendar date. So whether a fixture's gap is visible
+ * at all depends on whether a 1st of the month happens to fall inside it, and
+ * that is a property of the day the suite is run.
+ *
+ * Two tests here failed on exactly that. Both place a twenty-day hole relative to
+ * now and assert it is found; run on 12 August 2026 the "70 to 50 days ago" hole
+ * is 3 to 23 June, wholly inside one month, with no boundary in it to see it
+ * from. Run three days earlier the same test passed. Pinning removes the
+ * dependency rather than papering over it.
+ *
+ * The date itself is chosen against three constraints, all of which have a real
+ * failure behind them:
+ *
+ *  - the 40-to-20-days-back hole must contain a month start (here 1 August, with
+ *    eight days' slack either side), and so must the 70-to-50 one (1 July);
+ *  - the dense fixtures hold 260 days of history, which has to reach back past
+ *    the 1 January rating anchor or their opening boundary is unreadable and the
+ *    whole period comes out null. That caps this date at about 8 September;
+ *  - not itself a month start, which would make `periodInstants` emit both
+ *    midnight and noon on the same day and turn every off-by-one into a puzzle.
+ */
+const FIXED_NOW = new Date(2026, 8, 2, 12, 0, 0); // 2 Sep 2026, local noon
+
+beforeEach(() => {
+  // Only `Date`. Faking the timer functions too would be enough to hang anything
+  // that waits on one, and nothing here needs them frozen.
+  vi.useFakeTimers({toFake: ['Date']});
+  vi.setSystemTime(FIXED_NOW);
+  // The shared clock ref was initialised when its module was imported, which is
+  // before the line above ran. `refresh` ticks it anyway; this covers the
+  // computeds a test reads without refreshing first.
+  tick();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 // The store reaches for gRPC; the transport is stubbed and driven by `_meters`,
 // a per-test fixture. A meter absent from the fixture behaves like one with no
@@ -127,14 +174,6 @@ vi.mock('@/api/sc/traits/meter.js', () => ({
     if (m?.throws) throw m.throws;
     const usage = m?.at?.[localDay(startTime)];
     return usage == null ? null : {meterReading: {usage}};
-  })),
-  getMeterReadingBefore: vi.fn((name, at, windowDays) => tracked(() => {
-    const m = _meters.get(name);
-    if (m?.throws) throw m.throws;
-    const lo = at.getTime() - windowDays * DAY_MS;
-    const hits = meterSamples(m)
-      .filter(s => s.at.getTime() <= at.getTime() && s.at.getTime() >= lo);
-    return hits.length ? hits[hits.length - 1] : null;
   })),
   // A run of the last `limit` readings, ascending, as the real API returns. The
   // run behind the boundary is what measures the meter's resolution, so a mock
@@ -1331,6 +1370,104 @@ describe('the turn of the rating period', () => {
     expect(store.canProject).toBe(false);
     expect(store.canUseTrailing).toBe(false);
     expect(store.headlineBasis).toBeNull();
+  });
+});
+
+describe('the clock, on a dashboard nobody reloads', () => {
+  const A = 'bldg/meters/a';
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    _meters.clear();
+  });
+
+  /**
+   * Move the wall clock forward and bring the store's reactive clock with it.
+   *
+   * The interval in `main.js` does this in the app; a test has to do it by hand.
+   *
+   * @param {number} days
+   */
+  function advanceDays(days) {
+    vi.setSystemTime(new Date(Date.now() + days * DAY_MS));
+    tick();
+  }
+
+  /**
+   * @param {Object} [extra]
+   * @return {Object}
+   */
+  function store2(extra = {}) {
+    return storeWith({
+      enabled:           true,
+      nia:               1000,
+      postcode:          'WD25 9NH',
+      ratedHours:        60,
+      ratingPeriodStart: '2026-01-01',
+      meterNames:        {lighting: [A], pvGeneration: [], pvExport: []},
+      ...extra
+    });
+  }
+
+  it('annualises over the window it actually measured, however long it has been up', async () => {
+    // The defect this pins, and it was silent. `elapsedDays` was
+    // `differenceInDays(new Date(), ...)` inside a `computed`, and a computed is
+    // only re-evaluated when a *reactive* dependency changes. The system clock is
+    // not one, and config is written once, so the value froze at whatever it was
+    // when the page first rendered.
+    //
+    // `refresh` meanwhile kept reading energy up to a live `now` on its daily
+    // interval. So the numerator grew with real time and the divisor did not, and
+    // the annualised intensity — and the star rating drawn from it — inflated a
+    // little further every day the display stayed on.
+    givenMeters({[A]: {at: {'2026-01-01': 0}, current: 100_000}});
+    const store = store2();
+    await store.refresh();
+
+    const day1Elapsed = store.elapsedDays;
+    const day1Intensity = store.totalIntensity;
+    expect(day1Intensity).not.toBeNull();
+
+    // Sixty days pass with nobody touching the browser and no refresh yet. The
+    // figures on screen describe the window they were measured over, so nothing
+    // may move: reading the live clock here is what made the projection creep.
+    advanceDays(60);
+    expect(store.elapsedDays).toBe(day1Elapsed);
+    expect(store.totalIntensity).toBe(day1Intensity);
+
+    // The daily interval fires. Now both ends move together, and because the
+    // meter went on consuming at the same rate the annualised intensity should
+    // land back where it started rather than 60/day1 times higher.
+    _meters.set(A, {at: {'2026-01-01': 0}, current: 100_000 * (day1Elapsed + 60) / day1Elapsed});
+    await store.refresh();
+    expect(store.elapsedDays).toBe(day1Elapsed + 60);
+    expect(store.totalIntensity).toBeCloseTo(day1Intensity, 6);
+  });
+
+  it('crosses into a period long enough to project from', async () => {
+    // `canProject` froze too, so a dashboard opened six days into a rating period
+    // sat on "too few measured months to annualise from" for good, however long
+    // it was left running.
+    givenMeters({[A]: {at: {}, current: 500}});
+    const store = store2({ratingPeriodStart: localDay(new Date(Date.now() - 6 * DAY_MS))});
+    await store.refresh();
+    expect(store.canProject).toBe(false);
+
+    advanceDays(30);
+    await store.refresh();
+    expect(store.canProject).toBe(true);
+  });
+
+  it('rolls the rating period over at its anniversary', async () => {
+    // A frozen `ratingPeriodStart` goes on differencing against last year's
+    // start, so the period-to-date figure quietly becomes a period-to-date-plus-a-
+    // year one.
+    const store = store2({ratingPeriodStart: '2026-03-01'});
+    expect(store.ratingPeriodStart).toEqual(new Date(2026, 2, 1));
+
+    // Past the next anniversary.
+    advanceDays(200);
+    expect(store.ratingPeriodStart).toEqual(new Date(2027, 2, 1));
   });
 });
 

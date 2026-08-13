@@ -104,19 +104,6 @@ async function readingAtEdge(name, startTime, endTime, order) {
 }
 
 /**
- * The most recent reading at or before `at`, within `windowDays` of it.
- *
- * @param {string} name
- * @param {Date} at
- * @param {number} windowDays how far back to look before giving up
- * @return {Promise<MeterSample|null>}
- */
-export function getMeterReadingBefore(name, at, windowDays) {
-  const from = new Date(at.getTime() - windowDays * 24 * 60 * 60 * 1000);
-  return readingAtEdge(name, from, at, 'desc');
-}
-
-/**
  * The last `limit` readings at or before `at`, within `windowDays` of it.
  *
  * The nearest reading is the run's *last* element, since runs are ascending.

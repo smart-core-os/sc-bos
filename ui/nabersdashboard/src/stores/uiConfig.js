@@ -32,7 +32,12 @@ export const useUiConfigStore = defineStore('nabersdashboard:uiConfig', () => {
       const res = await fetch(url);
       const json = await res.json();
       const section = json.airquality ?? json;
-      migrateConfig(section.config);
+      if (!section?.config) {
+        console.warn(
+          `UI config at ${url} has no "config" object; every dashboard will read as unconfigured`,
+          section);
+      }
+      migrateConfig(section?.config);
       _config.value = section;
     } catch (e) {
       console.warn('Failed to load config from server, using default config', e);
@@ -82,9 +87,15 @@ export const useUiConfigStore = defineStore('nabersdashboard:uiConfig', () => {
 /**
  * Converts legacy config properties to their current equivalents.
  *
- * @param {Object} config The config to migrate - modified in place
+ * Tolerates a missing config object. It used to throw on one, and because the
+ * only caller is inside `loadConfig`'s try block the whole file was then
+ * discarded for the built-in default — so a config served with a typo'd or absent
+ * `config` key produced a dashboard with no meters and no message saying why.
+ *
+ * @param {Object} [config] The config to migrate - modified in place
  */
 function migrateConfig(config) {
+  if (!config || typeof config !== 'object') return;
   if (Object.hasOwn(config, 'proxy') && !Object.hasOwn(config, 'gateway')) {
     console.warn('ui config property "proxy" is deprecated, please use "gateway" instead');
     config.gateway = config.proxy;

@@ -28,11 +28,14 @@ jobs:
           node-version: 22.x
           registry-url: https://npm.pkg.github.com
 
-      - name: Check there are no private dependencies in yarn.lock
+      # Every lockfile under ui/, not just the workspace root's: nabersdashboard is
+      # a standalone project with its own, and checking only ui/yarn.lock left it
+      # free to introduce a private URL nothing would catch.
+      - name: Check there are no private dependencies in any yarn.lock
         run: |
           echo "Checking for private yarn.lock dependencies"
-          if grep -E "nexus\.vanti\.co\.uk/repository/" ui/yarn.lock; then
-            echo "Private URLs found in yarn.lock" >&2
+          if grep -rE "nexus\.vanti\.co\.uk/repository/" --include=yarn.lock ui/; then
+            echo "Private URLs found in a yarn.lock" >&2
             exit 1
           else
             echo "No private URLs found."
@@ -48,6 +51,46 @@ jobs:
           for dir in $(jq -r '.workspaces[]' package.json); do
             echo "Linting $dir..."
             yarn --cwd "$dir" lint:nofix
-            echo 
+            echo
           done
 
+  # A separate job because nabersdashboard is not a yarn workspace: it has its own
+  # lockfile, and it pins a newer sc-bos-ui-gen than the one ui/ui-gen vendors, so
+  # folding it into `ui/package.json`'s workspaces would not resolve locally
+  # anyway. Left out of the loop above it had no CI at all — not linted, not
+  # built, and its ~3.3k lines of tests never run. Two of those tests were failing
+  # on main-line dates and nobody knew.
+  nabersdashboard_job:
+    runs-on: ubuntu-latest
+    name: NABERS Dashboard
+    permissions:
+      contents: read
+      # The lockfile resolves @smart-core-os/sc-bos-ui-gen from GitHub Packages.
+      packages: read
+    defaults:
+      run:
+        working-directory: ui/nabersdashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://npm.pkg.github.com
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run lint
+        run: yarn lint:nofix
+
+      - name: Run tests
+        run: yarn test
+
+      # Unit tests exercise the stores and utils; only a build compiles every SFC,
+      # so it is the one thing that catches a template or an import the tests
+      # never reach.
+      - name: Build
+        run: yarn build

@@ -151,8 +151,8 @@
           meter quality table and the CSV export.
         -->
         <div v-if="estimatedPct !== null" class="caveat">
-          {{ formatPct(estimatedPct) }} of this figure's energy was projected forward past
-          the last reading of an unreachable meter.
+          {{ formatPct(estimatedPct) }} of this figure's energy was
+          {{ estimationMechanismLabel(estimatedKind) }}.
           <button
               v-if="estimatedMeterLabels.length"
               type="button"
@@ -183,6 +183,7 @@
 
 <script setup>
 import {computed, ref} from 'vue';
+import {estimationMechanismLabel} from '@/util/disclosure.js';
 
 const props = defineProps({
   /** @type {{stars: number, bandedStars: number, intensity: number, benchmarkingFactor: number}|null} */
@@ -232,6 +233,13 @@ const props = defineProps({
    * shows no disclosure at all rather than a redundant "0% estimated".
    */
   estimatedSharePct:   {type: Number,  default: null},
+  /**
+   * By what mechanism, so the caveat can say which way the figure errs. The two
+   * mechanisms pull in opposite directions, so this cannot be assumed.
+   *
+   * @type {import('@/util/meterEstimation.js').EstimationKind}
+   */
+  estimatedKind:       {type: String,  default: null},
   /** Per-meter attribution, e.g. "Lifts: lift-1". */
   estimatedMeterLabels: {type: Array,  default: () => []},
   /**

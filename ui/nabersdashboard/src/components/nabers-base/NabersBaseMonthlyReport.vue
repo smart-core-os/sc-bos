@@ -83,7 +83,8 @@
       <template v-if="totalEstimated > 0">
         <span class="estimated-note">
           {{ estimatedShareLabel }} of the reported energy ({{ Math.round(totalEstimated).toLocaleString() }} kWh)
-          was projected forward past an unreachable meter's last reading and is included in the totals above.
+          was estimated rather than measured and is included in the totals above.
+          {{ estimationMechanism(totalEstimatedKind) }}
         </span>
       </template>
     </div>
@@ -93,7 +94,8 @@
 <script setup>
 import {computed} from 'vue';
 import {NABERS_MODEL_VERSION} from '@/util/nabersRating.js';
-import {formatGap} from '@/util/meterEstimation.js';
+import {formatGap, mergeEstimationKinds} from '@/util/meterEstimation.js';
+import {estimationMechanism, estimationMechanismLabel, CARRY_FORWARD_NOTE} from '@/util/disclosure.js';
 import {downloadCsv} from '@/util/csv.js';
 import {safeHttpUrl} from '@/util/externalLink.js';
 
@@ -156,9 +158,20 @@ const totalGross = computed(() => monthsWithData.value.reduce((a, r) => a + r.gr
 const totalPv    = computed(() => monthsWithData.value.reduce((a, r) => a + (r.pvKwh ?? 0), 0));
 const totalNet   = computed(() => monthsWithData.value.reduce((a, r) => a + r.netKwh, 0));
 
-/** Energy in the totals above that came from a projected reading. */
+/** Energy in the totals above that was estimated rather than measured. */
 const totalEstimated = computed(() =>
   monthsWithData.value.reduce((a, r) => a + (r.estimatedKwh ?? 0), 0)
+);
+
+/**
+ * By what mechanism, across the months that contributed any.
+ *
+ * @type {import('vue').ComputedRef<import('@/util/meterEstimation.js').EstimationKind>}
+ */
+const totalEstimatedKind = computed(() =>
+  mergeEstimationKinds(monthsWithData.value
+    .filter(r => (r.estimatedKwh ?? 0) > 0)
+    .map(r => r.estimatedKind))
 );
 
 const estimatedSharePct = computed(() =>
@@ -226,8 +239,12 @@ function flagTitle(row) {
   if (row.quality !== 'estimated') return undefined;
   const names = (row.estimatedMeters ?? []).map(meterName);
   const gap = formatGap(row.estimatedHours ?? 0);
-  const who = names.length ? `Projected: ${names.join(', ')}` : 'Projected meter data';
-  return gap ? `${who} — longest gap ${gap}` : who;
+  // Named by mechanism rather than always "Projected": a month estimated only
+  // because a register stepped backwards was not projected at all, and reports
+  // zero for the affected board.
+  const how = estimationMechanismLabel(row.estimatedKind);
+  const who = names.length ? `${names.join(', ')} — ${how}` : `Estimated: ${how}`;
+  return gap ? `${who} (longest gap ${gap})` : who;
 }
 
 /**
@@ -260,26 +277,30 @@ function exportCsv() {
     ['Model version', NABERS_MODEL_VERSION],
     ['Rated area (m² NIA)', props.nia ?? ''],
     ['Indicative', 'Computed from this building\'s own meters. Not an accredited-Assessor-validated or lodged NABERS certificate.'],
+    // The disclosure is keyed on the mechanism that actually applied. It used to
+    // assert the forward projection unconditionally, so a month estimated only
+    // because a register stepped backwards told the assessor the figure had been
+    // conservatively inflated when it had in fact been floored at zero — the one
+    // direction the NABERS method forbids of a substituted value, described as
+    // its opposite, in the artefact a submission is cross-checked against.
     ['Estimated data', estimatedRows.length
       ? `${estimatedShareLabel.value} of the reported energy (${Math.round(totalEstimated.value)} kWh) ` +
-        'was projected forward past the last reading of a meter that failed a live read and is ' +
-        'therefore known to be offline. The projection runs at that meter\'s own mean rate, inflated ' +
-        'by a configured uplift so a substituted value cannot understate consumption, and is refused ' +
-        'outright once the silence exceeds the estimation window. Months affected are marked ' +
-        '"Estimated" below.'
+        'was estimated rather than measured. ' + estimationMechanism(totalEstimatedKind.value) +
+        ' Months affected are marked "Estimated" below, and the meters responsible are named ' +
+        'per month in the "Estimated meters" column.'
       : 'None. Every figure below is derived from actual meter readings.'],
-    ['Missing readings', 'Where a meter recorded nothing either side of a month boundary, its ' +
-      'accumulator value at that boundary is the last reading before it, carried forward. This is a ' +
-      'measurement rather than an estimate: the history automation records a reading only when it ' +
-      'changes, so a stretch with no records is a stretch in which every poll read that same value. ' +
-      'Consumption is therefore attributed to the month in which the meter was next seen to move, ' +
-      'and the total across any set of whole months is unaffected by where the boundary fell.'],
+    ['Missing readings', CARRY_FORWARD_NOTE],
     []
   ];
 
   const header = [
     'Month', 'Gross kWh', 'PV kWh', 'Net kWh', 'kWh/m²',
-    'Estimated kWh', 'Estimated %', 'Longest gap (h)', 'Estimated meters', 'Data quality',
+    'Estimated kWh', 'Estimated %', 'Longest gap (h)', 'Estimated meters',
+    // Per month, because the preamble can only describe the mechanism across the
+    // whole table and a mixed table needs the reader to be able to tell which
+    // months were inflated from which were floored at zero.
+    'Estimation basis',
+    'Data quality',
     // An assessor reading a blank row needs the same answer the tooltip gives, and
     // a spreadsheet detached from this dashboard is exactly where "why is December
     // empty" otherwise becomes unanswerable.
@@ -296,6 +317,7 @@ function exportCsv() {
     (r.estimatedKwh ?? 0) > 0 ? (r.estimatedPct ?? 0).toFixed(1) : '',
     (r.estimatedHours ?? 0) > 0 ? Math.round(r.estimatedHours) : '',
     (r.estimatedMeters ?? []).map(meterName).join('; '),
+    (r.estimatedKwh ?? 0) > 0 ? estimationMechanismLabel(r.estimatedKind) : '',
     flagLabel(r).replace(/^[^A-Za-z]+/, ''),
     (r.unreadableMeters ?? []).map(meterName).join('; '),
     // Per board, so a month withheld by several meters is not reduced to whichever
@@ -316,7 +338,10 @@ function exportCsv() {
     totalIntensity.value !== null ? totalIntensity.value.toFixed(2) : '',
     totalEstimated.value > 0 ? Math.round(totalEstimated.value) : '',
     totalEstimated.value > 0 ? estimatedSharePct.value.toFixed(1) : '',
-    '', '', '', '', ''
+    // Longest gap, estimated meters, then the basis across the whole table.
+    '', '',
+    totalEstimated.value > 0 ? estimationMechanismLabel(totalEstimatedKind.value) : '',
+    '', '', ''
   ];
 
   downloadCsv([...preamble, header, ...rows, total],

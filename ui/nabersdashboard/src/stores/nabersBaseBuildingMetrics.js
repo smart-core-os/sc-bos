@@ -8,9 +8,11 @@ import {getMeterReading} from '@/api/sc/traits/meter.js';
 import {getMetadata} from '@/api/sc/traits/metadata.js';
 import {mapLimit, MAX_CONCURRENT_READS} from '@/util/concurrency.js';
 import {describeRpcError} from '@/util/rpcError.js';
+import {now, tick} from '@/util/clock.js';
 import {readBoundaries, periodInstants} from '@/util/meterBoundaries.js';
 import {
-  estimationOptions, boundaryDelta, spanDelta, sumDeltas, estimatedSharePct
+  estimationOptions, boundaryDelta, spanDelta, sumDeltas, estimatedSharePct,
+  mergeEstimationKinds
 } from '@/util/meterEstimation.js';
 import {
   computeRating,
@@ -443,6 +445,16 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
   /** Estimated kWh by end use over the period to date. */
   const categoryEstimatedKwh = ref({});
 
+  /**
+   * By what mechanism the period-to-date figures were estimated, if they were.
+   *
+   * The two mechanisms err in opposite directions, so the disclosure cannot be
+   * written without knowing which applied. See `EstimationKind`.
+   *
+   * @type {import('vue').Ref<import('@/util/meterEstimation.js').EstimationKind>}
+   */
+  const periodEstimatedKind = ref(null);
+
   /** Gross electricity over the period to date, or null when not yet knowable. */
   const grossPeriodKwh = computed(() => {
     if (!hasConfiguredMeters.value) return null;
@@ -501,18 +513,38 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
     return null;
   });
 
+  // `now` is the reactive clock, not `new Date()`. A computed reading the system
+  // clock directly is evaluated once and then frozen for the life of the page,
+  // which on a dashboard left up on a display means the rating period never rolls
+  // over at its anniversary. See util/clock.js.
   const ratingPeriodStart = computed(() => {
-    const now = new Date();
+    const today = now.value;
     const anchor = ratingPeriodAnchor.value;
-    if (!anchor || anchor > now) return new Date(now.getFullYear(), 0, 1);
+    if (!anchor || anchor > today) return new Date(today.getFullYear(), 0, 1);
     // Walk anniversaries forward to the most recent one at or before now.
     let start = anchor;
-    while (addYears(start, 1) <= now) start = addYears(start, 1);
+    while (addYears(start, 1) <= today) start = addYears(start, 1);
     return start;
   });
 
+  /**
+   * The instant the period-to-date figures were measured to, set by
+   * {@link refresh}.
+   *
+   * `elapsedDays` is read from this rather than from the live clock, because it
+   * is the divisor of an annualisation whose numerator is the energy fetched at
+   * exactly this instant. Reading the clock instead lets the two describe
+   * different windows: frozen, the divisor lags and the projection inflates;
+   * live, it leads between refreshes and the projection sags. Neither is a
+   * measurement. Null until the first refresh, where the live clock is the honest
+   * answer for "how far into the period are we" on a dashboard with no data yet.
+   *
+   * @type {import('vue').Ref<Date|null>}
+   */
+  const measuredTo = ref(null);
+
   const elapsedDays = computed(() =>
-    Math.max(1, differenceInDays(new Date(), ratingPeriodStart.value) + 1)
+    Math.max(1, differenceInDays(measuredTo.value ?? now.value, ratingPeriodStart.value) + 1)
   );
 
   // ── Projection: a straight-line forecast, not a rating ───────────────────────
@@ -570,6 +602,13 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
   /** Estimated share of the trailing-12-month figure, as a percentage. */
   const monthlyEstimatedSharePct = computed(() =>
     estimatedSharePct(monthlyData.value.map(m => ({kwh: m.netKwh, estimatedKwh: m.estimatedKwh ?? 0})))
+  );
+
+  /** By what mechanism the months behind us were estimated, if they were. */
+  const monthlyEstimatedKind = computed(() =>
+    mergeEstimationKinds(monthlyData.value
+      .filter(m => (m.estimatedKwh ?? 0) > 0)
+      .map(m => m.estimatedKind))
   );
 
   // ── Trailing months: a basis that survives the turn of the rating period ─────
@@ -645,6 +684,19 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
     headlineBasis.value === 'projection'
       ? periodEstimatedSharePct.value
       : monthlyEstimatedSharePct.value
+  );
+
+  /**
+   * The mechanism behind that share, tracking the headline for the same reason:
+   * describing the period's mechanism beside a settled twelve-month figure would
+   * explain a number that is not on screen.
+   *
+   * @type {import('vue').ComputedRef<import('@/util/meterEstimation.js').EstimationKind>}
+   */
+  const estimatedKind = computed(() =>
+    headlineBasis.value === 'projection'
+      ? periodEstimatedKind.value
+      : monthlyEstimatedKind.value
   );
 
   /** Whether anything on screen rests on estimated data. */
@@ -998,8 +1050,11 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
 
     monthlyLoading.value = true;
     try {
-      const now         = new Date();
-      const monthStarts = Array.from({length: 13}, (_, i) => startOfMonth(subMonths(now, 12 - i)));
+      // `tick()` rather than `new Date()`: the same instant then drives the
+      // clock's dependents, so the twelve months fetched here and the period the
+      // rest of the store describes cannot be a day apart.
+      const readAt      = tick();
+      const monthStarts = Array.from({length: 13}, (_, i) => startOfMonth(subMonths(readAt, 12 - i)));
       const allMeterNames = categories.value.flatMap(cat => meterCfg.value[cat] ?? []);
       const pvNames       = meterCfg.value.pvGeneration ?? [];
       const exportNames   = meterCfg.value.pvExport ?? [];
@@ -1067,6 +1122,9 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
           unreadableMeters: gross.unreadable,
           failures:       gross.failures,
           estimatedKwh,
+          // Which mechanism produced that energy, so the row's tooltip and the CSV
+          // can say whether it was inflated or floored rather than assuming.
+          estimatedKind:  gross.delta.estimatedKind,
           estimatedPct:   (netKwh) ? (estimatedKwh / netKwh) * 100 : 0,
           estimatedHours: gross.delta.estimatedHours,
           estimatedMeters: gross.estimated
@@ -1138,8 +1196,11 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
     try {
       const pvNames     = meterCfg.value.pvGeneration ?? [];
       const exportNames = meterCfg.value.pvExport ?? [];
+      // Advance the clock first, so `ratingPeriodStart` is resolved against the
+      // same instant the energy is read up to rather than against whenever this
+      // computed last happened to be evaluated.
+      const readAt = tick();
       const start = ratingPeriodStart.value;
-      const now   = new Date();
 
       // One flat work list across every end use plus generation, so the limit
       // governs the real total rather than being applied per category.
@@ -1152,7 +1213,7 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
       // fetched, so a period whose only real hole was 66 days reported 290 days and
       // 95% estimated. Interior probes bound each gap to about a month, and are the
       // only thing that can see a hole in the middle of the period at all.
-      const instants = periodInstants(start, now);
+      const instants = periodInstants(start, readAt);
       const table = await readBoundaries(work.map(w => w.name), instants, estimation.value);
 
       const byCat = new Map();
@@ -1161,7 +1222,7 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
       const idle = [];
       const quality = {};
       work.forEach(({cat, name}) => {
-        const d = spanDelta(instants.map(t => table.get(name, t)), start, now, estimation.value);
+        const d = spanDelta(instants.map(t => table.get(name, t)), start, readAt, estimation.value);
         if (!byCat.has(cat)) byCat.set(cat, []);
         byCat.get(cat).push(d);
         // Tracked for every meter, not only the estimated ones: history the period
@@ -1191,6 +1252,7 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
 
       const results = {};
       const estimatedResults = {};
+      const kinds = [];
       for (const cat of categories.value) {
         // Not configured contributes 0 — a real "nothing metered here", as for an
         // unmetered end use. Configured but with *any* meter unreadable is null.
@@ -1198,9 +1260,11 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
         const summed = deltas ? sumDeltas(deltas) : null;
         results[cat] = summed ? summed.kwh : 0;
         estimatedResults[cat] = summed ? summed.estimatedKwh : 0;
+        if (summed) kinds.push(summed.estimatedKind);
       }
       categoryPeriodKwh.value    = results;
       categoryEstimatedKwh.value = estimatedResults;
+      periodEstimatedKind.value  = mergeEstimationKinds(kinds);
 
       pvGenerationKwh.value = pvNames.length ? sumDeltas(byCat.get('pvGeneration')).kwh : 0;
       pvExportKwh.value     = exportNames.length ? sumDeltas(byCat.get('pvExport')).kwh : 0;
@@ -1208,6 +1272,10 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
       meterFailures.value  = failures;
       meterEstimates.value = estimates;
       meterIdles.value     = idle;
+      // Set last, and only on the success path: it is what `elapsedDays`
+      // annualises over, so it must describe the figures just written and not a
+      // window some earlier attempt failed to read.
+      measuredTo.value     = readAt;
       // Deliberately not `error.value`: the section renders an alert in place of
       // the whole dashboard when that is set, so one dead board would blank every
       // end use. The failures are surfaced by name instead, here and in the meter
@@ -1253,12 +1321,13 @@ export const useNabersBaseBuildingStore = defineStore('nabersdashboard:nabersBas
     meterIdles, meterIdle,
     estimatedMetersByCategory, estimatedMeterLabels,
     periodEstimatedSharePct, monthlyEstimatedSharePct, estimatedShare, hasEstimatedData,
+    periodEstimatedKind, monthlyEstimatedKind, estimatedKind,
     // rating
     standingRating, projectedRating, trailingRating,
     headlineRating, headlineIsProjection, headlineBasis,
     trailingMonths, trailingDaysCovered, canUseTrailing,
     currentStars, bandedStars, totalIntensity,
-    monthsOfData, hasFullRatingPeriod, ratingPeriodStart, elapsedDays, canProject,
+    monthsOfData, hasFullRatingPeriod, ratingPeriodStart, measuredTo, elapsedDays, canProject,
     starCeilings, fiveStarMax, fourStarMax, nextStarTarget,
     targetStars, targetStarMax, recommendedMarginPct,
     stretchTarget, stretchHeadroomPct, stretchReductionNeeded,
