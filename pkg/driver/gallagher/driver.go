@@ -3,7 +3,6 @@ package gallagher
 import (
 	"context"
 	"fmt"
-	"path"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,16 +12,11 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/gallagher/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
-	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
-const (
-	DriverName                      = "gallagher"
-	defaultOccupancyRefreshInterval = time.Minute * 30
-)
+const DriverName = "gallagher"
 
 type Driver struct {
 	*service.Service[config.Root]
@@ -100,19 +94,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return sc.run(ctx, cfg.RefreshAlarms)
 	})
 
+	// Reading the deprecated field is the whole point here: it is how a site config that
+	// still sets it gets told the setting no longer does anything.
+	//lint:ignore SA1019 deliberate, to warn on a config that still sets it
 	if cfg.OccupancyCountEnabled {
-		occupancyCtrl := newOccupancyEventController(client, d.logger, cfg.RefreshOccupancyInterval.Or(defaultOccupancyRefreshInterval))
-		announcer.Announce(path.Join(cfg.ScNamePrefix, "occupancy"),
-			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancyCtrl)),
-			node.HasTrait(trait.OccupancySensor),
-			node.HasDeviceType(metadatapb.Metadata_VIRTUAL),
-		)
-		grp.Go(func() error {
-			if err := occupancyCtrl.run(ctx); err != nil {
-				return err
-			}
-			return nil
-		})
+		d.logger.Warn("occupancyCountEnabled is deprecated and does nothing; " +
+			"occupancy now comes from Gallagher zone counting on the access zone devices, " +
+			"polled on the refreshAccessZones schedule")
 	}
 
 	grp.Go(func() error {

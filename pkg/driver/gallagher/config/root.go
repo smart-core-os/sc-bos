@@ -36,10 +36,15 @@ type Root struct {
 	UdmiExportInterval jsontypes.Duration  `json:"udmiExportInterval"`
 	TopicPrefix        string              `json:"topicPrefix,omitempty"`
 
+	// Deprecated: has no effect. Occupancy came from counting turnstile events, which had no
+	// absolute reference and reset on every restart. Access zones now serve the OccupancySensor
+	// trait from Gallagher's own zone count, refreshed on the RefreshAccessZones schedule.
+	// Retained so existing site configs still parse.
 	RefreshOccupancyInterval *jsontypes.Duration `json:"refreshOccupancyInterval,omitempty"`
 
 	// number of security events to store, defaults to 200 if not set
-	NumSecurityEvents     int  `json:"numSecurityEvents,omitempty"`
+	NumSecurityEvents int `json:"numSecurityEvents,omitempty"`
+	// Deprecated: has no effect, see RefreshOccupancyInterval.
 	OccupancyCountEnabled bool `json:"occupancyCountEnabled,omitempty"`
 }
 

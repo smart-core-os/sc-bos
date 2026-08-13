@@ -11,7 +11,7 @@
       "clientCertPath": "/run/secrets/gallagher_client_cert",
       "clientKeyPath" : "/run/secrets/gallagher_client_key",
       "scNamePrefix" : "<system-name>/access-control",
-      "occupancyCountEnabled" : true
+      "refreshAccessZones" : "*/5 * * * *"
     }
   ]
 }

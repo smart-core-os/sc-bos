@@ -3,6 +3,7 @@ package gallagher
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"path"
 	"slices"
 	"time"
@@ -15,7 +16,9 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
@@ -34,15 +37,31 @@ type AccessZonePayload struct {
 	Description string   `json:"description,omitempty"`
 	StatusFlags []string `json:"statusFlags,omitempty"`
 	Status      string   `json:"status,omitempty"`
-	ZoneCount   int      `json:"zoneCount,omitempty"`
+	// ZoneCount is how many cardholders Gallagher currently counts inside the zone.
+	// It's a pointer because Command Centre only sends it for zones with zone counting
+	// enabled, and an absent count has to be distinguishable from a count of zero.
+	ZoneCount *int `json:"zoneCount,omitempty"`
 }
 
 type AccessZone struct {
 	accesspb.UnimplementedAccessApiServer
 	config.ScDevice
 	AccessZonePayload
-	lastAccessAttempt *resource.Value // of *accesspb.AccessAttempt
-	undo              []node.Undo
+	lastAccessAttempt *resource.Value          // of *accesspb.AccessAttempt
+	occupancy         *occupancysensorpb.Model // nil until Gallagher reports a zone count
+	// occupancyUndo is held apart from undo because occupancy is the one feature that can
+	// come and go while the zone stays, so it has to be revocable on its own.
+	occupancyUndo node.Undo
+	undo          []node.Undo
+}
+
+// unannounce withdraws everything this zone announced, occupancy included.
+func (z *AccessZone) unannounce() {
+	for _, undo := range z.undo {
+		undo()
+	}
+	z.undo = nil
+	z.withdrawOccupancy()
 }
 
 type AccessZoneController struct {
@@ -99,6 +118,10 @@ func (azc *AccessZoneController) getAccessZoneDetails(zone *AccessZone) {
 		return
 	}
 
+	// unmarshalling into the existing zone leaves absent properties at their previous value,
+	// so clear the count first: if counting is turned off in Command Centre we want to stop
+	// publishing rather than serve the last figure forever.
+	zone.ZoneCount = nil
 	if err = json.Unmarshal(resp, zone); err != nil {
 		azc.logger.Error("failed to decode access zone details", zap.Error(err))
 		return
@@ -120,6 +143,98 @@ func (azc *AccessZoneController) getAccessZoneDetails(zone *AccessZone) {
 	}
 
 	_, _ = zone.lastAccessAttempt.Set(attempt)
+	zone.setOccupancy()
+	// Reached only on a successful fetch and decode, which matters: a transient
+	// error must not be read as "counting was turned off".
+	azc.withdrawOccupancy(zone)
+}
+
+// setOccupancy publishes Gallagher's own zone count as an occupancy reading.
+// Command Centre maintains this figure, so unlike counting turnstile events it needs no
+// starting reference and survives a driver restart.
+//
+// StateChangeTime is only moved when the occupied state flips; a steady count carries the
+// previous timestamp forward so consumers don't read every poll as a fresh change.
+func (z *AccessZone) setOccupancy() {
+	if z.ZoneCount == nil || z.occupancy == nil {
+		return // zone counting isn't enabled for this zone
+	}
+
+	// Clamped rather than converted straight through. PeopleCount is an int32 and the
+	// count arrives as a plain JSON number, so a garbled response could otherwise wrap
+	// a large value round to a negative headcount.
+	count := min(max(*z.ZoneCount, 0), math.MaxInt32)
+
+	occupancy := &occupancysensorpb.Occupancy{
+		PeopleCount:     int32(count),
+		State:           occupancysensorpb.Occupancy_UNOCCUPIED,
+		Confidence:      1,
+		StateChangeTime: timestamppb.Now(),
+	}
+	if count > 0 {
+		occupancy.State = occupancysensorpb.Occupancy_OCCUPIED
+	}
+	if prev, err := z.occupancy.GetOccupancy(); err == nil &&
+		prev.State == occupancy.State && prev.StateChangeTime != nil {
+		occupancy.StateChangeTime = prev.StateChangeTime
+	}
+
+	_, _ = z.occupancy.SetOccupancy(occupancy)
+}
+
+// announceOccupancy adds the OccupancySensor trait to a zone the first time Gallagher reports
+// a zone count for it. Zones without zone counting enabled never get the trait, which keeps
+// the estate free of sensors that would sit at zero forever.
+//
+// It's called after the details fetch rather than alongside the zone's other features because
+// only the details response tells us whether a count exists.
+func (azc *AccessZoneController) announceOccupancy(zone *AccessZone, announcer node.Announcer) {
+	if zone.ZoneCount == nil || zone.occupancy != nil {
+		return
+	}
+
+	zone.occupancy = occupancysensorpb.NewModel(resource.WithNoDuplicates())
+	zone.setOccupancy() // seed the model with the count we just fetched
+	zone.occupancyUndo = announcer.Announce(zone.ScName,
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer,
+			occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(zone.occupancy))),
+		node.HasTrait(trait.OccupancySensor),
+	)
+	azc.logger.Debug("announced occupancy for access zone",
+		zap.String("name", zone.ScName), zap.Int("zoneCount", *zone.ZoneCount))
+}
+
+// withdrawOccupancy removes the OccupancySensor trait from a zone that has stopped
+// reporting a count, which is what happens when zone counting is turned off in Command
+// Centre.
+//
+// This is the other half of clearing ZoneCount before unmarshalling the details response.
+// That clear exists so an absent count is distinguishable from an unchanged one, but on
+// its own it achieved nothing: setOccupancy simply returns when the count is nil, so the
+// model kept its last value and the trait stayed announced. A zone that had seven people
+// in it when counting was disabled went on reporting seven people indefinitely, which is
+// worse than reporting nothing because it looks like a live figure.
+//
+// announceOccupancy is lazy and idempotent, so a count that comes back is picked up again
+// on the next refresh.
+func (azc *AccessZoneController) withdrawOccupancy(zone *AccessZone) {
+	if zone.ZoneCount != nil || zone.occupancy == nil {
+		return
+	}
+
+	zone.withdrawOccupancy()
+	azc.logger.Debug("withdrew occupancy for access zone, no zone count reported",
+		zap.String("name", zone.ScName))
+}
+
+// withdrawOccupancy drops the zone's occupancy model and unannounces its trait, if it has
+// one. Safe to call on a zone that never had one.
+func (z *AccessZone) withdrawOccupancy() {
+	if z.occupancyUndo != nil {
+		z.occupancyUndo()
+		z.occupancyUndo = nil
+	}
+	z.occupancy = nil
 }
 
 // statusFlagsToGrant maps Gallagher access zone status flags to an AccessAttempt Grant value.
@@ -161,15 +276,14 @@ func (azc *AccessZoneController) refreshAccessZones(announcer node.Announcer, sc
 			azc.zones[id] = z
 		}
 		azc.getAccessZoneDetails(azc.zones[id])
+		azc.announceOccupancy(azc.zones[id], announcer)
 	}
 
 	// unannounce removed zones
 	for id, z := range azc.zones {
 		if _, ok := zones[id]; !ok {
 			azc.logger.Info("unannouncing access zone", zap.String("id", id))
-			for _, undo := range z.undo {
-				undo()
-			}
+			z.unannounce()
 			delete(azc.zones, id)
 		}
 	}
