@@ -5,9 +5,11 @@ import {StatusCode} from 'grpc-web';
 import {useUiConfigStore} from './uiConfig.js';
 import {getMeterReading, getFirstMeterReadingInPeriod} from '@/api/sc/traits/meter.js';
 import {mapLimit, MAX_CONCURRENT_READS} from '@/util/concurrency.js';
+import {now, tick} from '@/util/clock.js';
 import {readBoundaries, periodInstants} from '@/util/meterBoundaries.js';
 import {
-  estimationOptions, boundaryDelta, spanDelta, sumDeltas, estimatedSharePct
+  estimationOptions, boundaryDelta, spanDelta, sumDeltas, estimatedSharePct,
+  mergeEstimationKinds
 } from '@/util/meterEstimation.js';
 import {
   computeTenancyRating,
@@ -94,6 +96,15 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     {kwh: equipmentPeriodKwh.value, estimatedKwh: equipmentEstimatedKwh.value}
   ]));
 
+  /**
+   * By what mechanism, set by {@link refresh}. The tenancy boundary shares the
+   * estimation code with base building, so it can be estimated by either of the
+   * two mechanisms and cannot assume the projection any more than that one can.
+   *
+   * @type {import('vue').Ref<import('@/util/meterEstimation.js').EstimationKind>}
+   */
+  const periodEstimatedKind = ref(null);
+
   /** Estimated meter names, for the disclosure caveat. */
   const estimatedMeterLabels = computed(() => {
     const acc = {};
@@ -102,13 +113,24 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
   });
 
   // ── The rating period ────────────────────────────────────────────────────────
-  const ratingPeriodStart = computed(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), 0, 1);
-  });
+  // Off the reactive clock, not `new Date()`: a computed reading the system clock
+  // has no reactive dependency to invalidate it, so it freezes at whatever it was
+  // when the page loaded. On a dashboard meant to be left on a display that meant
+  // the calendar year never turned over and the annualisation divisor stopped
+  // growing while the energy behind it kept on. See util/clock.js.
+  const ratingPeriodStart = computed(() => new Date(now.value.getFullYear(), 0, 1));
+
+  /**
+   * The instant the period-to-date figures were measured to, set by
+   * {@link refresh}. `elapsedDays` divides by this rather than by the live clock
+   * so the divisor and its numerator always describe the same window.
+   *
+   * @type {import('vue').Ref<Date|null>}
+   */
+  const measuredTo = ref(null);
 
   const elapsedDays = computed(() =>
-    Math.max(1, differenceInDays(new Date(), ratingPeriodStart.value) + 1)
+    Math.max(1, differenceInDays(measuredTo.value ?? now.value, ratingPeriodStart.value) + 1)
   );
 
   const annualisationFactor = computed(() => 365 / elapsedDays.value);
@@ -170,6 +192,13 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     estimatedSharePct(monthlyData.value.map(m => ({kwh: m.totalKwh, estimatedKwh: m.estimatedKwh ?? 0})))
   );
 
+  /** By what mechanism the months behind us were estimated, if they were. */
+  const monthlyEstimatedKind = computed(() =>
+    mergeEstimationKinds(monthlyData.value
+      .filter(m => (m.estimatedKwh ?? 0) > 0)
+      .map(m => m.estimatedKind))
+  );
+
   // ── Trailing months: a basis that survives the turn of the rating period ─────
   // Annualising four days multiplies them by ninety, so the projection is
   // suppressed just after each anniversary and — unless all twelve months happen
@@ -219,6 +248,13 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     headlineBasis.value === 'projection'
       ? periodEstimatedSharePct.value
       : monthlyEstimatedSharePct.value
+  );
+
+  /** The mechanism behind that share, tracking the headline for the same reason. */
+  const estimatedKind = computed(() =>
+    headlineBasis.value === 'projection'
+      ? periodEstimatedKind.value
+      : monthlyEstimatedKind.value
   );
 
   const hasEstimatedData = computed(() => (estimatedShare.value ?? 0) > 0);
@@ -303,8 +339,8 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
 
     monthlyLoading.value = true;
     try {
-      const now         = new Date();
-      const monthStarts = Array.from({length: 13}, (_, i) => startOfMonth(subMonths(now, 12 - i)));
+      const readAt      = tick();
+      const monthStarts = Array.from({length: 13}, (_, i) => startOfMonth(subMonths(readAt, 12 - i)));
 
       const table = await readBoundaries(
         [...lightingNames.value, ...equipmentNames.value], monthStarts, estimation.value);
@@ -335,6 +371,7 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
           quality:            !hasData ? 'missing' : (estimatedKwh > 0 ? 'estimated' : 'actual'),
           estimatedKwh,
           estimatedPct:       totalKwh ? (estimatedKwh / totalKwh) * 100 : 0,
+          estimatedKind:      mergeEstimationKinds([l.delta.estimatedKind, e.delta.estimatedKind]),
           estimatedMeters:    [...l.estimated, ...e.estimated]
         });
       }
@@ -349,9 +386,14 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
   // ── After-hours ──────────────────────────────────────────────────────────────
   const afterHoursKwh = ref(null);
 
+  // The reactive clock, so the card actually flips at the end of the working day.
+  // Read off `new Date()` this was evaluated once, when the page loaded, and then
+  // held that answer: a dashboard opened in the morning reported "Within
+  // operating hours" all evening while `refreshAfterHours` sat beside it every
+  // fifteen minutes computing the standby figure it was refusing to show.
   const isAfterHours = computed(() => {
     const endHour = cfg.value.nabersOperatingHoursEnd ?? 17;
-    return new Date().getHours() >= endHour;
+    return now.value.getHours() >= endHour;
   });
 
   /**
@@ -363,14 +405,17 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     if (!cfg.value.nabersEnabled || !equipmentNames.value.length) return;
 
     const endHour = cfg.value.nabersOperatingHoursEnd ?? 17;
-    const now     = new Date();
+    // Ticks the shared clock rather than shadowing it, so `isAfterHours` and this
+    // figure are decided by the same instant and cannot disagree about whether
+    // the working day has ended.
+    const readAt  = tick();
 
-    if (now.getHours() < endHour) {
+    if (readAt.getHours() < endHour) {
       afterHoursKwh.value = 0;
       return;
     }
 
-    const opEnd = new Date(now);
+    const opEnd = new Date(readAt);
     opEnd.setHours(endHour, 0, 0, 0);
     const opEndPlus15 = new Date(opEnd.getTime() + 15 * 60 * 1000);
 
@@ -420,8 +465,10 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     error.value   = null;
 
     try {
+      // Advance the clock first, so the period start is resolved against the same
+      // instant the energy is read up to.
+      const readAt = tick();
       const start = ratingPeriodStart.value;
-      const now   = new Date();
       const work = [
         ...lightingNames.value.map(name => ({name, stream: 'lighting'})),
         ...equipmentNames.value.map(name => ({name, stream: 'equipment'}))
@@ -430,7 +477,7 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
       // Every month boundary inside the period, not just its two ends — see
       // `periodInstants`. The energy needs only the ends, but a gap's extent and
       // its share of the energy are only as accurate as the sampling.
-      const instants = periodInstants(start, now);
+      const instants = periodInstants(start, readAt);
       const table = await readBoundaries(work.map(w => w.name), instants, estimation.value);
 
       const failures = [];
@@ -442,7 +489,7 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
        */
       const streamDelta = (names, stream) => {
         const deltas = names.map(name => {
-          const d = spanDelta(instants.map(t => table.get(name, t)), start, now, estimation.value);
+          const d = spanDelta(instants.map(t => table.get(name, t)), start, readAt, estimation.value);
           if (d.kwh === null) failures.push({name, stream, reason: d.reason ?? 'unreadable'});
           else if (d.estimated) estimates.push({name, stream, hours: d.estimatedHours});
           return d;
@@ -457,9 +504,15 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
       equipmentPeriodKwh.value    = equipmentNames.value.length ? e.kwh : 0;
       lightingEstimatedKwh.value  = lightingNames.value.length ? l.estimatedKwh : 0;
       equipmentEstimatedKwh.value = equipmentNames.value.length ? e.estimatedKwh : 0;
+      periodEstimatedKind.value   = mergeEstimationKinds([
+        lightingNames.value.length ? l.estimatedKind : null,
+        equipmentNames.value.length ? e.estimatedKind : null
+      ]);
 
       meterFailures.value  = failures;
       meterEstimates.value = estimates;
+      // Only on the success path: it is what `elapsedDays` annualises over.
+      measuredTo.value     = readAt;
       if (failures.length) {
         console.warn(
           `NABERS: ${failures.length} of ${work.length} tenancy meters unreadable`,
@@ -482,6 +535,7 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     // estimation / disclosure
     estimation, meterFailures, meterEstimates, estimatedMeterLabels,
     periodEstimatedSharePct, monthlyEstimatedSharePct, estimatedShare, hasEstimatedData,
+    periodEstimatedKind, monthlyEstimatedKind, estimatedKind,
     // energy
     lightingIntensity, equipmentIntensity, totalPeriodKwh,
     // rating
@@ -489,7 +543,7 @@ export const useNabersMetricsStore = defineStore('nabersdashboard:nabersMetrics'
     headlineRating, headlineIsProjection, headlineBasis,
     trailingMonths, trailingDaysCovered, canUseTrailing,
     currentStars, bandedStars, totalIntensity,
-    monthsOfData, hasFullRatingPeriod, elapsedDays, canProject,
+    monthsOfData, hasFullRatingPeriod, measuredTo, elapsedDays, canProject,
     starCeilings, nextStarTarget, nextStarThreshold, reductionNeeded, progressToNextStar,
     loading, error, refresh,
     // monthly

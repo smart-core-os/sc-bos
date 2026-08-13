@@ -415,10 +415,12 @@ function exportCsv() {
       'live read and still be unusable for the rating — most often because its history does not ' +
       'reach back to the period start — in which case it blanks every dependent figure. ' +
       'Such a meter reads "No period data" with the reason in the Fault column.'],
-    ['Projected hours', 'Hours of the rating period whose reading was projected forward because this ' +
-      'meter failed a live read and is therefore known to be offline. This is the only substituted ' +
-      'value the dashboard produces, and the only one disclosed as estimated. Blank means every hour ' +
-      'rests on a recorded reading.'],
+    ['Projected hours', 'Hours of the rating period that rest on a substituted value rather than a ' +
+      'recorded one. Two things put hours here and they err in opposite directions: a reading ' +
+      'projected forward because the meter failed a live read and is therefore known to be offline, ' +
+      'which is inflated so it cannot understate; or a cumulative register that stepped backwards by ' +
+      'less than its allowance, whose span is floored at zero and so understates. The monthly report ' +
+      'names which applied. Blank means every hour rests on a recorded reading.'],
     ['Unrecorded hours', 'Hours of the rating period with no meter history behind them. Does not by ' +
       'itself mean a figure was estimated, and usually does not: history records a reading only when ' +
       'it changes, so the accumulator held its last recorded value across the stretch and the total ' +

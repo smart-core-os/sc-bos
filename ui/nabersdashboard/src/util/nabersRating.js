@@ -460,8 +460,8 @@ export function tenancyAdjustedBenchmark({ratedHours, ratedArea, occupiedWorksta
  * divides this term by the rated area and then adds it to total kWh, which is
  * subsequently divided by area again — so the contribution lands in kWh/m²
  * rather than kWh and is scaled by 1/area². That is a unit error carried over
- * from the base-building tab, where the equivalent term genuinely is a per-m²
- * *benchmark* adjustment. The tab's own note ("to prevent double counting, any
+ * from the base-building tab, where the equivalent term genuinely is an
+ * adjustment to the benchmark. The tab's own note ("to prevent double counting, any
  * energy consumption included in this subsection should not be included in the
  * Energy Consumption section above") makes the intent plain: this is rated
  * energy. It is therefore added here as un-normalised kWhe. Only tenancies with

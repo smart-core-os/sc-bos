@@ -16,8 +16,10 @@ import {
   boundaryDelta,
   sumDeltas,
   estimatedSharePct,
+  mergeEstimationKinds,
   formatGap
 } from './meterEstimation.js';
+import {estimationMechanism, estimationMechanismLabel} from './disclosure.js';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -744,6 +746,13 @@ describe('boundaryDelta', () => {
     expect(d.estimatedKwh).toBeCloseTo(150, 6);
     // The whole span, because the register could have fallen anywhere inside it.
     expect(d.estimatedHours).toBe(744);
+    // And it says which mechanism did it. Every published disclosure used to
+    // assert the forward projection unconditionally, so this month told an
+    // assessor its figure had been inflated so it could not understate — when it
+    // had been floored at zero and understates by whatever the pump really used.
+    expect(d.estimatedKind).toBe('regressed');
+    expect(estimationMechanism(d.estimatedKind)).toMatch(/UNDERSTATES/);
+    expect(estimationMechanism(d.estimatedKind)).not.toMatch(/cannot understate/);
   });
 
   it('still refuses a step back too large to be a correction', () => {
@@ -914,6 +923,50 @@ describe('sumDeltas', () => {
     expect(out.estimated).toBe(true);
     expect(out.estimatedKwh).toBe(150);
     expect(out.reason).toBeNull();
+  });
+
+  it('carries the longest gap through, as the typedef always promised', () => {
+    // It did not. `BoundaryDelta` documents `longestGap`, `spanDelta` sets it, and
+    // the summed shape simply omitted the key — so a caller reading it off a pool
+    // got `undefined` where the contract says null.
+    const gap = (hours) => ({from: at(0), to: at(hours), hours});
+    const withGap = (kwh, hours) => ({...d(kwh), longestGap: gap(hours)});
+    expect(sumDeltas([d(10)]).longestGap).toBeNull();
+    expect(sumDeltas([withGap(10, 6), withGap(10, 48)]).longestGap.hours).toBe(48);
+  });
+});
+
+describe('which mechanism estimated a figure', () => {
+  // The disclosure has to name it, because the two err in opposite directions:
+  // a projection is inflated so it cannot understate, and a floored backwards
+  // step understates by construction. Saying the wrong one is worse than saying
+  // nothing, and for a while every disclosure on the dashboard said `projected`.
+  const d = (kwh, estimatedKwh, estimatedKind) =>
+    ({kwh, estimated: estimatedKwh > 0, estimatedHours: 0, estimatedKwh, estimatedKind, reason: null});
+
+  it('is null when nothing was estimated', () => {
+    expect(mergeEstimationKinds([])).toBeNull();
+    expect(mergeEstimationKinds([null, null])).toBeNull();
+    expect(sumDeltas([d(100, 0, null)]).estimatedKind).toBeNull();
+  });
+
+  it('keeps a single mechanism as itself', () => {
+    expect(mergeEstimationKinds([null, 'regressed', null])).toBe('regressed');
+    expect(sumDeltas([d(100, 0, null), d(0, 150, 'regressed')]).estimatedKind).toBe('regressed');
+  });
+
+  it('is mixed once a pool holds both', () => {
+    expect(mergeEstimationKinds(['projected', 'regressed'])).toBe('mixed');
+    expect(sumDeltas([d(10, 5, 'projected'), d(0, 150, 'regressed')]).estimatedKind).toBe('mixed');
+  });
+
+  it('describes each one in the direction it actually errs', () => {
+    expect(estimationMechanism('projected')).toMatch(/cannot understate/);
+    expect(estimationMechanism('regressed')).toMatch(/UNDERSTATES/);
+    expect(estimationMechanism('mixed')).toMatch(/UNDERSTATES/);
+    // Even with no mechanism recorded it must not invent the reassuring one.
+    expect(estimationMechanism(null)).not.toMatch(/cannot understate/);
+    expect(estimationMechanismLabel('regressed')).toMatch(/backwards/);
   });
 });
 

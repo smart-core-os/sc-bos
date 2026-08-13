@@ -1,6 +1,5 @@
 <template>
   <div v-if="enabled" class="nabers-base-section">
-
     <!-- Header -->
     <div class="section-header">
       <h2 class="section-title">NABERS Base Building Energy</h2>
@@ -20,7 +19,6 @@
     </div>
 
     <div v-else class="nabers-body">
-
       <!--
         The disclosure NABERS requires, above the fold rather than behind an
         accordion: anyone reading a figure off this screen has to be able to see
@@ -30,9 +28,9 @@
         <v-icon icon="mdi-chart-timeline-variant" size="16"/>
         <span>
           <strong>Includes estimated data.</strong>
-          {{ estimatedShareLabel }} of the energy behind the figures below was projected forward
-          past the last reading of a meter that could not be reached. Estimated months are marked
-          in the monthly report and dashed on the trend chart.
+          {{ estimatedShareLabel }} of the energy behind the figures below was estimated rather
+          than measured. {{ estimationMechanism(store.estimatedKind) }}
+          Estimated months are marked in the monthly report and dashed on the trend chart.
         </span>
       </div>
 
@@ -60,6 +58,7 @@
             :progress-to-next-star="store.progressToNextStar"
             :pv-deduction-assumed="store.pvDeductionAssumed"
             :estimated-share-pct="store.estimatedShare"
+            :estimated-kind="store.estimatedKind"
             :estimated-meter-labels="store.estimatedMeterLabels"/>
       </div>
 
@@ -184,7 +183,6 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
-
     </div>
   </div>
 
@@ -204,6 +202,7 @@ import {useNabersBaseBuildingStore} from '@/stores/nabersBaseBuildingMetrics.js'
 import {
   DFP_SEVERITY_COLOR, dfpSeverity, dfpSeverityColor, headroomSeverity
 } from '@/util/dfpSeverity.js';
+import {estimationMechanism} from '@/util/disclosure.js';
 import NabersStatCard            from '@/components/nabers/NabersStatCard.vue';
 import NabersScenarioGauge       from '@/components/nabers/NabersScenarioGauge.vue';
 import NabersRatingGauge         from '@/components/nabers/NabersRatingGauge.vue';

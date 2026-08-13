@@ -154,8 +154,11 @@ function exportCsv() {
       'the period to date, else the measured months behind it. Annualising ignores seasonality.'],
     ['Target', 'The modelled figure from config for comparison. Blank where no target was ' +
       'transcribed for that end use — deliberately absent rather than estimated.'],
-    ['Estimated kWh', 'Energy within the measured figure that was projected forward past the last ' +
-      'reading of an unreachable meter. These are the amber-outlined bars on screen.'],
+    ['Estimated kWh', 'Energy within the measured figure that was estimated rather than measured — ' +
+      'either projected forward past the last reading of an unreachable meter, which overstates by ' +
+      'design, or floored at zero across a cumulative register that stepped backwards by less than ' +
+      'its allowance, which understates. The monthly report names which applied, per month and per ' +
+      'board. These are the amber-outlined bars on screen.'],
     ['Blank intensity', 'The end use could not be read — one unreadable meter makes its whole ' +
       'end use unknown. Not a zero.'],
     []

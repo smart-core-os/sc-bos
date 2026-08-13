@@ -7,6 +7,29 @@ site. `dashboards-config.json` in this directory is a template: replace the
 placeholder values with the ones from the building's Design for Performance
 assessment.
 
+### Credentials, and what that means
+
+The dashboard authenticates itself. It reads a username and password from
+`VITE_DASHBOARD_USERNAME`/`VITE_DASHBOARD_PASSWORD`, falling back to
+`config.username`/`config.password` in `dashboards-config.json`, and exchanges
+them for a token via the OAuth2 password grant (`src/stores/auth.js`).
+
+**Both of those places are readable by anyone who can load the page.** Vite bakes
+env vars into the bundle at build time, and `dashboards-config.json` is fetched
+over plain HTTP by the browser. There is no way to hide a credential in a
+single-page app, so this is not a bug to fix in the client — but it does mean:
+
+- Give the dashboard its **own service account**, never a person's login and
+  never an administrator's. It only ever issues reads, so scope it to read.
+- Treat that account as public. Anyone who can reach the display, or the URL, can
+  extract it and call the API directly with the same rights.
+- Do not commit real credentials. The `dashboards-config.json` in this directory
+  is a template and the values in it are placeholders.
+
+If the deployment can mint a short-lived token server-side and serve it to the
+page instead, prefer that; the client already treats the token as opaque and
+re-fetches it on `UNAUTHENTICATED`, so only `fetchToken` would change.
+
 ### Linking out to the ops UI
 
 The base building breakdown widget can carry a link to a fuller energy view, so

@@ -66,6 +66,7 @@
               :reduction-needed="store.reductionNeeded"
               :progress-to-next-star="store.progressToNextStar"
               :estimated-share-pct="store.estimatedShare"
+              :estimated-kind="store.estimatedKind"
               :estimated-meter-labels="store.estimatedMeterLabels"/>
         </div>
       </div>

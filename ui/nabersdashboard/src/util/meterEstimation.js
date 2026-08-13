@@ -232,23 +232,64 @@ const HOUR_MS = 60 * 60 * 1000;
  */
 
 /**
+ * Which mechanism produced a span's estimated energy.
+ *
+ * This has to travel with the figure, because the two mechanisms err in opposite
+ * directions and a disclosure that names the wrong one is worse than a vague
+ * one:
+ *
+ * - `projected` — a rate carried past the last reading of an unreachable meter,
+ *   deliberately inflated by `extrapolationUpliftPct`. It **overstates**, which is
+ *   the direction the NABERS method requires of a substituted value.
+ * - `regressed` — a register that stepped backwards by less than its allowance,
+ *   so the span reports zero and discloses the size of the step. It
+ *   **understates** by whatever the meter really consumed, which is the direction
+ *   the method forbids. See {@link DEFAULT_REGRESSION_SHARE_PCT} for why it is
+ *   nonetheless the better of the two errors on an indicative dashboard.
+ * - `mixed` — both, somewhere in the pool being summed.
+ *
+ * Null when nothing was estimated. Every published disclosure — the banner, the
+ * gauge caveat, the monthly report and the CSV preamble — used to assert
+ * `projected` unconditionally, so a month withheld only by a register correction
+ * told its reader the figure had been conservatively inflated when it had been
+ * floored at zero.
+ *
+ * @typedef {'projected'|'regressed'|'mixed'|null} EstimationKind
+ */
+
+/**
  * Consumption between two resolved boundaries, with its provenance.
  *
- * `estimatedHours`/`estimatedKwh` describe what the reported total rests on;
- * `unrecordedHours` is how much of the span had no recorded history at all, which
- * is a data-quality figure and can be large even when the total is exact. See
- * {@link spanDelta}.
+ * `estimatedHours`/`estimatedKwh` describe what the reported total rests on, and
+ * `estimatedKind` says by what mechanism; `unrecordedHours` is how much of the
+ * span had no recorded history at all, which is a data-quality figure and can be
+ * large even when the total is exact. See {@link spanDelta}.
  *
  * @typedef {{
  *   kwh: number|null,
  *   estimated: boolean,
  *   estimatedHours: number,
  *   estimatedKwh: number,
+ *   estimatedKind: EstimationKind,
  *   unrecordedHours: number,
  *   longestGap: {from: Date, to: Date, hours: number}|null,
  *   reason: string|null
  * }} BoundaryDelta
  */
+
+/**
+ * Combine the mechanisms seen across a pool into one.
+ *
+ * @param {Array<EstimationKind>} kinds
+ * @return {EstimationKind}
+ */
+export function mergeEstimationKinds(kinds) {
+  const seen = new Set((kinds ?? []).filter(Boolean));
+  if (seen.size === 0) return null;
+  if (seen.size > 1) return 'mixed';
+  const [only] = seen;
+  return only;
+}
 
 /**
  * Estimation settings, with this module's defaults filled in.
@@ -911,7 +952,7 @@ function estimatedEnergy(gaps, from, to) {
  */
 export function spanDelta(boundaries, from, to, opts) {
   const none = (reason) => ({
-    kwh: null, estimated: false, estimatedHours: 0, estimatedKwh: 0,
+    kwh: null, estimated: false, estimatedHours: 0, estimatedKwh: 0, estimatedKind: null,
     unrecordedHours: 0, longestGap: null, reason
   });
   if (!boundaries?.length) return none('no boundaries resolved');
@@ -959,6 +1000,9 @@ export function spanDelta(boundaries, from, to, opts) {
       // The whole span, because the register could have fallen anywhere inside it.
       estimatedHours: overlapHours([{from, to}], from, to),
       estimatedKwh: droppedKwh,
+      // Named, so the disclosure can say this understated rather than claiming the
+      // inflated forward projection it is not.
+      estimatedKind: 'regressed',
       unrecordedHours,
       longestGap,
       reason:       null
@@ -986,6 +1030,9 @@ export function spanDelta(boundaries, from, to, opts) {
     estimated:    material,
     estimatedHours,
     estimatedKwh,
+    // Only extrapolation sets a gap pair, so any energy attributed here came from
+    // a forward projection past an unreachable meter.
+    estimatedKind: estimatedKwh > 0 ? 'projected' : null,
     unrecordedHours,
     longestGap,
     reason:       null
@@ -1024,7 +1071,7 @@ export function boundaryDelta(a, b, from, to, opts) {
  */
 export function sumDeltas(deltas) {
   const none = (reason) => ({
-    kwh: null, estimated: false, estimatedHours: 0, estimatedKwh: 0,
+    kwh: null, estimated: false, estimatedHours: 0, estimatedKwh: 0, estimatedKind: null,
     unrecordedHours: 0, longestGap: null, reason
   });
   if (!deltas?.length) return none('no meters');
@@ -1033,7 +1080,9 @@ export function sumDeltas(deltas) {
   let estimatedKwh = 0;
   let estimatedHours = 0;
   let unrecordedHours = 0;
+  let longestGap = null;
   let material = false;
+  const kinds = [];
   for (const d of deltas) {
     if (d?.kwh == null || Number.isNaN(d.kwh)) return none(d?.reason ?? 'unreadable meter');
     kwh += d.kwh;
@@ -1042,6 +1091,13 @@ export function sumDeltas(deltas) {
     // the same week is one week of degraded data, not two.
     estimatedHours = Math.max(estimatedHours, d.estimatedHours);
     unrecordedHours = Math.max(unrecordedHours, d.unrecordedHours ?? 0);
+    // Same argument, and carried rather than dropped: this used to be absent from
+    // the summed shape while the `BoundaryDelta` typedef promised it, so a caller
+    // reading it off a pool got `undefined` instead of the documented null.
+    if (d.longestGap && (!longestGap || d.longestGap.hours > longestGap.hours)) {
+      longestGap = d.longestGap;
+    }
+    kinds.push(d.estimatedKind ?? null);
     if (d.estimated) material = true;
   }
   // `material`, propagated from the per-meter deltas, not recomputed from hours.
@@ -1051,7 +1107,11 @@ export function sumDeltas(deltas) {
   // with no accumulator movement is the *normal* case for an idle meter and there
   // is nothing to disclose. Keying on hours made the dashboard cry wolf on every
   // car park and exterior lighting meter.
-  return {kwh, estimated: material, estimatedHours, estimatedKwh, unrecordedHours, reason: null};
+  return {
+    kwh, estimated: material, estimatedHours, estimatedKwh,
+    estimatedKind: mergeEstimationKinds(kinds),
+    unrecordedHours, longestGap, reason: null
+  };
 }
 
 /**
