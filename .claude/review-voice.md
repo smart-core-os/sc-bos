@@ -39,5 +39,3 @@ deliberately out of scope.
 - Don't restate the reviewer's point back at them. No thanks-for-catching-this, no
   summary of the wider change.
 - Disagreeing is fine — give the concrete reason in a sentence.
-
-Source: review feedback from @hexaglow, August 2026.
