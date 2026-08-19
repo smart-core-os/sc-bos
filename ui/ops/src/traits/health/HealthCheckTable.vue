@@ -92,7 +92,7 @@ import MdText from '@/components/MdText.vue';
 import {useDevices} from '@/composables/devices.js';
 import {useDataTableCollection} from '@/composables/table.js';
 import CheckCountCell from '@/traits/health/CheckCountCell.vue';
-import {countChecks, useHealthCheckFilters} from '@/traits/health/health';
+import {ABNORMAL_NORMALITY_STATES, countChecks, RELIABILITY_FAILURE_STATES, useHealthCheckFilters} from '@/traits/health/health';
 import HealthCheckEnrichedRows from '@/traits/health/HealthCheckEnrichedRows.vue';
 import NormalityLastChangeCell from '@/traits/health/NormalityLastChangeCell.vue';
 import ReliabilityLastChangeCell from '@/traits/health/ReliabilityLastChangeCell.vue';
@@ -102,8 +102,18 @@ import {computed, ref} from 'vue';
 const props = defineProps({
   conditions: {
     type: Array, // of Device.Query.Condition.AsObject
+    // Default to devices that are unhealthy in either dimension: an abnormal check
+    // OR a comms/reliability failure. Normality and reliability are independent
+    // (a device we can't talk to can still read NORMAL), so any_of ORs them so
+    // comms-only issues surface by default. See SCB-1381 for the any_of primitive.
     default: () => ([
-      {'field': 'health_checks.normality', 'stringIn': {'stringsList': ['ABNORMAL', 'HIGH', 'LOW']}}
+      {
+        field: 'health_checks',
+        anyOf: {queriesList: [
+          {conditionsList: [{field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITY_STATES}}]},
+          {conditionsList: [{field: 'reliability.state', stringIn: {stringsList: RELIABILITY_FAILURE_STATES}}]}
+        ]}
+      }
     ])
   }
 });

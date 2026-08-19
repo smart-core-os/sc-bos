@@ -14,6 +14,25 @@ const NO_ZONE = '< no zone >';
 const NO_SUBSYSTEM = '< no subsystem >';
 
 /**
+ * Normality enum names that indicate an abnormal (unhealthy) check.
+ * Any Normality greater than NORMAL is abnormal; see health.proto.
+ *
+ * @type {string[]}
+ */
+export const ABNORMAL_NORMALITY_STATES = ['ABNORMAL', 'HIGH', 'LOW'];
+
+/**
+ * Reliability.State enum names that indicate a connectivity (comms) issue.
+ * Everything except STATE_UNSPECIFIED (not reported) and RELIABLE (healthy).
+ *
+ * @type {string[]}
+ */
+export const RELIABILITY_FAILURE_STATES = [
+  'UNRELIABLE', 'CONN_TRANSIENT_FAILURE', 'SEND_FAILURE',
+  'NO_RESPONSE', 'BAD_RESPONSE', 'NOT_FOUND', 'PERMISSION_DENIED'
+];
+
+/**
  * Convert a protobuf enum numeric value to its string name.
  *
  * @param {Object} enumObj - The enum object (e.g., HealthCheck.OccupantImpact)
@@ -216,6 +235,20 @@ export function useHealthCheckFilters(forcedFilters) {
       }
     }
 
+    if (!Object.hasOwn(forced, 'health_checks.issue_type')) {
+      filters.push({
+        key: 'health_checks.issue_type',
+        icon: 'mdi-alert-outline',
+        title: 'Issue Type',
+        type: 'list',
+        items: [
+          {title: 'Connectivity', value: 'connectivity'},
+          {title: 'Out of range', value: 'range'},
+          {title: 'Fault', value: 'fault'}
+        ]
+      });
+    }
+
     if (!Object.hasOwn(forced, 'health_checks.occupant_impact')) {
       filters.push({
         key: 'health_checks.occupant_impact',
@@ -261,6 +294,43 @@ export function useHealthCheckFilters(forcedFilters) {
         return {field: 'metadata.location.zone', stringEqualFold: value === NO_ZONE ? '' : value};
       case 'metadata.membership.subsystem':
         return {field: 'metadata.membership.subsystem', stringEqualFold: value === NO_SUBSYSTEM ? '' : value};
+      case 'health_checks.issue_type': {
+        // Each option narrows to a single kind of issue on a single health check.
+        // A nested `matches` (matcher ANY) applies the sub-conditions to the same
+        // check, so e.g. "Fault" means the same check both is a faults check and is
+        // currently abnormal. Only converter-supported matchers are used here
+        // (present / string_in / matches); see ui/api/ui/devices.js.
+        const token = value?.value ?? value;
+        switch (token) {
+          case 'connectivity':
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'reliability.state', stringIn: {stringsList: RELIABILITY_FAILURE_STATES}}
+              ]}
+            };
+          case 'range':
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'bounds', present: {}},
+                {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITY_STATES}}
+              ]}
+            };
+          case 'fault':
+            // Faults present always implies ABNORMAL (health.proto), so the normality
+            // clause simply excludes a faults check whose fault list is currently empty.
+            return {
+              field: 'health_checks',
+              matches: {conditionsList: [
+                {field: 'faults', present: {}},
+                {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITY_STATES}}
+              ]}
+            };
+          default:
+            return null;
+        }
+      }
       case 'health_checks.occupant_impact': {
         const numVal = value?.value ?? value;
         const enumName = enumValueToName(HealthCheck.OccupantImpact, numVal);
