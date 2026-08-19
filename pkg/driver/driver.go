@@ -7,6 +7,7 @@ import (
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -16,6 +17,15 @@ type Services struct {
 	Logger          *zap.Logger
 	Node            *node.Node  // for advertising devices
 	ClientTLSConfig *tls.Config // for connecting to other smartcore nodes
+	// CloudCredential is the node's Smart Core Connect identity, for mTLS to the
+	// Connect API. Distinct from ClientTLSConfig, which is the cohort identity and
+	// will not authenticate to Connect.
+	//
+	// Nil when no cloud connection is configured, and always nil for a driver
+	// running inside a zone (pkg/zone/area does not thread it through). Drivers
+	// must degrade rather than fail when absent, and must expect
+	// GetClientCertificate to error while the node is not yet enrolled.
+	CloudCredential connect.Credential
 	HTTPMux         *http.ServeMux
 	Config          service.ConfigUpdater
 	Database        *bolthold.Store
