@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/smart-core-os/sc-bos/internal/cloud"
+	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 )
 
 const (
@@ -104,5 +105,24 @@ func TestCloudCredentialSource_noCloudConnection(t *testing.T) {
 	c := &Controller{}
 	if cred := c.cloudCredentialSource(); cred != nil {
 		t.Errorf("cloudCredentialSource() = %#v, want a nil interface", cred)
+	}
+}
+
+// TestCloudCredentialSource_noCloudConfig keeps the documented "no cloud
+// connection is configured" state reachable. initCloud builds a cloud.Conn
+// whichever way the config went, so a node with no cloud block has a non-nil
+// c.Cloud; only sysconf tells the two apart. Without this a driver would be
+// handed a credential that can never produce a certificate.
+func TestCloudCredentialSource_noCloudConfig(t *testing.T) {
+	c := &Controller{Cloud: &cloud.Conn{}}
+	c.SystemConfig.Cloud = nil
+
+	if cred := c.cloudCredentialSource(); cred != nil {
+		t.Errorf("cloudCredentialSource() = %#v, want a nil interface", cred)
+	}
+
+	c.SystemConfig.Cloud = &sysconf.Cloud{}
+	if cred := c.cloudCredentialSource(); cred == nil {
+		t.Error("cloudCredentialSource() with cloud configured = nil, want a credential")
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -17,6 +18,9 @@ type Services struct {
 	Node            *node.Node
 	Devices         *Devices
 	ClientTLSConfig *tls.Config // for connecting to other smartcore nodes
+	// CloudCredential is the node's Smart Core Connect identity, passed on to any
+	// drivers the zone hosts. See driver.Services.CloudCredential.
+	CloudCredential connect.Credential
 	HTTPMux         *http.ServeMux
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks

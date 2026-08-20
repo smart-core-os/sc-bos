@@ -28,12 +28,17 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
-// cloudCredentialSource returns the node's Connect credential for drivers and
-// automations, or nil when no cloud connection is configured. The returned
-// Credential reads the connection state per call, so it follows certificate
-// renewals and enrollment on a node that enrols after start-up.
+// cloudCredentialSource returns the node's Connect credential for drivers,
+// automations and zones, or nil when no cloud connection is configured. The
+// returned Credential reads the connection state per call, so it follows
+// certificate renewals and enrollment on a node that enrols after start-up.
+//
+// The test is on the config, not the connection: initCloud builds a cloud.Conn
+// whether or not a cloud block was configured, so c.Cloud alone would never be
+// nil and the documented "not configured" state would be unreachable. Compare
+// the same test guarding the poll loop in Controller.Run.
 func (c *Controller) cloudCredentialSource() connect.Credential {
-	if c.Cloud == nil {
+	if c.SystemConfig.Cloud == nil || c.Cloud == nil {
 		return nil // plain nil, not a typed nil: callers nil-check the interface
 	}
 	return cloudCredential{state: c.Cloud.State}
@@ -203,6 +208,7 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		Logger:          c.Logger.Named("zone"),
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		HTTPMux:         c.Mux,
 		DriverFactories: c.SystemConfig.DriverFactories,
 	}
