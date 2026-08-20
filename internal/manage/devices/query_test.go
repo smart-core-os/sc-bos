@@ -219,13 +219,15 @@ func TestRangeValuesOptions_RangeMessage(t *testing.T) {
 		newValueCase("r_result.result", resultFd("result"), m.RResult[0].Result, m.RResult[1].Result),
 		newValueCase("r_result[0]", resultFd("r_result"), m.RResult[0]),
 		newValueCase("r_result[0].result", resultFd("result"), m.RResult[0].Result),
+		// numbers have no presence, so a zero resolves like any other value
+		{path: "r_result[2].int32_val", wantVals: []value{{resultFd("int32_val"), protoreflect.ValueOfInt32(0)}}},
+		{path: "r_result[2].double_val", wantVals: []value{{resultFd("double_val"), protoreflect.ValueOfFloat64(0)}}},
 	}...)
 
 	// tests for when path doesn't match any value, return empty iterator
 	for _, path := range []string{
 		// value doesn't exist, or is default
 		"r_result[2].bool_val",
-		"r_result[2].int32_val",
 		"r_result[2].string_val",
 		"r_result[2].timestamp_val",
 		"m_string_range.c.bool_val",
@@ -1098,4 +1100,67 @@ func Example_anyOfMatchesAbnormalOrUnreliable() {
 	//   Device01 matches: false
 	//   Device02 matches: true
 	//   Device03 matches: true
+}
+
+func Example_deviationThresholds() {
+	// in range, so nothing to measure
+	device01 := &devicespb.Device{
+		Name: "Device01",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Temperature", Normality: healthpb.HealthCheck_NORMAL, Deviation: 0},
+		},
+	}
+	// just outside its expected range
+	device02 := &devicespb.Device{
+		Name: "Device02",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Temperature", Normality: healthpb.HealthCheck_HIGH, Deviation: 0.05},
+		},
+	}
+	// well outside its expected range
+	device03 := &devicespb.Device{
+		Name: "Device03",
+		HealthChecks: []*healthpb.HealthCheck{
+			{Id: "Temperature", Normality: healthpb.HealthCheck_HIGH, Deviation: 0.8},
+		},
+	}
+
+	// hide the minor excursions a dashboard doesn't want to show
+	significantQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
+			{
+				Field: "health_checks.deviation",
+				Value: &devicespb.Device_Query_Condition_FloatGte{FloatGte: 0.1},
+			},
+		},
+	}
+	fmt.Println("Devices deviating by 10% or more:")
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
+		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(significantQuery, device))
+	}
+
+	// numbers have no presence, so a check with nothing to measure still
+	// compares as the zero it reports rather than dropping out of the query
+	withinToleranceQuery := &devicespb.Device_Query{
+		Conditions: []*devicespb.Device_Query_Condition{
+			{
+				Field: "health_checks.deviation",
+				Value: &devicespb.Device_Query_Condition_FloatLte{FloatLte: 0.1},
+			},
+		},
+	}
+	fmt.Println("Devices deviating by 10% or less:")
+	for _, device := range []*devicespb.Device{device01, device02, device03} {
+		fmt.Printf("  %s matches: %v\n", device.Name, deviceMatchesQuery(withinToleranceQuery, device))
+	}
+
+	// Output:
+	// Devices deviating by 10% or more:
+	//   Device01 matches: false
+	//   Device02 matches: false
+	//   Device03 matches: true
+	// Devices deviating by 10% or less:
+	//   Device01 matches: true
+	//   Device02 matches: true
+	//   Device03 matches: false
 }

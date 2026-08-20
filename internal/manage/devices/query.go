@@ -443,7 +443,7 @@ func (opts rangeValuesOptions) scanMessage(path []pathSegment, msg protoreflect.
 	}
 
 	v := msg.Get(fd)
-	if v.Equal(fd.Default()) {
+	if v.Equal(fd.Default()) && !isNumericScalar(fd) {
 		return emptyValues // field exists but has no value
 	}
 
@@ -674,6 +674,30 @@ func isLeaf(fd protoreflect.FieldDescriptor) bool {
 	return true // all other types are scalars, aka leafs
 }
 
+// isNumericKind returns true if fd holds a number that can be compared numerically.
+// Enums are excluded: their numeric value is an encoding detail, they are compared
+// by name via toString.
+func isNumericKind(fd protoreflect.FieldDescriptor) bool {
+	switch fd.Kind() {
+	case protoreflect.FloatKind, protoreflect.DoubleKind,
+		protoreflect.Int32Kind, protoreflect.Int64Kind,
+		protoreflect.Sint32Kind, protoreflect.Sint64Kind,
+		protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind,
+		protoreflect.Uint32Kind, protoreflect.Uint64Kind,
+		protoreflect.Fixed32Kind, protoreflect.Fixed64Kind:
+		return true
+	default:
+		return false
+	}
+}
+
+// isNumericScalar returns true if fd is a single number, one whose proto3 default
+// of 0 is a measurement rather than an absent value. Scans keep those zeros so that
+// less-than comparisons can see them; every other kind treats its default as unset.
+func isNumericScalar(fd protoreflect.FieldDescriptor) bool {
+	return !fd.IsList() && !fd.IsMap() && isNumericKind(fd)
+}
+
 // toString converts the value into a string ready for comparison to another string.
 // Unlike l.v.String() this converts enum values to their enum name where available,
 // otherwise converts them to a string representation of the enum number.
@@ -724,25 +748,19 @@ func (v value) toString() (string, bool) {
 	}
 }
 
-// toFloat converts the value into a float64 if it holds a number.
-// Enums are excluded: their numeric value is an encoding detail, and they are
-// compared by name via toString.
+// toFloat converts the value into a float64 if it holds a number, see isNumericKind.
 func (v value) toFloat() (float64, bool) {
-	if v.fd == nil {
+	if v.fd == nil || !isNumericKind(v.fd) {
 		return 0, false
 	}
 	switch v.fd.Kind() {
 	case protoreflect.FloatKind, protoreflect.DoubleKind:
 		return v.v.Float(), true
-	case protoreflect.Int32Kind, protoreflect.Int64Kind,
-		protoreflect.Sint32Kind, protoreflect.Sint64Kind,
-		protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
-		return float64(v.v.Int()), true
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind,
 		protoreflect.Fixed32Kind, protoreflect.Fixed64Kind:
 		return float64(v.v.Uint()), true
 	default:
-		return 0, false
+		return float64(v.v.Int()), true
 	}
 }
 
