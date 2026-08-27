@@ -1,4 +1,4 @@
-name: UI Lint
+name: UI Checks
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
 jobs:
   ui_job:
     runs-on: ubuntu-latest
-    name: UI Lint
+    name: UI Checks
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +48,12 @@ jobs:
           for dir in $(jq -r '.workspaces[]' package.json); do
             echo "Linting $dir..."
             yarn --cwd "$dir" lint:nofix
-            echo 
+            echo
           done
+
+      # Only ops has a test suite today. Add further workspaces here as they gain one, rather
+      # than looping over package.json workspaces — the others have no test script to run.
+      - name: Run tests
+        working-directory: ui
+        run: yarn --cwd ops test:run
 
