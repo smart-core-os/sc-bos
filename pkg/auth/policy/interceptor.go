@@ -226,9 +226,9 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 	}
 	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
 	if isWriteMethod(method) && !isAuditExcluded(service, method) && !stream.Open {
-		outcome := "allowed"
+		outcome := outcomeAllowed
 		if err != nil {
-			outcome = "denied"
+			outcome = outcomeDenied
 		}
 		i.writeAuditEntry(outcome, creds, addr,
 			auditField{"service", service},
@@ -283,9 +283,9 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	if isHTTPWriteMethod(r.Method) {
-		outcome := "allowed"
+		outcome := outcomeAllowed
 		if err != nil {
-			outcome = "denied"
+			outcome = outcomeDenied
 		}
 		i.writeAuditEntry(outcome, creds, addr,
 			auditField{"path", r.URL.Path},
@@ -293,6 +293,69 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	return creds, err
+}
+
+// AuditClientConn wraps cc so that write RPCs issued through it are audited.
+//
+// In-process calls originate from a loopback connection and never pass through the gRPC server
+// interceptor chain, so this is their only audit point. External traffic reaches routed services
+// via a different path (the server's unknown-service handler), so wrapping a loopback conn here
+// does not double-audit anything.
+//
+// No principal is known for an in-process call, so entries carry no subject, certificate or token.
+// Returns cc unchanged when no audit sink is configured.
+func (i *Interceptor) AuditClientConn(cc grpc.ClientConnInterface) grpc.ClientConnInterface {
+	if i == nil || i.auditQueue == nil {
+		return cc
+	}
+	return &auditingClientConn{ClientConnInterface: cc, i: i}
+}
+
+// auditingClientConn writes an audit entry for each write RPC sent through it.
+type auditingClientConn struct {
+	grpc.ClientConnInterface
+	i *Interceptor
+}
+
+func (c *auditingClientConn) Invoke(ctx context.Context, method string, args, reply any, opts ...grpc.CallOption) error {
+	err := c.ClientConnInterface.Invoke(ctx, method, args, reply, opts...)
+	c.audit(method, err)
+	return err
+}
+
+// NewStream audits at stream open. isWriteMethod filters out the Pull* streams that make up
+// almost all in-process stream traffic, so this rarely records anything, but it stops streaming
+// writes being a blind spot.
+func (c *auditingClientConn) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	stream, err := c.ClientConnInterface.NewStream(ctx, desc, method, opts...)
+	c.audit(method, err)
+	return stream, err
+}
+
+// audit records the outcome of an in-process call to method, if it is an audited write.
+// method is a full gRPC method path, e.g. "/smartcore.bos.udmi.v1.UdmiService/OnMessage".
+func (c *auditingClientConn) audit(method string, err error) {
+	// This runs on every in-process call and nearly all of them are reads, so reject those with a
+	// byte scan before paying for the regex-backed split.
+	slash := strings.LastIndexByte(method, '/')
+	if slash < 0 || !isWriteMethod(method[slash+1:]) {
+		return
+	}
+	service, name, ok := rpcutil.SplitMethodPath(method)
+	if !ok || isAuditExcluded(service, name) {
+		return
+	}
+	// Unlike the server interceptor there is no policy decision to report, so the outcome
+	// describes whether the call itself succeeded.
+	outcome := outcomeOK
+	if err != nil {
+		outcome = outcomeFailed
+	}
+	c.i.writeAuditEntry(outcome, nil, loopback,
+		auditField{"service", service},
+		auditField{"method", name},
+		auditField{"ingress", loopback},
+	)
 }
 
 type InterceptorOption func(interceptor *Interceptor)
@@ -358,6 +421,20 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 	return r.TLS.VerifiedChains[0][0]
 }
 
+// Audit entry outcomes. allowed/denied report a policy decision and are used for calls that
+// pass through the server interceptors. ok/failed report the result of the call itself and are
+// used for in-process calls, where no policy is evaluated.
+const (
+	outcomeAllowed = "allowed"
+	outcomeDenied  = "denied"
+	outcomeOK      = "ok"
+	outcomeFailed  = "failed"
+)
+
+// loopback is the ingress of an audit entry for an in-process call, and stands in for its peer
+// address, which does not exist. It lets consumers tell machine-originated writes from human ones.
+const loopback = "loopback"
+
 // auditField is a protocol-specific key/value pair appended to every audit entry.
 type auditField struct {
 	key   string
@@ -407,7 +484,7 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 // Called only from the background worker goroutine.
 func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 	lvl := logpb.Level_LEVEL_INFO
-	if rec.outcome == "denied" {
+	if rec.outcome == outcomeDenied || rec.outcome == outcomeFailed {
 		lvl = logpb.Level_LEVEL_WARN
 	}
 	fields := make(map[string]string, 7+len(rec.extra))
