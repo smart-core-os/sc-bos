@@ -7,8 +7,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
-// DefaultHeartbeatInterval is how long a pointset event topic may stay quiet before
-// the auto asks the source for a current message.
+// DefaultHeartbeatInterval is how long a source may stay quiet before the auto
+// asks it for a current message to publish.
 const DefaultHeartbeatInterval = 4 * time.Hour
 
 // DefaultMinSendInterval is the shortest time allowed between two publishes on the
@@ -41,12 +41,17 @@ type Root struct {
 	// unset, preserving the previous single-QoS behaviour.
 	StateQoS byte `json:"stateQos,omitempty"`
 	// HeartbeatInterval is the longest a source may go without publishing a pointset
-	// event. Once a source has been quiet for this long the auto asks it for a current
-	// message via UdmiService.GetExportMessage and publishes that, so consumers can
-	// tell a stable device from a dead one. Sources only emit on change, so a device
-	// whose readings never move is otherwise silent indefinitely. Nothing is replayed
-	// or restamped: a source with nothing to report answers Unavailable and the auto
-	// stays silent, and one that answers Unimplemented is not heartbeated at all.
+	// event. Once it has been quiet for this long it is asked, via GetExportMessage,
+	// for a current message to publish, so consumers can tell a stable device from a
+	// dead one. Sources only emit on change, so a device whose readings never move is
+	// otherwise silent indefinitely.
+	//
+	// The message published is one the source collected and stamped itself; the auto
+	// never replays or restamps. A source that cannot produce one answers Unavailable
+	// and nothing is published, so silence still means dead. A source that doesn't
+	// implement GetExportMessage at all answers Unimplemented, which disarms its
+	// heartbeat for the lifetime of the auto.
+	//
 	// Defaults to 4h; set "0s" to disable.
 	HeartbeatInterval *jsontypes.Duration `json:"heartbeatInterval,omitempty,omitzero"`
 	// MinSendInterval is the shortest time allowed between two publishes on the same
