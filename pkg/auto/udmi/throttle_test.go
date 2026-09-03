@@ -234,6 +234,39 @@ func TestThrottle_HeartbeatStillFiresWhenNothingHeld(t *testing.T) {
 	})
 }
 
+// The deployed configuration for a site that wants change-driven publishing paced
+// to a fixed floor, with the heartbeat left as a slow liveness ping: an asset whose
+// data doesn't change publishes nothing at the floor's boundaries, and is only
+// heard from again when the heartbeat comes round. The floor caps how often a
+// change may be reported; it never manufactures a report of its own.
+func TestThrottle_QuietAssetWaitsForTheHeartbeatNotTheFloor(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const hbInterval = 30 * time.Minute
+		h := newHarnessWith(t, hbInterval, testMinSend)
+
+		// Restart: the first payload publishes on arrival, no floor to wait out.
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		// Five floor intervals pass with no change from the asset, stopping short of
+		// the heartbeat. The floor is a ceiling on rate, not a sample clock, so none
+		// of them publish.
+		for range 5 {
+			h.advance(testMinSend)
+			h.assertTopics()
+		}
+
+		// The heartbeat is what breaks the silence, asking the source for a reading.
+		beat := pointset(23)
+		h.get.answerWith(eventTopic, beat)
+		h.advance(hbInterval - 5*testMinSend)
+		pubs := h.assertTopics(eventTopic)
+		if pubs[0].payload != beat {
+			t.Errorf("published %s, want the heartbeat's reading %s", pubs[0].payload, beat)
+		}
+	})
+}
+
 // Setting minSendInterval and heartbeatInterval to the same value turns the pair
 // into a metronome: the floor bounds a chatty device and the heartbeat covers a
 // quiet one, so a topic publishes exactly once per interval either way. This is
