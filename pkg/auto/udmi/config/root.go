@@ -7,8 +7,8 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
-// DefaultHeartbeatInterval is how long a pointset event topic may stay quiet before
-// the auto republishes its last message.
+// DefaultHeartbeatInterval is how long a source may stay quiet before the auto
+// asks it for a current message to publish.
 const DefaultHeartbeatInterval = 4 * time.Hour
 
 // DefaultMinSendInterval is the shortest time allowed between two publishes on the
@@ -40,11 +40,19 @@ type Root struct {
 	// (everything that is not an event topic). Defaults to 0 (matching QoS) when
 	// unset, preserving the previous single-QoS behaviour.
 	StateQoS byte `json:"stateQos,omitempty"`
-	// HeartbeatInterval is the longest a pointset event topic may go without a publish.
-	// Once a topic has been quiet for this long its last message is republished, with
-	// the timestamp refreshed, so consumers can tell a stable device from a dead one.
-	// Sources only emit on change, so a device whose readings never move is otherwise
-	// silent indefinitely. Defaults to 4h; set "0s" to disable.
+	// HeartbeatInterval is the longest a source may go without publishing a pointset
+	// event. Once it has been quiet for this long it is asked, via GetExportMessage,
+	// for a current message to publish, so consumers can tell a stable device from a
+	// dead one. Sources only emit on change, so a device whose readings never move is
+	// otherwise silent indefinitely.
+	//
+	// The message published is one the source collected and stamped itself; the auto
+	// never replays or restamps. A source that cannot produce one answers Unavailable
+	// and nothing is published, so silence still means dead. A source that doesn't
+	// implement GetExportMessage at all answers Unimplemented, which disarms its
+	// heartbeat for the lifetime of the auto.
+	//
+	// Defaults to 4h; set "0s" to disable.
 	HeartbeatInterval *jsontypes.Duration `json:"heartbeatInterval,omitempty,omitzero"`
 	// MinSendInterval is the shortest time allowed between two publishes on the same
 	// pointset event topic: a rate limit for chatty devices. Sources emit on every

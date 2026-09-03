@@ -28,7 +28,13 @@ It defaults to `0`, which is off. Some details worth knowing:
 - A released payload keeps the `timestamp` the source gave it. The reading was taken when it was reported, possibly most of an interval ago, and restamping it would misreport when it was observed.
 - This is a floor on publishing, not a change-of-value deadband. It bounds how often a value may be reported, not how far it must move to be worth reporting, so a point that drifts by a hair still publishes once per interval.
 - It applies to pointset event topics only. State and metadata are rare, retained, and describe the device rather than sampling it, so they publish on arrival.
-- Set it below `heartbeatInterval`, or the intervals no longer mean what they say. A heartbeat's reply is a sample like any other and goes through the floor too, so it can't breach `minSendInterval`; if one arrives while a payload is held, the fresher reading supersedes the held one.
+- Don't set it above `heartbeatInterval`, or the intervals no longer mean what they say. A heartbeat's reply is a sample like any other and goes through the floor too, so it can't breach `minSendInterval`; if one arrives while a payload is held, the fresher reading supersedes the held one.
+
+### Bounding a chatty site to a fixed rate
+
+`minSendInterval` on its own is a floor, not a metronome: it caps how often a topic *may* publish, and a device whose readings settle simply stops publishing until its heartbeat comes round. For the assets this setting is aimed at — meters, and anything polled on a short period whose value never quite settles — that distinction doesn't arise, because there is always a held payload waiting when the interval expires. Setting `minSendInterval` to `5m` moves such a device from a publish every 10s to one every 5m and keeps it there.
+
+Where a *guaranteed* sample every interval is the requirement, set `heartbeatInterval` to the same value as `minSendInterval`. The floor then bounds the chatty devices and the heartbeat fills in for the quiet ones, giving one publish per interval per topic either way. This is the one case where the two being equal is deliberate rather than a misconfiguration. It only holds for sources that implement `GetExportMessage`, though: Steinel HPD and Xovis answer `Unimplemented`, so a quiet device on those drivers stays quiet whatever the intervals say.
 
 ```json
 {

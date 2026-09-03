@@ -234,6 +234,45 @@ func TestThrottle_HeartbeatStillFiresWhenNothingHeld(t *testing.T) {
 	})
 }
 
+// Setting minSendInterval and heartbeatInterval to the same value turns the pair
+// into a metronome: the floor bounds a chatty device and the heartbeat covers a
+// quiet one, so a topic publishes exactly once per interval either way. This is
+// the configuration for a site that wants a fixed sample rate rather than just a
+// cap, so it's worth pinning both halves.
+func TestThrottle_EqualIntervalsGiveAFixedRate(t *testing.T) {
+	t.Run("chatty device is bounded by the floor", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			h := newHarnessWith(t, testMinSend, testMinSend)
+			h.send(eventTopic, pointset(21.5))
+			h.assertTopics(eventTopic)
+
+			// Four intervals of changes every 10s: one publish per interval, no more.
+			for i := range 4 {
+				for range 30 {
+					h.advance(10 * time.Second)
+					h.send(eventTopic, pointset(22+float64(i)))
+				}
+				h.assertTopics(eventTopic)
+			}
+		})
+	})
+	t.Run("quiet device is covered by the heartbeat", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			h := newHarnessWith(t, testMinSend, testMinSend)
+			h.send(eventTopic, pointset(21.5))
+			h.assertTopics(eventTopic)
+
+			// Nothing arrives on changes at all, so every publish is a heartbeat's
+			// reply — and the floor never suppresses one, since the interval has
+			// always just expired when it fires.
+			for range 4 {
+				h.advance(testMinSend)
+				h.assertTopics(eventTopic)
+			}
+		})
+	})
+}
+
 // A heartbeat is a publish on the topic, so it starts a fresh send interval
 // rather than letting a change arrive on its heels.
 func TestThrottle_HeartbeatResetsTheFloor(t *testing.T) {
