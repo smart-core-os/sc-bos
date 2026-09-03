@@ -113,11 +113,20 @@ type harness struct {
 	get       *testGetter
 	collector *exportCollector
 	hb        *heartbeat
+	th        *throttle
 	done      chan error
 	cancel    context.CancelFunc
 }
 
+// newHarness runs handleMessages with only the heartbeat active; the minimum send
+// interval is off, so every message publishes on arrival.
 func newHarness(t *testing.T, interval time.Duration) *harness {
+	return newHarnessWith(t, interval, 0)
+}
+
+// newHarnessWith runs handleMessages with both paces configured. Either interval
+// may be zero to disable that half.
+func newHarnessWith(t *testing.T, hbInterval, minSend time.Duration) *harness {
 	t.Helper()
 	get := &testGetter{}
 	// By default the source is healthy and collects a fresh reading on demand,
@@ -131,7 +140,8 @@ func newHarness(t *testing.T, interval time.Duration) *harness {
 		pub:       &testPublisher{},
 		get:       get,
 		collector: newExportCollector(time.Now),
-		hb:        newHeartbeat(interval, zap.NewNop()),
+		hb:        newHeartbeat(hbInterval, zap.NewNop()),
+		th:        newThrottle(minSend),
 	}
 	h.start()
 	t.Cleanup(func() {
@@ -151,7 +161,7 @@ func (h *harness) start() {
 	h.done = done
 	changes := h.changes
 	go func() {
-		done <- handleMessages(ctx, "test-device", h.get, changes, h.pub, h.collector, h.hb)
+		done <- handleMessages(ctx, "test-device", h.get, changes, h.pub, h.collector, h.hb, h.th)
 	}()
 	synctest.Wait()
 }
