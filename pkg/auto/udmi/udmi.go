@@ -64,6 +64,9 @@ func validateConfig(cfg config.Root) error {
 	if hb := cfg.HeartbeatInterval.Or(config.DefaultHeartbeatInterval); hb < 0 {
 		return fmt.Errorf("invalid heartbeatInterval %v: must not be negative", hb)
 	}
+	if minSend := cfg.MinSendInterval.Or(config.DefaultMinSendInterval); minSend < 0 {
+		return fmt.Errorf("invalid minSendInterval %v: must not be negative", minSend)
+	}
 	return nil
 }
 
@@ -71,7 +74,10 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	if err := validateConfig(cfg); err != nil {
 		return err
 	}
-	hbInterval := cfg.HeartbeatInterval.Or(config.DefaultHeartbeatInterval)
+	pace := cadence{
+		heartbeat: cfg.HeartbeatInterval.Or(config.DefaultHeartbeatInterval),
+		minSend:   cfg.MinSendInterval.Or(config.DefaultMinSendInterval),
+	}
 
 	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
@@ -104,7 +110,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	var tasks namedTasks
 	pullFrom := func(name string) {
 		logger := e.services.Logger.With(zap.String("name", name))
-		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector, hbInterval),
+		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector, pace),
 			task.WithRetry(task.RetryUnlimited), task.WithBackoff(time.Millisecond*100, time.Second*10))
 		if errors.Is(err, ErrAlreadyRunning) {
 			// cool, I guess someone else beat us to it

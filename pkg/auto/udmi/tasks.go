@@ -15,17 +15,26 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
+// cadence bounds how often the auto publishes pointset events: minSend is the
+// floor between two publishes on the same topic, heartbeat the ceiling on how
+// long a whole source may stay silent. Either is disabled by a value of zero or
+// less.
+type cadence struct {
+	minSend   time.Duration
+	heartbeat time.Duration
+}
+
 // tasksForSource returns an array of tasks to run for each UdmiService source/name
 // all of these need to be run for the implementation to work.
-// hbInterval is how long a source may stay quiet before it is asked for a
-// current message to publish; zero or less disables that.
-func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub, collector *exportCollector, hbInterval time.Duration) []task.Task {
+func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub, collector *exportCollector, pace cadence) []task.Task {
 	var tasks []task.Task
 
-	// Built out here, not inside the task below, so the quiet-since deadline
-	// survives the task being retried after a publish error, and a retry resumes
-	// the countdown rather than restarting it.
-	hb := newHeartbeat(hbInterval, logger)
+	// Built out here, not inside the task below, so the deadlines and held payloads
+	// survive the task being retried after a publish error: hb's countdown resumes
+	// rather than restarting, and th keeps a payload it is holding. The source
+	// dedupes, so anything we forget it will never send again.
+	hb := newHeartbeat(pace.heartbeat, logger)
+	th := newThrottle(pace.minSend)
 
 	tasks = append(tasks, func(ctx context.Context) (task.Next, error) {
 		logger.Debug("subscribing")
@@ -49,7 +58,7 @@ func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceCl
 			return pullMessages(ctx, name, logger, client, messageChanges)
 		})
 		grp.Go(func() error {
-			return handleMessages(ctx, name, client, messageChanges, pubsub.Publisher, collector, hb)
+			return handleMessages(ctx, name, client, messageChanges, pubsub.Publisher, collector, hb, th)
 		})
 		err := grp.Wait() // this waits for all go routines to finish, so we are safe to then close the channel
 		return task.Normal, err
@@ -126,37 +135,40 @@ func pullMessages(ctx context.Context, name string, logger *zap.Logger, client u
 // handleMessages waits for messages on the given channel and sends them to the publisher
 // ultimately these end up getting sent as MQTT messages. Each message is also offered to
 // the collector (when non-nil), which keeps the pointset events for the points list export.
-// Between messages it runs hb's timer: once the source has been quiet for longer than the
-// heartbeat interval it is asked, via GetExportMessage, for a current message to publish.
-func handleMessages(ctx context.Context, name string, client exportMessageGetter, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector, hb *heartbeat) error {
-	// The nil channel is what disables the heartbeat arm of the select: until a
-	// pointset event has been seen there's nothing to keep alive, and beat is never ready.
-	var timer *time.Timer
-	var beat <-chan time.Time
-	stopTimer := func() {
-		if timer != nil {
-			timer.Stop()
-			timer = nil
-			beat = nil
-		}
+// Between messages it runs the timers that pace publishing: once the source has been
+// quiet for longer than the heartbeat interval hb has it asked, via GetExportMessage,
+// for a current message to publish, and th releases a payload it held back to keep a
+// chatty topic inside its minimum send interval.
+func handleMessages(ctx context.Context, name string, client exportMessageGetter, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector, hb *heartbeat, th *throttle) error {
+	var beat, release deadlineTimer
+	defer beat.stop()
+	defer release.stop()
+	armTimers := func() {
+		now := time.Now()
+		beat.arm(hb.wait(now))
+		release.arm(th.wait(now))
 	}
-	defer stopTimer()
-	armTimer := func() {
-		d, ok := hb.wait(time.Now())
-		if !ok {
-			stopTimer()
-			return
+	// Arm before the first receive: on a task retry hb and th already hold deadlines
+	// from the previous run, and they must keep running rather than restart.
+	armTimers()
+
+	// publish sends a sample the source handed us — straight through, after being held,
+	// or in answer to a heartbeat — and records it against everything that tracks what
+	// the broker has actually seen, so none of them count a failed write as a publish.
+	// Every arm below publishes through here; only their error handling differs.
+	publish := func(topic, payload string, now time.Time) error {
+		if err := publisher.Publish(ctx, topic, payload); err != nil {
+			return err
 		}
-		if timer == nil {
-			timer = time.NewTimer(d)
-			beat = timer.C
-			return
+		// Record only after a successful publish so the export reflects what was actually
+		// sent to the broker rather than what we tried to send.
+		if collector != nil {
+			collector.Record(name, topic, payload)
 		}
-		timer.Reset(d) // go1.23+ timers never deliver a stale tick, so no drain needed
+		hb.record(topic, now)
+		th.sent(topic, now)
+		return nil
 	}
-	// Arm before the first receive: on a task retry hb already holds a deadline from
-	// the previous run, and it must keep running rather than restart.
-	armTimer()
 
 	for {
 		select {
@@ -169,17 +181,16 @@ func handleMessages(ctx context.Context, name string, client exportMessageGetter
 			if change.Message == nil {
 				continue
 			}
-			err := publisher.Publish(ctx, change.Message.Topic, change.Message.Payload)
-			if err != nil {
-				return err
+			now := time.Now()
+			topic, payload := change.Message.Topic, change.Message.Payload
+			// A held payload is published by the release arm below once the topic's
+			// interval expires, so nothing is recorded for it here: it hasn't been sent.
+			if !th.hold(topic, payload, now) {
+				if err := publish(topic, payload, now); err != nil {
+					return err
+				}
 			}
-			// Record only after a successful publish so the export reflects what was actually
-			// sent to the broker rather than what we tried to send.
-			if collector != nil {
-				collector.Record(name, change.Message.Topic, change.Message.Payload)
-			}
-			hb.record(change.Message.Topic, time.Now())
-		case now := <-beat:
+		case now := <-beat.c:
 			if !hb.due(now) {
 				break
 			}
@@ -213,19 +224,62 @@ func handleMessages(ctx context.Context, name string, client exportMessageGetter
 			if msg == nil || !isPointsetEventTopic(msg.Topic) {
 				break
 			}
-			if err := publisher.Publish(ctx, msg.Topic, msg.Payload); err != nil {
-				if ctx.Err() != nil {
-					return ctx.Err()
+			// The reply is a live sample like any other, so it goes through the floor:
+			// a heartbeat can't breach minSendInterval, and arriving while a payload is
+			// held it supersedes it, being the fresher of the two.
+			if !th.hold(msg.Topic, msg.Payload, now) {
+				if err := publish(msg.Topic, msg.Payload, now); err != nil {
+					if ctx.Err() != nil {
+						return ctx.Err()
+					}
+					// Unlike a live message, a missed heartbeat isn't worth tearing down a
+					// working subscription for; the next one will retry.
+					hb.logger.Warn("unable to publish heartbeat",
+						zap.String("topic", msg.Topic), zap.Error(err))
 				}
-				hb.logger.Warn("unable to publish heartbeat",
-					zap.String("topic", msg.Topic), zap.Error(err))
-				break
 			}
-			if collector != nil {
-				collector.Record(name, msg.Topic, msg.Payload)
+		case now := <-release.c:
+			// A released payload is a live sample the source has already handed us, so a
+			// failed publish is treated exactly as one arriving on changes would be: tear
+			// the task down and retry. th.sent is only called on success, so the payload
+			// stays held for the next run rather than being lost here.
+			for _, msg := range th.due(now) {
+				if err := publish(msg.topic, msg.payload, now); err != nil {
+					return err
+				}
 			}
-			hb.record(msg.Topic, time.Now())
 		}
-		armTimer()
+		armTimers()
+	}
+}
+
+// deadlineTimer is a timer whose select arm disappears when there's nothing to
+// wait for. A nil channel is never ready to receive, so leaving c nil disables
+// the arm rather than needing a flag at every use.
+type deadlineTimer struct {
+	timer *time.Timer
+	c     <-chan time.Time
+}
+
+// arm sets the timer to fire in d, or disarms it when ok is false. The arguments
+// are the results of a heartbeat.wait / throttle.wait call.
+func (t *deadlineTimer) arm(d time.Duration, ok bool) {
+	if !ok {
+		t.stop()
+		return
+	}
+	if t.timer == nil {
+		t.timer = time.NewTimer(d)
+		t.c = t.timer.C
+		return
+	}
+	t.timer.Reset(d) // go1.23+ timers never deliver a stale tick, so no drain needed
+}
+
+func (t *deadlineTimer) stop() {
+	if t.timer != nil {
+		t.timer.Stop()
+		t.timer = nil
+		t.c = nil
 	}
 }

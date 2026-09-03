@@ -124,7 +124,7 @@ func TestHandleMessages_RecordsToCollector(t *testing.T) {
 
 	// A zero interval disables the heartbeat, so this exercises collection alone.
 	hb := newHeartbeat(0, zap.NewNop())
-	if err := handleMessages(context.Background(), "dev", &testGetter{}, changes, pub, c, hb); err != nil {
+	if err := handleMessages(context.Background(), "dev", &testGetter{}, changes, pub, c, hb, newThrottle(0)); err != nil {
 		t.Fatalf("handleMessages: %v", err)
 	}
 	if published != 2 {

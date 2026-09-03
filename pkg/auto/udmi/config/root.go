@@ -11,6 +11,11 @@ import (
 // the auto republishes its last message.
 const DefaultHeartbeatInterval = 4 * time.Hour
 
+// DefaultMinSendInterval is the shortest time allowed between two publishes on the
+// same pointset event topic. Zero leaves the floor off, so every change a source
+// reports is published, which is the behaviour predating the setting.
+const DefaultMinSendInterval time.Duration = 0
+
 type Root struct {
 	auto.Config
 
@@ -41,4 +46,18 @@ type Root struct {
 	// Sources only emit on change, so a device whose readings never move is otherwise
 	// silent indefinitely. Defaults to 4h; set "0s" to disable.
 	HeartbeatInterval *jsontypes.Duration `json:"heartbeatInterval,omitempty,omitzero"`
+	// MinSendInterval is the shortest time allowed between two publishes on the same
+	// pointset event topic: a rate limit for chatty devices. Sources emit on every
+	// change they observe, so a device polled every 10s whose readings never settle
+	// publishes every 10s, indefinitely.
+	//
+	// A change arriving inside the interval isn't dropped, it's held: the newest held
+	// payload for the topic is published as soon as the interval expires, so consumers
+	// see the current value at a bounded rate. Intermediate values are lost, which is
+	// what a rate limit means — don't set this on a topic whose every sample matters.
+	//
+	// This is a floor on publishing, not a change-of-value deadband: it bounds how
+	// often a value can be reported, not how much it must move to be worth reporting.
+	// Defaults to 0, which is off.
+	MinSendInterval *jsontypes.Duration `json:"minSendInterval,omitempty,omitzero"`
 }
