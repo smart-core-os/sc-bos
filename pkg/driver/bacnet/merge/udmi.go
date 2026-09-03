@@ -293,6 +293,15 @@ func (f *udmiMerge) GetExportMessage(ctx context.Context, request *udmipb.GetExp
 			return nil, ctx.Err()
 		default:
 		}
+		// No fresh event within the timeout, so fall back to the last snapshot — but
+		// only if we're still reaching the device. pollPeer leaves f.points intact when
+		// every read fails (see its allFailed return), so without this an unreachable
+		// device would keep answering with values it can no longer confirm, stamped now
+		// by pointsToPointSet. operational is swapped on every poll regardless of
+		// EmitStateMetadata; only sendState is gated on that.
+		if !f.operational.Load() {
+			return nil, status.Error(codes.Unavailable, "device not operational")
+		}
 		f.pointsLock.Lock()
 		points := f.points
 		f.pointsLock.Unlock()
