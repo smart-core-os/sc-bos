@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
@@ -63,24 +66,72 @@ func (p *testPublisher) failWith(err error) {
 	p.err = err
 }
 
+// testGetter stands in for the source's UdmiServiceClient, answering
+// GetExportMessage with whatever the test has set and counting the calls.
+type testGetter struct {
+	mu    sync.Mutex
+	reply func() (*udmipb.MqttMessage, error)
+	calls int
+}
+
+func (g *testGetter) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageRequest, _ ...grpc.CallOption) (*udmipb.MqttMessage, error) {
+	g.mu.Lock()
+	reply := g.reply
+	g.calls++
+	g.mu.Unlock()
+	return reply()
+}
+
+// answerWith makes the source return the given message, as a driver that
+// collected a reading on demand would.
+func (g *testGetter) answerWith(topic, payload string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.reply = func() (*udmipb.MqttMessage, error) {
+		return &udmipb.MqttMessage{Topic: topic, Payload: payload}, nil
+	}
+}
+
+func (g *testGetter) failWith(err error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.reply = func() (*udmipb.MqttMessage, error) { return nil, err }
+}
+
+func (g *testGetter) callCount() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.calls
+}
+
 // harness runs handleMessages inside a synctest bubble, feeding it messages and
 // advancing the fake clock.
 type harness struct {
-	t       *testing.T
-	changes chan *udmipb.PullExportMessagesResponse
-	pub     *testPublisher
-	hb      *heartbeat
-	done    chan error
-	cancel  context.CancelFunc
+	t         *testing.T
+	changes   chan *udmipb.PullExportMessagesResponse
+	pub       *testPublisher
+	get       *testGetter
+	collector *exportCollector
+	hb        *heartbeat
+	done      chan error
+	cancel    context.CancelFunc
 }
 
 func newHarness(t *testing.T, interval time.Duration) *harness {
 	t.Helper()
+	get := &testGetter{}
+	// By default the source is healthy and collects a fresh reading on demand,
+	// stamped at the moment it was asked.
+	get.reply = func() (*udmipb.MqttMessage, error) {
+		return &udmipb.MqttMessage{Topic: eventTopic, Payload: pointsetAt(time.Now().UTC(), 21.5)}, nil
+	}
 	h := &harness{
-		t:       t,
-		changes: make(chan *udmipb.PullExportMessagesResponse),
-		pub:     &testPublisher{},
-		hb:      newHeartbeat(interval, zap.NewNop()),
+		t:         t,
+		changes:   make(chan *udmipb.PullExportMessagesResponse),
+		pub:       &testPublisher{},
+		get:       get,
+		collector: newExportCollector(time.Now),
+		hb:        newHeartbeat(interval, zap.NewNop()),
 	}
 	h.start()
 	t.Cleanup(func() {
@@ -100,8 +151,7 @@ func (h *harness) start() {
 	h.done = done
 	changes := h.changes
 	go func() {
-		// nil collector: these tests are about the heartbeat, not the points list export.
-		done <- handleMessages(ctx, "test-device", changes, h.pub, nil, h.hb)
+		done <- handleMessages(ctx, "test-device", h.get, changes, h.pub, h.collector, h.hb)
 	}()
 	synctest.Wait()
 }
@@ -138,24 +188,28 @@ func (h *harness) assertTopics(want ...string) []publication {
 	return pubs
 }
 
-// pointset builds an enveloped pointset event payload, as the drivers do.
-func pointset(t *testing.T, value float64) string {
-	t.Helper()
+// pointsetAt builds an enveloped pointset event payload, as the drivers do.
+func pointsetAt(ts time.Time, value float64) string {
 	b, err := json.Marshal(PointsetEvent{
-		Timestamp: time.Now().UTC(),
+		Timestamp: ts,
 		Version:   PointsetVersion,
 		Points:    PointsEvent{"ZnTemp": PointValue{PresentValue: value}},
 	})
 	if err != nil {
-		t.Fatalf("marshal pointset: %v", err)
+		panic(err) // a fixed literal payload; marshalling it can't fail
 	}
 	return string(b)
 }
 
-func TestHandleMessages_RepublishesWhenQuiet(t *testing.T) {
+// pointset builds a pointset event payload stamped now.
+func pointset(value float64) string {
+	return pointsetAt(time.Now().UTC(), value)
+}
+
+func TestHandleMessages_HeartbeatsWhenQuiet(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		payload := pointset(t, 21.5)
+		payload := pointset(21.5)
 
 		h.send(eventTopic, payload)
 		pubs := h.assertTopics(eventTopic)
@@ -163,35 +217,58 @@ func TestHandleMessages_RepublishesWhenQuiet(t *testing.T) {
 			t.Errorf("live publish altered the payload:\n got %s\nwant %s", pubs[0].payload, payload)
 		}
 
-		// Nothing yet just before the deadline.
+		// Nothing yet just before the deadline, and the source hasn't been bothered.
 		h.advance(testInterval - time.Minute)
 		h.assertTopics()
+		if got := h.get.callCount(); got != 0 {
+			t.Errorf("GetExportMessage called %d times before the deadline, want 0", got)
+		}
 
-		// Republished once the interval has elapsed.
+		// Once the interval has elapsed the source is asked for a current message.
 		h.advance(2 * time.Minute)
-		pubs = h.assertTopics(eventTopic)
-		assertSamePoints(t, payload, pubs[0].payload)
+		h.assertTopics(eventTopic)
+		if got := h.get.callCount(); got != 1 {
+			t.Errorf("GetExportMessage called %d times, want 1", got)
+		}
 	})
 }
 
-func TestHandleMessages_RepublishRefreshesTimestamp(t *testing.T) {
+// The heartbeat publishes what the driver gave it, byte for byte: the auto no
+// longer rewrites the timestamp, because the driver stamped it when it collected
+// the reading.
+func TestHandleMessages_PublishesTheDriversMessageVerbatim(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
+
+		collected := pointsetAt(time.Now().UTC().Add(-30*time.Second), 22.5)
+		h.get.answerWith(eventTopic, collected)
 
 		h.advance(testInterval)
 		pubs := h.assertTopics(eventTopic)
+		if pubs[0].payload != collected {
+			t.Errorf("heartbeat payload is\n %s\nwant the driver's bytes unchanged:\n %s",
+				pubs[0].payload, collected)
+		}
+	})
+}
 
-		var got PointsetEvent
-		if err := json.Unmarshal([]byte(pubs[0].payload), &got); err != nil {
-			t.Fatalf("unmarshal heartbeat: %v", err)
-		}
-		if !got.Timestamp.Equal(time.Now()) {
-			t.Errorf("heartbeat timestamp is %v, want now (%v)", got.Timestamp, time.Now())
-		}
-		if got.Version != PointsetVersion {
-			t.Errorf("heartbeat version is %q, want %q", got.Version, PointsetVersion)
+// The legacy bacnet topic carries a bare points map; it is still a pointset event
+// and is passed through untouched.
+func TestHandleMessages_LegacyTopicHeartbeats(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		payload := `{"ZnTemp":{"present_value":21.5}}`
+		h.get.answerWith(legacyTopic, payload)
+
+		h.send(legacyTopic, payload)
+		h.assertTopics(legacyTopic)
+
+		h.advance(testInterval)
+		pubs := h.assertTopics(legacyTopic)
+		if pubs[0].payload != payload {
+			t.Errorf("heartbeat payload is %s, want it unchanged: %s", pubs[0].payload, payload)
 		}
 	})
 }
@@ -199,12 +276,12 @@ func TestHandleMessages_RepublishRefreshesTimestamp(t *testing.T) {
 func TestHandleMessages_ActivityResetsTheDeadline(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
 		// A real change 3h in restarts the countdown.
 		h.advance(3 * time.Hour)
-		h.send(eventTopic, pointset(t, 22))
+		h.send(eventTopic, pointset(22))
 		h.assertTopics(eventTopic)
 
 		// So nothing at t=4h...
@@ -220,7 +297,7 @@ func TestHandleMessages_ActivityResetsTheDeadline(t *testing.T) {
 func TestHandleMessages_RepeatsWhileQuiet(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
 		h.advance(12 * time.Hour)
@@ -228,55 +305,44 @@ func TestHandleMessages_RepeatsWhileQuiet(t *testing.T) {
 	})
 }
 
-func TestHandleMessages_DeadlinesArePerTopic(t *testing.T) {
+// GetExportMessage is addressed by source, so the deadline is per source rather
+// than per topic: any pointset traffic from the source means it is alive, and
+// asking it again would only duplicate what it just sent.
+func TestHandleMessages_DeadlineIsPerSource(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		const busyTopic = "client/site-01/HVAC/AHU-1/events/pointset"
+		const otherTopic = "client/site-01/HVAC/AHU-1/events/pointset"
 		h := newHarness(t, testInterval)
 
-		h.send(eventTopic, pointset(t, 21.5))
-		h.send(busyTopic, pointset(t, 1))
-		h.assertTopics(eventTopic, busyTopic)
+		h.send(eventTopic, pointset(21.5))
+		h.send(otherTopic, pointset(1))
+		h.assertTopics(eventTopic, otherTopic)
 
-		// The busy topic keeps changing; the quiet one must still get a heartbeat.
+		// One of the source's topics keeps changing, so the source is never quiet.
 		for range 5 {
 			h.advance(time.Hour)
-			h.send(busyTopic, pointset(t, 2))
+			h.send(otherTopic, pointset(2))
 		}
-		pubs := h.pub.take()
-		var quiet int
-		for _, p := range pubs {
-			if p.topic == eventTopic {
-				quiet++
-			}
+		if got := h.get.callCount(); got != 0 {
+			t.Errorf("GetExportMessage called %d times while the source was publishing, want 0", got)
 		}
-		if quiet != 1 {
-			t.Errorf("quiet topic published %d times over 5h, want 1 heartbeat", quiet)
-		}
-	})
-}
+		h.pub.take()
 
-func TestHandleMessages_RepublishesTheLatestPayload(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
-		latest := pointset(t, 30)
-		h.send(eventTopic, latest)
-		h.assertTopics(eventTopic, eventTopic)
-
-		h.advance(testInterval)
-		pubs := h.assertTopics(eventTopic)
-		assertSamePoints(t, latest, pubs[0].payload)
+		// Once it stops, the heartbeat resumes.
+		h.advance(testInterval + time.Minute)
+		if got := h.get.callCount(); got != 1 {
+			t.Errorf("GetExportMessage called %d times after the source went quiet, want 1", got)
+		}
 	})
 }
 
 func TestHandleMessages_IgnoresNonPointsetTopics(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
-		// State is published as normal but must neither be cached nor push the
-		// deadline out - the bacnet driver re-announces it on every reconnect.
+		// State is published as normal but must not push the deadline out - the
+		// bacnet driver re-announces it on every reconnect.
 		h.advance(3 * time.Hour)
 		h.send(stateTopic, `{"timestamp":"2026-01-01T00:00:00Z"}`)
 		h.assertTopics(stateTopic)
@@ -286,20 +352,89 @@ func TestHandleMessages_IgnoresNonPointsetTopics(t *testing.T) {
 	})
 }
 
-// The bacnet driver's default topic suffix is the legacy one, whose payload is a
-// bare points map with no envelope to restamp.
-func TestHandleMessages_LegacyTopicRepublishedVerbatim(t *testing.T) {
+// We asked for telemetry. A source that answers with state or metadata hasn't
+// given us a reading, so nothing is published.
+func TestHandleMessages_NonPointsetReplyIsNotPublished(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		payload := `{"ZnTemp":{"present_value":21.5}}`
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
 
-		h.send(legacyTopic, payload)
-		h.assertTopics(legacyTopic)
-
+		h.get.answerWith(stateTopic, `{"timestamp":"2026-01-01T00:00:00Z"}`)
 		h.advance(testInterval)
-		pubs := h.assertTopics(legacyTopic)
-		if pubs[0].payload != payload {
-			t.Errorf("heartbeat payload is %s, want it unchanged: %s", pubs[0].payload, payload)
+		h.assertTopics()
+	})
+}
+
+// Unavailable is the source saying it has nothing current to report, which is the
+// liveness signal: a dead device produces silence, just as it did before the
+// heartbeat existed. The deadline still moves on, so we ask once per interval.
+func TestHandleMessages_UnavailableSourcePublishesNothing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		h.get.failWith(status.Error(codes.Unavailable, "device not operational"))
+		h.advance(12 * time.Hour)
+		h.assertTopics()
+		if got := h.get.callCount(); got != 3 {
+			t.Errorf("GetExportMessage called %d times over 12h, want 3 (one per interval, no hot loop)", got)
+		}
+
+		// The source recovering resumes heartbeats.
+		h.get.answerWith(eventTopic, pointset(21.5))
+		h.advance(testInterval)
+		h.assertTopics(eventTopic)
+	})
+}
+
+// A source that can't collect on demand is asked once and then left alone, rather
+// than being retried every interval for the life of the automation.
+func TestHandleMessages_UnimplementedDisablesTheHeartbeat(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.get.failWith(status.Error(codes.Unimplemented, "not implemented"))
+
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		h.advance(24 * time.Hour)
+		h.assertTopics()
+		if got := h.get.callCount(); got != 1 {
+			t.Errorf("GetExportMessage called %d times over 24h, want 1", got)
+		}
+
+		// Later traffic doesn't re-arm it either.
+		h.send(eventTopic, pointset(22))
+		h.assertTopics(eventTopic)
+		h.advance(24 * time.Hour)
+		h.assertTopics()
+		if got := h.get.callCount(); got != 1 {
+			t.Errorf("GetExportMessage called %d times after disabling, want 1", got)
+		}
+	})
+}
+
+// A heartbeat message is a real reading, so it counts towards the points list
+// export like any other.
+func TestHandleMessages_HeartbeatIsCollected(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		collected := pointsetAt(time.Now().UTC(), 30)
+		h.get.answerWith(eventTopic, collected)
+		h.advance(testInterval)
+		h.assertTopics(eventTopic)
+
+		records := h.collector.Snapshot()
+		if len(records) != 1 {
+			t.Fatalf("collector holds %d records, want 1: %v", len(records), records)
+		}
+		if records[0].payload != collected {
+			t.Errorf("collector holds\n %s\nwant the heartbeat payload\n %s", records[0].payload, collected)
 		}
 	})
 }
@@ -307,11 +442,14 @@ func TestHandleMessages_LegacyTopicRepublishedVerbatim(t *testing.T) {
 func TestHandleMessages_DisabledByZeroInterval(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, 0)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
 		h.advance(8 * time.Hour)
 		h.assertTopics()
+		if got := h.get.callCount(); got != 0 {
+			t.Errorf("GetExportMessage called %d times with the heartbeat disabled, want 0", got)
+		}
 	})
 }
 
@@ -320,18 +458,21 @@ func TestHandleMessages_NoHeartbeatBeforeFirstMessage(t *testing.T) {
 		h := newHarness(t, testInterval)
 		h.advance(8 * time.Hour)
 		h.assertTopics()
+		if got := h.get.callCount(); got != 0 {
+			t.Errorf("GetExportMessage called %d times before any message, want 0", got)
+		}
 	})
 }
 
 func TestHandleMessages_HeartbeatPublishErrorIsNotFatal(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
 		h.pub.failWith(errors.New("broker unavailable"))
 		h.advance(testInterval)
-		h.assertTopics() // the failed heartbeat recorded nothing
+		h.assertTopics()
 
 		select {
 		case err := <-h.done:
@@ -339,8 +480,32 @@ func TestHandleMessages_HeartbeatPublishErrorIsNotFatal(t *testing.T) {
 		default:
 		}
 
-		// The handler is still live: messages flow, and the next heartbeat fires.
+		// The handler is still live: the next heartbeat fires.
 		h.pub.failWith(nil)
+		h.advance(testInterval)
+		h.assertTopics(eventTopic)
+	})
+}
+
+// Any other error from the source is logged and skipped; a missed heartbeat isn't
+// worth tearing down a working subscription for.
+func TestHandleMessages_HeartbeatGetErrorIsNotFatal(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		h.get.failWith(status.Error(codes.Internal, "boom"))
+		h.advance(testInterval)
+		h.assertTopics()
+
+		select {
+		case err := <-h.done:
+			t.Fatalf("handleMessages returned %v, want it still running", err)
+		default:
+		}
+
+		h.get.answerWith(eventTopic, pointset(21.5))
 		h.advance(testInterval)
 		h.assertTopics(eventTopic)
 	})
@@ -352,7 +517,7 @@ func TestHandleMessages_LivePublishErrorReturns(t *testing.T) {
 		wantErr := errors.New("broker unavailable")
 		h.pub.failWith(wantErr)
 
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		select {
 		case err := <-h.done:
 			if !errors.Is(err, wantErr) {
@@ -403,7 +568,7 @@ func TestHandleMessages_CancelReturnsCtxErr(t *testing.T) {
 func TestHandleMessages_DeadlineSurvivesRestart(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHarness(t, testInterval)
-		h.send(eventTopic, pointset(t, 21.5))
+		h.send(eventTopic, pointset(21.5))
 		h.assertTopics(eventTopic)
 
 		// The task dies and is retried 3h later with the same heartbeat.
@@ -416,100 +581,6 @@ func TestHandleMessages_DeadlineSurvivesRestart(t *testing.T) {
 		h.advance(time.Hour + time.Minute)
 		h.assertTopics(eventTopic)
 	})
-}
-
-// assertSamePoints checks that a heartbeat carries the same points as the message
-// it replays, ignoring the refreshed timestamp.
-func assertSamePoints(t *testing.T, want, got string) {
-	t.Helper()
-	var wantEvent, gotEvent PointsetEvent
-	if err := json.Unmarshal([]byte(want), &wantEvent); err != nil {
-		t.Fatalf("unmarshal want: %v", err)
-	}
-	if err := json.Unmarshal([]byte(got), &gotEvent); err != nil {
-		t.Fatalf("unmarshal got: %v", err)
-	}
-	if !wantEvent.Points.Equal(gotEvent.Points) {
-		t.Errorf("heartbeat points are %v, want %v", gotEvent.Points, wantEvent.Points)
-	}
-}
-
-func TestRestamp(t *testing.T) {
-	now := time.Date(2026, 7, 28, 12, 0, 0, 0, time.UTC)
-	nowJSON, err := json.Marshal(now)
-	if err != nil {
-		t.Fatalf("marshal now: %v", err)
-	}
-
-	tests := map[string]struct {
-		payload string
-		want    string
-	}{
-		"envelope is restamped, siblings preserved": {
-			payload: `{"timestamp":"2020-01-01T00:00:00Z","version":"1.5.2","partial_update":true,"points":{"ZnTemp":{"present_value":21.5}}}`,
-			want:    `{"partial_update":true,"points":{"ZnTemp":{"present_value":21.5}},"timestamp":` + string(nowJSON) + `,"version":"1.5.2"}`,
-		},
-		"legacy bare points map is untouched": {
-			payload: `{"ZnTemp":{"present_value":21.5}}`,
-			want:    `{"ZnTemp":{"present_value":21.5}}`,
-		},
-		// A bare points map may hold a point actually called "timestamp"; requiring
-		// a sibling "points" key is what stops us corrupting it.
-		"bare points map with a timestamp point is untouched": {
-			payload: `{"timestamp":{"present_value":"2020-01-01T00:00:00Z"}}`,
-			want:    `{"timestamp":{"present_value":"2020-01-01T00:00:00Z"}}`,
-		},
-		"envelope without a timestamp is untouched": {
-			payload: `{"version":"1.5.2","points":{"ZnTemp":{"present_value":21.5}}}`,
-			want:    `{"version":"1.5.2","points":{"ZnTemp":{"present_value":21.5}}}`,
-		},
-		"malformed json is untouched": {
-			payload: `not json`,
-			want:    `not json`,
-		},
-		"json array is untouched": {
-			payload: `[1,2,3]`,
-			want:    `[1,2,3]`,
-		},
-		"empty payload is untouched": {
-			payload: ``,
-			want:    ``,
-		},
-	}
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			if got := restamp(tt.payload, now); got != tt.want {
-				t.Errorf("restamp(%q):\n got %s\nwant %s", tt.payload, got, tt.want)
-			}
-		})
-	}
-}
-
-// restamp must produce the same timestamp encoding the drivers do, so consumers
-// can't tell a heartbeat from a live sample by its formatting.
-func TestRestamp_MatchesDriverEncoding(t *testing.T) {
-	now := time.Date(2026, 7, 28, 12, 0, 0, 123456789, time.UTC)
-	live, err := json.Marshal(PointsetEvent{
-		Timestamp: now,
-		Version:   PointsetVersion,
-		Points:    PointsEvent{"ZnTemp": PointValue{PresentValue: 21.5}},
-	})
-	if err != nil {
-		t.Fatalf("marshal live event: %v", err)
-	}
-
-	stale := `{"timestamp":"2020-01-01T00:00:00Z","version":"` + PointsetVersion +
-		`","points":{"ZnTemp":{"present_value":21.5}}}`
-	var got, want PointsetEvent
-	if err := json.Unmarshal([]byte(restamp(stale, now)), &got); err != nil {
-		t.Fatalf("unmarshal restamped: %v", err)
-	}
-	if err := json.Unmarshal(live, &want); err != nil {
-		t.Fatalf("unmarshal live: %v", err)
-	}
-	if !got.Timestamp.Equal(want.Timestamp) {
-		t.Errorf("restamped timestamp is %v, want %v", got.Timestamp, want.Timestamp)
-	}
 }
 
 func TestIsPointsetEventTopic(t *testing.T) {

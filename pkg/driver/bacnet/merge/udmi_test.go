@@ -5,9 +5,16 @@ import (
 	"math"
 	"slices"
 	"testing"
+	"time"
+
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
@@ -336,5 +343,31 @@ func Test_readUdmiMergeConfig_pointUnits(t *testing.T) {
 	}
 	if got := ps.Points["space_temperature"].Units; got != "Degrees-Celsius" {
 		t.Errorf("pointset units = %q, want %q", got, "Degrees-Celsius")
+	}
+}
+
+// When no fresh event arrives within the timeout, GetExportMessage falls back to
+// the last polled snapshot - but only while the device is still answering.
+// pollPeer leaves f.points intact when every read fails, so without the
+// operational gate an unreachable device would keep serving values it can no
+// longer confirm, freshly stamped by pointsToPointSet.
+func TestGetExportMessage_notOperationalIsUnavailable(t *testing.T) {
+	um := &udmiMerge{logger: zap.NewNop()}
+	um.config.Name = "picv-1"
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
+	// Short enough that the no-fresh-event path is taken promptly; GetExportMessage
+	// waits a quarter of this.
+	um.config.PollTimeout = &config.Duration{Duration: 40 * time.Millisecond}
+	um.pollTask = task.NewIntermittent(um.startPoll)
+	// A snapshot from when the device was reachable, and a failed poll since.
+	um.points = udmi.PointsEvent{"space_temperature": {PresentValue: 21.5}}
+	um.operational.Store(false)
+
+	msg, err := um.GetExportMessage(t.Context(), &udmipb.GetExportMessageRequest{Name: um.config.Name})
+	if status.Code(err) != codes.Unavailable {
+		t.Errorf("GetExportMessage() error = %v, want Unavailable", err)
+	}
+	if msg != nil {
+		t.Errorf("GetExportMessage() returned %v, want no message", msg)
 	}
 }
