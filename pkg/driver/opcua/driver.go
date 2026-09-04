@@ -9,6 +9,7 @@ package opcua
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -199,7 +200,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 }
 
 func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.Client, error) {
-	opcClient, err := opcua.NewClient(cfg.Conn.Endpoint)
+	endpoint, opts, err := d.opcClientOptions(ctx, cfg.Conn)
+	if err != nil {
+		service.UpdateSystemCheck(d.systemCheck, err)
+		return nil, err
+	}
+
+	opcClient, err := opcua.NewClient(endpoint, opts...)
 	if err != nil {
 		service.UpdateSystemCheck(d.systemCheck, err)
 		d.logger.Error("error creating new client", zap.Error(err))
@@ -214,6 +221,65 @@ func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.
 	}
 	service.UpdateSystemCheck(d.systemCheck, nil)
 	return opcClient, nil
+}
+
+// opcClientOptions works out how to connect to the server described by conn, returning the
+// endpoint URL to dial and the client options that apply the configured security and
+// credentials. The password, if any, is read from disk here rather than during config
+// parsing so that a rotated secret is picked up by the driver's retry loop.
+func (d *Driver) opcClientOptions(ctx context.Context, conn config.Conn) (string, []opcua.Option, error) {
+	sec, err := conn.ResolveSecurity() // already validated during config.ParseConfig
+	if err != nil {
+		return "", nil, err
+	}
+	if sec.AnonymousInsecure() {
+		// nothing to negotiate, so skip discovery and connect as the driver always has
+		return conn.Endpoint, nil, nil
+	}
+
+	// note this dials the server without security, which a server that secures its
+	// discovery endpoint will refuse
+	endpoints, err := opcua.GetEndpoints(ctx, conn.Endpoint)
+	if err != nil {
+		d.logger.Error("error getting opc ua server endpoints", zap.String("endpoint", conn.Endpoint), zap.Error(err))
+		return "", nil, fmt.Errorf("get endpoints %q: %w", conn.Endpoint, err)
+	}
+	ep, err := opcua.SelectEndpoint(endpoints, sec.PolicyURI, sec.Mode)
+	if err != nil {
+		d.logger.Error("no opc ua endpoint matches the configured security",
+			zap.String("policy", sec.PolicyURI), zap.Stringer("mode", sec.Mode), zap.Error(err))
+		return "", nil, fmt.Errorf("select endpoint: %w", err)
+	}
+	if ep.EndpointURL != conn.Endpoint {
+		// we have to dial the URL the server advertises, strict servers reject a session
+		// created against any other. Log it, because a server advertising a hostname this
+		// controller can't resolve is the usual cause of a connect failure from here.
+		d.logger.Info("using the endpoint url advertised by the opc ua server",
+			zap.String("configured", conn.Endpoint), zap.String("advertised", ep.EndpointURL))
+	}
+
+	opts := []opcua.Option{
+		// must come before the auth options: this creates the user identity token and sets
+		// its policy id from the endpoint, AuthUsername only fills in an existing token
+		opcua.SecurityFromEndpoint(ep, sec.TokenType),
+		opcua.CertificateFile(sec.CertFile), // a no-op when empty
+		opcua.PrivateKeyFile(sec.KeyFile),
+	}
+	if conn.Auth != nil {
+		if sec.Mode == ua.MessageSecurityModeNone {
+			d.logger.Warn("opc ua password will cross the network unencrypted, the configured security mode is None",
+				zap.String("username", conn.Auth.Username))
+		}
+		pass, err := conn.Auth.Read()
+		if err != nil {
+			d.logger.Error("error reading opc ua password file", zap.String("passwordFile", conn.Auth.PasswordFile), zap.Error(err))
+			return "", nil, fmt.Errorf("read password: %w", err)
+		}
+		opts = append(opts, opcua.AuthUsername(conn.Auth.Username, pass))
+	} else {
+		opts = append(opts, opcua.AuthAnonymous())
+	}
+	return ep.EndpointURL, opts, nil
 }
 
 func (d *Driver) onStop() {
