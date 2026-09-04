@@ -4,7 +4,7 @@
     {
       "name": "opcua",
       "type" : "opcua",
-      "opcUaConfig": {
+      "conn": {
         "endpoint": "opc.tcp://748tn73:62640/IntegrationObjects/ServerSimulator",
         "subscriptionInterval": "5s"
       },
@@ -17,6 +17,9 @@
             },
             {
               "nodeId": "ns=2;s=Tag2"
+            },
+            {
+              "nodeId": "ns=2;s=Tag15"
             }
           ],
           "traits": [
