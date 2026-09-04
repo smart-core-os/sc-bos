@@ -26,6 +26,8 @@ The `conn` block says where the server is and how to authenticate against it.
 |---|---|---|
 | `endpoint` | string | **Required.** OPC UA server endpoint, e.g. `opc.tcp://server.example.com:4840`. |
 | `subscriptionInterval` | duration | How often the server publishes subscription updates. Defaults to `5s`. |
+| `samplingInterval` | duration | How often the server samples each monitored node. Defaults to `subscriptionInterval`. |
+| `queueSize` | number | Server-side queue depth per monitored node. Defaults to `1`, so only the most recent sample is published. |
 | `clientId` | number | Client ID, unique within a server. A random one is generated when unset. |
 | `auth.username` | string | OPC UA user to authenticate as. Omit the whole `auth` block to connect anonymously. |
 | `auth.passwordFile` | string | **Required with `auth`.** Path to a file containing that user's password. A plaintext `password` in the config is rejected. |
@@ -33,6 +35,13 @@ The `conn` block says where the server is and how to authenticate against it.
 | `security.mode` | string | Message security mode: `None`, `Sign` or `SignAndEncrypt`. Defaults to `SignAndEncrypt` when `auth` is set, `None` otherwise. |
 | `security.certFile` | string | Client X509 certificate. **Required for `Sign` and `SignAndEncrypt`.** |
 | `security.keyFile` | string | RSA private key matching `certFile`. **Required for `Sign` and `SignAndEncrypt`.** |
+
+Sample faster than the server publishes and you need `queueSize` raised to match, or the
+server's queue for that item overflows and it discards samples. It reports the overflow by
+setting an info bit on the status code of every value it does send: `0x480` is Good with the
+Overflow bit set, not an error, and the driver consumes such values normally. The defaults
+above — sample once per publish into a queue of one — mean the driver always takes the
+latest value and never asks the server to queue anything.
 
 With neither `auth` nor `security` the driver connects anonymously over an unsecured
 channel, which is how it has always behaved, so existing configs keep working unchanged.
@@ -63,6 +72,8 @@ Two notes on how the connection is made once security is configured:
   "conn": {
     "endpoint": "opc.tcp://server.example.com:4840",
     "subscriptionInterval": "5s",
+    "samplingInterval": "5s",
+    "queueSize": 1,
     "auth": {
       "username": "sc-bos",
       "passwordFile": "/etc/sc-bos/secrets/opcua-password"

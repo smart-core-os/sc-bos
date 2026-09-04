@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gopcua/opcua/ua"
 
@@ -184,4 +185,55 @@ func writePasswordFile(t *testing.T, contents string) string {
 // quote renders path as a JSON string literal, which escapes the backslashes in Windows paths.
 func quote(path string) string {
 	return strconv.Quote(path)
+}
+
+// TestParseConfig_monitoringDefaults checks the monitoring parameters we send to the server
+// when a config leaves them out. Sampling once per publish into a queue of one is what keeps
+// the server from overflowing its queue and flagging every value it sends us.
+func TestParseConfig_monitoringDefaults(t *testing.T) {
+	tests := []struct {
+		name                           string
+		conn                           string
+		wantSubscription, wantSampling time.Duration
+		wantQueueSize                  uint32
+	}{
+		{
+			name:             "all defaulted",
+			conn:             `{"endpoint": "opc.tcp://server:4840"}`,
+			wantSubscription: 5 * time.Second,
+			wantSampling:     5 * time.Second,
+			wantQueueSize:    1,
+		},
+		{
+			name:             "sampling follows subscription interval",
+			conn:             `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "1s"}`,
+			wantSubscription: time.Second,
+			wantSampling:     time.Second,
+			wantQueueSize:    1,
+		},
+		{
+			name:             "explicit values are kept",
+			conn:             `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "5s", "samplingInterval": "250ms", "queueSize": 20}`,
+			wantSubscription: 5 * time.Second,
+			wantSampling:     250 * time.Millisecond,
+			wantQueueSize:    20,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := ParseConfig([]byte(`{"name": "opcua", "type": "opcua", "conn": ` + tt.conn + `}`))
+			if err != nil {
+				t.Fatalf("ParseConfig: %v", err)
+			}
+			if got := cfg.Conn.SubscriptionInterval.Duration; got != tt.wantSubscription {
+				t.Errorf("subscriptionInterval = %v, want %v", got, tt.wantSubscription)
+			}
+			if got := cfg.Conn.SamplingInterval.Duration; got != tt.wantSampling {
+				t.Errorf("samplingInterval = %v, want %v", got, tt.wantSampling)
+			}
+			if got := cfg.Conn.QueueSize; got != tt.wantQueueSize {
+				t.Errorf("queueSize = %d, want %d", got, tt.wantQueueSize)
+			}
+		})
+	}
 }

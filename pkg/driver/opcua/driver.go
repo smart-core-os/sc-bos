@@ -86,7 +86,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
-	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
+	client := NewClient(opcClient, d.logger, cfg.Conn)
 
 	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 

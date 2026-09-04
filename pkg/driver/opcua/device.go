@@ -2,7 +2,6 @@ package opcua
 
 import (
 	"context"
-	"errors"
 
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/ua"
@@ -72,7 +71,7 @@ func (d *device) subscribe(ctx context.Context) error {
 
 // handleEvent processes OPC UA subscription events and routes them to trait handlers.
 // It handles both DataChangeNotification (variable value changes) and EventNotificationList (OPC UA events).
-// Values with non-OK status codes are logged as warnings and not passed to trait handlers.
+// Values with Bad status codes are logged as warnings and not passed to trait handlers.
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, node *ua.NodeID) {
 	if event.Error != nil {
 		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(event.Error))
@@ -89,35 +88,39 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				continue
 			}
 
-			if errors.Is(item.Value.Status, ua.StatusOK) {
-				d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
-				service.UpdateSystemCheck(d.systemCheck, nil)
-				value := item.Value.Value.Value()
-				d.handleTraitEvent(ctx, node, value)
-			} else {
-				setPointReadNotOk(ctx, node.String(), item.Value.Status, d.faultCheck)
-				d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", item.Value.Status.Error()))
-			}
+			d.handleStatusValue(ctx, node, item.Value.Status, item.Value.Value.Value())
 		}
 
 	case *ua.EventNotificationList:
 		for _, item := range x.Events {
 			for _, field := range item.EventFields {
-				if errors.Is(field.StatusCode(), ua.StatusOK) {
-					value := field.Value()
-					d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
-					service.UpdateSystemCheck(d.systemCheck, nil)
-					d.handleTraitEvent(ctx, node, value)
-				} else {
-					setPointReadNotOk(ctx, node.String(), field.StatusCode(), d.faultCheck)
-					d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", field.StatusCode().Error()))
-				}
+				d.handleStatusValue(ctx, node, field.StatusCode(), field.Value())
 			}
 		}
 
 	default:
 		d.logger.Warn("unhandled event", zap.Any("energyValue", event.Value))
 	}
+}
+
+// handleStatusValue dispatches value to the trait handlers unless status is Bad,
+// updating the device health to match the status severity.
+// Only the severity bits of the status are significant: a Good code carrying info bits,
+// notably the Overflow bit a busy subscription queue sets, still delivers a usable value.
+func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status ua.StatusCode, value any) {
+	switch {
+	case statusIsBad(status):
+		setPointReadNotOk(ctx, node.String(), status, d.faultCheck)
+		d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", status.Error()))
+		return
+	case statusIsUncertain(status):
+		setPointReadUncertain(ctx, node.String(), status, d.faultCheck)
+		d.logger.Debug("uncertain value for node", zap.Stringer("node", node), zap.String("code", status.Error()))
+	default: // Good, whatever info bits it carries
+		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+		service.UpdateSystemCheck(d.systemCheck, nil)
+	}
+	d.handleTraitEvent(ctx, node, value)
 }
 
 // handleTraitEvent dispatches an OPC UA value change to all configured trait handlers.
