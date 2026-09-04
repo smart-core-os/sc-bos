@@ -6,7 +6,9 @@
       "type" : "opcua",
       "conn": {
         "endpoint": "opc.tcp://748tn73:62640/IntegrationObjects/ServerSimulator",
-        "subscriptionInterval": "5s"
+        "subscriptionInterval": "5s",
+        "samplingInterval": "5s",
+        "queueSize": 1
       },
       "devices" : [
         {

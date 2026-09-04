@@ -98,7 +98,15 @@ type Conn struct {
 	// Endpoint is the OPC UA server endpoint.
 	Endpoint string `json:"endpoint,omitempty"`
 	// SubscriptionInterval for OPC UA subscription, defaults to 5s if not set.
+	// This is the publishing interval: how often the server sends us the samples it has queued.
 	SubscriptionInterval *jsontypes.Duration `json:"subscriptionInterval,omitempty,omitzero"`
+	// SamplingInterval is how often the server samples the monitored node.
+	// Defaults to SubscriptionInterval. A shorter interval than the publishing
+	// interval requires QueueSize to be raised to match or samples are discarded.
+	SamplingInterval *jsontypes.Duration `json:"samplingInterval,omitempty,omitzero"`
+	// QueueSize is the server-side queue depth per monitored item.
+	// Defaults to 1, meaning only the most recent sample is published.
+	QueueSize uint32 `json:"queueSize,omitempty,omitzero"`
 	// ClientId is the ID of the client that will be used to connect to the OPC UA server.
 	// Should be unique within the context of a server. If not set, a random ID will be generated.
 	ClientId uint32 `json:"clientId,omitempty,omitzero"`
@@ -281,6 +289,14 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 
 	if cfg.Conn.SubscriptionInterval == nil {
 		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
+	}
+	if cfg.Conn.SamplingInterval == nil {
+		// sampling no faster than the server publishes keeps the queue from overflowing,
+		// which the server would report as a Good status with the Overflow info bit set
+		cfg.Conn.SamplingInterval = &jsontypes.Duration{Duration: cfg.Conn.SubscriptionInterval.Duration}
+	}
+	if cfg.Conn.QueueSize == 0 {
+		cfg.Conn.QueueSize = 1
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()

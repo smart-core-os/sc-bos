@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap"
@@ -61,13 +60,49 @@ func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
 	})
 }
 
+// severityMask isolates the severity bits (31:30) of an OPC UA StatusCode.
+// See OPC UA Part 4 s7.34: the low bits carry sub-codes and info bits that
+// do not affect whether the value is usable. A value delivered through a
+// subscription commonly arrives as Good with the Overflow info bit set (0x480),
+// which is still a perfectly good value.
+const severityMask ua.StatusCode = 0xC0000000
+
+// statusIsGood reports whether the status says the value is usable as-is.
+func statusIsGood(c ua.StatusCode) bool { return c&severityMask == ua.StatusGood }
+
+// statusIsUncertain reports whether the status says the value is usable but of reduced quality.
+func statusIsUncertain(c ua.StatusCode) bool { return c&severityMask == ua.StatusUncertain }
+
+// statusIsBad reports whether the status says the value should not be used.
+func statusIsBad(c ua.StatusCode) bool { return c&severityMask == ua.StatusBad }
+
+// statusHealthCode renders a status code the same way the driver logs it, so the code
+// shown in the UI can be matched against the logs.
+func statusHealthCode(status ua.StatusCode) *healthpb.HealthCheck_Error_Code {
+	return statusToHealthCode(fmt.Sprintf("0x%X", uint32(status)))
+}
+
 func setPointReadNotOk(ctx context.Context, nodeId string, status ua.StatusCode, fc *healthpb.FaultCheck) {
 	fc.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
 		State: healthpb.HealthCheck_Reliability_BAD_RESPONSE,
 		LastError: &healthpb.HealthCheck_Error{
 			SummaryText: fmt.Sprintf("Attempt to read device point returned non OK status: %s", status.Error()),
 			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, status.Error()),
-			Code:        statusToHealthCode(strconv.Itoa(int(status))),
+			Code:        statusHealthCode(status),
+		},
+	})
+}
+
+// setPointReadUncertain reports a point whose value is usable but of reduced quality.
+// healthpb has no dedicated degraded state, so UNRELIABLE is the closest fit: the value is
+// consumed, but our confidence in it is lower than RELIABLE would imply.
+func setPointReadUncertain(ctx context.Context, nodeId string, status ua.StatusCode, fc *healthpb.FaultCheck) {
+	fc.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
+		State: healthpb.HealthCheck_Reliability_UNRELIABLE,
+		LastError: &healthpb.HealthCheck_Error{
+			SummaryText: fmt.Sprintf("Device point returned an uncertain status: %s", status.Error()),
+			DetailsText: fmt.Sprintf("NodeID: %s, Status: %s", nodeId, status.Error()),
+			Code:        statusHealthCode(status),
 		},
 	})
 }

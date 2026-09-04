@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/gopcua/opcua/ua"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -522,6 +523,58 @@ func TestNewHealth_ValidationCalled(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+// TestSetPointRead checks how a point's status code reaches the reliability report.
+// The health code is hex so it can be matched against the code the driver logs; it used to
+// be decimal, rendering 0x480 as "1152" and a Bad code as "2150629376".
+func TestSetPointRead(t *testing.T) {
+	tests := []struct {
+		name        string
+		set         func(h *testHarness, nodeId string, status ua.StatusCode)
+		status      ua.StatusCode
+		wantState   healthpb.HealthCheck_Reliability_State
+		wantCode    string
+		wantSummary string
+	}{
+		{
+			name: "bad",
+			set: func(h *testHarness, nodeId string, status ua.StatusCode) {
+				setPointReadNotOk(h.ctx, nodeId, status, h.fc)
+			},
+			status:      ua.StatusBadNodeIDUnknown,
+			wantState:   healthpb.HealthCheck_Reliability_BAD_RESPONSE,
+			wantCode:    "0x80340000",
+			wantSummary: "non OK status",
+		},
+		{
+			name: "uncertain",
+			set: func(h *testHarness, nodeId string, status ua.StatusCode) {
+				setPointReadUncertain(h.ctx, nodeId, status, h.fc)
+			},
+			status:      ua.StatusUncertainSimulatedValue,
+			wantState:   healthpb.HealthCheck_Reliability_UNRELIABLE,
+			wantCode:    "0x42090000",
+			wantSummary: "uncertain status",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := setupTestHarness(t)
+			const nodeId = "ns=2;s=Tag1"
+
+			tt.set(h, nodeId, tt.status)
+
+			rel := h.getHealthChecks(t)[0].GetReliability()
+			require.NotNil(t, rel)
+			require.Equal(t, tt.wantState, rel.State)
+			require.NotNil(t, rel.LastError)
+			require.Equal(t, tt.wantCode, rel.LastError.Code.Code)
+			require.Equal(t, SystemName, rel.LastError.Code.System)
+			require.Contains(t, rel.LastError.SummaryText, tt.wantSummary)
+			require.Contains(t, rel.LastError.DetailsText, nodeId)
 		})
 	}
 }
