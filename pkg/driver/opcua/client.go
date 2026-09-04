@@ -75,5 +75,31 @@ func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcu
 	if statusIsBad(res.Results[0].StatusCode) {
 		return nil, fmt.Errorf("error monitoring node: %s", res.Results[0].StatusCode.Error())
 	}
+	c.warnIfRevised(nodeId, res.Results[0])
 	return notifyCh, nil
+}
+
+// warnIfRevised reports monitoring parameters the server declined to honour.
+// A server is free to revise what we ask for, typically clamping a sampling interval to its
+// MinSupportedSampleRate or a queue to the depth it is willing to hold, and it tells us what
+// it settled on rather than failing. That revision is the authoritative version of the
+// config-time warnings in config.Conn.MonitoringWarnings, so it is worth surfacing: a queue
+// revised down below a publishing cycle's worth of samples is exactly the setup that makes
+// the server flag every value with the Overflow info bit.
+func (c *Client) warnIfRevised(nodeId *ua.NodeID, res *ua.MonitoredItemCreateResult) {
+	// floatEqual rather than !=: the revised interval is a float off the wire, and a server
+	// echoing back what we asked for should not read as a revision
+	requested := float64(c.samplingInterval.Milliseconds())
+	if !floatEqual(res.RevisedSamplingInterval, requested) {
+		c.logger.Warn("server revised the sampling interval",
+			zap.Stringer("node", nodeId),
+			zap.Float64("requestedMs", requested),
+			zap.Float64("revisedMs", res.RevisedSamplingInterval))
+	}
+	if res.RevisedQueueSize != c.queueSize {
+		c.logger.Warn("server revised the queue size",
+			zap.Stringer("node", nodeId),
+			zap.Uint32("requested", c.queueSize),
+			zap.Uint32("revised", res.RevisedQueueSize))
+	}
 }
