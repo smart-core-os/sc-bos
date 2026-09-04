@@ -53,13 +53,25 @@ type udmiAuto struct {
 	collector *exportCollector
 }
 
-func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
+// validateConfig checks the values applyConfig can't recover from.
+func validateConfig(cfg config.Root) error {
 	if cfg.QoS > 2 {
 		return fmt.Errorf("invalid qos %d: must be 0, 1, or 2", cfg.QoS)
 	}
 	if cfg.StateQoS > 2 {
 		return fmt.Errorf("invalid stateQos %d: must be 0, 1, or 2", cfg.StateQoS)
 	}
+	if hb := cfg.HeartbeatInterval.Or(config.DefaultHeartbeatInterval); hb < 0 {
+		return fmt.Errorf("invalid heartbeatInterval %v: must not be negative", hb)
+	}
+	return nil
+}
+
+func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
+	if err := validateConfig(cfg); err != nil {
+		return err
+	}
+	hbInterval := cfg.HeartbeatInterval.Or(config.DefaultHeartbeatInterval)
 
 	udmiClient := udmipb.NewUdmiServiceClient(e.services.Node.ClientConn())
 
@@ -92,7 +104,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	var tasks namedTasks
 	pullFrom := func(name string) {
 		logger := e.services.Logger.With(zap.String("name", name))
-		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector),
+		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector, hbInterval),
 			task.WithRetry(task.RetryUnlimited), task.WithBackoff(time.Millisecond*100, time.Second*10))
 		if errors.Is(err, ErrAlreadyRunning) {
 			// cool, I guess someone else beat us to it

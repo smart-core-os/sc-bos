@@ -141,6 +141,7 @@
       "sources": [
         "smart-core/doors/reader/1"
       ],
+      "heartbeatInterval": "4h",
       "broker": {
         "host": "localhost:1883"
       }

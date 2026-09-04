@@ -12,7 +12,7 @@
       </v-list-item>
       <v-list-item class="py-1 mb-2" v-if="message.value">
         <v-list-item-title class="text-body-small text-capitalize">Topic</v-list-item-title>
-        <v-list-item-subtitle class="text-capitalize">{{ message.value?.topic }}</v-list-item-subtitle>
+        <v-list-item-subtitle>{{ message.value?.topic }}</v-list-item-subtitle>
       </v-list-item>
       <div class="udmi-points">
         <v-list-item class="py-1" v-if="rawPayload">
@@ -20,8 +20,13 @@
             <pre class="ma-0">{{ rawPayload }}</pre>
           </v-list-item-subtitle>
         </v-list-item>
+        <!--
+          Point names and values are reproduced verbatim: they are identifiers and readings
+          off the wire, so no text-capitalize here or the card would misreport them
+          (zone_air_temperature as Zone_air_temperature, true as True).
+        -->
         <v-list-item class="py-1" v-for="(value, key) in points" :key="key" lines="one">
-          <v-list-item-title class="text-body-small text-capitalize flex-fill">{{ key }}</v-list-item-title>
+          <v-list-item-title class="text-body-small flex-fill">{{ key }}</v-list-item-title>
           <template #append>
             <v-list-item-subtitle
                 v-if="isStructured(displayValue(value))"
@@ -40,7 +45,7 @@
               </div>
               <pre v-if="!collapsed[key]" class="ma-0">{{ JSON.stringify(displayValue(value), null, 2) }}</pre>
             </v-list-item-subtitle>
-            <v-list-item-subtitle v-else class="text-capitalize text-end flex-fill text-body-1">
+            <v-list-item-subtitle v-else class="text-end flex-fill text-body-1">
               {{ displayValue(value) }}
             </v-list-item-subtitle>
           </template>
