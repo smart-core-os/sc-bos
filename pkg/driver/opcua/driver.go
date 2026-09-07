@@ -2,8 +2,11 @@
 // It subscribes to OPC UA variable nodes and exposes their values through Smart Core traits
 // including Meter, Electric, Transport, and UDMI.
 //
-// The driver creates an internal device instance for each configured device, which manages
-// OPC UA subscriptions and routes value changes to the appropriate trait handlers.
+// The driver creates an internal device instance for each configured device, which manages one
+// OPC UA subscription carrying all of that device's variables as monitored items, and routes
+// value changes to the appropriate trait handlers. One subscription per device rather than per
+// variable because gopcua keeps a single publish request in flight per client, so the
+// subscription count is what bounds how fast values can arrive.
 package opcua
 
 import (

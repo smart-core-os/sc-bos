@@ -13,7 +13,9 @@ import (
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/ua"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -254,7 +256,7 @@ func TestDevice_handleEvent(t *testing.T) {
 			nodeId := mustParseNodeID("ns=2;s=Tag1")
 			event := &opcua.PublishNotificationData{Value: tt.eventValue}
 
-			dev.handleEvent(ctx, event, nodeId)
+			dev.handleEvent(ctx, event, fixedLookup(nodeId))
 
 			if tt.setupMeter {
 				reading, _ := meter.GetMeterReading(ctx, nil)
@@ -505,14 +507,22 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 	}
 }
 
-func makeStatusEvent(status ua.StatusCode) *opcua.PublishNotificationData {
+// makeStatusEvent is one value arriving under the client handle of the item that produced it,
+// which is all a notification says about which node it belongs to.
+func makeStatusEvent(handle uint32, status ua.StatusCode) *opcua.PublishNotificationData {
 	return &opcua.PublishNotificationData{
 		Value: &ua.DataChangeNotification{
 			MonitoredItems: []*ua.MonitoredItemNotification{
-				{Value: &ua.DataValue{Value: ua.MustVariant(float32(100.0)), Status: status}},
+				{ClientHandle: handle, Value: &ua.DataValue{Value: ua.MustVariant(float32(100.0)), Status: status}},
 			},
 		},
 	}
+}
+
+// fixedLookup resolves every client handle to the same node, for the dispatch tests where
+// which node a value came from is not what is under test.
+func fixedLookup(nodeId *ua.NodeID) nodeLookup {
+	return func(uint32) (*ua.NodeID, bool) { return nodeId, true }
 }
 
 func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
@@ -526,7 +536,7 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	ctx := context.Background()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
-	dev.handleEvent(ctx, makeStatusEvent(ua.StatusBadNodeIDUnknown), nodeId)
+	dev.handleEvent(ctx, makeStatusEvent(1, ua.StatusBadNodeIDUnknown), fixedLookup(nodeId))
 	checks := h.getHealthChecks(t)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
@@ -537,7 +547,7 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
 	require.Contains(t, rel.LastError.DetailsText, nodeId.String())
 
-	dev.handleEvent(ctx, makeStatusEvent(ua.StatusOK), nodeId)
+	dev.handleEvent(ctx, makeStatusEvent(1, ua.StatusOK), fixedLookup(nodeId))
 	checks = h.getHealthChecks(t)
 	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
 
@@ -580,7 +590,7 @@ func TestOpcuaHandleEvent_Severity(t *testing.T) {
 				eventHandlers: []EventHandler{meter},
 			}
 
-			dev.handleEvent(h.ctx, makeStatusEvent(tt.status), nodeId)
+			dev.handleEvent(h.ctx, makeStatusEvent(1, tt.status), fixedLookup(nodeId))
 
 			rel := h.getHealthChecks(t)[0].GetReliability()
 			require.NotNil(t, rel)
@@ -614,27 +624,34 @@ func (m devicesServerModel) ClientConn() grpc.ClientConnInterface {
 	return nil
 }
 
-// fakeSubscriber hands out a scripted sequence of Subscribe outcomes and records the calls,
+// fakeSubscriber hands out a scripted sequence of subscriptions and records the calls,
 // standing in for *Client so the retry behaviour can be driven without an OPC UA server.
 type fakeSubscriber struct {
 	mu sync.Mutex
-	// errs is the outcome of each successive call, a nil entry meaning success. The last entry
-	// repeats once the script runs out, so a script ending in nil keeps succeeding.
-	errs  []error
-	calls []string                              // node ids, in call order
-	chans []chan *opcua.PublishNotificationData // one per successful call, in call order
+	// errs is the outcome of each successive NewSubscription call, a nil entry meaning a
+	// subscription is created. The last entry repeats once the script runs out.
+	errs []error
+	// outcomes is the scripted status for a node id on each successive occasion it is asked
+	// about, a nil entry meaning the item was created. The last entry repeats, so
+	// {StatusBadTimeout, nil} fails once and then works forever. Kept here rather than on the
+	// subscription so a script carries across a resubscribe.
+	outcomes map[string][]error
+	seen     map[string]int // how many times each node has been asked about, over all subs
+
+	subs  []*fakePointSub
+	calls int
 }
 
-func newFakeSubscriber(errs ...error) *fakeSubscriber {
-	return &fakeSubscriber{errs: errs}
+func newFakeSubscriber(outcomes map[string][]error, errs ...error) *fakeSubscriber {
+	return &fakeSubscriber{errs: errs, outcomes: outcomes, seen: make(map[string]int)}
 }
 
-func (f *fakeSubscriber) Subscribe(_ context.Context, nodeId *ua.NodeID) (<-chan *opcua.PublishNotificationData, error) {
+func (f *fakeSubscriber) NewSubscription(_ context.Context) (pointSubscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	i := len(f.calls)
-	f.calls = append(f.calls, nodeId.String())
+	i := f.calls
+	f.calls++
 	if len(f.errs) > 0 {
 		if i >= len(f.errs) {
 			i = len(f.errs) - 1
@@ -643,22 +660,136 @@ func (f *fakeSubscriber) Subscribe(_ context.Context, nodeId *ua.NodeID) (<-chan
 			return nil, err
 		}
 	}
-	ch := make(chan *opcua.PublishNotificationData)
-	f.chans = append(f.chans, ch)
-	return ch, nil
+	sub := &fakePointSub{
+		owner:  f,
+		notify: make(chan *opcua.PublishNotificationData),
+		nodes:  make(map[uint32]*ua.NodeID),
+	}
+	f.subs = append(f.subs, sub)
+	return sub, nil
 }
 
 func (f *fakeSubscriber) callCount() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return len(f.calls)
+	return f.calls
 }
 
-// chanAt returns the channel handed out by successful Subscribe number i, counting from zero.
-func (f *fakeSubscriber) chanAt(i int) chan *opcua.PublishNotificationData {
+// subAt returns the subscription handed out by successful call number i, counting from zero.
+func (f *fakeSubscriber) subAt(i int) *fakePointSub {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.chans[i]
+	return f.subs[i]
+}
+
+func (f *fakeSubscriber) subCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.subs)
+}
+
+// outcome consumes the next scripted result for nodeId, wrapped the way Client wraps it so
+// that subscribeErrIsPermanent classifies it from the status code inside.
+func (f *fakeSubscriber) outcome(nodeId *ua.NodeID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := nodeId.String()
+	script := f.outcomes[key]
+	asked := f.seen[key]
+	f.seen[key]++
+	if len(script) == 0 {
+		return nil
+	}
+	err := script[min(asked, len(script)-1)]
+	if err == nil {
+		return nil
+	}
+	return monitorErr(nodeId, err)
+}
+
+// fakePointSub is one scripted subscription: it answers Monitor from its subscriber's script,
+// hands out client handles as items are created, and records everything it was asked.
+type fakePointSub struct {
+	owner *fakeSubscriber
+
+	mu         sync.Mutex
+	calls      [][]string // node ids of each successive Monitor call, in call order
+	cancels    int
+	nextHandle uint32
+	nodes      map[uint32]*ua.NodeID
+
+	notify chan *opcua.PublishNotificationData
+}
+
+func (f *fakePointSub) Monitor(_ context.Context, nodeIds ...*ua.NodeID) []monitorResult {
+	results := make([]monitorResult, 0, len(nodeIds))
+	asked := make([]string, 0, len(nodeIds))
+	for _, nodeId := range nodeIds {
+		asked = append(asked, nodeId.String())
+		err := f.owner.outcome(nodeId)
+		if err == nil {
+			f.mu.Lock()
+			f.nextHandle++
+			f.nodes[f.nextHandle] = nodeId
+			f.mu.Unlock()
+		}
+		results = append(results, monitorResult{NodeId: nodeId, Err: err})
+	}
+	f.mu.Lock()
+	f.calls = append(f.calls, asked)
+	f.mu.Unlock()
+	return results
+}
+
+func (f *fakePointSub) Notifications() <-chan *opcua.PublishNotificationData {
+	return f.notify
+}
+
+func (f *fakePointSub) Node(handle uint32) (*ua.NodeID, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	nodeId, ok := f.nodes[handle]
+	return nodeId, ok
+}
+
+func (f *fakePointSub) Cancel(context.Context) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.cancels++
+}
+
+// send delivers a notification to whoever is pumping this subscription, blocking until it is
+// taken so that a test knows it has been dispatched.
+func (f *fakePointSub) send(event *opcua.PublishNotificationData) {
+	f.notify <- event
+}
+
+// monitorCalls returns the node ids of each successive Monitor call.
+func (f *fakePointSub) monitorCalls() [][]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([][]string, len(f.calls))
+	copy(out, f.calls)
+	return out
+}
+
+func (f *fakePointSub) cancelCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.cancels
+}
+
+// handleFor returns the client handle the subscription gave nodeId, or zero when it has no
+// item for it.
+func (f *fakePointSub) handleFor(nodeId string) uint32 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for handle, n := range f.nodes {
+		if n.String() == nodeId {
+			return handle
+		}
+	}
+	return 0
 }
 
 // faultRecorder keeps the latest state of a health check as the registry commits it, so a test
@@ -734,11 +865,19 @@ func goSubscribe(ctx context.Context, dev *device) <-chan error {
 	return done
 }
 
+// requireCalls checks how many subscriptions the device has asked for. One per device is the
+// point of the exercise, so most of these tests are really assertions about this number.
 func requireCalls(t *testing.T, sub *fakeSubscriber, want int) {
 	t.Helper()
 	if got := sub.callCount(); got != want {
-		t.Fatalf("Subscribe called %d times, want %d", got, want)
+		t.Fatalf("NewSubscription called %d times, want %d", got, want)
 	}
+}
+
+// requireMonitored checks the node ids of each successive Monitor call on one subscription.
+func requireMonitored(t *testing.T, sub *fakePointSub, want [][]string) {
+	t.Helper()
+	require.Equal(t, want, sub.monitorCalls(), "the nodes monitored, per Monitor call")
 }
 
 func requireSubscribeReturns(t *testing.T, done <-chan error) {
@@ -753,28 +892,126 @@ func requireSubscribeReturns(t *testing.T, done <-chan error) {
 	}
 }
 
-// eventually polls cond until it holds, for the tests whose goroutines run on the real clock.
-func eventually(t *testing.T, cond func() bool, msg string, args ...any) {
-	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if cond() {
-			return
-		}
-		time.Sleep(time.Millisecond)
-	}
-	t.Fatalf(msg, args...)
+// recordingHandler captures every dispatch, for the tests about which node a value belongs to.
+type recordingHandler struct {
+	mu     sync.Mutex
+	events []dispatch
 }
 
-// TestDevice_subscribe_retriesTransientFailure is the reported fault: a point that browses
-// fine fails to subscribe with StatusBadTimeout, which is our own request timeout expiring
-// against a slow server rather than anything wrong with the node. It used to be abandoned for
-// the lifetime of the config.
-func TestDevice_subscribe_retriesTransientFailure(t *testing.T) {
+type dispatch struct {
+	node  string
+	value any
+}
+
+func (r *recordingHandler) handleEvent(_ context.Context, node *ua.NodeID, value any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.events = append(r.events, dispatch{node: node.String(), value: value})
+}
+
+func (r *recordingHandler) dispatched() []dispatch {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make([]dispatch, len(r.events))
+	copy(out, r.events)
+	return out
+}
+
+// mapLookup resolves client handles from a fixed map, standing in for pointSub.Node.
+func mapLookup(nodes map[uint32]string) nodeLookup {
+	return func(handle uint32) (*ua.NodeID, bool) {
+		nodeId, ok := nodes[handle]
+		if !ok {
+			return nil, false
+		}
+		return mustParseNodeID(nodeId), true
+	}
+}
+
+// TestDevice_handleEvent_demux is the whole reason a client handle is stamped on each item: one
+// subscription carries every point on the device, and the handle is the only thing on a
+// notification that says which node a value came from.
+func TestDevice_handleEvent_demux(t *testing.T) {
+	const nodeA, nodeB = "ns=2;s=A", "ns=2;s=B"
+	rec := &recordingHandler{}
+	dev := &device{
+		conf:          &config.Device{Name: "test-device"},
+		logger:        zaptest.NewLogger(t),
+		faultCheck:    newSimpleFaultCheck(t),
+		eventHandlers: []EventHandler{rec},
+	}
+
+	dev.handleEvent(t.Context(), &opcua.PublishNotificationData{
+		Value: &ua.DataChangeNotification{
+			MonitoredItems: []*ua.MonitoredItemNotification{
+				{ClientHandle: 2, Value: &ua.DataValue{Value: ua.MustVariant(float32(2)), Status: ua.StatusOK}},
+				{ClientHandle: 1, Value: &ua.DataValue{Value: ua.MustVariant(float32(1)), Status: ua.StatusOK}},
+			},
+		},
+	}, mapLookup(map[uint32]string{1: nodeA, 2: nodeB}))
+
+	want := []dispatch{{node: nodeB, value: float32(2)}, {node: nodeA, value: float32(1)}}
+	require.Equal(t, want, rec.dispatched(), "each value should reach the node its handle names")
+}
+
+// TestDevice_handleEvent_unknownHandle checks a notification we cannot attribute is dropped.
+// There is nothing on the wire saying which node it came from, so there is no point to fault,
+// and the device's own points are unaffected by the server reporting an item we do not know:
+// calling it a read failure would blame every point on the device for it.
+func TestDevice_handleEvent_unknownHandle(t *testing.T) {
+	rec := &recordingHandler{}
+	fc, faults := newRecordedFaultCheck(t)
+	dev := &device{
+		conf:          &config.Device{Name: "test-device"},
+		logger:        zaptest.NewLogger(t),
+		faultCheck:    fc,
+		eventHandlers: []EventHandler{rec},
+	}
+
+	// a value and a nil value, since the handle is resolved before the nil check
+	dev.handleEvent(t.Context(), &opcua.PublishNotificationData{
+		Value: &ua.DataChangeNotification{
+			MonitoredItems: []*ua.MonitoredItemNotification{
+				{ClientHandle: 99, Value: &ua.DataValue{Value: ua.MustVariant(float32(1)), Status: ua.StatusOK}},
+				{ClientHandle: 99, Value: nil},
+			},
+		},
+	}, mapLookup(nil))
+
+	require.Empty(t, rec.dispatched(), "a value we cannot attribute must not be dispatched")
+	require.Nil(t, faults.fault(PointSubscribeError))
+	require.Nil(t, faults.fault(DeviceConfigError))
+}
+
+// TestDevice_logUnknownHandle_thins checks the logging ladder. A server that keeps reporting an
+// item we do not know about would otherwise repeat the same line every publishing cycle for as
+// long as the config lives, drowning out whatever else is going on.
+func TestDevice_logUnknownHandle_thins(t *testing.T) {
+	core, logs := observer.New(zap.DebugLevel)
+	dev := &device{conf: &config.Device{Name: "test-device"}, logger: zap.New(core)}
+
+	for range 5 {
+		dev.logUnknownHandle(7)
+	}
+	require.Equal(t, 3, logs.FilterLevelExact(zap.WarnLevel).Len(),
+		"two lines then one saying it is reducing, however many follow")
+	require.Zero(t, logs.FilterLevelExact(zap.DebugLevel).Len())
+
+	for range 95 {
+		dev.logUnknownHandle(7)
+	}
+	require.Equal(t, 3, logs.FilterLevelExact(zap.WarnLevel).Len())
+	require.Equal(t, 1, logs.FilterLevelExact(zap.DebugLevel).Len(), "one line per hundred after that")
+}
+
+// TestDevice_subscribe_partialFailureKeepsSubscription is the case that decides the whole shape
+// of the retry: one point of many failing must not disturb the ones that are working. With a
+// subscription per device, tearing it down to retry that point would take every sibling with it.
+func TestDevice_subscribe_partialFailureKeepsSubscription(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		const nodeId = "ns=2;s=Tag1"
-		sub := newFakeSubscriber(ua.StatusBadTimeout, ua.StatusBadTimeout, nil)
-		dev, meter, _ := newTestDevice(t, sub, nodeId)
+		const good, bad = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(map[string][]error{bad: {ua.StatusBadTimeout}})
+		dev, meter, rec := newTestDevice(t, sub, good, bad)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -782,92 +1019,258 @@ func TestDevice_subscribe_retriesTransientFailure(t *testing.T) {
 
 		synctest.Wait()
 		requireCalls(t, sub, 1)
+		requireMonitored(t, sub.subAt(0), [][]string{{good, bad}})
+		require.Zero(t, sub.subAt(0).cancelCount(), "a subscription with points delivering on it is not an orphan")
 
-		// WithBackoff(2s, 5m) ramps by half each time, so the delays are 2s then 3s
-		time.Sleep(subscribeRetryInitial)
-		synctest.Wait()
-		requireCalls(t, sub, 2)
+		fault := rec.fault(PointSubscribeError)
+		require.NotNil(t, fault, "the point being retried should raise a %s fault", PointSubscribeError)
+		require.Contains(t, fault.DetailsText, bad)
+		require.NotContains(t, fault.DetailsText, good, "a point that is delivering is not a fault")
+		require.Nil(t, rec.fault(DeviceConfigError), "being retried is not being misconfigured")
 
-		time.Sleep(3 * time.Second)
-		synctest.Wait()
-		requireCalls(t, sub, 3)
-
-		// the third attempt worked, so values reach the traits again
-		sub.chanAt(0) <- makeStatusEvent(ua.StatusOK)
+		// and the good point is delivering, which is the thing that used to be lost
+		sub.subAt(0).send(makeStatusEvent(sub.subAt(0).handleFor(good), ua.StatusOK))
 		synctest.Wait()
 		reading, err := meter.GetMeterReading(ctx, nil)
 		require.NoError(t, err)
-		require.Equal(t, float32(100), reading.Usage, "the point should deliver values once it subscribes")
+		require.Equal(t, float32(100), reading.Usage)
 
 		cancel()
 		requireSubscribeReturns(t, done)
 	})
 }
 
-// TestDevice_subscribe_givesUpOnPermanentFailure covers the other half of the split: a node id
-// the server does not know is never going to appear, so asking again forever would be noise.
-func TestDevice_subscribe_givesUpOnPermanentFailure(t *testing.T) {
-	const nodeId = "ns=2;s=MissingTag"
-	sub := newFakeSubscriber(ua.StatusBadNodeIDUnknown)
-	dev, _, rec := newTestDevice(t, sub, nodeId)
+// TestDevice_subscribe_retriesStragglerOnLiveSubscription is the other half of that: the point
+// that failed has to rejoin its siblings, and it does so by being monitored onto the
+// subscription they are already delivering on rather than by starting a new one.
+func TestDevice_subscribe_retriesStragglerOnLiveSubscription(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const good, late = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(map[string][]error{late: {ua.StatusBadTimeout, nil}})
+		dev, meter, rec := newTestDevice(t, sub, good, late)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	done := goSubscribe(ctx, dev)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
 
-	eventually(t, func() bool { return rec.fault(DeviceConfigError) != nil },
-		"no %s fault was raised for a point the server rejected", DeviceConfigError)
+		synctest.Wait()
+		require.NotNil(t, rec.fault(PointSubscribeError))
 
-	fault := rec.fault(DeviceConfigError)
-	require.Contains(t, fault.DetailsText, nodeId, "the fault should name the point")
-	require.Contains(t, fault.DetailsText, ua.StatusBadNodeIDUnknown.Error())
-	// one attempt and no more. The first retry would be subscribeRetryInitial away, so this
-	// also says it stopped rather than merely not having got there yet.
-	require.Equal(t, 1, sub.callCount())
-	require.Nil(t, rec.fault(PointSubscribeError), "a point we gave up on is not one being retried")
+		// the straggler waits before its first retry: it was asked about a moment ago
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
 
-	cancel()
-	requireSubscribeReturns(t, done)
+		requireCalls(t, sub, 1)
+		requireMonitored(t, sub.subAt(0), [][]string{{good, late}, {late}})
+		require.Zero(t, sub.subAt(0).cancelCount())
+		require.Nil(t, rec.fault(PointSubscribeError), "the fault should clear once the point is monitored")
+		require.NotZero(t, sub.subAt(0).handleFor(late), "the straggler should have an item on the live subscription")
+
+		// the point that was working all along has not been disturbed
+		sub.subAt(0).send(makeStatusEvent(sub.subAt(0).handleFor(good), ua.StatusOK))
+		synctest.Wait()
+		reading, err := meter.GetMeterReading(ctx, nil)
+		require.NoError(t, err)
+		require.Equal(t, float32(100), reading.Usage)
+
+		// and the retry loop is done, rather than idling for the life of the device
+		time.Sleep(10 * time.Minute)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{good, late}, {late}})
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
 }
 
-// TestDevice_subscribe_survivesAllPointsFailing is a regression test for the downstream
-// symptom of the old behaviour. subscribe used to return once it had no live subscriptions
-// left, and applyConfig reads that as the config being finished and takes it as the cue to
-// close the client every other device on the connection is still using.
-func TestDevice_subscribe_survivesAllPointsFailing(t *testing.T) {
-	const nodeA, nodeB = "ns=2;s=MissingA", "ns=2;s=MissingB"
-	sub := newFakeSubscriber(ua.StatusBadNodeIDUnknown)
-	dev, _, rec := newTestDevice(t, sub, nodeA, nodeB)
+// TestDevice_subscribe_stragglerBacksOff pins the straggler's own ramp. It cannot share the
+// device's, which describes a subscription that will not open at all, but it has to ramp for
+// the same reason: a point the server keeps refusing should not be asked for every two seconds
+// all night.
+func TestDevice_subscribe_stragglerBacksOff(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const good, late = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(map[string][]error{
+			late: {ua.StatusBadTimeout, ua.StatusBadTimeout, nil},
+		})
+		dev, _, _ := newTestDevice(t, sub, good, late)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	done := goSubscribe(ctx, dev)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
 
-	eventually(t, func() bool { return sub.callCount() == 2 }, "both points should have been attempted")
+		synctest.Wait()
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{good, late}, {late}})
 
-	select {
-	case err := <-done:
-		t.Fatalf("subscribe() returned %v while its ctx was still live", err)
-	case <-time.After(100 * time.Millisecond):
-	}
+		// ramped by half, so 3s rather than another 2s
+		time.Sleep(3*time.Second - time.Millisecond)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{good, late}, {late}})
 
-	// both points are named rather than the second overwriting the first: faults are keyed on
-	// system and code, so one fault naming its points is the only shape that survives
-	fault := rec.fault(DeviceConfigError)
-	require.NotNil(t, fault)
-	require.Contains(t, fault.DetailsText, nodeA)
-	require.Contains(t, fault.DetailsText, nodeB)
+		time.Sleep(time.Millisecond)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{good, late}, {late}, {late}})
+		requireCalls(t, sub, 1)
 
-	cancel()
-	requireSubscribeReturns(t, done)
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
 }
 
-// TestDevice_subscribe_clearsFaultOnSuccess checks a point being retried says so, and stops
-// saying so once it works. Nothing in this driver used to remove a fault it had raised.
-func TestDevice_subscribe_clearsFaultOnSuccess(t *testing.T) {
+// TestDevice_subscribe_stragglerGivenUp covers a straggler whose next answer says it can never
+// work. It moves to the config fault and stops being asked about, which also ends the retry
+// goroutine, so a device whose points have settled leaves nothing of its own running.
+func TestDevice_subscribe_stragglerGivenUp(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const good, doomed = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(map[string][]error{
+			doomed: {ua.StatusBadTimeout, ua.StatusBadNodeIDUnknown},
+		})
+		dev, _, rec := newTestDevice(t, sub, good, doomed)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		require.NotNil(t, rec.fault(PointSubscribeError))
+
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		fault := rec.fault(DeviceConfigError)
+		require.NotNil(t, fault, "a point the server says can never work is a config fault")
+		require.Contains(t, fault.DetailsText, doomed)
+		require.Nil(t, rec.fault(PointSubscribeError), "a point we gave up on is not one being retried")
+
+		// never asked about again, and the subscription its sibling is using stays up
+		time.Sleep(10 * time.Minute)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{good, doomed}, {doomed}})
+		requireCalls(t, sub, 1)
+		require.Zero(t, sub.subAt(0).cancelCount())
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_cancelsOrphanSubscription checks a subscription nothing is delivering on
+// is torn down before the device backs off.
+//
+// Left behind it would sit in the client folding into the client-wide publish timeout, and
+// gopcua spawns a permanently blocked notify goroutine for every stale subscription on every
+// transport error - one leak per resubscribe.
+func TestDevice_subscribe_cancelsOrphanSubscription(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeA, nodeB = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		timeouts := []error{ua.StatusBadTimeout, ua.StatusBadTimeout, nil}
+		sub := newFakeSubscriber(map[string][]error{nodeA: timeouts, nodeB: timeouts})
+		dev, _, rec := newTestDevice(t, sub, nodeA, nodeB)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		requireCalls(t, sub, 1)
+		require.Equal(t, 1, sub.subAt(0).cancelCount(), "a subscription with nothing on it is an orphan")
+		fault := rec.fault(PointSubscribeError)
+		require.NotNil(t, fault)
+		require.Contains(t, fault.DetailsText, nodeA)
+		require.Contains(t, fault.DetailsText, nodeB)
+
+		// a whole new subscription per attempt, each orphan cancelled once
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2)
+		require.Equal(t, 1, sub.subAt(1).cancelCount())
+
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+		require.Zero(t, sub.subAt(2).cancelCount(), "the attempt that worked must keep its subscription")
+		require.Nil(t, rec.fault(PointSubscribeError))
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_givesUpWhenEveryPointRefused checks a device the server has refused
+// outright stops asking, without subscribe returning.
+//
+// Returning is the part that matters: applyConfig reads grp.Wait returning as the config being
+// finished and takes it as the cue to close the client every other device is still using.
+func TestDevice_subscribe_givesUpWhenEveryPointRefused(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeA, nodeB = "ns=2;s=MissingA", "ns=2;s=MissingB"
+		unknown := []error{ua.StatusBadNodeIDUnknown}
+		sub := newFakeSubscriber(map[string][]error{nodeA: unknown, nodeB: unknown})
+		dev, _, rec := newTestDevice(t, sub, nodeA, nodeB)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		// both points named rather than the second overwriting the first: faults are keyed on
+		// system and code, so one fault naming its points is the only shape that survives
+		fault := rec.fault(DeviceConfigError)
+		require.NotNil(t, fault)
+		require.Contains(t, fault.DetailsText, nodeA)
+		require.Contains(t, fault.DetailsText, nodeB)
+		require.Nil(t, rec.fault(PointSubscribeError))
+		require.Equal(t, 1, sub.subAt(0).cancelCount())
+
+		// one attempt and no more, however long we wait
+		time.Sleep(10 * time.Minute)
+		synctest.Wait()
+		requireCalls(t, sub, 1)
+		select {
+		case err := <-done:
+			t.Fatalf("subscribe() returned %v while its ctx was still live", err)
+		default:
+		}
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_noConfiguredPoints checks a device with nothing to monitor asks the
+// server for nothing at all, rather than opening a subscription it would put no items on.
+func TestDevice_subscribe_noConfiguredPoints(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber(nil)
+		fc, rec := newRecordedFaultCheck(t)
+		dev := newDevice(&config.Device{Name: "test-device"}, zaptest.NewLogger(t), sub, fc, nil)
+		dev.maxStagger = 0
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		time.Sleep(10 * time.Minute)
+		synctest.Wait()
+		requireCalls(t, sub, 0)
+		require.Nil(t, rec.fault(PointSubscribeError))
+		require.Nil(t, rec.fault(DeviceConfigError))
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_retriesFailedSubscription covers the failure that is nothing to do with
+// any one point: the subscription itself will not open. Every point is reported as waiting on
+// it, since none of them can be told apart at that stage.
+func TestDevice_subscribe_retriesFailedSubscription(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const nodeId = "ns=2;s=Tag1"
-		sub := newFakeSubscriber(ua.StatusBadTimeout, nil)
+		sub := newFakeSubscriber(nil, ua.StatusBadTooManySubscriptions, nil)
 		dev, _, rec := newTestDevice(t, sub, nodeId)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -875,17 +1278,19 @@ func TestDevice_subscribe_clearsFaultOnSuccess(t *testing.T) {
 		done := goSubscribe(ctx, dev)
 
 		synctest.Wait()
+		requireCalls(t, sub, 1)
+		require.Zero(t, sub.subCount(), "no subscription was created, so there is none to cancel")
 		fault := rec.fault(PointSubscribeError)
-		require.NotNil(t, fault, "a point being retried should raise a %s fault", PointSubscribeError)
+		require.NotNil(t, fault)
 		require.Contains(t, fault.DetailsText, nodeId)
-		require.Contains(t, fault.DetailsText, ua.StatusBadTimeout.Error())
-		// being retried is not being misconfigured, and saying it is sends whoever reads the
-		// fault hunting a mistake in the config that is not there
+		// a capacity code clears as load drops, so it is retried rather than given up on
 		require.Nil(t, rec.fault(DeviceConfigError))
 
 		time.Sleep(subscribeRetryInitial)
 		synctest.Wait()
-		require.Nil(t, rec.fault(PointSubscribeError), "the fault should be removed once the point subscribes")
+		requireCalls(t, sub, 2)
+		requireMonitored(t, sub.subAt(0), [][]string{{nodeId}})
+		require.Nil(t, rec.fault(PointSubscribeError))
 
 		cancel()
 		requireSubscribeReturns(t, done)
@@ -895,17 +1300,59 @@ func TestDevice_subscribe_clearsFaultOnSuccess(t *testing.T) {
 // TestDevice_subscribe_resubscribesWhenSubscriptionEnds covers a subscription that worked and
 // then died. gopcua never closes the notification channel, so that arrives as a
 // StatusChangeNotification carrying a Bad status, which handleEvent used to discard as an
-// unhandled event, leaving the point silently dead.
+// unhandled event, leaving every point on the device silently dead.
 //
-// It also pins the ResetBackoff: a subscription that ran for a while demonstrably works, so
-// the retry starts from the initial delay rather than carrying a ramp built from an older
-// problem.
+// It also pins two things the batching brought with it: the dead subscription is cancelled
+// exactly once, and a point already given up on stays given up on across the resubscribe.
 func TestDevice_subscribe_resubscribesWhenSubscriptionEnds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		const good, doomed = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(map[string][]error{
+			doomed: {ua.StatusBadTimeout, ua.StatusBadNodeIDUnknown},
+		})
+		dev, _, rec := newTestDevice(t, sub, good, doomed)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		// let the straggler retry turn the second point into a permanent failure
+		synctest.Wait()
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		require.NotNil(t, rec.fault(DeviceConfigError))
+
+		// now the server ends the subscription under us
+		sub.subAt(0).send(&opcua.PublishNotificationData{
+			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
+		})
+		synctest.Wait()
+		require.Equal(t, 1, sub.subAt(0).cancelCount(), "the dead subscription is cancelled exactly once")
+		requireCalls(t, sub, 1) // a backoff away, not immediate
+		require.NotNil(t, rec.fault(PointSubscribeError), "the points are waiting on a new subscription")
+
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2)
+		// the point we gave up on is not asked about again, and its fault stands
+		requireMonitored(t, sub.subAt(1), [][]string{{good}})
+		require.NotNil(t, rec.fault(DeviceConfigError))
+		require.Nil(t, rec.fault(PointSubscribeError))
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_resetsBackoffAfterGrace checks a subscription that ran for a while
+// resubscribes from the initial delay rather than carrying a ramp built from an older problem.
+// The grace now measures the whole device, so one flapping point can no longer keep the ramp up.
+func TestDevice_subscribe_resetsBackoffAfterGrace(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 		const nodeId = "ns=2;s=Tag1"
-		// two failures first so the backoff has ramped to 4.5s by the time a subscription is
-		// established. Without them a reset and a normal first delay are the same number.
-		sub := newFakeSubscriber(ua.StatusBadTimeout, ua.StatusBadTimeout, nil)
+		// two failures first so the ramp has reached 4.5s by the time a subscription opens.
+		// Without them a reset and a normal first delay are the same number.
+		sub := newFakeSubscriber(nil, ua.StatusBadTimeout, ua.StatusBadTimeout, nil)
 		dev, _, _ := newTestDevice(t, sub, nodeId)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -921,11 +1368,11 @@ func TestDevice_subscribe_resubscribesWhenSubscriptionEnds(t *testing.T) {
 
 		// let it run long enough to count as working, then have the server end it
 		time.Sleep(resubscribeGrace)
-		sub.chanAt(0) <- &opcua.PublishNotificationData{
+		sub.subAt(0).send(&opcua.PublishNotificationData{
 			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
-		}
+		})
 		synctest.Wait()
-		requireCalls(t, sub, 3) // a backoff away, not immediate
+		requireCalls(t, sub, 3)
 
 		time.Sleep(subscribeRetryInitial - time.Millisecond)
 		synctest.Wait()
@@ -935,6 +1382,27 @@ func TestDevice_subscribe_resubscribesWhenSubscriptionEnds(t *testing.T) {
 		time.Sleep(time.Millisecond)
 		synctest.Wait()
 		requireCalls(t, sub, 4)
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_dedupesNodeIds checks a config listing the same node twice monitors it
+// once. Two entries used to mean two subscriptions to the same node, which was merely wasteful;
+// on one subscription it would mean two items delivering the same value under two handles.
+func TestDevice_subscribe_dedupesNodeIds(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeA, nodeB = "ns=2;s=Tag1", "ns=2;s=Tag2"
+		sub := newFakeSubscriber(nil)
+		dev, _, _ := newTestDevice(t, sub, nodeA, nodeB, nodeA)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(0), [][]string{{nodeA, nodeB}})
 
 		cancel()
 		requireSubscribeReturns(t, done)

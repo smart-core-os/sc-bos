@@ -668,3 +668,71 @@ func Test_renderPoints(t *testing.T) {
 	require.Equal(t, "ns=2;s=A: bad a\nns=2;s=B: bad b", first)
 	require.Empty(t, renderPoints(nil))
 }
+
+// countingFaultCheck reports the faults on a check and how many updates the registry has
+// published for it, which is the cost applyBatch exists to avoid.
+func countingFaultCheck(t *testing.T) (*healthpb.FaultCheck, func() (map[string]string, int)) {
+	t.Helper()
+	var latest *healthpb.HealthCheck
+	updates := 0
+	reg := healthpb.NewRegistry(
+		healthpb.WithOnCheckUpdate(func(_ string, c *healthpb.HealthCheck) {
+			updates++
+			latest = c
+		}),
+	)
+	check := getDeviceHealthCheck(healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	fc, err := reg.ForOwner("test").NewFaultCheck("test-device", check)
+	require.NoError(t, err)
+	t.Cleanup(fc.Dispose)
+
+	// read is called from the test goroutine only, as are the writes above, so there is
+	// nothing here to synchronise
+	read := func() (map[string]string, int) {
+		faults := make(map[string]string)
+		for _, f := range latest.GetFaults().GetCurrentFaults() {
+			faults[f.GetCode().GetCode()] = f.GetSummaryText() + "\n" + f.GetDetailsText()
+		}
+		return faults, updates
+	}
+	return fc, read
+}
+
+// Test_pointHealth_applyBatch checks a device's whole subscribe outcome commits as one update,
+// reading exactly as the setters it replaces.
+//
+// commit rewrites both faults and pushes the check to the registry every time it runs. With a
+// subscription per point those calls were spread over as many goroutines; with one per device
+// they arrive together, so a 200-point device would publish 200 growing versions of the same
+// fault per attempt, every one of them visible over the devices API. What must not change is
+// what an operator ends up reading, hence comparing the text rather than just the count.
+func Test_pointHealth_applyBatch(t *testing.T) {
+	const nodeA, nodeB, nodeC, nodeD, nodeE = "ns=2;s=A", "ns=2;s=B", "ns=2;s=C", "ns=2;s=D", "ns=2;s=E"
+	timeout, unknown := ua.StatusBadTimeout, ua.StatusBadNodeIDUnknown
+
+	sequential, readSequential := countingFaultCheck(t)
+	one := newPointHealth(sequential)
+	one.setOk(nodeA)
+	one.setFailing(nodeB, timeout)
+	one.setFailing(nodeC, timeout)
+	one.setPermanent(nodeD, unknown)
+	one.setPermanent(nodeE, unknown)
+
+	batched, readBatched := countingFaultCheck(t)
+	all := newPointHealth(batched)
+	all.applyBatch([]string{nodeA},
+		map[string]error{nodeB: timeout, nodeC: timeout},
+		map[string]error{nodeD: unknown, nodeE: unknown})
+
+	sequentialFaults, sequentialUpdates := readSequential()
+	batchedFaults, batchedUpdates := readBatched()
+
+	require.Equal(t, sequentialFaults, batchedFaults, "the batch must read exactly as the setters it replaces")
+	require.Len(t, batchedFaults, 2, "one fault per state, each naming the points it covers")
+	// two rather than one because commit writes each fault code separately, which is
+	// healthpb's API rather than anything we choose. The point is that it is per fault code
+	// and not per point: five points still cost the same two writes fifty would.
+	require.Equal(t, 2, batchedUpdates, "a device's whole outcome commits once per fault code")
+	require.Greater(t, sequentialUpdates, batchedUpdates,
+		"an update per point is the cost this exists to avoid")
+}
