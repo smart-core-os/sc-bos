@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -98,6 +99,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 
 	grp, ctx := errgroup.WithContext(ctx)
+	// hold the group open for the life of the config. grp.Wait returning is what closes the
+	// client every device shares, so it must not happen while any of them could still be
+	// using it - including a config with no devices at all. The devices park on ctx too;
+	// this is what survives one of them growing an early return.
+	// No SetLimit here: it bounds live goroutines, and these live as long as the config does.
+	grp.Go(func() error {
+		<-ctx.Done()
+		return ctx.Err()
+	})
 	for _, dev := range cfg.Devices {
 		allFeatures := []node.Feature{node.HasMetadata(dev.Meta), node.HasDeviceType(metadatapb.Metadata_DEVICE)}
 
@@ -239,9 +249,19 @@ func (d *Driver) opcClientOptions(ctx context.Context, conn config.Conn) (string
 	if err != nil {
 		return "", nil, err
 	}
+
+	// options that apply however we authenticate, hoisted above the security branch because
+	// the anonymous-insecure path returns early: anything added only to the secure branch
+	// below would silently not apply to the commonest deployment there is
+	common := []opcua.Option{
+		// gopcua defaults this to 10s and the driver never used to set it, which is where a
+		// StatusBadTimeout against a perfectly readable node comes from
+		opcua.RequestTimeout(conn.RequestTimeout.Duration),
+	}
+
 	if sec.AnonymousInsecure() {
 		// nothing to negotiate, so skip discovery and connect as the driver always has
-		return conn.Endpoint, nil, nil
+		return conn.Endpoint, common, nil
 	}
 
 	// note this dials the server without security, which a server that secures its
@@ -265,13 +285,15 @@ func (d *Driver) opcClientOptions(ctx context.Context, conn config.Conn) (string
 			zap.String("configured", conn.Endpoint), zap.String("advertised", ep.EndpointURL))
 	}
 
-	opts := []opcua.Option{
+	// slices.Concat rather than append(common, ...), which would be free to write through
+	// common's backing array
+	opts := slices.Concat(common, []opcua.Option{
 		// must come before the auth options: this creates the user identity token and sets
 		// its policy id from the endpoint, AuthUsername only fills in an existing token
 		opcua.SecurityFromEndpoint(ep, sec.TokenType),
 		opcua.CertificateFile(sec.CertFile), // a no-op when empty
 		opcua.PrivateKeyFile(sec.KeyFile),
-	}
+	})
 	if conn.Auth != nil {
 		if sec.Mode == ua.MessageSecurityModeNone {
 			d.logger.Warn("opc ua password will cross the network unencrypted, the configured security mode is None",

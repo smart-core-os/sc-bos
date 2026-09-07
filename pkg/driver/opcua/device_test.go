@@ -2,8 +2,12 @@ package opcua
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/gopcua/opcua"
@@ -608,4 +612,331 @@ type devicesServerModel struct {
 
 func (m devicesServerModel) ClientConn() grpc.ClientConnInterface {
 	return nil
+}
+
+// fakeSubscriber hands out a scripted sequence of Subscribe outcomes and records the calls,
+// standing in for *Client so the retry behaviour can be driven without an OPC UA server.
+type fakeSubscriber struct {
+	mu sync.Mutex
+	// errs is the outcome of each successive call, a nil entry meaning success. The last entry
+	// repeats once the script runs out, so a script ending in nil keeps succeeding.
+	errs  []error
+	calls []string                              // node ids, in call order
+	chans []chan *opcua.PublishNotificationData // one per successful call, in call order
+}
+
+func newFakeSubscriber(errs ...error) *fakeSubscriber {
+	return &fakeSubscriber{errs: errs}
+}
+
+func (f *fakeSubscriber) Subscribe(_ context.Context, nodeId *ua.NodeID) (<-chan *opcua.PublishNotificationData, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	i := len(f.calls)
+	f.calls = append(f.calls, nodeId.String())
+	if len(f.errs) > 0 {
+		if i >= len(f.errs) {
+			i = len(f.errs) - 1
+		}
+		if err := f.errs[i]; err != nil {
+			return nil, err
+		}
+	}
+	ch := make(chan *opcua.PublishNotificationData)
+	f.chans = append(f.chans, ch)
+	return ch, nil
+}
+
+func (f *fakeSubscriber) callCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.calls)
+}
+
+// chanAt returns the channel handed out by successful Subscribe number i, counting from zero.
+func (f *fakeSubscriber) chanAt(i int) chan *opcua.PublishNotificationData {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.chans[i]
+}
+
+// faultRecorder keeps the latest state of a health check as the registry commits it, so a test
+// can read the current faults without going through the devices API. The harness above starts
+// gRPC goroutines of its own, which do not belong inside a synctest bubble.
+type faultRecorder struct {
+	mu    sync.Mutex
+	check *healthpb.HealthCheck
+}
+
+func (r *faultRecorder) set(c *healthpb.HealthCheck) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.check = c
+}
+
+// fault returns the current fault carrying code, or nil when there is none.
+func (r *faultRecorder) fault(code string) *healthpb.HealthCheck_Error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, f := range r.check.GetFaults().GetCurrentFaults() {
+		if f.GetCode().GetCode() == code {
+			return f
+		}
+	}
+	return nil
+}
+
+func newRecordedFaultCheck(t *testing.T) (*healthpb.FaultCheck, *faultRecorder) {
+	t.Helper()
+	rec := &faultRecorder{}
+	reg := healthpb.NewRegistry(
+		healthpb.WithOnCheckCreate(func(_ string, c *healthpb.HealthCheck) *healthpb.HealthCheck {
+			rec.set(c)
+			return nil
+		}),
+		healthpb.WithOnCheckUpdate(func(_ string, c *healthpb.HealthCheck) { rec.set(c) }),
+	)
+	check := getDeviceHealthCheck(healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	fc, err := reg.ForOwner("test").NewFaultCheck("test-device", check)
+	require.NoError(t, err)
+	t.Cleanup(fc.Dispose)
+	return fc, rec
+}
+
+// newTestDevice builds a device wired to sub, with a meter reading the first node, and returns
+// the recorder watching its fault check. The stagger is zeroed so the retry delays are the
+// only thing on the clock.
+func newTestDevice(t *testing.T, sub subscriber, nodeIds ...string) (*device, *Meter, *faultRecorder) {
+	t.Helper()
+	logger := zaptest.NewLogger(t)
+	fc, rec := newRecordedFaultCheck(t)
+
+	cfg := &config.Device{Name: "test-device"}
+	for _, nodeId := range nodeIds {
+		cfg.Variables = append(cfg.Variables, &config.Variable{NodeId: nodeId, ParsedNodeId: mustParseNodeID(nodeId)})
+	}
+
+	meter, err := newMeter("test-device", config.RawTrait{
+		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"` + nodeIds[0] + `"}}`),
+	}, logger)
+	require.NoError(t, err)
+
+	dev := newDevice(cfg, logger, sub, fc, nil)
+	dev.eventHandlers = append(dev.eventHandlers, meter)
+	dev.maxStagger = 0
+	return dev, meter, rec
+}
+
+func goSubscribe(ctx context.Context, dev *device) <-chan error {
+	done := make(chan error, 1)
+	go func() { done <- dev.subscribe(ctx) }()
+	return done
+}
+
+func requireCalls(t *testing.T, sub *fakeSubscriber, want int) {
+	t.Helper()
+	if got := sub.callCount(); got != want {
+		t.Fatalf("Subscribe called %d times, want %d", got, want)
+	}
+}
+
+func requireSubscribeReturns(t *testing.T, done <-chan error) {
+	t.Helper()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("subscribe() = %v, want context.Canceled", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Error("subscribe() did not return after its ctx was cancelled")
+	}
+}
+
+// eventually polls cond until it holds, for the tests whose goroutines run on the real clock.
+func eventually(t *testing.T, cond func() bool, msg string, args ...any) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if cond() {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf(msg, args...)
+}
+
+// TestDevice_subscribe_retriesTransientFailure is the reported fault: a point that browses
+// fine fails to subscribe with StatusBadTimeout, which is our own request timeout expiring
+// against a slow server rather than anything wrong with the node. It used to be abandoned for
+// the lifetime of the config.
+func TestDevice_subscribe_retriesTransientFailure(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeId = "ns=2;s=Tag1"
+		sub := newFakeSubscriber(ua.StatusBadTimeout, ua.StatusBadTimeout, nil)
+		dev, meter, _ := newTestDevice(t, sub, nodeId)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		requireCalls(t, sub, 1)
+
+		// WithBackoff(2s, 5m) ramps by half each time, so the delays are 2s then 3s
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2)
+
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+
+		// the third attempt worked, so values reach the traits again
+		sub.chanAt(0) <- makeStatusEvent(ua.StatusOK)
+		synctest.Wait()
+		reading, err := meter.GetMeterReading(ctx, nil)
+		require.NoError(t, err)
+		require.Equal(t, float32(100), reading.Usage, "the point should deliver values once it subscribes")
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_givesUpOnPermanentFailure covers the other half of the split: a node id
+// the server does not know is never going to appear, so asking again forever would be noise.
+func TestDevice_subscribe_givesUpOnPermanentFailure(t *testing.T) {
+	const nodeId = "ns=2;s=MissingTag"
+	sub := newFakeSubscriber(ua.StatusBadNodeIDUnknown)
+	dev, _, rec := newTestDevice(t, sub, nodeId)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := goSubscribe(ctx, dev)
+
+	eventually(t, func() bool { return rec.fault(DeviceConfigError) != nil },
+		"no %s fault was raised for a point the server rejected", DeviceConfigError)
+
+	fault := rec.fault(DeviceConfigError)
+	require.Contains(t, fault.DetailsText, nodeId, "the fault should name the point")
+	require.Contains(t, fault.DetailsText, ua.StatusBadNodeIDUnknown.Error())
+	// one attempt and no more. The first retry would be subscribeRetryInitial away, so this
+	// also says it stopped rather than merely not having got there yet.
+	require.Equal(t, 1, sub.callCount())
+	require.Nil(t, rec.fault(PointSubscribeError), "a point we gave up on is not one being retried")
+
+	cancel()
+	requireSubscribeReturns(t, done)
+}
+
+// TestDevice_subscribe_survivesAllPointsFailing is a regression test for the downstream
+// symptom of the old behaviour. subscribe used to return once it had no live subscriptions
+// left, and applyConfig reads that as the config being finished and takes it as the cue to
+// close the client every other device on the connection is still using.
+func TestDevice_subscribe_survivesAllPointsFailing(t *testing.T) {
+	const nodeA, nodeB = "ns=2;s=MissingA", "ns=2;s=MissingB"
+	sub := newFakeSubscriber(ua.StatusBadNodeIDUnknown)
+	dev, _, rec := newTestDevice(t, sub, nodeA, nodeB)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := goSubscribe(ctx, dev)
+
+	eventually(t, func() bool { return sub.callCount() == 2 }, "both points should have been attempted")
+
+	select {
+	case err := <-done:
+		t.Fatalf("subscribe() returned %v while its ctx was still live", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	// both points are named rather than the second overwriting the first: faults are keyed on
+	// system and code, so one fault naming its points is the only shape that survives
+	fault := rec.fault(DeviceConfigError)
+	require.NotNil(t, fault)
+	require.Contains(t, fault.DetailsText, nodeA)
+	require.Contains(t, fault.DetailsText, nodeB)
+
+	cancel()
+	requireSubscribeReturns(t, done)
+}
+
+// TestDevice_subscribe_clearsFaultOnSuccess checks a point being retried says so, and stops
+// saying so once it works. Nothing in this driver used to remove a fault it had raised.
+func TestDevice_subscribe_clearsFaultOnSuccess(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeId = "ns=2;s=Tag1"
+		sub := newFakeSubscriber(ua.StatusBadTimeout, nil)
+		dev, _, rec := newTestDevice(t, sub, nodeId)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		fault := rec.fault(PointSubscribeError)
+		require.NotNil(t, fault, "a point being retried should raise a %s fault", PointSubscribeError)
+		require.Contains(t, fault.DetailsText, nodeId)
+		require.Contains(t, fault.DetailsText, ua.StatusBadTimeout.Error())
+		// being retried is not being misconfigured, and saying it is sends whoever reads the
+		// fault hunting a mistake in the config that is not there
+		require.Nil(t, rec.fault(DeviceConfigError))
+
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		require.Nil(t, rec.fault(PointSubscribeError), "the fault should be removed once the point subscribes")
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_resubscribesWhenSubscriptionEnds covers a subscription that worked and
+// then died. gopcua never closes the notification channel, so that arrives as a
+// StatusChangeNotification carrying a Bad status, which handleEvent used to discard as an
+// unhandled event, leaving the point silently dead.
+//
+// It also pins the ResetBackoff: a subscription that ran for a while demonstrably works, so
+// the retry starts from the initial delay rather than carrying a ramp built from an older
+// problem.
+func TestDevice_subscribe_resubscribesWhenSubscriptionEnds(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const nodeId = "ns=2;s=Tag1"
+		// two failures first so the backoff has ramped to 4.5s by the time a subscription is
+		// established. Without them a reset and a normal first delay are the same number.
+		sub := newFakeSubscriber(ua.StatusBadTimeout, ua.StatusBadTimeout, nil)
+		dev, _, _ := newTestDevice(t, sub, nodeId)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+
+		// let it run long enough to count as working, then have the server end it
+		time.Sleep(resubscribeGrace)
+		sub.chanAt(0) <- &opcua.PublishNotificationData{
+			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
+		}
+		synctest.Wait()
+		requireCalls(t, sub, 3) // a backoff away, not immediate
+
+		time.Sleep(subscribeRetryInitial - time.Millisecond)
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+
+		// subscribeRetryInitial, not the 4.5s the ramp had reached
+		time.Sleep(time.Millisecond)
+		synctest.Wait()
+		requireCalls(t, sub, 4)
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
 }

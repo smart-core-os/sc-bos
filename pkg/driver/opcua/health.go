@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
+	"sync"
 
 	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap"
@@ -18,6 +22,11 @@ const (
 	ServerUnreachable = "ServerUnreachable"
 
 	DeviceConfigError = "DeviceConfig"
+	// PointSubscribeError reports points the driver could not subscribe to but is still
+	// retrying. It is deliberately not DeviceConfigError: a point failing for a reason that
+	// may go away is not a misconfigured point, and calling it one sends whoever is reading
+	// the fault hunting a mistake in the config that isn't there.
+	PointSubscribeError = "PointSubscribe"
 
 	SystemName = "OPCUA"
 
@@ -52,26 +61,121 @@ func statusToHealthCode(code string) *healthpb.HealthCheck_Error_Code {
 	}
 }
 
-func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
-	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+func configFault(details string) *healthpb.HealthCheck_Error {
+	return &healthpb.HealthCheck_Error{
 		SummaryText: "An issue has been detected with the device's configuration",
 		DetailsText: details,
 		Code:        statusToHealthCode(DeviceConfigError),
+	}
+}
+
+func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
+	fc.AddOrUpdateFault(configFault(details))
+}
+
+func raisePointSubscribeFault(details string, count int, fc *healthpb.FaultCheck) {
+	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
+		SummaryText: fmt.Sprintf("Could not subscribe to %d of the device's points, retrying", count),
+		DetailsText: details,
+		Code:        statusToHealthCode(PointSubscribeError),
 	})
 }
 
-// severityMask isolates the severity bits (31:30) of an OPC UA StatusCode.
-// See OPC UA Part 4 s7.34: the low bits carry sub-codes and info bits that
-// do not affect whether the value is usable. A value delivered through a
-// subscription commonly arrives as Good with the Overflow info bit set (0x480),
-// which is still a perfectly good value.
-const severityMask ua.StatusCode = 0xC0000000
+// pointHealth aggregates the subscribe state of one device's points into that device's fault
+// check.
+//
+// The aggregation is forced rather than chosen: faults are keyed on system and code, so a
+// fault raised per point would have every point overwriting its neighbours. One fault per
+// state, naming the affected points in its details, is the only shape that survives.
+//
+// It carries its own mutex because the pump goroutines behind it are one per point and all
+// write here. That does not make the underlying healthpb check goroutine-safe - checkBase.write
+// is an unsynchronised read-modify-write, which this driver already races from those same
+// goroutines through handleStatusValue - it only keeps the maps below consistent.
+type pointHealth struct {
+	fc *healthpb.FaultCheck
 
-// statusIsUncertain reports whether the status says the value is usable but of reduced quality.
-func statusIsUncertain(c ua.StatusCode) bool { return c&severityMask == ua.StatusUncertain }
+	mu sync.Mutex
+	// transient holds node id -> last error for points that failed and are still being retried.
+	transient map[string]string
+	// permanent holds node id -> error for points the server says can never be subscribed.
+	permanent map[string]string
+}
 
-// statusIsBad reports whether the status says the value should not be used.
-func statusIsBad(c ua.StatusCode) bool { return c&severityMask == ua.StatusBad }
+func newPointHealth(fc *healthpb.FaultCheck) *pointHealth {
+	return &pointHealth{
+		fc:        fc,
+		transient: make(map[string]string),
+		permanent: make(map[string]string),
+	}
+}
+
+// setFailing records a point that failed to subscribe for a reason that may go away.
+func (p *pointHealth) setFailing(nodeId string, err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.permanent, nodeId)
+	p.transient[nodeId] = err.Error()
+	p.commit()
+}
+
+// setPermanent records a point we have given up on because the server says it can never work.
+func (p *pointHealth) setPermanent(nodeId string, err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.transient, nodeId)
+	p.permanent[nodeId] = err.Error()
+	p.commit()
+}
+
+// setOk records a point that is subscribed, clearing whatever was last said about it.
+func (p *pointHealth) setOk(nodeId string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.transient, nodeId)
+	delete(p.permanent, nodeId)
+	p.commit()
+}
+
+// commit rewrites both faults from the current state, removing the one whose bucket has
+// emptied. Callers must hold p.mu.
+//
+// Rewriting on every change is cheap because checkBase.write drops an update that would leave
+// the check unchanged, which only holds while identical state renders identical text - hence
+// the sorted node ids in renderPoints.
+//
+// Note this makes pointHealth the owner of both fault codes on a device's check: it clears
+// DeviceConfigError whenever no point is permanently failing, so anything else raising that
+// code on the same check would be wiped out here. Nothing else does today, and a second
+// source of device config faults should get its own code rather than share this one.
+func (p *pointHealth) commit() {
+	if len(p.transient) == 0 {
+		p.fc.RemoveFault(&healthpb.HealthCheck_Error{Code: statusToHealthCode(PointSubscribeError)})
+	} else {
+		raisePointSubscribeFault("Retrying the subscription to:\n"+renderPoints(p.transient), len(p.transient), p.fc)
+	}
+
+	if len(p.permanent) == 0 {
+		p.fc.RemoveFault(&healthpb.HealthCheck_Error{Code: statusToHealthCode(DeviceConfigError)})
+	} else {
+		raiseConfigFault("Gave up subscribing to:\n"+renderPoints(p.permanent), p.fc)
+	}
+}
+
+// renderPoints lists points and their errors one per line, sorted by node id so that an
+// unchanged set of failures always renders identically.
+func renderPoints(points map[string]string) string {
+	var sb strings.Builder
+	for _, nodeId := range slices.Sorted(maps.Keys(points)) {
+		if sb.Len() > 0 {
+			sb.WriteByte('\n')
+		}
+		sb.WriteString(nodeId)
+		sb.WriteString(": ")
+		sb.WriteString(points[nodeId])
+	}
+	return sb.String()
+}
 
 // statusHealthCode renders a status code the same way the driver logs it, so the code
 // shown in the UI can be matched against the logs.
