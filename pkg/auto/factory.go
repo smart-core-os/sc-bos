@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -35,16 +36,9 @@ type Services struct {
 	Health          *healthpb.Checks
 }
 
-// CloudCredentialSource exposes the node's current Connect leaf certificate and
-// identity for authenticating to the Connect telemetry (Event Grid MQTT) broker.
-// It is satisfied by the node's cloud connection; GetClientCertificate reflects
-// credential renewals live so callers can install it directly as
-// tls.Config.GetClientCertificate.
-type CloudCredentialSource interface {
-	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
-	// NodeID returns the SCC node id (the leaf Subject CN), stable across renewals.
-	NodeID() string
-}
+// CloudCredentialSource is an alias for connect.Credential, retained so existing
+// automations continue to compile. Prefer connect.Credential in new code.
+type CloudCredentialSource = connect.Credential
 
 // Factory constructs new automation instances.
 type Factory interface {

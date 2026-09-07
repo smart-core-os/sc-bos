@@ -13,6 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -27,11 +28,28 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
+// cloudCredentialSource returns the node's Connect credential for drivers,
+// automations and zones, or nil when no cloud connection is configured. The
+// returned Credential reads the connection state per call, so it follows
+// certificate renewals and enrollment on a node that enrols after start-up.
+//
+// The test is on the config, not the connection: initCloud builds a cloud.Conn
+// whether or not a cloud block was configured, so c.Cloud alone would never be
+// nil and the documented "not configured" state would be unreachable. Compare
+// the same test guarding the poll loop in Controller.Run.
+func (c *Controller) cloudCredentialSource() connect.Credential {
+	if c.SystemConfig.Cloud == nil || c.Cloud == nil {
+		return nil // plain nil, not a typed nil: callers nil-check the interface
+	}
+	return cloudCredential{state: c.Cloud.State}
+}
+
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
 	ctxServices := driver.Services{
 		Logger:          c.Logger.Named("driver"),
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		HTTPMux:         c.Mux,
 		Database:        c.Database,
 	}
@@ -69,12 +87,7 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		GRPCServices:    c.GRPC,
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
-	}
-	// Give automations the node's Connect leaf credential (for mTLS to the Event
-	// Grid telemetry broker). The adapter reads the current registration per call,
-	// so it follows certificate renewals live.
-	if c.Cloud != nil {
-		ctxServices.CloudCredential = cloudCredential{conn: c.Cloud}
+		CloudCredential: c.cloudCredentialSource(),
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
@@ -99,14 +112,18 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 	return m, nil
 }
 
-// cloudCredential adapts the cloud connection to auto.CloudCredentialSource,
-// presenting the node's current Connect leaf certificate and node id for mTLS to
-// the telemetry broker. Both accessors read cloud.Conn.State() per call, so they
-// track certificate renewals (and enrollment) without reconnecting.
-type cloudCredential struct{ conn *cloud.Conn }
+// cloudCredential adapts the node's cloud connection to connect.Credential,
+// presenting the current Connect leaf certificate, node id and API origin. It holds
+// a state function rather than the *cloud.Conn itself so that all three accessors
+// read the connection state per call - tracking certificate renewals and enrollment
+// without reconnecting - and so the adapter can be exercised without opening a
+// connection.
+type cloudCredential struct{ state func() cloud.ConnState }
+
+var _ connect.Credential = cloudCredential{}
 
 func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-	reg := c.conn.State().Registration
+	reg := c.state().Registration
 	if reg == nil {
 		return nil, fmt.Errorf("cloud connection is not enrolled; no client certificate available")
 	}
@@ -114,8 +131,15 @@ func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls
 }
 
 func (c cloudCredential) NodeID() string {
-	if reg := c.conn.State().Registration; reg != nil {
+	if reg := c.state().Registration; reg != nil {
 		return reg.NodeID()
+	}
+	return ""
+}
+
+func (c cloudCredential) APIEndpoint() string {
+	if reg := c.state().Registration; reg != nil {
+		return reg.APIEndpoint
 	}
 	return ""
 }
@@ -184,6 +208,7 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		Logger:          c.Logger.Named("zone"),
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		HTTPMux:         c.Mux,
 		DriverFactories: c.SystemConfig.DriverFactories,
 	}
