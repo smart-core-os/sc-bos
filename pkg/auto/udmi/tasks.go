@@ -188,9 +188,18 @@ func handleMessages(ctx context.Context, name string, client exportMessageGetter
 				}
 				break
 			}
-			// We asked for telemetry; a state or metadata re-announce doesn't answer the
-			// question a heartbeat asks, so don't pass it off as one.
+			// We asked for telemetry; a state or metadata re-announce does not answer
+			// the question a heartbeat asks, so do not pass it off as one. That leaves
+			// this beat unanswered, so ask again shortly rather than going quiet for a
+			// whole interval: a source is free to answer with its last published
+			// message, which may be telemetry again by then.
 			if msg == nil || !isPointsetEventTopic(msg.Topic) {
+				topic := ""
+				if msg != nil {
+					topic = msg.Topic
+				}
+				hb.logger.Debug("heartbeat answered without telemetry",
+					zap.String("topic", topic), zap.Bool("retrying", hb.retry(time.Now())))
 				break
 			}
 			if err := publisher.Publish(ctx, msg.Topic, msg.Payload); err != nil {

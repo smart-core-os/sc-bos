@@ -11,6 +11,16 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 )
 
+// heartbeatRetryDelay is how long to wait before asking again when a heartbeat
+// attempt produced nothing publishable. Short relative to any sensible
+// interval, so a lost beat costs minutes of extra silence rather than hours.
+const heartbeatRetryDelay = time.Minute
+
+// maxHeartbeatRetries bounds the attempts spent on one missed beat, so a source
+// that keeps answering with the same unusable message settles at a few calls
+// per interval instead of polling every minute forever.
+const maxHeartbeatRetries = 3
+
 // exportMessageGetter is the slice of udmipb.UdmiServiceClient the heartbeat needs.
 type exportMessageGetter interface {
 	GetExportMessage(context.Context, *udmipb.GetExportMessageRequest, ...grpc.CallOption) (*udmipb.MqttMessage, error)
@@ -52,6 +62,9 @@ type heartbeat struct {
 	// disabled is set when the source answers Unimplemented, so a driver that
 	// can't collect a message on demand isn't asked again every interval.
 	disabled bool
+	// retries counts the brought-forward attempts spent on the current missed
+	// beat, reset once a beat is published or the attempts run out.
+	retries int
 }
 
 func newHeartbeat(interval time.Duration, logger *zap.Logger) *heartbeat {
@@ -83,6 +96,7 @@ func (h *heartbeat) record(topic string, now time.Time) {
 		return
 	}
 	h.deadline = now.Add(h.interval)
+	h.retries = 0
 }
 
 // wait reports how long until the next heartbeat is due, clamped at zero for an
@@ -114,6 +128,24 @@ func (h *heartbeat) due(now time.Time) bool {
 		return false
 	}
 	h.deadline = now.Add(h.interval)
+	return true
+}
+
+// retry brings the next heartbeat forward when an attempt produced nothing to
+// publish, so one unusable answer costs heartbeatRetryDelay of extra silence
+// rather than a whole interval of it. It reports whether a retry was scheduled;
+// once maxHeartbeatRetries are spent the deadline set by due stands and the
+// source is left alone until the next interval.
+//
+// The delay is capped at the interval so a short configured interval is never
+// made longer by retrying.
+func (h *heartbeat) retry(now time.Time) bool {
+	if !h.enabled() || h.retries >= maxHeartbeatRetries {
+		h.retries = 0
+		return false
+	}
+	h.retries++
+	h.deadline = now.Add(min(heartbeatRetryDelay, h.interval))
 	return true
 }
 

@@ -366,6 +366,62 @@ func TestHandleMessages_NonPointsetReplyIsNotPublished(t *testing.T) {
 	})
 }
 
+// A beat answered with state or metadata is a beat lost, so it is asked again
+// shortly rather than left until the next interval. The retries are bounded: a
+// source that never answers with telemetry must not become a per-minute poll.
+func TestHandleMessages_NonPointsetReplyIsRetried(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+		h.get.answerWith(stateTopic, `{"timestamp":"2026-01-01T00:00:00Z"}`)
+
+		h.advance(testInterval)
+		if got := h.get.callCount(); got != 1 {
+			t.Fatalf("GetExportMessage called %d times at the first deadline, want 1", got)
+		}
+		for i := 1; i <= maxHeartbeatRetries; i++ {
+			h.advance(heartbeatRetryDelay)
+			if got, want := h.get.callCount(), i+1; got != want {
+				t.Fatalf("GetExportMessage called %d times after retry %d, want %d", got, i, want)
+			}
+		}
+
+		// Attempts spent, so the source is left alone until the next interval.
+		h.advance(30 * heartbeatRetryDelay)
+		if got, want := h.get.callCount(), maxHeartbeatRetries+1; got != want {
+			t.Errorf("GetExportMessage called %d times once retries were spent, want %d", got, want)
+		}
+		h.assertTopics()
+	})
+}
+
+// The point of retrying: a source whose answer becomes telemetry within the
+// retry window still gets a beat out, minutes late rather than an interval late.
+// Publishing it resets the retries, so the next beat is a full interval away.
+func TestHandleMessages_RetryPublishesLaterTelemetry(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHarness(t, testInterval)
+		h.send(eventTopic, pointset(21.5))
+		h.assertTopics(eventTopic)
+
+		h.get.answerWith(stateTopic, `{"timestamp":"2026-01-01T00:00:00Z"}`)
+		h.advance(testInterval)
+		h.assertTopics()
+
+		h.get.answerWith(eventTopic, pointset(22))
+		h.advance(heartbeatRetryDelay)
+		h.assertTopics(eventTopic)
+
+		// Retries reset: the next beat is an interval after the published one, not
+		// another retry delay later.
+		h.advance(30 * heartbeatRetryDelay)
+		h.assertTopics()
+		h.advance(testInterval)
+		h.assertTopics(eventTopic)
+	})
+}
+
 // Unavailable is the source saying it has nothing current to report, which is the
 // liveness signal: a dead device produces silence, just as it did before the
 // heartbeat existed. The deadline still moves on, so we ask once per interval.
