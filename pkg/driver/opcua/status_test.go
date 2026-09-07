@@ -25,8 +25,10 @@ func Test_statusSeverity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := statusIsGood(tt.status); got != tt.good {
-				t.Errorf("statusIsGood(0x%X) = %v, want %v", uint32(tt.status), got, tt.good)
+			// Good has no predicate of its own: handleStatusValue treats it as the
+			// default case, so what matters is that neither fault branch claims the status.
+			if got := !statusIsUncertain(tt.status) && !statusIsBad(tt.status); got != tt.good {
+				t.Errorf("status 0x%X: good = %v, want %v", uint32(tt.status), got, tt.good)
 			}
 			if got := statusIsUncertain(tt.status); got != tt.uncertain {
 				t.Errorf("statusIsUncertain(0x%X) = %v, want %v", uint32(tt.status), got, tt.uncertain)

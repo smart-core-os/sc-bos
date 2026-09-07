@@ -67,9 +67,6 @@ func raiseConfigFault(details string, fc *healthpb.FaultCheck) {
 // which is still a perfectly good value.
 const severityMask ua.StatusCode = 0xC0000000
 
-// statusIsGood reports whether the status says the value is usable as-is.
-func statusIsGood(c ua.StatusCode) bool { return c&severityMask == ua.StatusGood }
-
 // statusIsUncertain reports whether the status says the value is usable but of reduced quality.
 func statusIsUncertain(c ua.StatusCode) bool { return c&severityMask == ua.StatusUncertain }
 
