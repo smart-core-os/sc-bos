@@ -29,6 +29,8 @@ The `conn` block says where the server is and how to authenticate against it.
 | `samplingInterval` | duration | How often the server samples each monitored node. Defaults to `subscriptionInterval`. Must be positive. |
 | `queueSize` | number | Server-side queue depth per monitored node. Defaults to `1`, so only the most recent sample is published. |
 | `clientId` | number | Client ID, unique within a server. A random one is generated when unset. |
+| `requestTimeout` | duration | How long to wait for the server to answer a single request. Defaults to `10s`. Must be positive. |
+| `maxConcurrentSubscribes` | number | How many points are subscribed at once, across every device on this connection. Defaults to `4`. Must be at least 1. |
 | `auth.username` | string | OPC UA user to authenticate as. Omit the whole `auth` block to connect anonymously. |
 | `auth.passwordFile` | string | **Required with `auth`.** Path to a file containing that user's password. A plaintext `password` in the config is rejected. |
 | `security.policy` | string | Security policy short name: `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep` or `Aes256Sha256RsaPss`. Defaults to `Basic256Sha256` when `auth` is set, `None` otherwise. |
@@ -134,3 +136,43 @@ above), PEM or DER — gopcua sniffs the content rather than trusting the file e
 Most servers then need the certificate trusting before they will accept a session: copy
 `client.pem` into the server's trusted-client store, or connect once and move the
 certificate from its rejected list to its trusted list.
+
+## Retrying subscriptions
+
+A point that fails to subscribe is retried until it works, starting 2 seconds later and
+backing off by half each time up to a 5 minute ceiling. The reason for the failure decides
+whether it is retried at all:
+
+- **Retried.** Anything that might go away on its own. `StatusBadTimeout` is the common one,
+  and it is usually `requestTimeout` expiring rather than anything the server said, so it
+  means *too slow*, not *no such node*. Also the capacity codes
+  (`BadTooManyMonitoredItems`, `BadResourceUnavailable`, ...), the connection and session
+  codes gopcua is already repairing underneath us, and
+  `BadNoCommunication`/`BadWaitingForInitialData`, which a DA-wrapper server routinely
+  reports until it has polled the devices behind it.
+- **Given up on.** Only the codes saying the request itself can never work: the node id is
+  unknown or malformed, the attribute or encoding is wrong, the server does not implement
+  what we need, or we are not allowed to read it. These raise a `DeviceConfig` fault naming
+  the point, since they need a config change to fix.
+
+Anything the driver does not recognise is retried. That is deliberate rather than lazy: an
+unrecognised retryable code would abandon a working point for the lifetime of the config,
+which is the failure this retry loop exists to prevent, whereas an unrecognised permanent one
+costs one request every five minutes and a fault naming the point.
+
+Points still being retried are reported as a `PointSubscribe` fault listing them and their
+errors, and it is removed as they come good. A point being retried is not a misconfigured
+point, so it deliberately does not raise `DeviceConfig`.
+
+A subscription that worked and then died - the server restarting, say - is retried the same
+way, except that because it demonstrably worked the backoff starts over rather than carrying
+a ramp built from some earlier problem.
+
+### Pacing the startup burst
+
+The driver creates one subscription per monitored variable and each costs two sequential
+round trips, so a config with a few hundred points would ask the server for all of them at
+once the moment it loads. `maxConcurrentSubscribes` caps how many are in flight, and each
+point waits a random moment under half a second before its first attempt so they do not
+arrive in lockstep. A server answering `StatusBadTimeout` for a node that browses fine is the
+sign to lower that cap, or to raise `requestTimeout`.
