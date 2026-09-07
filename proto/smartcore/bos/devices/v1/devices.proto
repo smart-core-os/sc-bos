@@ -32,6 +32,10 @@ message Device {
   // Use the HealthApi to collect this information.
   // These values can change frequently without affecting the checks
   // normality or reliability and are omitted to reduce churn.
+  //
+  // Derived summaries of those values are kept where they are stable enough to
+  // be worth querying on. HealthCheck.deviation is quantised, so it only changes
+  // when an excursion meaningfully changes, not on every sample.
   repeated smartcore.bos.health.v1.HealthCheck health_checks = 3;
 
   // Query selects a subset of devices based on how message property values match against conditions.
@@ -81,6 +85,18 @@ message Device {
         // String conversion will be applied to non-string values before comparison.
         // See the go package strings.EqualFold.
         string string_not_equal_fold = 9;
+
+        // The condition matches if the value is greater than this number.
+        // Only numeric values are comparable; anything else never matches.
+        // There is no float_equal because comparing floats for equality rarely does
+        // what you want; use string_equal, which stringifies numbers, if you need it.
+        double float_gt = 10;
+        // The condition matches if the value is greater than or equal to this number.
+        double float_gte = 11;
+        // The condition matches if the value is less than this number.
+        double float_lt = 12;
+        // The condition matches if the value is less than or equal to this number.
+        double float_lte = 13;
 
         // The condition matches if the value is equal to this timestamp.
         google.protobuf.Timestamp timestamp_equal = 20;

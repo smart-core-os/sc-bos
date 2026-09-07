@@ -16,9 +16,13 @@ func (c *Config) Issuer() string {
 	return fmt.Sprintf("%s/realms/%s", c.URL, c.Realm)
 }
 
-// DefaultPermittedSignatureAlgorithms lists the signature algorithms permitted by default.
-// TODO: reduce the number of permitted signature algorithms for all keycloak installations
-// KeyCloak will select "a reasonable default" cipher suite if none is specified by the installation
+// DefaultPermittedSignatureAlgorithms lists the signature algorithms permitted by default. It stays
+// broad because Keycloak selects "a reasonable default" cipher suite when an installation specifies
+// none. That breadth is not an algorithm confusion exposure
+// (https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/): go-jose picks its
+// verifier from the type of the key rather than the token's alg header, so an algorithm the key
+// cannot carry is rejected whatever this list permits. See
+// jwks.TestLocalKeySet_VerifySignature_keyConfusion.
 var DefaultPermittedSignatureAlgorithms = []string{
 	string(jose.RS256),
 	string(jose.RS384),
@@ -29,5 +33,4 @@ var DefaultPermittedSignatureAlgorithms = []string{
 	string(jose.PS256),
 	string(jose.PS384),
 	string(jose.PS512),
-	string(jose.HS256),
 }

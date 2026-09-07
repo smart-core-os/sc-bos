@@ -97,7 +97,7 @@ The `COMMENT_ID` is the `id` of the review comment being replied to (from the `/
 gh api repos/{owner}/{repo}/issues/<number>/comments -f body="Reply text"
 ```
 
-Keep replies concise: what was done (with commit ref if applicable), or why the current approach is preferred.
+Replies follow `.claude/review-voice.md` — read it before writing the first one. In short: one or two lines, what was done (with commit ref if applicable) or why the current approach stands.
 
 ## Phase 5b — Integration pass
 

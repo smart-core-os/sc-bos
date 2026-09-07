@@ -64,8 +64,13 @@ func splitCheck(c *healthpb.HealthCheck) (main, aux *healthpb.HealthCheck) {
 	// copy frequently changing fields from aux to main
 	if v := c.GetBounds().GetCurrentValue(); v != nil {
 		main.Check = &healthpb.HealthCheck_Bounds_{Bounds: &healthpb.HealthCheck_Bounds{CurrentValue: v}}
+		// Deviation is derived from the current value, so it moves with it. Left in
+		// aux it would defeat the UNIQUE payload dedup with a near-unique row per
+		// sample.
+		main.Deviation = c.GetDeviation()
 		aux = proto.Clone(aux).(*healthpb.HealthCheck)
 		aux.GetBounds().CurrentValue = nil
+		aux.Deviation = 0
 	}
 	return main, aux
 }

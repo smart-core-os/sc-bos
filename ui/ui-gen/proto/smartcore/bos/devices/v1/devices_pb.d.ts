@@ -101,6 +101,26 @@ export namespace Device {
       hasStringNotEqualFold(): boolean;
       clearStringNotEqualFold(): Condition;
 
+      getFloatGt(): number;
+      setFloatGt(value: number): Condition;
+      hasFloatGt(): boolean;
+      clearFloatGt(): Condition;
+
+      getFloatGte(): number;
+      setFloatGte(value: number): Condition;
+      hasFloatGte(): boolean;
+      clearFloatGte(): Condition;
+
+      getFloatLt(): number;
+      setFloatLt(value: number): Condition;
+      hasFloatLt(): boolean;
+      clearFloatLt(): Condition;
+
+      getFloatLte(): number;
+      setFloatLte(value: number): Condition;
+      hasFloatLte(): boolean;
+      clearFloatLte(): Condition;
+
       getTimestampEqual(): google_protobuf_timestamp_pb.Timestamp | undefined;
       setTimestampEqual(value?: google_protobuf_timestamp_pb.Timestamp): Condition;
       hasTimestampEqual(): boolean;
@@ -185,6 +205,10 @@ export namespace Device {
         stringInFold?: Device.Query.StringList.AsObject;
         stringNotEqual?: string;
         stringNotEqualFold?: string;
+        floatGt?: number;
+        floatGte?: number;
+        floatLt?: number;
+        floatLte?: number;
         timestampEqual?: google_protobuf_timestamp_pb.Timestamp.AsObject;
         timestampGt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
         timestampGte?: google_protobuf_timestamp_pb.Timestamp.AsObject;
@@ -216,6 +240,10 @@ export namespace Device {
         STRING_IN_FOLD = 7,
         STRING_NOT_EQUAL = 8,
         STRING_NOT_EQUAL_FOLD = 9,
+        FLOAT_GT = 10,
+        FLOAT_GTE = 11,
+        FLOAT_LT = 12,
+        FLOAT_LTE = 13,
         TIMESTAMP_EQUAL = 20,
         TIMESTAMP_GT = 21,
         TIMESTAMP_GTE = 22,

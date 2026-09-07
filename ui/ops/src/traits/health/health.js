@@ -247,6 +247,22 @@ export function useHealthCheckFilters(forcedFilters) {
       });
     }
 
+    if (!Object.hasOwn(forced, 'health_checks.deviation')) {
+      // Deviation is a fraction of the range width. The chosen value is a minimum
+      // (see toCondition), so users can hide barely-out-of-range checks.
+      filters.push({
+        key: 'health_checks.deviation',
+        icon: 'mdi-arrow-expand-vertical',
+        title: 'Deviation',
+        type: 'list',
+        items: [
+          {title: 'Over 5%', value: 0.05},
+          {title: 'Over 10%', value: 0.1},
+          {title: 'Over 25%', value: 0.25}
+        ]
+      });
+    }
+
     return {filters, defaults};
   });
 
@@ -270,6 +286,23 @@ export function useHealthCheckFilters(forcedFilters) {
         const numVal = value?.value ?? value;
         const enumName = enumValueToName(HealthCheck.EquipmentImpact, numVal);
         return {field: 'health_checks.equipment_impact', stringEqual: enumName};
+      }
+      case 'health_checks.deviation': {
+        const numVal = value?.value ?? value;
+        // Deviation only exists for range checks, which report HIGH/LOW; equality
+        // and value-set faults report ABNORMAL with no deviation. Match, per health
+        // check, either a large enough range excursion OR a hard ABNORMAL fault, so
+        // filtering by deviation narrows the range excursions shown without ever
+        // hiding a genuinely-abnormal device that has no range check.
+        return {
+          field: 'health_checks',
+          anyOf: {
+            queriesList: [
+              {conditionsList: [{field: 'deviation', floatGte: numVal}]},
+              {conditionsList: [{field: 'normality', stringEqual: 'ABNORMAL'}]}
+            ]
+          }
+        };
       }
       default:
         return {field: field, stringEqualFold: value};
