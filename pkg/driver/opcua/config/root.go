@@ -110,6 +110,16 @@ type Conn struct {
 	// ClientId is the ID of the client that will be used to connect to the OPC UA server.
 	// Should be unique within the context of a server. If not set, a random ID will be generated.
 	ClientId uint32 `json:"clientId,omitempty,omitzero"`
+	// RequestTimeout bounds how long the client waits for the server to answer a single
+	// request before giving up on it. Defaults to 10s, which is the gopcua default it replaces.
+	// This is the knob for a server that is slow rather than unreachable: a subscribe that
+	// expires here fails with StatusBadTimeout even though the node is perfectly readable.
+	RequestTimeout *jsontypes.Duration `json:"requestTimeout,omitempty,omitzero"`
+	// MaxConcurrentSubscribes caps how many points are subscribed at once across every device
+	// on this connection. Defaults to 4. Each point costs two sequential round trips, so
+	// without a cap a config load asks the server for all of them at once, which is what
+	// makes a slow server answer with timeouts.
+	MaxConcurrentSubscribes int `json:"maxConcurrentSubscribes,omitempty,omitzero"`
 
 	// Auth configures the OPC UA user identity token.
 	// When absent the driver connects to the server anonymously.
@@ -126,6 +136,14 @@ const (
 	// one. A depth of one holds the latest sample only, so the server never has to discard
 	// anything and never reports queue overflow.
 	DefaultQueueSize = 1
+	// DefaultRequestTimeout bounds a single request to the server when conn omits a timeout.
+	// It matches gopcua's own default, so making the value configurable leaves the behaviour
+	// of a config that says nothing about it unchanged.
+	DefaultRequestTimeout = 10 * time.Second
+	// DefaultMaxConcurrentSubscribes is how many points are subscribed at once when conn omits
+	// a limit. Low enough to keep a slow DA-wrapper server answering, high enough that a few
+	// hundred points still come up in a reasonable time.
+	DefaultMaxConcurrentSubscribes = 4
 	// aggressiveInterval is the point below which a publishing or sampling interval is
 	// reported as a load risk. It is a sanity threshold for configs written without checking
 	// the server: the authoritative floor is the server's own
@@ -149,6 +167,12 @@ func (c Conn) validateMonitoring() error {
 	}
 	if d := c.SamplingInterval.Duration; d <= 0 {
 		return fmt.Errorf("samplingInterval must be positive, got %s; omit it to sample once per publishing interval", d)
+	}
+	if d := c.RequestTimeout.Duration; d <= 0 {
+		return fmt.Errorf("requestTimeout must be positive, got %s; omit it for %s", d, DefaultRequestTimeout)
+	}
+	if n := c.MaxConcurrentSubscribes; n < 1 {
+		return fmt.Errorf("maxConcurrentSubscribes must be at least 1, got %d; omit it for %d", n, DefaultMaxConcurrentSubscribes)
 	}
 	return nil
 }
@@ -384,6 +408,12 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
+	}
+	if cfg.Conn.RequestTimeout == nil {
+		cfg.Conn.RequestTimeout = &jsontypes.Duration{Duration: DefaultRequestTimeout}
+	}
+	if cfg.Conn.MaxConcurrentSubscribes == 0 {
+		cfg.Conn.MaxConcurrentSubscribes = DefaultMaxConcurrentSubscribes
 	}
 
 	// check the monitoring parameters now so that an unworkable interval is reported here

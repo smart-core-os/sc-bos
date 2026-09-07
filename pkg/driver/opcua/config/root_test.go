@@ -196,6 +196,8 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 		conn                           string
 		wantSubscription, wantSampling time.Duration
 		wantQueueSize                  uint32
+		wantRequestTimeout             time.Duration
+		wantMaxConcurrent              int
 	}{
 		{
 			name:             "all defaulted",
@@ -203,20 +205,28 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			wantSubscription: 5 * time.Second,
 			wantSampling:     5 * time.Second,
 			wantQueueSize:    1,
+			// 10s matches gopcua's own default, so making it configurable leaves a config
+			// that says nothing about it behaving exactly as it did
+			wantRequestTimeout: 10 * time.Second,
+			wantMaxConcurrent:  4,
 		},
 		{
-			name:             "sampling follows subscription interval",
-			conn:             `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "1s"}`,
-			wantSubscription: time.Second,
-			wantSampling:     time.Second,
-			wantQueueSize:    1,
+			name:               "sampling follows subscription interval",
+			conn:               `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "1s"}`,
+			wantSubscription:   time.Second,
+			wantSampling:       time.Second,
+			wantQueueSize:      1,
+			wantRequestTimeout: 10 * time.Second,
+			wantMaxConcurrent:  4,
 		},
 		{
-			name:             "explicit values are kept",
-			conn:             `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "5s", "samplingInterval": "250ms", "queueSize": 20}`,
-			wantSubscription: 5 * time.Second,
-			wantSampling:     250 * time.Millisecond,
-			wantQueueSize:    20,
+			name:               "explicit values are kept",
+			conn:               `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "5s", "samplingInterval": "250ms", "queueSize": 20, "requestTimeout": "45s", "maxConcurrentSubscribes": 1}`,
+			wantSubscription:   5 * time.Second,
+			wantSampling:       250 * time.Millisecond,
+			wantQueueSize:      20,
+			wantRequestTimeout: 45 * time.Second,
+			wantMaxConcurrent:  1,
 		},
 	}
 	for _, tt := range tests {
@@ -233,6 +243,12 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			}
 			if got := cfg.Conn.QueueSize; got != tt.wantQueueSize {
 				t.Errorf("queueSize = %d, want %d", got, tt.wantQueueSize)
+			}
+			if got := cfg.Conn.RequestTimeout.Duration; got != tt.wantRequestTimeout {
+				t.Errorf("requestTimeout = %v, want %v", got, tt.wantRequestTimeout)
+			}
+			if got := cfg.Conn.MaxConcurrentSubscribes; got != tt.wantMaxConcurrent {
+				t.Errorf("maxConcurrentSubscribes = %d, want %d", got, tt.wantMaxConcurrent)
 			}
 		})
 	}
@@ -266,6 +282,25 @@ func TestParseConfig_monitoringRejected(t *testing.T) {
 			name:    "negative subscription interval",
 			conn:    `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "-500ms"}`,
 			wantErr: "subscriptionInterval must be positive",
+		},
+		{
+			// a zero request timeout would mean no timeout at all, so a slow server would
+			// hold a subscribe open indefinitely rather than failing it
+			name:    "zero request timeout",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "requestTimeout": "0s"}`,
+			wantErr: "requestTimeout must be positive",
+		},
+		{
+			name:    "negative request timeout",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "requestTimeout": "-10s"}`,
+			wantErr: "requestTimeout must be positive",
+		},
+		{
+			// a zero is the absent value and gets defaulted, but a negative is a request for
+			// something we cannot honour: no subscribe would ever start
+			name:    "negative concurrent subscribes",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "maxConcurrentSubscribes": -1}`,
+			wantErr: "maxConcurrentSubscribes must be at least 1",
 		},
 	}
 	for _, tt := range tests {
