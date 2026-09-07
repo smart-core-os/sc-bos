@@ -8,7 +8,7 @@ import (
 )
 
 // DefaultHeartbeatInterval is how long a pointset event topic may stay quiet before
-// the auto republishes its last message.
+// the auto asks the source for a current message.
 const DefaultHeartbeatInterval = 4 * time.Hour
 
 type Root struct {
@@ -35,10 +35,13 @@ type Root struct {
 	// (everything that is not an event topic). Defaults to 0 (matching QoS) when
 	// unset, preserving the previous single-QoS behaviour.
 	StateQoS byte `json:"stateQos,omitempty"`
-	// HeartbeatInterval is the longest a pointset event topic may go without a publish.
-	// Once a topic has been quiet for this long its last message is republished, with
-	// the timestamp refreshed, so consumers can tell a stable device from a dead one.
-	// Sources only emit on change, so a device whose readings never move is otherwise
-	// silent indefinitely. Defaults to 4h; set "0s" to disable.
+	// HeartbeatInterval is the longest a source may go without publishing a pointset
+	// event. Once a source has been quiet for this long the auto asks it for a current
+	// message via UdmiService.GetExportMessage and publishes that, so consumers can
+	// tell a stable device from a dead one. Sources only emit on change, so a device
+	// whose readings never move is otherwise silent indefinitely. Nothing is replayed
+	// or restamped: a source with nothing to report answers Unavailable and the auto
+	// stays silent, and one that answers Unimplemented is not heartbeated at all.
+	// Defaults to 4h; set "0s" to disable.
 	HeartbeatInterval *jsontypes.Duration `json:"heartbeatInterval,omitempty,omitzero"`
 }
