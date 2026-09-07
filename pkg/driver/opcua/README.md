@@ -26,6 +26,8 @@ The `conn` block says where the server is and how to authenticate against it.
 |---|---|---|
 | `endpoint` | string | **Required.** OPC UA server endpoint, e.g. `opc.tcp://server.example.com:4840`. |
 | `subscriptionInterval` | duration | How often the server publishes subscription updates. Defaults to `5s`. |
+| `samplingInterval` | duration | How often the server samples each monitored node. Defaults to `subscriptionInterval`. Must be positive. |
+| `queueSize` | number | Server-side queue depth per monitored node. Defaults to `1`, so only the most recent sample is published. |
 | `clientId` | number | Client ID, unique within a server. A random one is generated when unset. |
 | `auth.username` | string | OPC UA user to authenticate as. Omit the whole `auth` block to connect anonymously. |
 | `auth.passwordFile` | string | **Required with `auth`.** Path to a file containing that user's password. A plaintext `password` in the config is rejected. |
@@ -33,6 +35,39 @@ The `conn` block says where the server is and how to authenticate against it.
 | `security.mode` | string | Message security mode: `None`, `Sign` or `SignAndEncrypt`. Defaults to `SignAndEncrypt` when `auth` is set, `None` otherwise. |
 | `security.certFile` | string | Client X509 certificate. **Required for `Sign` and `SignAndEncrypt`.** |
 | `security.keyFile` | string | RSA private key matching `certFile`. **Required for `Sign` and `SignAndEncrypt`.** |
+
+Sample faster than the server publishes and you need `queueSize` raised to match, or the
+server's queue for that item overflows and it discards samples. It reports the overflow by
+setting an info bit on the status code of every value it does send: `0x480` is Good with the
+Overflow bit set, not an error, and the driver consumes such values normally. The defaults
+above — sample once per publish into a queue of one — mean the driver always takes the
+latest value and never asks the server to queue anything.
+
+### Guards on the monitoring parameters
+
+Both intervals must be positive, and a config giving either as `0s` or a negative duration is
+rejected by `ParseConfig` rather than deployed. `0s` is worth calling out: OPC UA reads a
+sampling interval of zero as *sample as fast as you practicably can*, so it is a silent opt-in
+to the server's fastest rate and the usual way queue overflow starts. Asking for the fastest
+available rate is legitimate, but say it with a real duration so the intent is on the page.
+Omit a field entirely to take its default.
+
+Parameters that are workable but likely to bite are logged as warnings at connect, once per
+config load, and the driver carries on:
+
+| Warning | Trigger |
+|---|---|
+| queue too small | `queueSize` is smaller than the number of samples a publishing cycle holds, i.e. `subscriptionInterval / samplingInterval` rounded up. The server discards the excess and sets the Overflow bit. |
+| aggressive sampling | `samplingInterval` under 100 ms. Many servers clamp this to their `MinSupportedSampleRate`. |
+| aggressive publishing | `subscriptionInterval` under 100 ms. The driver creates one subscription per monitored variable, so this multiplies. |
+
+The 100 ms figure is a sanity threshold for configs written without checking the server; the
+authoritative floor is the server's own
+`Server/ServerCapabilities/MinSupportedSampleRate`. A server may also revise anything it is
+asked for rather than refusing it, so the driver additionally logs the sampling interval and
+queue size the server actually settled on whenever they differ from the request. A queue
+revised down below a publishing cycle's worth of samples is exactly the setup that produces a
+continuous `0x480`.
 
 With neither `auth` nor `security` the driver connects anonymously over an unsecured
 channel, which is how it has always behaved, so existing configs keep working unchanged.
@@ -63,6 +98,8 @@ Two notes on how the connection is made once security is configured:
   "conn": {
     "endpoint": "opc.tcp://server.example.com:4840",
     "subscriptionInterval": "5s",
+    "samplingInterval": "5s",
+    "queueSize": 1,
     "auth": {
       "username": "sc-bos",
       "passwordFile": "/etc/sc-bos/secrets/opcua-password"

@@ -98,7 +98,17 @@ type Conn struct {
 	// Endpoint is the OPC UA server endpoint.
 	Endpoint string `json:"endpoint,omitempty"`
 	// SubscriptionInterval for OPC UA subscription, defaults to 5s if not set.
+	// This is the publishing interval: how often the server sends us the samples it has queued.
+	// Must be a whole number of milliseconds, which is all the request can carry.
 	SubscriptionInterval *jsontypes.Duration `json:"subscriptionInterval,omitempty,omitzero"`
+	// SamplingInterval is how often the server samples the monitored node.
+	// Defaults to SubscriptionInterval. A shorter interval than the publishing
+	// interval requires QueueSize to be raised to match or samples are discarded.
+	// Must be a whole number of milliseconds, which is all the request can carry.
+	SamplingInterval *jsontypes.Duration `json:"samplingInterval,omitempty,omitzero"`
+	// QueueSize is the server-side queue depth per monitored item.
+	// Defaults to 1, meaning only the most recent sample is published.
+	QueueSize uint32 `json:"queueSize,omitempty,omitzero"`
 	// ClientId is the ID of the client that will be used to connect to the OPC UA server.
 	// Should be unique within the context of a server. If not set, a random ID will be generated.
 	ClientId uint32 `json:"clientId,omitempty,omitzero"`
@@ -109,6 +119,111 @@ type Conn struct {
 	// Security configures the secure channel used to talk to the server.
 	// The defaults depend on whether Auth is set, see ResolveSecurity.
 	Security *Security `json:"security,omitempty"`
+}
+
+const (
+	// DefaultSubscriptionInterval is the publishing interval used when conn omits one.
+	DefaultSubscriptionInterval = 5 * time.Second
+	// DefaultQueueSize is the server-side queue depth per monitored item used when conn omits
+	// one. A depth of one holds the latest sample only, so the server never has to discard
+	// anything and never reports queue overflow.
+	DefaultQueueSize = 1
+	// aggressiveInterval is the point below which a publishing or sampling interval is
+	// reported as a load risk. It is a sanity threshold for configs written without checking
+	// the server: the authoritative floor is the server's own
+	// Server/ServerCapabilities/MinSupportedSampleRate, and a server is free to revise
+	// anything we ask for, which Client.Subscribe warns about separately.
+	aggressiveInterval = 100 * time.Millisecond
+)
+
+// validateMonitoring rejects monitoring parameters the server cannot act on sensibly.
+// A non-positive interval is the case worth failing on: OPC UA reads a sampling interval of 0
+// as "sample as fast as you practicably can", so a config asking for "0s" quietly opts into
+// the fastest rate the server will run and is the usual way queue overflow starts. Wanting the
+// fastest available rate is a legitimate thing to want, but it should be a deliberate choice
+// expressed as a real duration rather than something a zero value falls into.
+//
+// An interval finer than a millisecond is the same case wearing a disguise: the request only
+// carries whole milliseconds, so "500us" would be truncated to that same 0 on the way out.
+// Requiring a whole number of milliseconds shuts that door and makes the conversion exact.
+//
+// ParseConfig defaults the absent fields before calling this, so both interval pointers are
+// set by the time it runs and only an explicit value reaches it.
+func (c Conn) validateMonitoring() error {
+	if err := validateInterval("subscriptionInterval", c.SubscriptionInterval.Duration); err != nil {
+		return fmt.Errorf("%w; omit it to publish every %s", err, DefaultSubscriptionInterval)
+	}
+	if err := validateInterval("samplingInterval", c.SamplingInterval.Duration); err != nil {
+		return fmt.Errorf("%w; omit it to sample once per publishing interval", err)
+	}
+	return nil
+}
+
+// validateInterval rejects an interval the request cannot carry faithfully.
+// Both intervals reach the server as a count of whole milliseconds — Client.Subscribe
+// converts the sampling interval, gopcua converts the publishing interval — and both
+// conversions truncate, so anything finer is silently altered and anything under a
+// millisecond arrives as 0, which is the spec's "use the fastest practical rate".
+func validateInterval(name string, d time.Duration) error {
+	if d <= 0 {
+		return fmt.Errorf("%s must be positive, got %s", name, d)
+	}
+	if d%time.Millisecond != 0 {
+		return fmt.Errorf("%s must be a whole number of milliseconds, got %s: "+
+			"the request carries it in whole milliseconds, so the server would see %s",
+			name, d, d.Truncate(time.Millisecond))
+	}
+	return nil
+}
+
+// MonitoringWarnings reports monitoring parameters that are workable but likely to cause
+// trouble, as messages ready to log. It returns nil when there is nothing to say.
+//
+// These are warnings rather than errors because whether they are a problem depends on the
+// server: a fast local simulator will happily sample every 50ms, while the DA-wrapper servers
+// this driver often talks to will not. Callers should log them and carry on.
+//
+// Like validateMonitoring this expects the defaults to have been applied already.
+func (c Conn) MonitoringWarnings() []string {
+	var warnings []string
+	publish, sample := c.SubscriptionInterval.Duration, c.SamplingInterval.Duration
+
+	// a queue too shallow to hold a publishing cycle's worth of samples overflows every cycle,
+	// which the server reports by setting the Overflow info bit on the values it does send
+	if perCycle := samplesPerCycle(publish, sample); perCycle > int64(c.QueueSize) {
+		warnings = append(warnings, fmt.Sprintf(
+			"queueSize %d is too small to hold the ~%d samples a samplingInterval of %s produces per %s publishing cycle: "+
+				"the server will discard the excess and flag the values it does send with the Overflow info bit; "+
+				"raise queueSize to at least %d, or lengthen samplingInterval to %s",
+			c.QueueSize, perCycle, sample, publish, perCycle, publish))
+	}
+	if sample < aggressiveInterval {
+		warnings = append(warnings, fmt.Sprintf(
+			"samplingInterval %s is shorter than %s, which asks the server to sample every monitored node "+
+				"more than %d times a second; many servers will clamp this to their MinSupportedSampleRate",
+			sample, aggressiveInterval, int64(time.Second/aggressiveInterval)))
+	}
+	if publish < aggressiveInterval {
+		warnings = append(warnings, fmt.Sprintf(
+			"subscriptionInterval %s is shorter than %s; the driver creates one subscription per monitored variable, "+
+				"so a short publishing interval multiplies into a lot of traffic",
+			publish, aggressiveInterval))
+	}
+	return warnings
+}
+
+// samplesPerCycle is how many samples a publishing cycle of publish holds when the server
+// samples every sample, rounded up. It reports 1 when sampling no faster than publishing,
+// since a cycle then carries at most one sample.
+func samplesPerCycle(publish, sample time.Duration) int64 {
+	if sample <= 0 || sample >= publish {
+		return 1
+	}
+	perCycle := int64(publish / sample)
+	if publish%sample != 0 {
+		perCycle++
+	}
+	return perCycle
 }
 
 // Auth configures the OPC UA user identity token used when creating a session.
@@ -280,10 +395,24 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	}
 
 	if cfg.Conn.SubscriptionInterval == nil {
-		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: 5 * time.Second}
+		cfg.Conn.SubscriptionInterval = &jsontypes.Duration{Duration: DefaultSubscriptionInterval}
+	}
+	if cfg.Conn.SamplingInterval == nil {
+		// sampling no faster than the server publishes keeps the queue from overflowing,
+		// which the server would report as a Good status with the Overflow info bit set
+		cfg.Conn.SamplingInterval = &jsontypes.Duration{Duration: cfg.Conn.SubscriptionInterval.Duration}
+	}
+	if cfg.Conn.QueueSize == 0 {
+		cfg.Conn.QueueSize = DefaultQueueSize
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
+	}
+
+	// check the monitoring parameters now so that an unworkable interval is reported here
+	// rather than becoming a load problem on the server after deployment
+	if err := cfg.Conn.validateMonitoring(); err != nil {
+		return cfg, fmt.Errorf("conn: %w", err)
 	}
 
 	// resolve the security config now so that bad security settings are reported here

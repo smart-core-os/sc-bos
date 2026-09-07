@@ -80,13 +80,20 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	d.dispose()
 
+	// the parameters are workable or ParseConfig would have rejected them, but say so if they
+	// look likely to overload the server or overflow its queues. Before connecting, so the
+	// warning still lands when a misconfigured server is also unreachable.
+	if warnings := cfg.Conn.MonitoringWarnings(); len(warnings) > 0 {
+		d.logger.Warn("monitoring parameters may cause trouble", zap.Strings("warnings", warnings))
+	}
+
 	opcClient, err := d.connectOpcClient(ctx, cfg)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
 	}
 
-	client := NewClient(opcClient, d.logger, cfg.Conn.SubscriptionInterval.Duration, cfg.Conn.ClientId)
+	client := NewClient(opcClient, d.logger, cfg.Conn)
 
 	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 

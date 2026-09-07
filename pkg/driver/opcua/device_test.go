@@ -2,6 +2,7 @@ package opcua
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -174,6 +175,37 @@ func TestDevice_handleEvent(t *testing.T) {
 				MonitoredItems: []*ua.MonitoredItemNotification{{Value: nil}},
 			},
 			shouldNotPanic: true,
+		},
+		{
+			// 0x480 is Good with the Overflow info bit set, which the driver used to reject.
+			name:       "good status with info bits updates meter",
+			setupMeter: true,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusCode(0x480)}},
+				},
+			},
+			expectUsage: 150.5,
+		},
+		{
+			name:       "named good status updates meter",
+			setupMeter: true,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusGoodCallAgain}},
+				},
+			},
+			expectUsage: 150.5,
+		},
+		{
+			name:       "uncertain status still updates meter",
+			setupMeter: true,
+			eventValue: &ua.DataChangeNotification{
+				MonitoredItems: []*ua.MonitoredItemNotification{
+					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusUncertainSimulatedValue}},
+				},
+			},
+			expectUsage: 150.5,
 		},
 		{
 			name:       "bad status does not update meter",
@@ -469,6 +501,16 @@ func TestOpcuaFaultLifecycle(t *testing.T) {
 	}
 }
 
+func makeStatusEvent(status ua.StatusCode) *opcua.PublishNotificationData {
+	return &opcua.PublishNotificationData{
+		Value: &ua.DataChangeNotification{
+			MonitoredItems: []*ua.MonitoredItemNotification{
+				{Value: &ua.DataValue{Value: ua.MustVariant(float32(100.0)), Status: status}},
+			},
+		},
+	}
+}
+
 func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	h := setupTestHarness(t)
@@ -480,16 +522,7 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	ctx := context.Background()
 	nodeId := mustParseNodeID("ns=2;s=Tag1")
 
-	makeEvent := func(status ua.StatusCode) *opcua.PublishNotificationData {
-		return &opcua.PublishNotificationData{
-			Value: &ua.DataChangeNotification{
-				MonitoredItems: []*ua.MonitoredItemNotification{
-					{Value: &ua.DataValue{Value: ua.MustVariant(float32(100.0)), Status: status}},
-				},
-			},
-		}
-	}
-	dev.handleEvent(ctx, makeEvent(ua.StatusBadNodeIDUnknown), nodeId)
+	dev.handleEvent(ctx, makeStatusEvent(ua.StatusBadNodeIDUnknown), nodeId)
 	checks := h.getHealthChecks(t)
 	rel := checks[0].GetReliability()
 	require.NotNil(t, rel)
@@ -500,12 +533,73 @@ func TestOpcuaHandleEvent_WithHealth(t *testing.T) {
 	require.Contains(t, rel.LastError.SummaryText, "non OK status")
 	require.Contains(t, rel.LastError.DetailsText, nodeId.String())
 
-	dev.handleEvent(ctx, makeEvent(ua.StatusOK), nodeId)
+	dev.handleEvent(ctx, makeStatusEvent(ua.StatusOK), nodeId)
 	checks = h.getHealthChecks(t)
 	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, checks[0].GetReliability().GetState())
 
 	faults := checks[0].GetFaults().GetCurrentFaults()
 	require.Len(t, faults, 0)
+}
+
+// TestOpcuaHandleEvent_Severity checks the driver reports health from the severity bits of the
+// status code alone. A Good code carrying info bits, 0x480 being the Overflow bit a busy
+// subscription queue sets, must not look like a read failure.
+func TestOpcuaHandleEvent_Severity(t *testing.T) {
+	tests := []struct {
+		name    string
+		status  ua.StatusCode
+		want    healthpb.HealthCheck_Reliability_State
+		wantErr bool // an error is attached to the reliability report
+	}{
+		{name: "ok", status: ua.StatusOK, want: healthpb.HealthCheck_Reliability_RELIABLE},
+		{name: "good with overflow info bit", status: ua.StatusCode(0x480), want: healthpb.HealthCheck_Reliability_RELIABLE},
+		{name: "named good", status: ua.StatusGoodCallAgain, want: healthpb.HealthCheck_Reliability_RELIABLE},
+		{name: "uncertain", status: ua.StatusUncertainSimulatedValue, want: healthpb.HealthCheck_Reliability_UNRELIABLE, wantErr: true},
+		{name: "bad", status: ua.StatusBadNodeIDUnknown, want: healthpb.HealthCheck_Reliability_BAD_RESPONSE, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
+			h := setupTestHarness(t)
+			nodeId := mustParseNodeID("ns=2;s=Tag1")
+
+			meterCfg := config.RawTrait{
+				Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
+			}
+			meter, err := newMeter("opcua-device-1", meterCfg, logger)
+			require.NoError(t, err)
+
+			dev := &device{
+				conf:          &config.Device{Name: "opcua-device-1"},
+				logger:        logger,
+				faultCheck:    h.fc,
+				eventHandlers: []EventHandler{meter},
+			}
+
+			dev.handleEvent(h.ctx, makeStatusEvent(tt.status), nodeId)
+
+			rel := h.getHealthChecks(t)[0].GetReliability()
+			require.NotNil(t, rel)
+			require.Equal(t, tt.want, rel.State)
+
+			// only a Bad status withholds the value from the traits
+			wantUsage := float32(100)
+			if statusIsBad(tt.status) {
+				wantUsage = 0
+			}
+			reading, err := meter.GetMeterReading(h.ctx, nil)
+			require.NoError(t, err)
+			require.Equal(t, wantUsage, reading.Usage)
+
+			if !tt.wantErr {
+				return
+			}
+			require.NotNil(t, rel.LastError)
+			require.Equal(t, SystemName, rel.LastError.Code.System)
+			require.Equal(t, fmt.Sprintf("0x%X", uint32(tt.status)), rel.LastError.Code.Code)
+			require.Contains(t, rel.LastError.DetailsText, nodeId.String())
+		})
+	}
 }
 
 type devicesServerModel struct {
