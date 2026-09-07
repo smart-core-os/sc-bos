@@ -83,8 +83,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	// the parameters are workable or ParseConfig would have rejected them, but say so if they
 	// look likely to overload the server or overflow its queues. Before connecting, so the
 	// warning still lands when a misconfigured server is also unreachable.
-	for _, w := range cfg.Conn.MonitoringWarnings() {
-		d.logger.Warn("monitoring parameters may cause trouble: " + w)
+	if warnings := cfg.Conn.MonitoringWarnings(); len(warnings) > 0 {
+		d.logger.Warn("monitoring parameters may cause trouble", zap.Strings("warnings", warnings))
 	}
 
 	opcClient, err := d.connectOpcClient(ctx, cfg)
