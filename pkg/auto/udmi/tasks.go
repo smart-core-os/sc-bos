@@ -129,36 +129,16 @@ func pullMessages(ctx context.Context, name string, logger *zap.Logger, client u
 // Between messages it runs hb's timer: once the source has been quiet for longer than the
 // heartbeat interval it is asked, via GetExportMessage, for a current message to publish.
 func handleMessages(ctx context.Context, name string, client exportMessageGetter, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector, hb *heartbeat) error {
-	// The nil channel is what disables the heartbeat arm of the select: until a
-	// pointset event has been seen there's nothing to keep alive, and beat is never ready.
-	var timer *time.Timer
-	var beat <-chan time.Time
-	stopTimer := func() {
-		if timer != nil {
-			timer.Stop()
-			timer = nil
-			beat = nil
-		}
-	}
-	defer stopTimer()
-	armTimer := func() {
-		d, ok := hb.wait(time.Now())
-		if !ok {
-			stopTimer()
-			return
-		}
-		if timer == nil {
-			timer = time.NewTimer(d)
-			beat = timer.C
-			return
-		}
-		timer.Reset(d) // go1.23+ timers never deliver a stale tick, so no drain needed
-	}
-	// Arm before the first receive: on a task retry hb already holds a deadline from
-	// the previous run, and it must keep running rather than restart.
-	armTimer()
-
 	for {
+		// beat is nil, and so never ready, until the source has published a pointset
+		// event: there is nothing to keep alive yet. Recomputing it each iteration is
+		// what re-arms the heartbeat, and since hb's deadline is absolute a task retry
+		// resumes the countdown rather than restarting it.
+		var beat <-chan time.Time
+		if d, ok := hb.wait(time.Now()); ok {
+			beat = time.After(d)
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -226,6 +206,5 @@ func handleMessages(ctx context.Context, name string, client exportMessageGetter
 			}
 			hb.record(msg.Topic, time.Now())
 		}
-		armTimer()
 	}
 }
