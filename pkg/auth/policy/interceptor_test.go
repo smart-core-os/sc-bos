@@ -346,3 +346,149 @@ allow if input.method == "GET"
 allow if input.path == "/foo"
 `,
 }
+
+// stubConn is a ClientConnInterface that ignores the call and returns a fixed error.
+type stubConn struct{ err error }
+
+func (c stubConn) Invoke(context.Context, string, any, any, ...grpc.CallOption) error {
+	return c.err
+}
+
+func (c stubConn) NewStream(context.Context, *grpc.StreamDesc, string, ...grpc.CallOption) (grpc.ClientStream, error) {
+	return nil, c.err
+}
+
+// In-process calls never reach the server interceptors, so AuditClientConn is their only audit
+// point. It must apply the same write/exclusion filtering the server path does.
+func TestInterceptor_AuditClientConn_Filtering(t *testing.T) {
+	tests := []struct {
+		name       string
+		methodPath string
+		wantEntry  bool
+	}{
+		{"read method", "/smartcore.bos.onoff.v1.OnOffApi/GetOnOff", false},
+		{"pull method", "/smartcore.bos.onoff.v1.OnOffApi/PullOnOff", false},
+		{"write method", "/smartcore.bos.onoff.v1.OnOffApi/UpdateOnOff", true},
+		// OnMessage is the MQTT ingress this audit point exists for; it must be treated as a write.
+		{"udmi OnMessage", "/smartcore.bos.udmi.v1.UdmiService/OnMessage", true},
+		{"excluded method", "/smartcore.bos.hub.v1.HubApi/TestHubNode", false},
+		{"excluded telemetry", "/smartcore.bos.history.v1.HistoryAdminApi/CreateHistoryRecord", false},
+		{"unparseable path", "not-a-method-path", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sink := &captureSink{}
+			interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+			cc := interceptor.AuditClientConn(stubConn{})
+
+			if err := cc.Invoke(context.Background(), tt.methodPath, nil, nil); err != nil {
+				t.Fatalf("Invoke: %v", err)
+			}
+			interceptor.Close() // drain the async audit queue before asserting
+
+			want := 0
+			if tt.wantEntry {
+				want = 1
+			}
+			if got := len(sink.all()); got != want {
+				t.Errorf("got %d audit entries, want %d", got, want)
+			}
+		})
+	}
+}
+
+// The entry must record the call as in-process and must not invent a principal.
+func TestInterceptor_AuditClientConn_Fields(t *testing.T) {
+	sink := &captureSink{}
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+	cc := interceptor.AuditClientConn(stubConn{})
+
+	if err := cc.Invoke(context.Background(), "/smartcore.bos.udmi.v1.UdmiService/OnMessage", nil, nil); err != nil {
+		t.Fatalf("Invoke: %v", err)
+	}
+	interceptor.Close()
+
+	msgs := sink.all()
+	if len(msgs) != 1 {
+		t.Fatalf("got %d audit entries, want 1", len(msgs))
+	}
+	msg := msgs[0]
+	if msg.Level != logpb.Level_LEVEL_INFO {
+		t.Errorf("level = %v, want INFO", msg.Level)
+	}
+	for key, want := range map[string]string{
+		"service": "smartcore.bos.udmi.v1.UdmiService",
+		"method":  "OnMessage",
+		"ingress": "loopback",
+		"peer":    "loopback",
+		"outcome": "ok",
+		// no principal is knowable for an in-process call
+		"subject": "",
+		"name":    "",
+		"cert":    "false",
+		"token":   "false",
+	} {
+		if got := msg.Fields[key]; got != want {
+			t.Errorf("field %q = %q, want %q", key, got, want)
+		}
+	}
+}
+
+// A failed in-process write is still recorded, and at WARN so it stands out.
+func TestInterceptor_AuditClientConn_Failed(t *testing.T) {
+	sink := &captureSink{}
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+	cc := interceptor.AuditClientConn(stubConn{err: status.Error(codes.Internal, "boom")})
+
+	if err := cc.Invoke(context.Background(), "/smartcore.bos.udmi.v1.UdmiService/OnMessage", nil, nil); err == nil {
+		t.Fatal("Invoke: expected an error")
+	}
+	interceptor.Close()
+
+	msgs := sink.all()
+	if len(msgs) != 1 {
+		t.Fatalf("got %d audit entries, want 1", len(msgs))
+	}
+	if got := msgs[0].Fields["outcome"]; got != "failed" {
+		t.Errorf("outcome = %q, want %q", got, "failed")
+	}
+	if msgs[0].Level != logpb.Level_LEVEL_WARN {
+		t.Errorf("level = %v, want WARN", msgs[0].Level)
+	}
+}
+
+// Streaming writes are audited at stream open; the common Pull* streams are not.
+func TestInterceptor_AuditClientConn_Streams(t *testing.T) {
+	sink := &captureSink{}
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+	cc := interceptor.AuditClientConn(stubConn{})
+	ctx := context.Background()
+
+	if _, err := cc.NewStream(ctx, &grpc.StreamDesc{}, "/smartcore.bos.onoff.v1.OnOffApi/PullOnOff"); err != nil {
+		t.Fatalf("NewStream: %v", err)
+	}
+	if n := len(sink.all()); n != 0 {
+		t.Errorf("PullOnOff: got %d audit entries, want 0", n)
+	}
+
+	if _, err := cc.NewStream(ctx, &grpc.StreamDesc{}, "/smartcore.bos.onoff.v1.OnOffApi/UpdateOnOffStream"); err != nil {
+		t.Fatalf("NewStream: %v", err)
+	}
+	interceptor.Close()
+	if n := len(sink.all()); n != 1 {
+		t.Errorf("UpdateOnOffStream: got %d audit entries, want 1", n)
+	}
+}
+
+// Without an audit sink there is nothing to write to, so the connection is handed back untouched
+// rather than paying for a wrapper on every in-process call.
+func TestInterceptor_AuditClientConn_NoSink(t *testing.T) {
+	cc := stubConn{}
+	if got := NewInterceptor(AllowAll).AuditClientConn(cc); got != grpc.ClientConnInterface(cc) {
+		t.Errorf("AuditClientConn wrapped the conn despite having no sink")
+	}
+	var nilInterceptor *Interceptor
+	if got := nilInterceptor.AuditClientConn(cc); got != grpc.ClientConnInterface(cc) {
+		t.Errorf("AuditClientConn on a nil Interceptor wrapped the conn")
+	}
+}

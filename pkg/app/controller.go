@@ -115,9 +115,20 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	nodeRouter := router.New(router.WithKeyInterceptor(func(key string) (string, error) {
 		return idOrNodeName(key), nil
 	}))
+	// initAuth runs before rootNode is created so the audit interceptor can be installed on the
+	// node's in-process connection; it depends only on config and logger.
+	ai := initAuth(config, logger)
+
 	// rootNode grants both local (in-process) and networked (via grpc.Server) access to controller APIs.
 	// Announce devices on rootNode to expose them via Smart Core APIs; use rootNode.Clients to call them.
-	rootNode := node.New(cName, nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter))
+	nodeOpts := []node.Option{nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter)}
+	// In-process calls bypass the grpc.Server interceptors, so audit them on the way out of the
+	// node's loopback connection instead. Writes arriving over MQTT (the UDMI automation calling
+	// UdmiService.OnMessage) take this path and would otherwise go unrecorded.
+	if ai.Interceptor != nil {
+		nodeOpts = append(nodeOpts, nodeopts.WithClientConnWrapper(ai.Interceptor.AuditClientConn))
+	}
+	rootNode := node.New(cName, nodeOpts...)
 	rootNode.Logger = logger.Named("node")
 
 	var accountStore *account.Store
@@ -162,8 +173,6 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	// once enrolled as the manager address is updated automatically.
 	manager := node.DialChan(ctx, pi.EnrollServer.ManagerAddress(ctx),
 		grpc.WithTransportCredentials(credentials.NewTLS(pi.GRPCClient)))
-
-	ai := initAuth(config, logger)
 
 	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
 

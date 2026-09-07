@@ -41,6 +41,9 @@ type Node struct {
 	devices nodeopts.Store
 	mlLists map[string]*metadataList
 
+	// ccWrapper decorates the connection returned by ClientConn. May be nil.
+	ccWrapper func(grpc.ClientConnInterface) grpc.ClientConnInterface
+
 	Logger *zap.Logger
 }
 
@@ -65,11 +68,12 @@ func New(name string, opts ...Option) *Node {
 	}
 
 	node := &Node{
-		name:    name,
-		router:  cfg.Router,
-		devices: cfg.Store,
-		mlLists: make(map[string]*metadataList),
-		Logger:  zap.NewNop(),
+		name:      name,
+		router:    cfg.Router,
+		devices:   cfg.Store,
+		mlLists:   make(map[string]*metadataList),
+		ccWrapper: cfg.ClientConnWrapper,
+		Logger:    zap.NewNop(),
 	}
 
 	// nodes implement the MetadataApi without using the router,

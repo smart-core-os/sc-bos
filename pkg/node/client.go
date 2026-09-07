@@ -7,8 +7,16 @@ import (
 )
 
 // ClientConn returns a connection to the Node's router.
+//
+// Calls made through this connection are dispatched in-process and so do not pass through any
+// interceptors registered on a grpc.Server. Configure the Node with
+// nodeopts.WithClientConnWrapper to observe them.
 func (n *Node) ClientConn() grpc.ClientConnInterface {
-	return router.NewLoopback(n.router)
+	cc := grpc.ClientConnInterface(router.NewLoopback(n.router))
+	if n.ccWrapper != nil {
+		cc = n.ccWrapper(cc)
+	}
+	return cc
 }
 
 // ClientConner represents a type that can return a gRPC client connection.
