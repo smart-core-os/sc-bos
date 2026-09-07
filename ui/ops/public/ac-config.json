@@ -21,7 +21,9 @@
     },
     "system": {
       "drivers": true,
-      "features": true
+      "features": true,
+      "logs": true,
+      "audit": true
     }
   },
   "config": {
