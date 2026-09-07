@@ -3,9 +3,18 @@ package merge
 import (
 	"encoding/json"
 	"math"
+	"slices"
 	"testing"
+	"time"
+
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
+	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/task"
 )
 
 func Test_pointsToPointSet_sanitisesNaNAndInf(t *testing.T) {
@@ -179,5 +188,186 @@ func TestMetadataMessage(t *testing.T) {
 	// Smart Core device name (config.Name = "picv-1").
 	if ev.System.Name != "PICV-12345" {
 		t.Errorf("system.name = %q, want %q", ev.System.Name, "PICV-12345")
+	}
+}
+
+// configPoints builds a Points map with the given names; the value sources don't matter
+// to metadata, only membership does.
+func configPoints(names ...string) map[string]*config.ValueSource {
+	out := make(map[string]*config.ValueSource, len(names))
+	for _, n := range names {
+		out[n] = &config.ValueSource{}
+	}
+	return out
+}
+
+// metadataPointset returns the pointset block of a metadata payload, and whether
+// the "pointset" key was present at all — an absent key and a present-but-empty one
+// mean different things on the wire.
+func metadataPointset(t *testing.T, payload string) (udmi.MetadataPointset, bool) {
+	t.Helper()
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(payload), &raw); err != nil {
+		t.Fatalf("unmarshal payload: %v", err)
+	}
+	got, ok := raw["pointset"]
+	if !ok {
+		return udmi.MetadataPointset{}, false
+	}
+	var ps udmi.MetadataPointset
+	if err := json.Unmarshal(got, &ps); err != nil {
+		t.Fatalf("unmarshal pointset: %v", err)
+	}
+	return ps, true
+}
+
+func TestMetadataMessage_pointUnits(t *testing.T) {
+	um := &udmiMerge{}
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
+	um.config.Points = configPoints("space_temperature", "valve_position", "fan_status")
+	um.config.PointUnits = map[string]string{
+		"space_temperature": "Degrees-Celsius",
+		"valve_position":    "Percent",
+		"fan_status":        "",      // no engineering unit: declares none
+		"not_a_point":       "Watts", // stale key: filtered out
+	}
+
+	msg, err := um.metadataMessage()
+	if err != nil {
+		t.Fatalf("metadataMessage: %v", err)
+	}
+	ps, ok := metadataPointset(t, msg.Payload)
+	if !ok {
+		t.Fatal("pointset absent, want it populated")
+	}
+
+	want := map[string]udmi.MetadataPoint{
+		"space_temperature": {Units: "Degrees-Celsius"},
+		"valve_position":    {Units: "Percent"},
+	}
+	if len(ps.Points) != len(want) {
+		t.Errorf("pointset has %d points, want %d: %+v", len(ps.Points), len(want), ps.Points)
+	}
+	for name, w := range want {
+		if got := ps.Points[name]; got != w {
+			t.Errorf("points[%q] = %+v, want %+v", name, got, w)
+		}
+	}
+	// Writable isn't configurable and must not be asserted for a read-only point.
+	if ps.Points["space_temperature"].Writable {
+		t.Error("writable should be false, it isn't derived from config")
+	}
+}
+
+// No pointUnits must serialise exactly as before this feature: the pointset key
+// absent entirely, not an empty object.
+func TestMetadataMessage_noPointUnitsOmitsPointset(t *testing.T) {
+	tests := map[string]map[string]string{
+		"nil map":           nil,
+		"empty map":         {},
+		"all values empty":  {"space_temperature": ""},
+		"all keys unknown":  {"not_a_point": "Watts"},
+		"empty and unknown": {"space_temperature": "", "not_a_point": "Watts"},
+	}
+	for name, pointUnits := range tests {
+		t.Run(name, func(t *testing.T) {
+			um := &udmiMerge{}
+			um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
+			um.config.Points = configPoints("space_temperature")
+			um.config.PointUnits = pointUnits
+
+			msg, err := um.metadataMessage()
+			if err != nil {
+				t.Fatalf("metadataMessage: %v", err)
+			}
+			if _, ok := metadataPointset(t, msg.Payload); ok {
+				t.Errorf("pointset present, want it omitted: %s", msg.Payload)
+			}
+		})
+	}
+}
+
+func Test_unknownPointUnits(t *testing.T) {
+	tests := map[string]struct {
+		pointUnits map[string]string
+		want       []string
+	}{
+		"all known": {
+			pointUnits: map[string]string{"space_temperature": "Degrees-Celsius"},
+			want:       nil,
+		},
+		"none declared": {
+			pointUnits: nil,
+			want:       nil,
+		},
+		// Sorted, so the startup warning is stable across restarts rather than
+		// reordering with Go's map iteration.
+		"unknown keys sorted": {
+			pointUnits: map[string]string{"zulu": "Percent", "alpha": "Watts", "space_temperature": "Degrees-Celsius"},
+			want:       []string{"alpha", "zulu"},
+		},
+		// An unknown key still counts as drift even with no unit to publish.
+		"unknown key with empty unit": {
+			pointUnits: map[string]string{"ghost": ""},
+			want:       []string{"ghost"},
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			cfg := UdmiMergeConfig{Points: configPoints("space_temperature"), PointUnits: tt.pointUnits}
+			if got := cfg.unknownPointUnits(); !slices.Equal(got, tt.want) {
+				t.Errorf("unknownPointUnits() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// pointUnits arriving in config it predates must keep working: readUdmiMergeConfig
+// is a plain json.Unmarshal, and the field has to round-trip through it.
+func Test_readUdmiMergeConfig_pointUnits(t *testing.T) {
+	raw := []byte(`{
+		"topicPrefix": "client/site-01/HVAC/PICV-12345",
+		"points": {"space_temperature": {"device": "dev", "object": "analog-value,1"}},
+		"pointUnits": {"space_temperature": "Degrees-Celsius"}
+	}`)
+	cfg, err := readUdmiMergeConfig(raw)
+	if err != nil {
+		t.Fatalf("readUdmiMergeConfig: %v", err)
+	}
+	if got := cfg.PointUnits["space_temperature"]; got != "Degrees-Celsius" {
+		t.Errorf("pointUnits[space_temperature] = %q, want %q", got, "Degrees-Celsius")
+	}
+	ps := cfg.pointset()
+	if ps == nil {
+		t.Fatal("pointset() = nil, want the declared unit")
+	}
+	if got := ps.Points["space_temperature"].Units; got != "Degrees-Celsius" {
+		t.Errorf("pointset units = %q, want %q", got, "Degrees-Celsius")
+	}
+}
+
+// When no fresh event arrives within the timeout, GetExportMessage falls back to
+// the last polled snapshot - but only while the device is still answering.
+// pollPeer leaves f.points intact when every read fails, so without the
+// operational gate an unreachable device would keep serving values it can no
+// longer confirm, freshly stamped by pointsToPointSet.
+func TestGetExportMessage_notOperationalIsUnavailable(t *testing.T) {
+	um := &udmiMerge{logger: zap.NewNop()}
+	um.config.Name = "picv-1"
+	um.config.TopicPrefix = "client/site-01/HVAC/PICV-12345"
+	// Short enough that the no-fresh-event path is taken promptly; GetExportMessage
+	// waits a quarter of this.
+	um.config.PollTimeout = &config.Duration{Duration: 40 * time.Millisecond}
+	um.pollTask = task.NewIntermittent(um.startPoll)
+	// A snapshot from when the device was reachable, and a failed poll since.
+	um.points = udmi.PointsEvent{"space_temperature": {PresentValue: 21.5}}
+	um.operational.Store(false)
+
+	msg, err := um.GetExportMessage(t.Context(), &udmipb.GetExportMessageRequest{Name: um.config.Name})
+	if status.Code(err) != codes.Unavailable {
+		t.Errorf("GetExportMessage() error = %v, want Unavailable", err)
+	}
+	if msg != nil {
+		t.Errorf("GetExportMessage() returned %v, want no message", msg)
 	}
 }
