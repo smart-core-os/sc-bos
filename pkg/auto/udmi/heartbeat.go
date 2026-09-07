@@ -19,12 +19,11 @@ type exportMessageGetter interface {
 // heartbeat tracks how long a source has been quiet, so the auto can ask it for
 // a current reading when nothing has been published for a while.
 //
-// Sources only emit on change — the BACnet merge driver gates its send on
-// !points.Equal(events), Steinel and Xovis pull with resource.WithUpdatesOnly —
-// so a device whose readings never move sends one pointset and then nothing.
-// Event topics are published unretained (see config.Root.Retained), so such a
-// device simply vanishes from the broker and a consumer cannot tell "unchanged"
-// from "dead".
+// Nothing in the UdmiService contract obliges a source to keep publishing: a
+// pull stream may legitimately go quiet once a device's readings stop changing,
+// so a stable device may send one pointset and then nothing. Event topics are
+// published unretained (see config.Root.Retained), so such a device simply
+// vanishes from the broker and a consumer cannot tell "unchanged" from "dead".
 //
 // The heartbeat closes that gap without inventing data: on expiry the caller
 // asks the source for a message via GetExportMessage, whose contract is to
@@ -76,9 +75,9 @@ func (h *heartbeat) disable() {
 // source's heartbeat deadline.
 //
 // Only pointset event topics count. State and metadata are published retained,
-// so the broker already holds the latest, and — more importantly — the BACnet
-// merge driver re-announces both on every stream reconnect, so letting them
-// reset the deadline would suppress heartbeats indefinitely on a flapping link.
+// so the broker already holds the latest, and — more importantly — a source is
+// free to re-announce them whenever its stream reconnects, so letting them reset
+// the deadline would suppress heartbeats indefinitely on a flapping link.
 func (h *heartbeat) record(topic string, now time.Time) {
 	if !h.enabled() || !isPointsetEventTopic(topic) {
 		return
