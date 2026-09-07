@@ -218,6 +218,13 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			wantSampling:     250 * time.Millisecond,
 			wantQueueSize:    20,
 		},
+		{
+			name:             "one millisecond is the finest interval accepted",
+			conn:             `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "1s", "samplingInterval": "1ms", "queueSize": 1000}`,
+			wantSubscription: time.Second,
+			wantSampling:     time.Millisecond,
+			wantQueueSize:    1000,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -241,6 +248,8 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 // TestParseConfig_monitoringRejected checks the intervals a server cannot act on sensibly are
 // refused at parse time. "0s" is the one that matters: OPC UA reads a sampling interval of 0 as
 // "as fast as you can", so it used to be a silent opt-in to the fastest rate the server offered.
+// A sub-millisecond interval is the same opt-in by another route, since the request carries
+// whole milliseconds only and "500us" would be truncated to that same 0.
 func TestParseConfig_monitoringRejected(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -266,6 +275,21 @@ func TestParseConfig_monitoringRejected(t *testing.T) {
 			name:    "negative subscription interval",
 			conn:    `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "-500ms"}`,
 			wantErr: "subscriptionInterval must be positive",
+		},
+		{
+			name:    "sub-millisecond sampling interval",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "samplingInterval": "500us"}`,
+			wantErr: "samplingInterval must be a whole number of milliseconds",
+		},
+		{
+			name:    "sampling interval truncating to a non-zero millisecond count",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "samplingInterval": "1500us"}`,
+			wantErr: "samplingInterval must be a whole number of milliseconds",
+		},
+		{
+			name:    "sub-millisecond subscription interval",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "900us"}`,
+			wantErr: "subscriptionInterval must be a whole number of milliseconds",
 		},
 	}
 	for _, tt := range tests {

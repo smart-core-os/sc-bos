@@ -61,6 +61,8 @@ func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcu
 			ClientHandle:     c.clientHandle,
 			DiscardOldest:    true,
 			QueueSize:        c.queueSize,
+			// exact rather than truncating because config.Conn rejects any interval that
+			// isn't a whole number of milliseconds, which ParseConfig has already checked
 			SamplingInterval: float64(c.samplingInterval.Milliseconds()),
 		},
 	}

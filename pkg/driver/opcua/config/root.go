@@ -99,10 +99,12 @@ type Conn struct {
 	Endpoint string `json:"endpoint,omitempty"`
 	// SubscriptionInterval for OPC UA subscription, defaults to 5s if not set.
 	// This is the publishing interval: how often the server sends us the samples it has queued.
+	// Must be a whole number of milliseconds, which is all the request can carry.
 	SubscriptionInterval *jsontypes.Duration `json:"subscriptionInterval,omitempty,omitzero"`
 	// SamplingInterval is how often the server samples the monitored node.
 	// Defaults to SubscriptionInterval. A shorter interval than the publishing
 	// interval requires QueueSize to be raised to match or samples are discarded.
+	// Must be a whole number of milliseconds, which is all the request can carry.
 	SamplingInterval *jsontypes.Duration `json:"samplingInterval,omitempty,omitzero"`
 	// QueueSize is the server-side queue depth per monitored item.
 	// Defaults to 1, meaning only the most recent sample is published.
@@ -141,14 +143,35 @@ const (
 // fastest available rate is a legitimate thing to want, but it should be a deliberate choice
 // expressed as a real duration rather than something a zero value falls into.
 //
+// An interval finer than a millisecond is the same case wearing a disguise: the request only
+// carries whole milliseconds, so "500us" would be truncated to that same 0 on the way out.
+// Requiring a whole number of milliseconds shuts that door and makes the conversion exact.
+//
 // ParseConfig defaults the absent fields before calling this, so both interval pointers are
-// set by the time it runs and only an explicit non-positive value reaches it.
+// set by the time it runs and only an explicit value reaches it.
 func (c Conn) validateMonitoring() error {
-	if d := c.SubscriptionInterval.Duration; d <= 0 {
-		return fmt.Errorf("subscriptionInterval must be positive, got %s; omit it to publish every %s", d, DefaultSubscriptionInterval)
+	if err := validateInterval("subscriptionInterval", c.SubscriptionInterval.Duration); err != nil {
+		return fmt.Errorf("%w; omit it to publish every %s", err, DefaultSubscriptionInterval)
 	}
-	if d := c.SamplingInterval.Duration; d <= 0 {
-		return fmt.Errorf("samplingInterval must be positive, got %s; omit it to sample once per publishing interval", d)
+	if err := validateInterval("samplingInterval", c.SamplingInterval.Duration); err != nil {
+		return fmt.Errorf("%w; omit it to sample once per publishing interval", err)
+	}
+	return nil
+}
+
+// validateInterval rejects an interval the request cannot carry faithfully.
+// Both intervals reach the server as a count of whole milliseconds — Client.Subscribe
+// converts the sampling interval, gopcua converts the publishing interval — and both
+// conversions truncate, so anything finer is silently altered and anything under a
+// millisecond arrives as 0, which is the spec's "use the fastest practical rate".
+func validateInterval(name string, d time.Duration) error {
+	if d <= 0 {
+		return fmt.Errorf("%s must be positive, got %s", name, d)
+	}
+	if d%time.Millisecond != 0 {
+		return fmt.Errorf("%s must be a whole number of milliseconds, got %s: "+
+			"the request carries it in whole milliseconds, so the server would see %s",
+			name, d, d.Truncate(time.Millisecond))
 	}
 	return nil
 }
