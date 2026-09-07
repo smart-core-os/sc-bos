@@ -5,6 +5,7 @@ import {createRouter, createWebHistory} from 'vue-router';
 
 import AirQuality from '@/views/AirQuality.vue';
 import BuildingOccupancy from '@/views/BuildingOccupancy.vue';
+import EnergyGeneration from '@/views/EnergyGeneration.vue';
 import EnergyUsage from '@/views/EnergyUsage.vue';
 import TemperatureSystems from '@/views/TemperatureSystems.vue';
 import WaterUsage from '@/views/WaterUsage.vue';
@@ -61,6 +62,15 @@ const router = createRouter({
       props: () => {
         const uiConfig = useUiConfigStore();
         return uiConfig.getOrDefault('props.energy', {});
+      },
+    },
+    {
+      path: '/generation',
+      name: 'generation',
+      component: EnergyGeneration,
+      props: () => {
+        const uiConfig = useUiConfigStore();
+        return uiConfig.getOrDefault('props.generation', {});
       },
     },
     {
