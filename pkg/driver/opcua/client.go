@@ -58,9 +58,9 @@ func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcu
 		},
 		MonitoringMode: ua.MonitoringModeReporting,
 		RequestedParameters: &ua.MonitoringParameters{
-			ClientHandle:     c.clientHandle,
-			DiscardOldest:    true,
-			QueueSize:        c.queueSize,
+			ClientHandle:  c.clientHandle,
+			DiscardOldest: true,
+			QueueSize:     c.queueSize,
 			// exact rather than truncating because config.Conn rejects any interval that
 			// isn't a whole number of milliseconds, which ParseConfig has already checked
 			SamplingInterval: float64(c.samplingInterval.Milliseconds()),
@@ -87,7 +87,8 @@ func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcu
 // it settled on rather than failing. That revision is the authoritative version of the
 // config-time warnings in config.Conn.MonitoringWarnings, so it is worth surfacing: a queue
 // revised down below a publishing cycle's worth of samples is exactly the setup that makes
-// the server flag every value with the Overflow info bit.
+// the server flag every value with the Overflow info bit. A revision that can only help,
+// meanwhile, is worth a record but not an operator's attention.
 func (c *Client) warnIfRevised(nodeId *ua.NodeID, res *ua.MonitoredItemCreateResult) {
 	// floatEqual rather than !=: the revised interval is a float off the wire, and a server
 	// echoing back what we asked for should not read as a revision
@@ -98,8 +99,18 @@ func (c *Client) warnIfRevised(nodeId *ua.NodeID, res *ua.MonitoredItemCreateRes
 			zap.Float64("requestedMs", requested),
 			zap.Float64("revisedMs", res.RevisedSamplingInterval))
 	}
-	if res.RevisedQueueSize != c.queueSize {
-		c.logger.Warn("server revised the queue size",
+	// only a shallower queue than we asked for is a warning: that is the one that overflows.
+	// A server is entitled to hand back a deeper queue than requested, typically its own
+	// minimum depth, and a deeper queue only discards fewer samples. Warning on it would mean
+	// a line per monitored item on every config load for a server behaving perfectly well.
+	switch {
+	case res.RevisedQueueSize < c.queueSize:
+		c.logger.Warn("server revised the queue size down",
+			zap.Stringer("node", nodeId),
+			zap.Uint32("requested", c.queueSize),
+			zap.Uint32("revised", res.RevisedQueueSize))
+	case res.RevisedQueueSize > c.queueSize:
+		c.logger.Debug("server revised the queue size up",
 			zap.Stringer("node", nodeId),
 			zap.Uint32("requested", c.queueSize),
 			zap.Uint32("revised", res.RevisedQueueSize))
