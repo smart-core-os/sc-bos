@@ -198,6 +198,7 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 		wantQueueSize                  uint32
 		wantRequestTimeout             time.Duration
 		wantMaxConcurrent              int
+		wantMaxItems                   int
 	}{
 		{
 			name:             "all defaulted",
@@ -209,6 +210,7 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			// that says nothing about it behaving exactly as it did
 			wantRequestTimeout: 10 * time.Second,
 			wantMaxConcurrent:  4,
+			wantMaxItems:       50,
 		},
 		{
 			name:               "sampling follows subscription interval",
@@ -218,15 +220,17 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			wantQueueSize:      1,
 			wantRequestTimeout: 10 * time.Second,
 			wantMaxConcurrent:  4,
+			wantMaxItems:       50,
 		},
 		{
 			name:               "explicit values are kept",
-			conn:               `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "5s", "samplingInterval": "250ms", "queueSize": 20, "requestTimeout": "45s", "maxConcurrentSubscribes": 1}`,
+			conn:               `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "5s", "samplingInterval": "250ms", "queueSize": 20, "requestTimeout": "45s", "maxConcurrentSubscribes": 1, "maxMonitoredItemsPerRequest": 3}`,
 			wantSubscription:   5 * time.Second,
 			wantSampling:       250 * time.Millisecond,
 			wantQueueSize:      20,
 			wantRequestTimeout: 45 * time.Second,
 			wantMaxConcurrent:  1,
+			wantMaxItems:       3,
 		},
 	}
 	for _, tt := range tests {
@@ -249,6 +253,9 @@ func TestParseConfig_monitoringDefaults(t *testing.T) {
 			}
 			if got := cfg.Conn.MaxConcurrentSubscribes; got != tt.wantMaxConcurrent {
 				t.Errorf("maxConcurrentSubscribes = %d, want %d", got, tt.wantMaxConcurrent)
+			}
+			if got := cfg.Conn.MaxMonitoredItemsPerRequest; got != tt.wantMaxItems {
+				t.Errorf("maxMonitoredItemsPerRequest = %d, want %d", got, tt.wantMaxItems)
 			}
 		})
 	}
@@ -301,6 +308,13 @@ func TestParseConfig_monitoringRejected(t *testing.T) {
 			name:    "negative concurrent subscribes",
 			conn:    `{"endpoint": "opc.tcp://server:4840", "maxConcurrentSubscribes": -1}`,
 			wantErr: "maxConcurrentSubscribes must be at least 1",
+		},
+		{
+			// as above, a zero is the absent value: a request carrying no items would
+			// monitor nothing at all
+			name:    "negative monitored items per request",
+			conn:    `{"endpoint": "opc.tcp://server:4840", "maxMonitoredItemsPerRequest": -1}`,
+			wantErr: "maxMonitoredItemsPerRequest must be at least 1",
 		},
 	}
 	for _, tt := range tests {
@@ -358,6 +372,13 @@ func TestConn_MonitoringWarnings(t *testing.T) {
 			want: []string{"samplingInterval 50ms is shorter than 100ms", "subscriptionInterval 50ms is shorter than 100ms"},
 		},
 		{
+			// the field is still parsed so old configs load, but saying nothing about it
+			// being ignored would leave an operator tuning something with no effect
+			name: "deprecated clientId",
+			conn: `{"endpoint": "opc.tcp://server:4840", "clientId": 42}`,
+			want: []string{"clientId 42 is ignored"},
+		},
+		{
 			name: "aggressive on every count",
 			conn: `{"endpoint": "opc.tcp://server:4840", "subscriptionInterval": "50ms", "samplingInterval": "10ms"}`,
 			want: []string{"raise queueSize to at least 5", "samplingInterval 10ms", "subscriptionInterval 50ms"},
@@ -403,5 +424,38 @@ func Test_samplesPerCycle(t *testing.T) {
 				t.Errorf("samplesPerCycle(%s, %s) = %d, want %d", tt.publish, tt.sample, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestParseConfig_clientIdDeprecated checks a config carrying the old clientId still loads.
+//
+// The field is ignored now: it was sent as the ClientHandle on every monitored item on the
+// connection, and one value for the whole connection identified nothing once each item needs a
+// handle of its own to be told apart. But a config that loads today has to keep loading, so it
+// parses, is left exactly as written rather than replaced, and warns.
+func TestParseConfig_clientIdDeprecated(t *testing.T) {
+	cfg, err := ParseConfig([]byte(`{"name": "opcua", "type": "opcua", "conn": {"endpoint": "opc.tcp://server:4840", "clientId": 7}}`))
+	if err != nil {
+		t.Fatalf("ParseConfig with a clientId: %v", err)
+	}
+	if cfg.Conn.ClientId != 7 {
+		t.Errorf("clientId = %d, want the configured 7 left as it was", cfg.Conn.ClientId)
+	}
+	warnings := cfg.Conn.MonitoringWarnings()
+	if len(warnings) != 1 || !strings.Contains(warnings[0], "clientId 7 is ignored") {
+		t.Errorf("MonitoringWarnings() = %v, want one warning about clientId being ignored", warnings)
+	}
+
+	// and left out it stays zero rather than being randomised. Nothing reads it, so a random
+	// value only made ParseConfig non-deterministic and the warning above impossible to write.
+	cfg, err = ParseConfig([]byte(`{"name": "opcua", "type": "opcua", "conn": {"endpoint": "opc.tcp://server:4840"}}`))
+	if err != nil {
+		t.Fatalf("ParseConfig without a clientId: %v", err)
+	}
+	if cfg.Conn.ClientId != 0 {
+		t.Errorf("clientId = %d, want 0 when the config does not set one", cfg.Conn.ClientId)
+	}
+	if warnings := cfg.Conn.MonitoringWarnings(); len(warnings) != 0 {
+		t.Errorf("MonitoringWarnings() = %v, want nothing to say about a config that omits clientId", warnings)
 	}
 }

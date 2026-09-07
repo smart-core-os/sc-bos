@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gopcua/opcua/ua"
-	"math/rand/v2"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -107,19 +106,37 @@ type Conn struct {
 	// QueueSize is the server-side queue depth per monitored item.
 	// Defaults to 1, meaning only the most recent sample is published.
 	QueueSize uint32 `json:"queueSize,omitempty,omitzero"`
-	// ClientId is the ID of the client that will be used to connect to the OPC UA server.
-	// Should be unique within the context of a server. If not set, a random ID will be generated.
+	// ClientId was sent as the ClientHandle on every monitored item the connection created.
+	//
+	// Deprecated: ignored. The driver now stamps each monitored item with a handle unique
+	// within its subscription, which is what lets one subscription per device demultiplex the
+	// notifications it receives back to the node each value came from. A single value for the
+	// whole connection identified nothing. The field is still parsed so that a config
+	// carrying it keeps loading; MonitoringWarnings says so when it is set.
 	ClientId uint32 `json:"clientId,omitempty,omitzero"`
 	// RequestTimeout bounds how long the client waits for the server to answer a single
 	// request before giving up on it. Defaults to 10s, which is the gopcua default it replaces.
 	// This is the knob for a server that is slow rather than unreachable: a subscribe that
 	// expires here fails with StatusBadTimeout even though the node is perfectly readable.
 	RequestTimeout *jsontypes.Duration `json:"requestTimeout,omitempty,omitzero"`
-	// MaxConcurrentSubscribes caps how many points are subscribed at once across every device
-	// on this connection. Defaults to 4. Each point costs two sequential round trips, so
-	// without a cap a config load asks the server for all of them at once, which is what
-	// makes a slow server answer with timeouts.
+	// MaxConcurrentSubscribes caps how many subscribe requests are in flight at once across
+	// every device on this connection. Defaults to 4. Without a cap a config load asks the
+	// server for every device's points at once, which is what makes a slow server answer with
+	// timeouts.
 	MaxConcurrentSubscribes int `json:"maxConcurrentSubscribes,omitempty,omitzero"`
+	// MaxMonitoredItemsPerRequest caps how many monitored items the driver asks the server to
+	// create in one request. Defaults to 50.
+	//
+	// The driver creates one subscription per device and puts all of that device's variables on
+	// it as monitored items, sent in CreateMonitoredItems requests of at most this many. Servers
+	// advertise their own cap as Server/ServerCapabilities/OperationLimits/
+	// MaxMonitoredItemsPerCall and reject anything larger with BadTooManyOperations; that code is
+	// retried, so the symptom is a device that never comes up rather than one that fails loudly,
+	// and lowering this is the fix.
+	//
+	// This is not a way back to one subscription per point. Setting it to 1 sends one item per
+	// request, but there is still exactly one subscription per device.
+	MaxMonitoredItemsPerRequest int `json:"maxMonitoredItemsPerRequest,omitempty,omitzero"`
 
 	// Auth configures the OPC UA user identity token.
 	// When absent the driver connects to the server anonymously.
@@ -140,10 +157,15 @@ const (
 	// It matches gopcua's own default, so making the value configurable leaves the behaviour
 	// of a config that says nothing about it unchanged.
 	DefaultRequestTimeout = 10 * time.Second
-	// DefaultMaxConcurrentSubscribes is how many points are subscribed at once when conn omits
-	// a limit. Low enough to keep a slow DA-wrapper server answering, high enough that a few
-	// hundred points still come up in a reasonable time.
+	// DefaultMaxConcurrentSubscribes is how many subscribe requests are in flight at once when
+	// conn omits a limit. Low enough to keep a slow DA-wrapper server answering, high enough
+	// that a few hundred points still come up in a reasonable time.
 	DefaultMaxConcurrentSubscribes = 4
+	// DefaultMaxMonitoredItemsPerRequest is how many monitored items go in one
+	// CreateMonitoredItems request when conn omits a cap. Comfortably under the
+	// MaxMonitoredItemsPerCall the servers this driver talks to advertise, while still
+	// bringing a typical device up in a single request.
+	DefaultMaxMonitoredItemsPerRequest = 50
 	// aggressiveInterval is the point below which a publishing or sampling interval is
 	// reported as a load risk. It is a sanity threshold for configs written without checking
 	// the server: the authoritative floor is the server's own
@@ -173,6 +195,9 @@ func (c Conn) validateMonitoring() error {
 	}
 	if n := c.MaxConcurrentSubscribes; n < 1 {
 		return fmt.Errorf("maxConcurrentSubscribes must be at least 1, got %d; omit it for %d", n, DefaultMaxConcurrentSubscribes)
+	}
+	if n := c.MaxMonitoredItemsPerRequest; n < 1 {
+		return fmt.Errorf("maxMonitoredItemsPerRequest must be at least 1, got %d; omit it for %d", n, DefaultMaxMonitoredItemsPerRequest)
 	}
 	return nil
 }
@@ -206,9 +231,16 @@ func (c Conn) MonitoringWarnings() []string {
 	}
 	if publish < aggressiveInterval {
 		warnings = append(warnings, fmt.Sprintf(
-			"subscriptionInterval %s is shorter than %s; the driver creates one subscription per monitored variable, "+
-				"so a short publishing interval multiplies into a lot of traffic",
+			"subscriptionInterval %s is shorter than %s; the driver creates one subscription per device, "+
+				"so a short publishing interval multiplies by the device count into a lot of traffic",
 			publish, aggressiveInterval))
+	}
+	if c.ClientId != 0 {
+		warnings = append(warnings, fmt.Sprintf(
+			"clientId %d is ignored and can be removed: it was sent as the ClientHandle on every monitored "+
+				"item on the connection, so one value for the whole connection identified nothing; "+
+				"the driver now stamps each item with a handle unique within its device's subscription",
+			c.ClientId))
 	}
 	return warnings
 }
@@ -406,14 +438,14 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	if cfg.Conn.QueueSize == 0 {
 		cfg.Conn.QueueSize = DefaultQueueSize
 	}
-	if cfg.Conn.ClientId == 0 {
-		cfg.Conn.ClientId = rand.Uint32()
-	}
 	if cfg.Conn.RequestTimeout == nil {
 		cfg.Conn.RequestTimeout = &jsontypes.Duration{Duration: DefaultRequestTimeout}
 	}
 	if cfg.Conn.MaxConcurrentSubscribes == 0 {
 		cfg.Conn.MaxConcurrentSubscribes = DefaultMaxConcurrentSubscribes
+	}
+	if cfg.Conn.MaxMonitoredItemsPerRequest == 0 {
+		cfg.Conn.MaxMonitoredItemsPerRequest = DefaultMaxMonitoredItemsPerRequest
 	}
 
 	// check the monitoring parameters now so that an unworkable interval is reported here

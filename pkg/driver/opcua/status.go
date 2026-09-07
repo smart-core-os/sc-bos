@@ -59,11 +59,14 @@ var permanentSubscribeStatuses = []ua.StatusCode{
 }
 
 var (
-	// errUnexpectedResults reports a CreateMonitoredItems response that did not carry exactly
-	// one result for the one item we asked about, so we cannot tell whether it worked.
-	errUnexpectedResults = errors.New("expected exactly one monitored item result")
+	// errUnexpectedResults reports a CreateMonitoredItems response that did not carry one
+	// result per item we asked about, so we cannot tell which of them worked.
+	errUnexpectedResults = errors.New("expected one monitored item result per item requested")
 	// errSubscriptionClosed reports the notification channel closing under us.
 	errSubscriptionClosed = errors.New("subscription notification channel closed")
+	// errNoWorkablePoints reports a device left with nothing to subscribe to, because the
+	// server has said no to every one of its points for a reason that will never change.
+	errNoWorkablePoints = errors.New("no point on this device can be monitored")
 )
 
 // subscribeErrIsPermanent reports whether err says subscribing to a point can never succeed,

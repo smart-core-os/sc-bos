@@ -13,6 +13,20 @@ When the underlying value of the Variable Node changes, we get an event through 
 depending on which traits this device has configured to support.
 2 different devices can subscribe to the same nodeID without an issue. 
 
+Each device gets **one OPC UA subscription**, with all of its variables on it as monitored
+items. The subscription count is what bounds throughput: gopcua keeps a single
+`PublishRequest` in flight per client, on one goroutine, and a `PublishResponse` names one
+subscription, so every subscription costs a serialised round trip per publishing interval.
+200 points at a 5s interval is 40 round trips a second as one subscription each, and 4 a
+second as one per device across 20 devices.
+
+A notification therefore carries values for many nodes at once, and names each item only by
+the `ClientHandle` the driver chose when it created it (OPC UA Part 4, 7.21). The driver keeps
+the handle-to-node map per subscription, and that map is the only thing that says which node a
+value belongs to. A notification under a handle the driver does not know is dropped with a log
+line rather than faulted: there is nothing on the wire saying which point it was for, and the
+device's own points are unaffected.
+
 ## Traits
 
 In the config, each device configures which traits it supports. (see config/sample.json for an example)
@@ -28,9 +42,10 @@ The `conn` block says where the server is and how to authenticate against it.
 | `subscriptionInterval` | duration | How often the server publishes subscription updates. Defaults to `5s`. |
 | `samplingInterval` | duration | How often the server samples each monitored node. Defaults to `subscriptionInterval`. Must be positive. |
 | `queueSize` | number | Server-side queue depth per monitored node. Defaults to `1`, so only the most recent sample is published. |
-| `clientId` | number | Client ID, unique within a server. A random one is generated when unset. |
+| `clientId` | number | **Ignored.** Deprecated: it was sent as the `ClientHandle` on every monitored item on the connection, so one value for the whole connection identified nothing. Each item now gets a handle unique within its device's subscription. Still parsed, so existing configs load; warns at connect. |
 | `requestTimeout` | duration | How long to wait for the server to answer a single request. Defaults to `10s`. Must be positive. |
-| `maxConcurrentSubscribes` | number | How many points are subscribed at once, across every device on this connection. Defaults to `4`. Must be at least 1. |
+| `maxConcurrentSubscribes` | number | How many subscribe requests are in flight at once, across every device on this connection. Defaults to `4`. Must be at least 1. |
+| `maxMonitoredItemsPerRequest` | number | How many monitored items the driver asks the server to create in one request. Defaults to `50`. Must be at least 1. |
 | `auth.username` | string | OPC UA user to authenticate as. Omit the whole `auth` block to connect anonymously. |
 | `auth.passwordFile` | string | **Required with `auth`.** Path to a file containing that user's password. A plaintext `password` in the config is rejected. |
 | `security.policy` | string | Security policy short name: `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep` or `Aes256Sha256RsaPss`. Defaults to `Basic256Sha256` when `auth` is set, `None` otherwise. |
@@ -61,7 +76,8 @@ config load, and the driver carries on:
 |---|---|
 | queue too small | `queueSize` is smaller than the number of samples a publishing cycle holds, i.e. `subscriptionInterval / samplingInterval` rounded up. The server discards the excess and sets the Overflow bit. |
 | aggressive sampling | `samplingInterval` under 100 ms. Many servers clamp this to their `MinSupportedSampleRate`. |
-| aggressive publishing | `subscriptionInterval` under 100 ms. The driver creates one subscription per monitored variable, so this multiplies. |
+| aggressive publishing | `subscriptionInterval` under 100 ms. The driver creates one subscription per device, so this multiplies by the device count. |
+| deprecated `clientId` | `clientId` is set. It is ignored and can be removed. |
 
 The 100 ms figure is a sanity threshold for configs written without checking the server; the
 authoritative floor is the server's own
@@ -139,7 +155,7 @@ certificate from its rejected list to its trusted list.
 
 ## Retrying subscriptions
 
-A point that fails to subscribe is retried until it works, starting 2 seconds later and
+A point that fails to be monitored is retried until it works, starting 2 seconds later and
 backing off by half each time up to a 5 minute ceiling. The reason for the failure decides
 whether it is retried at all:
 
@@ -166,13 +182,50 @@ point, so it deliberately does not raise `DeviceConfig`.
 
 A subscription that worked and then died - the server restarting, say - is retried the same
 way, except that because it demonstrably worked the backoff starts over rather than carrying
-a ramp built from some earlier problem.
+a ramp built from some earlier problem. That grace now measures the whole device, so one
+flapping point can no longer keep a device's backoff ramped up.
+
+### Two levels of retry
+
+Because a device's points share a subscription, there are two different things that can fail
+and they are retried separately:
+
+- **The device.** The subscription would not open, or not one of its points could be
+  monitored, or a live subscription died. The whole device is retried on the backoff above:
+  a new subscription, then every point that has not been given up on. A subscription with
+  nothing delivering on it is cancelled before backing off, since leaving it behind holds a
+  channel nobody reads and slows every other device on the connection.
+- **A straggler point.** Some of the device's points were monitored and one was refused for a
+  reason that may go away. That point is retried **onto the live subscription**, on its own
+  ramp starting 2 seconds later, so the points that are working are never torn down to retry
+  the one that is not. The loop ends once every straggler is monitored or given up on.
 
 ### Pacing the startup burst
 
-The driver creates one subscription per monitored variable and each costs two sequential
-round trips, so a config with a few hundred points would ask the server for all of them at
-once the moment it loads. `maxConcurrentSubscribes` caps how many are in flight, and each
-point waits a random moment under half a second before its first attempt so they do not
-arrive in lockstep. A server answering `StatusBadTimeout` for a node that browses fine is the
-sign to lower that cap, or to raise `requestTimeout`.
+A device costs `1 + ceil(points / maxMonitoredItemsPerRequest)` requests to bring up: one to
+create the subscription, then one per batch of monitored items. A 500-point device with the
+default cap is 11 requests, where it used to be 1000. `maxConcurrentSubscribes` caps how many
+of those requests are in flight across the whole connection, and each device waits a random
+moment under half a second before its first attempt so they do not arrive in lockstep. A
+server answering `StatusBadTimeout` for a node that browses fine is the sign to lower that
+cap, or to raise `requestTimeout`.
+
+Requests are gated individually rather than per device, deliberately: a 500-point device
+holding a slot for its whole point list would block every other device behind it for minutes.
+
+### When a server will not take the batch
+
+Two server limits are worth knowing about, both reported as retryable codes, so the symptom is
+a device that never comes up rather than one that fails loudly:
+
+- **`BadTooManyOperations`** means the batch was larger than the server's
+  `Server/ServerCapabilities/OperationLimits/MaxMonitoredItemsPerCall`. Lower
+  `maxMonitoredItemsPerRequest` to match.
+- **`BadTooManyMonitoredItems`** means the server will not hold that many items, and it now
+  refuses a whole batch where it used to refuse a single point: a server whose per-subscription
+  limit is below a device's point count will fail that device indefinitely. The
+  `PointSubscribe` fault names the points, and the fix is to split the device in the config or
+  raise the server's limit.
+
+`BadTooManySubscriptions`, by contrast, has largely gone away: the subscription count drops by
+the points-per-device factor.

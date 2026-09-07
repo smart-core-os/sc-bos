@@ -88,10 +88,12 @@ func raisePointSubscribeFault(details string, count int, fc *healthpb.FaultCheck
 // fault raised per point would have every point overwriting its neighbours. One fault per
 // state, naming the affected points in its details, is the only shape that survives.
 //
-// It carries its own mutex because the pump goroutines behind it are one per point and all
-// write here. That does not make the underlying healthpb check goroutine-safe - checkBase.write
-// is an unsynchronised read-modify-write, which this driver already races from those same
-// goroutines through handleStatusValue - it only keeps the maps below consistent.
+// It carries its own mutex because the goroutines behind it - one pump per device, plus that
+// device's straggler retry loop - all write here. That does not make the underlying healthpb
+// check goroutine-safe: checkBase.write is an unsynchronised read-modify-write, which this
+// driver already races from those same goroutines through handleStatusValue. Batching the
+// points of a device onto one subscription narrows that race from one goroutine per point to
+// one per device, but does not close it. The mutex only keeps the maps below consistent.
 type pointHealth struct {
 	fc *healthpb.FaultCheck
 
@@ -112,28 +114,44 @@ func newPointHealth(fc *healthpb.FaultCheck) *pointHealth {
 
 // setFailing records a point that failed to subscribe for a reason that may go away.
 func (p *pointHealth) setFailing(nodeId string, err error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	delete(p.permanent, nodeId)
-	p.transient[nodeId] = err.Error()
-	p.commit()
+	p.applyBatch(nil, map[string]error{nodeId: err}, nil)
 }
 
 // setPermanent records a point we have given up on because the server says it can never work.
 func (p *pointHealth) setPermanent(nodeId string, err error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	delete(p.transient, nodeId)
-	p.permanent[nodeId] = err.Error()
-	p.commit()
+	p.applyBatch(nil, nil, map[string]error{nodeId: err})
 }
 
 // setOk records a point that is subscribed, clearing whatever was last said about it.
 func (p *pointHealth) setOk(nodeId string) {
+	p.applyBatch([]string{nodeId}, nil, nil)
+}
+
+// applyBatch records the outcome of one subscribe attempt for a whole device at once: ok names
+// the points now subscribed, failing those that failed for a reason that may go away, and
+// permanent those the server says can never work. A point named in more than one is resolved
+// in that order, so the last word wins.
+//
+// One call rather than one per point because commit rewrites both faults and pushes the check
+// to the registry every time. With a subscription per point those calls were spread over as
+// many goroutines; with one per device they arrive together, and a 200-point device would
+// otherwise publish 200 growing versions of the same fault per attempt, every one of them
+// visible over the devices API.
+func (p *pointHealth) applyBatch(ok []string, failing, permanent map[string]error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	delete(p.transient, nodeId)
-	delete(p.permanent, nodeId)
+	for _, nodeId := range ok {
+		delete(p.transient, nodeId)
+		delete(p.permanent, nodeId)
+	}
+	for nodeId, err := range failing {
+		delete(p.permanent, nodeId)
+		p.transient[nodeId] = err.Error()
+	}
+	for nodeId, err := range permanent {
+		delete(p.transient, nodeId)
+		p.permanent[nodeId] = err.Error()
+	}
 	p.commit()
 }
 
