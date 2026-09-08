@@ -1,11 +1,13 @@
-import {closeResource, newResourceValue} from '@/api/resource.js';
-import {listDevices, pullDevices, pullDevicesMetadata} from '@/api/ui/devices.js';
+import {closeResource, newActionTracker, newResourceValue} from '@/api/resource.js';
+import {getDevicesMetadata, listDevices, pullDevices, pullDevicesMetadata} from '@/api/ui/devices.js';
 import useFilterCtx from '@/components/filter/filterCtx.js';
 import useCollection from '@/composables/collection.js';
 import {useExperiment} from '@/composables/experiments.js';
+import {usePoll} from '@/composables/poll.js';
+import {SECOND} from '@/util/date.js';
 import {watchResource} from '@/util/traits.js';
 import {Device} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/devices/v1/devices_pb';
-import {computed, reactive, toRefs, toValue} from 'vue';
+import {computed, reactive, toRefs, toValue, watch} from 'vue';
 
 /**
  * @param {MaybeRefOrGetter<Partial<ListDevicesRequest.AsObject>>} request
@@ -202,6 +204,138 @@ export function useDevices(props) {
     query,
     items
   };
+}
+
+/**
+ * Normality values that mean a health check is reporting a problem.
+ *
+ * @type {string[]}
+ */
+export const ABNORMAL_NORMALITIES = ['ABNORMAL', 'HIGH', 'LOW'];
+
+/**
+ * Reliability states that mean a health check couldn't be read.
+ *
+ * @type {string[]}
+ */
+export const UNRELIABLE_STATES = [
+  'UNRELIABLE', 'CONN_TRANSIENT_FAILURE', 'SEND_FAILURE', 'NO_RESPONSE',
+  'BAD_RESPONSE', 'NOT_FOUND', 'PERMISSION_DENIED'
+];
+
+/**
+ * Query conditions matching devices that have an issue: any health check that is either
+ * abnormal or unreadable.
+ *
+ * Both dimensions are needed. They move independently - a comms failure sets reliability
+ * and leaves normality NORMAL, while a fault sets normality and leaves reliability
+ * RELIABLE - so checking one and not the other misses half the failures. any_of ORs them
+ * inside a single condition, so the two still have to hold of the *same* check. See the
+ * Example_ health query in internal/manage/devices/query_test.go, which this mirrors.
+ *
+ * Note this is stricter than the Health Status filter in useDeviceFilters, which looks at
+ * normality alone.
+ *
+ * @return {Device.Query.Condition.AsObject[]}
+ */
+export function unhealthyDeviceConditions() {
+  return [{
+    field: 'health_checks',
+    // Matcher defaults to ANY: the device matches if any health check matches anyOf.
+    anyOf: {
+      queriesList: [
+        {conditionsList: [{field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITIES}}]},
+        {conditionsList: [{field: 'reliability.state', stringIn: {stringsList: UNRELIABLE_STATES}}]}
+      ]
+    }
+  }];
+}
+
+/**
+ * @typedef {UseDevicesOptions} UseDeviceHealthCountOptions
+ * @property {number} expected
+ *   - if > 0, the total to report instead of the live device count. A live count makes an
+ *     outage invisible: when a node drops off the cohort its devices are removed, shrinking
+ *     the numerator and the denominator together. Pin this to the number of devices that
+ *     are supposed to exist and a whole node going dark reads as 0 / n instead.
+ * @property {number} pollPeriod - how often to recount, in milliseconds.
+ */
+
+/**
+ * Counts how many of the devices matching props are reporting normally.
+ *
+ * Both figures are counted by the server, as DevicesMetadata.total_count over the matching
+ * and the unhealthy queries. Nothing about the devices themselves is transferred, so this
+ * costs the same for ten devices as for a thousand.
+ *
+ * total_count is the right field for this; the field_counts in the same message are not.
+ * Those bucket a repeated field once per unique value, so a device with one NORMAL and one
+ * ABNORMAL check lands in both buckets and the counts don't add up to the total.
+ *
+ * Polled rather than pulled. Two counts need two queries, and a stream apiece would mean two
+ * held connections per caller: put four of these on a dashboard and they exhaust the
+ * browser's six-per-origin connection limit between them, leaving the later ones showing
+ * nothing at all. A coverage percentage does not need sub-second liveness, so this trades it
+ * for composability.
+ *
+ * @param {MaybeRefOrGetter<Partial<UseDeviceHealthCountOptions>>} props
+ * @return {{
+ *   total: import('vue').ComputedRef<number>,
+ *   unhealthy: import('vue').ComputedRef<number>,
+ *   online: import('vue').ComputedRef<number>,
+ *   percent: import('vue').ComputedRef<number>,
+ *   hasData: import('vue').ComputedRef<boolean>,
+ *   loading: import('vue').ComputedRef<boolean>,
+ *   error: import('vue').ComputedRef<RemoteError|null>,
+ *   refresh: (force?: boolean) => void
+ * }}
+ */
+export function useDeviceHealthCount(props) {
+  const opts = computed(() => /** @type {Partial<UseDeviceHealthCountOptions>} */ toValue(props) ?? {});
+  const conditions = computed(() => deviceConditions(opts.value));
+
+  const allTracker = reactive(/** @type {ActionTracker<DevicesMetadata.AsObject>} */ newActionTracker());
+  const unhealthyTracker = reactive(/** @type {ActionTracker<DevicesMetadata.AsObject>} */ newActionTracker());
+
+  const count = async () => {
+    if (opts.value.paused) return;
+    const conditionsList = conditions.value;
+    // Counted together so the two figures describe the same moment as closely as we can
+    // manage; online is their difference, and a stale total against a fresh unhealthy count
+    // can read as more devices broken than exist.
+    await Promise.all([
+      // the trackers record the errors, and one failing shouldn't abandon the other
+      getDevicesMetadata({query: {conditionsList}}, allTracker).catch(() => {}),
+      getDevicesMetadata({
+        query: {conditionsList: [...conditionsList, ...unhealthyDeviceConditions()]}
+      }, unhealthyTracker).catch(() => {})
+    ]);
+  };
+
+  const {pollNow, isPolling} = usePoll(count, () => opts.value.pollPeriod ?? 30 * SECOND);
+  // recount straight away when the query changes rather than waiting out the period
+  watch(conditions, () => pollNow(true), {deep: true});
+
+  const liveTotal = computed(() => allTracker.response?.totalCount ?? 0);
+  const total = computed(() => {
+    const expected = opts.value.expected;
+    return expected > 0 ? expected : liveTotal.value;
+  });
+  const unhealthy = computed(() => unhealthyTracker.response?.totalCount ?? 0);
+  // Devices missing from the live list are offline too, which is the whole point of
+  // expected: they are counted here by never being added to online in the first place.
+  const online = computed(() => Math.max(0, Math.min(total.value, liveTotal.value - unhealthy.value)));
+  // No devices reads as 0%, not 100%: there is nothing to be confident about.
+  const percent = computed(() => total.value === 0 ? 0 : (online.value / total.value) * 100);
+
+  // Keyed on the matching-devices count alone. Both are needed for a figure, but a count of
+  // zero is a real answer, so waiting for both would be waiting for nothing in the case we
+  // most expect: a healthy system, where the unhealthy count is legitimately 0.
+  const hasData = computed(() => Boolean(allTracker.response));
+  const loading = computed(() => isPolling.value && !hasData.value);
+  const error = computed(() => allTracker.error ?? unhealthyTracker.error ?? null);
+
+  return {total, unhealthy, online, percent, hasData, loading, error, refresh: pollNow};
 }
 
 /**
