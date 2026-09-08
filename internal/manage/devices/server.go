@@ -170,12 +170,16 @@ func (s *Server) PullDevices(request *devicespb.PullDevicesRequest, server devic
 
 func (s *Server) GetDevicesMetadata(_ context.Context, request *devicespb.GetDevicesMetadataRequest) (*devicespb.DevicesMetadata, error) {
 	devices := s.m.ListDevices(withDevicesMatchingsQuery(request.GetQuery()))
-	var res *devicespb.DevicesMetadata
 	col := newMetadataCollector(request.GetIncludes().GetFields()...)
 	for _, device := range devices {
-		res = col.add(device)
+		col.add(device)
 	}
-	return res, nil
+	// col.md rather than the return of the last add, so a query that matches nothing answers
+	// with a zero count instead of nil. PullDevicesMetadata skips sending anything that equals
+	// what it last sent, and nil equals the nil it starts with, so returning nil here left a
+	// caller whose query matches nothing waiting forever on a stream that was working fine.
+	// "Nothing matched" is a real answer and has to be sent.
+	return col.md, nil
 }
 
 func (s *Server) PullDevicesMetadata(request *devicespb.PullDevicesMetadataRequest, server devicespb.DevicesApi_PullDevicesMetadataServer) error {
