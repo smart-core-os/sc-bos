@@ -24,6 +24,7 @@ export const builtinWidgets = {
   'general/PlaceholderCard': defineAsyncComponent(() => import('@/dynamic/widgets/general/PlaceholderCard.vue')),
   'graphic/LayeredGraphic': defineAsyncComponent(() => import('@/dynamic/widgets/graphic/LayeredGraphic.vue')),
   'meter/EnergyVsBaselineCard': defineAsyncComponent(() => import('@/dynamic/widgets/meter/EnergyVsBaselineCard.vue')),
+  'meter/MeterHealthCard': defineAsyncComponent(() => import('@/dynamic/widgets/meter/MeterHealthCard.vue')),
   'meter/MeterDensityCard': defineAsyncComponent(() => import('@/dynamic/widgets/meter/MeterDensityCard.vue')),
   'meter/MeterHistoryCard': defineAsyncComponent(() => import('@/dynamic/widgets/meter/MeterHistoryCard.vue')),
   'notifications/ZoneNotifications': defineAsyncComponent(() => import('@/dynamic/widgets/notifications/ZoneNotifications.vue')),
