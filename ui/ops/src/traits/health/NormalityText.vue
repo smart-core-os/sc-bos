@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
+import {normalityToString} from '@/api/sc/traits/health.js';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -14,20 +14,7 @@ const props = defineProps({
   }
 })
 
-const normalityStr = computed(() => {
-  switch (props.modelValue?.normality ?? 0) {
-    case HealthCheck.Normality.NORMAL:
-      return 'Normal';
-    case HealthCheck.Normality.ABNORMAL:
-      return 'Abnormal';
-    case HealthCheck.Normality.HIGH:
-      return 'High';
-    case HealthCheck.Normality.LOW:
-      return 'Low';
-    default:
-      return 'Unknown';
-  }
-});
+const normalityStr = computed(() => normalityToString(props.modelValue?.normality ?? 0));
 </script>
 
 <style scoped>
