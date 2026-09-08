@@ -13,6 +13,7 @@
         <filter-choice-chips :ctx="filterCtx" class="mx-2"/>
         <filter-btn :ctx="filterCtx"/>
       </template>
+      <health-check-export-btn :query="devices.query.value" class="ml-2"/>
     </v-toolbar>
     <v-data-table-server
         v-bind="tableAttrs"
@@ -94,6 +95,7 @@ import {useDataTableCollection} from '@/composables/table.js';
 import CheckCountCell from '@/traits/health/CheckCountCell.vue';
 import {countChecks, useHealthCheckFilters} from '@/traits/health/health';
 import HealthCheckEnrichedRows from '@/traits/health/HealthCheckEnrichedRows.vue';
+import HealthCheckExportBtn from '@/traits/health/HealthCheckExportBtn.vue';
 import NormalityLastChangeCell from '@/traits/health/NormalityLastChangeCell.vue';
 import ReliabilityLastChangeCell from '@/traits/health/ReliabilityLastChangeCell.vue';
 import UdmiCard from '@/traits/udmi/UdmiCard.vue';
