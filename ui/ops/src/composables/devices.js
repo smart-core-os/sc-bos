@@ -111,11 +111,58 @@ const NO_SUBSYSTEM = '< no subsystem >';
  *   - if present and not 'all', adds the condition {field: "metadata.membership.subsystem", stringEqualFold: subsystem}
  * @property {string} floor
  *   - if present and not 'all', adds the condition {field: "metadata.location.floor", stringEqualFold: floor}
+ * @property {string|string[]} trait
+ *   - a fully-qualified trait name, or several; matches devices implementing it/any of them
  * @property {string} search
  *   - if present adds a condition for each word {stringContainsFold: word}
  * @property {Device.Query.Condition.AsObject[]} conditions
  * @property {(value: Device.AsObject, index?: number, array?: Device.AsObject[]) => boolean} filter
  */
+
+/**
+ * Builds the query conditions described by opts. Shared by useDevices and
+ * useDeviceHealthCount so both select the same devices from the same props.
+ *
+ * @param {Partial<UseDevicesOptions>} opts
+ * @return {Device.Query.Condition.AsObject[]}
+ */
+export function deviceConditions(opts) {
+  const conditionsList = [...opts.conditions ?? []];
+  if (opts.search) {
+    const words = opts.search.split(/\s+/);
+    conditionsList.push(...words.map(word => ({stringContainsFold: word})));
+  }
+  if (opts.subsystem && opts.subsystem.toLowerCase() !== 'all') {
+    conditionsList.push({field: 'metadata.membership.subsystem', stringEqualFold: opts.subsystem});
+  }
+  if (opts.floor) {
+    switch (opts.floor.toLowerCase()) {
+      case 'all':
+        // no filter
+        break;
+      case NO_FLOOR:
+        conditionsList.push({field: 'metadata.location.floor', stringEqualFold: ''});
+        break;
+      default:
+        conditionsList.push({field: 'metadata.location.floor', stringEqualFold: opts.floor});
+        break;
+    }
+  }
+  if (opts.trait) {
+    // Trait names are protobuf identifiers, so they're matched exactly. The other branches
+    // fold case because subsystems and floors are free text typed by an integrator.
+    const traits = Array.isArray(opts.trait) ? opts.trait : [opts.trait];
+    if (traits.length === 1) {
+      conditionsList.push({field: 'metadata.traits.name', stringEqual: traits[0]});
+    } else if (traits.length > 1) {
+      // A list reads as "implements any of these": metadata.traits.name is a value set and the
+      // query Matcher defaults to ANY. One condition per trait would AND them instead, as
+      // conditionsList entries are conjunctive.
+      conditionsList.push({field: 'metadata.traits.name', stringIn: {stringsList: traits}});
+    }
+  }
+  return conditionsList;
+}
 
 /**
  *
@@ -127,31 +174,7 @@ const NO_SUBSYSTEM = '< no subsystem >';
 export function useDevices(props) {
   const opts = computed(() => /** @type {Partial<UseDevicesOptions>} */ toValue(props));
 
-  const conditions = computed(() => {
-    const _opts = opts.value;
-    const conditionsList = [..._opts.conditions ?? []];
-    if (_opts.search) {
-      const words = _opts.search.split(/\s+/);
-      conditionsList.push(...words.map(word => ({stringContainsFold: word})));
-    }
-    if (_opts.subsystem && _opts.subsystem.toLowerCase() !== 'all') {
-      conditionsList.push({field: 'metadata.membership.subsystem', stringEqualFold: _opts.subsystem});
-    }
-    if (_opts.floor) {
-      switch (_opts.floor.toLowerCase()) {
-        case 'all':
-          // no filter
-          break;
-        case NO_FLOOR:
-          conditionsList.push({field: 'metadata.location.floor', stringEqualFold: ''});
-          break;
-        default:
-          conditionsList.push({field: 'metadata.location.floor', stringEqualFold: _opts.floor});
-          break;
-      }
-    }
-    return conditionsList;
-  });
+  const conditions = computed(() => deviceConditions(opts.value));
   const query = computed(() => {
     return {conditionsList: conditions.value};
   });
