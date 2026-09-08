@@ -105,7 +105,16 @@ const props = defineProps({
     default: () => ([
       {'field': 'health_checks.normality', 'stringIn': {'stringsList': ['ABNORMAL', 'HIGH', 'LOW']}}
     ])
-  }
+  },
+  /**
+   * A fully-qualified trait name, or several, limiting the table to devices implementing it
+   * (any of them, if given a list).
+   *
+   * This composes with conditions rather than replacing it, so a config wanting unhealthy
+   * meters sets trait alone and leaves conditions to its abnormal-normality default. Setting
+   * conditions still overrides that default outright.
+   */
+  trait: {type: [String, Array], default: null}
 });
 
 // Filter setup
@@ -136,6 +145,7 @@ const _useDevicesOpts = computed(() => {
   return {
     search: search.value,
     conditions: [...props.conditions, ...filterConditions.value],
+    trait: props.trait,
     wantCount: wantCount.value,
     paused: expandedRow.value !== null,
   }
