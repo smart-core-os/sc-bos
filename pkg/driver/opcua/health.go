@@ -36,12 +36,51 @@ const (
 
 func getDeviceHealthCheck(occupant healthpb.HealthCheck_OccupantImpact, equipment healthpb.HealthCheck_EquipmentImpact) *healthpb.HealthCheck {
 	return &healthpb.HealthCheck{
-		Id:              "deviceStatusCheck",
+		Id:              deviceStatusCheckId,
 		DisplayName:     "Device Status Check",
 		Description:     "Checks the device is reachable and responding correctly",
 		OccupantImpact:  occupant,
 		EquipmentImpact: equipment,
 	}
+}
+
+const (
+	// deviceStatusCheckId is the check carrying whether the device is doing its job: its
+	// trait-backed points, plus the server-level signals.
+	deviceStatusCheckId = "deviceStatusCheck"
+	// informationalPointCheckId is the check carrying failures on points marked informational.
+	//
+	// Both are relative ids. The registry namespaces them by owner, so what a client sees over
+	// the devices API is healthpb.AbsID(owner, id) - "<driver name>:deviceStatusCheck".
+	informationalPointCheckId = "informationalPointCheck"
+)
+
+// getInformationalPointCheck builds the check that failures on config.Variable.Informational
+// points are reported on, keeping them off deviceStatusCheck.
+//
+// The impacts are hard-coded rather than taken from the device: by definition no trait reads
+// these points, so the device is still doing its job and the equipment is still running. That
+// is also what keeps this check low in the Health page's impact breakdown, where it is still
+// listed.
+func getInformationalPointCheck() *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
+		Id:              informationalPointCheckId,
+		DisplayName:     "Informational Point Check",
+		Description:     "Checks points the device exports but no trait reads",
+		OccupantImpact:  healthpb.HealthCheck_NO_OCCUPANT_IMPACT,
+		EquipmentImpact: healthpb.HealthCheck_NO_EQUIPMENT_IMPACT,
+	}
+}
+
+// hasInformationalVariable reports whether the device marks any point informational, and so
+// whether it needs the second check at all.
+func hasInformationalVariable(dev *config.Device) bool {
+	for _, v := range dev.Variables {
+		if v.Informational {
+			return true
+		}
+	}
+	return false
 }
 
 func getDeviceErrorCheck(c config.HealthCheck) *healthpb.HealthCheck {
