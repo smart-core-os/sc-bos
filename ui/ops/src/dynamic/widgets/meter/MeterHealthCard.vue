@@ -46,6 +46,15 @@ const props = defineProps({
   floor: {type: String, default: null},
   conditions: {type: Array, default: () => []},
   /**
+   * Which health check ids count towards not reporting.
+   *
+   * Must match whatever a HealthCheckTable shown alongside is scoped to. Without it the card
+   * counts a failure on a point no trait reads as a device not reporting while the scoped
+   * table does not, giving "654 / 680 reporting" above an empty table - which reads as a bug
+   * in the table.
+   */
+  checkId: {type: [String, Array], default: null},
+  /**
    * The number of devices that are supposed to exist. Zero uses the live count instead.
    *
    * Worth setting wherever a device disappearing matters: a live count shrinks along with
@@ -74,6 +83,7 @@ const {total, online, percent, hasData, error} = useDeviceHealthCount(() => ({
   subsystem: props.subsystem,
   floor: props.floor,
   conditions: props.conditions,
+  checkId: props.checkId,
   expected: props.expected,
   pollPeriod: props.pollPeriod
 }));

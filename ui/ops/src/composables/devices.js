@@ -236,23 +236,51 @@ export const UNRELIABLE_STATES = [
  * Note this is stricter than the Health Status filter in useDeviceFilters, which looks at
  * normality alone.
  *
+ * @param {string|string[]} [checkId] limit the match to checks with these ids. Needed because
+ *   a device can carry checks that say nothing about whether it is doing its job - the opcua
+ *   driver's informationalPointCheck, for one - and a page scoped to function must not list a
+ *   device because one of those went abnormal. Omit it to match on any check, which is what
+ *   the building-wide Health page wants.
+ *
+ *   Ids are matched by substring against ':' + id, not by equality. What a client sees is the
+ *   absolute id: the owning driver's "kind:id" prefixed onto the id the driver declared, per
+ *   healthpb.AbsID. Nothing in a dashboard config knows the driver instance name, and the
+ *   devices query has no suffix operator.
  * @return {Device.Query.Condition.AsObject[]}
  */
-export function unhealthyDeviceConditions() {
+export function unhealthyDeviceConditions(checkId) {
+  // the two independent dimensions, ORed. See the note above on why both are needed.
+  const dimensions = [
+    {field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITIES}},
+    {field: 'reliability.state', stringIn: {stringsList: UNRELIABLE_STATES}}
+  ];
+  const ids = checkId ? (Array.isArray(checkId) ? checkId : [checkId]) : [];
+
+  // One query per (id, dimension) pair rather than one stringIn over the ids, because a
+  // substring match has no list form. Conditions within a query are conjunctive, which is the
+  // whole point: it ties the id and the abnormality to the *same* check. As a sibling
+  // condition on health_checks the id would instead match a device whose scoped check merely
+  // exists while some other check is the abnormal one.
+  const queriesList = ids.length === 0
+      ? dimensions.map(dimension => ({conditionsList: [dimension]}))
+      : ids.flatMap(id => {
+        const idCondition = {field: 'id', stringContains: ':' + id};
+        return dimensions.map(dimension => ({conditionsList: [idCondition, dimension]}));
+      });
+
   return [{
     field: 'health_checks',
     // Matcher defaults to ANY: the device matches if any health check matches anyOf.
-    anyOf: {
-      queriesList: [
-        {conditionsList: [{field: 'normality', stringIn: {stringsList: ABNORMAL_NORMALITIES}}]},
-        {conditionsList: [{field: 'reliability.state', stringIn: {stringsList: UNRELIABLE_STATES}}]}
-      ]
-    }
+    anyOf: {queriesList}
   }];
 }
 
 /**
  * @typedef {UseDevicesOptions} UseDeviceHealthCountOptions
+ * @property {string|string[]} checkId
+ *   - which health checks count towards not reporting. Must match whatever a table shown
+ *     alongside is scoped to, or the count and the table disagree and the mismatch reads as a
+ *     bug in the table. See unhealthyDeviceConditions.
  * @property {number} expected
  *   - if > 0, the total to report instead of the live device count. A live count makes an
  *     outage invisible: when a node drops off the cohort its devices are removed, shrinking
@@ -307,7 +335,7 @@ export function useDeviceHealthCount(props) {
       // the trackers record the errors, and one failing shouldn't abandon the other
       getDevicesMetadata({query: {conditionsList}}, allTracker).catch(() => {}),
       getDevicesMetadata({
-        query: {conditionsList: [...conditionsList, ...unhealthyDeviceConditions()]}
+        query: {conditionsList: [...conditionsList, ...unhealthyDeviceConditions(opts.value.checkId)]}
       }, unhealthyTracker).catch(() => {})
     ]);
   };

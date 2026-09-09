@@ -133,13 +133,39 @@ const props = defineProps({
    * meters sets trait alone and leaves the selection to its default. Setting conditions
    * still overrides that default outright.
    */
-  trait: {type: [String, Array], default: null}
+  trait: {type: [String, Array], default: null},
+  /**
+   * Which health check ids to judge a device by, limiting the table to devices whose *named*
+   * checks have a problem. Only has any effect alongside unhealthy.
+   *
+   * A device can carry checks that say nothing about whether it is doing its job - the opcua
+   * driver's informationalPointCheck, raised for points no trait reads - and a page scoped to
+   * function must not list a device because one of those went abnormal.
+   *
+   * Ids are the ones a driver declares, unprefixed: 'deviceStatusCheck', not
+   * 'opcua:metering-01:deviceStatusCheck'. See unhealthyDeviceConditions.
+   *
+   * Left unset the table judges a device by any check, which is what the building-wide Health
+   * page wants.
+   */
+  checkId: {type: [String, Array], default: null},
+  /**
+   * Subsystem and floor, passed through to useDevices to narrow the devices listed. These
+   * compose with trait and the selection, the way MeterHealthCard's do, so a dashboard cell
+   * can scope the table without hand-writing conditions - which would override unhealthy.
+   */
+  subsystem: {type: String, default: null},
+  floor: {type: String, default: null}
 });
 
 // conditions wins if given, so an explicit [] still clears the filter entirely.
+//
+// ABNORMAL_CONDITIONS, the no-props default, is deliberately left unscoped by checkId: the
+// building-wide Health page must keep showing every check a device carries, informational
+// ones included.
 const selection = computed(() => {
   if (props.conditions) return props.conditions;
-  return props.unhealthy ? unhealthyDeviceConditions() : ABNORMAL_CONDITIONS;
+  return props.unhealthy ? unhealthyDeviceConditions(props.checkId) : ABNORMAL_CONDITIONS;
 });
 
 // Filter setup
@@ -171,6 +197,8 @@ const _useDevicesOpts = computed(() => {
     search: search.value,
     conditions: [...selection.value, ...filterConditions.value],
     trait: props.trait,
+    subsystem: props.subsystem,
+    floor: props.floor,
     wantCount: wantCount.value,
     paused: expandedRow.value !== null,
   }
