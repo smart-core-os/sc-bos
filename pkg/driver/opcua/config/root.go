@@ -530,6 +530,8 @@ func validateDeviceTraits(device *Device) error {
 			valueSources, err = getValueSourcesForTrait[*TransportConfig](device.Name, t.Raw)
 		case udmipb.TraitName:
 			valueSources, err = getValueSourcesForTrait[*UdmiConfig](device.Name, t.Raw)
+		case healthpb.TraitName:
+			valueSources, err = getValueSourcesForTrait[*HealthConfig](device.Name, t.Raw)
 		default:
 			return fmt.Errorf("device '%s': unknown trait kind '%s'", device.Name, t.Kind)
 		}

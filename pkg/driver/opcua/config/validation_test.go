@@ -409,6 +409,44 @@ func TestValidateDeviceTraits(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			// regression: the kind was handled in driver.go but missing from this switch, so
+			// every config using it was rejected as an unknown trait kind. Nothing in the
+			// repo used the trait, so nothing caught it.
+			name: "valid device with health trait",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=Tag1"},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.bos.Health"},
+						Raw:   []byte(`{"kind":"smartcore.bos.Health","checks":[{"id":"boardHealth","displayName":"Board Reported Health","description":"The board's own health point","errorCode":"BoardHealth","summary":"The board is reporting a fault","normalValue":1,"name":"LPHD1.EEHealth","nodeId":"ns=2;s=Tag1"}]}`),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			// a check reading a node the device never monitors would sit at NORMAL forever,
+			// since Health.handleEvent only fires on a value notification
+			name: "health check nodeId not in device variables",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=Tag1"},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.bos.Health"},
+						Raw:   []byte(`{"kind":"smartcore.bos.Health","checks":[{"id":"boardHealth","displayName":"Board Reported Health","description":"The board's own health point","errorCode":"BoardHealth","summary":"The board is reporting a fault","normalValue":1,"name":"LPHD1.EEHealth","nodeId":"ns=2;s=Tag99"}]}`),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "ns=2;s=Tag99",
+		},
 	}
 
 	for _, tt := range tests {
