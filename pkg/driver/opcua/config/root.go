@@ -412,6 +412,15 @@ func securityPolicyNames() []string {
 type Variable struct {
 	// NodeId identifies the VariableNode in the OPC UA server.
 	NodeId string `json:"nodeId,omitempty"`
+	// Informational marks a point whose failure says nothing about whether the device is
+	// doing its job: one no trait reads, declared only so a bulk export like UDMI can
+	// publish it. Failures on these points are reported on the device's informational
+	// point check instead of deviceStatusCheck, so a dashboard scoped to the device's
+	// function does not light up because a spare per-phase register went away.
+	//
+	// Defaults to false, so a config that says nothing keeps every point on
+	// deviceStatusCheck exactly as before.
+	Informational bool `json:"informational,omitempty"`
 	// ParsedNodeId is the parsed ua.NodeID.
 	ParsedNodeId *ua.NodeID
 }
