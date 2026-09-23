@@ -4,8 +4,6 @@ package nodeopts
 import (
 	"context"
 
-	"google.golang.org/grpc"
-
 	"github.com/smart-core-os/sc-bos/internal/router"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -35,15 +33,6 @@ func WithRouter(r *router.Router) Option {
 	})
 }
 
-// WithClientConnWrapper sets a decorator applied to the connection returned by Node.ClientConn.
-// Every in-process caller obtains its connection from that method, so the wrapper sees all
-// in-process traffic. Used to audit writes that never reach the gRPC server's interceptors.
-func WithClientConnWrapper(wrapper func(grpc.ClientConnInterface) grpc.ClientConnInterface) Option {
-	return optionFunc(func(o *Struct) {
-		o.ClientConnWrapper = wrapper
-	})
-}
-
 // Join combines multiple options into a single struct.
 func Join(opts ...Option) Struct {
 	var o Struct
@@ -55,17 +44,13 @@ func Join(opts ...Option) Struct {
 
 // Struct contains all options for a Node as a struct for easy access.
 type Struct struct {
-	Store             Store
-	Router            *router.Router
-	ClientConnWrapper func(grpc.ClientConnInterface) grpc.ClientConnInterface
+	Store  Store
+	Router *router.Router
 }
 
 func (s Struct) apply(o *Struct) {
 	if s.Store != nil {
 		o.Store = s.Store
-	}
-	if s.ClientConnWrapper != nil {
-		o.ClientConnWrapper = s.ClientConnWrapper
 	}
 }
 

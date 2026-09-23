@@ -45,6 +45,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/history/dataretention"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -115,20 +116,9 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	nodeRouter := router.New(router.WithKeyInterceptor(func(key string) (string, error) {
 		return idOrNodeName(key), nil
 	}))
-	// initAuth runs before rootNode is created so the audit interceptor can be installed on the
-	// node's in-process connection; it depends only on config and logger.
-	ai := initAuth(config, logger)
-
 	// rootNode grants both local (in-process) and networked (via grpc.Server) access to controller APIs.
 	// Announce devices on rootNode to expose them via Smart Core APIs; use rootNode.Clients to call them.
-	nodeOpts := []node.Option{nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter)}
-	// In-process calls bypass the grpc.Server interceptors, so audit them on the way out of the
-	// node's loopback connection instead. Writes arriving over MQTT (the UDMI automation calling
-	// UdmiService.OnMessage) take this path and would otherwise go unrecorded.
-	if ai.Interceptor != nil {
-		nodeOpts = append(nodeOpts, nodeopts.WithClientConnWrapper(ai.Interceptor.AuditClientConn))
-	}
-	rootNode := node.New(cName, nodeOpts...)
+	rootNode := node.New(cName, nodeopts.WithStore(deviceStore), nodeopts.WithRouter(nodeRouter))
 	rootNode.Logger = logger.Named("node")
 
 	var accountStore *account.Store
@@ -173,6 +163,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	// once enrolled as the manager address is updated automatically.
 	manager := node.DialChan(ctx, pi.EnrollServer.ManagerAddress(ctx),
 		grpc.WithTransportCredentials(credentials.NewTLS(pi.GRPCClient)))
+
+	ai := initAuth(config, logger)
 
 	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
 
@@ -225,6 +217,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(closeHealthStore)
 	c.Defer(ci.DataRoot.Close)
 	if ai.Interceptor != nil {
+		// Only set when non-nil, so a typed-nil pointer never ends up in the interface.
+		c.Auditor = ai.Interceptor
 		c.Defer(ai.Interceptor.Close)
 	}
 	if ai.AuditSetup != nil {
@@ -720,6 +714,7 @@ type Controller struct {
 	Stores          *stores.Stores
 	Accounts        *account.Store
 	CheckRegistry   *healthpb.Registry
+	Auditor         auto.Auditor // records writes automations accept from non-gRPC ingresses; nil when there is no policy interceptor
 
 	ReflectionServer *reflectionapi.Server
 

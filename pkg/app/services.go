@@ -69,6 +69,7 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		GRPCServices:    c.GRPC,
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
+		Auditor:         c.Auditor,
 	}
 	// Give automations the node's Connect leaf credential (for mTLS to the Event
 	// Grid telemetry broker). The adapter reads the current registration per call,
