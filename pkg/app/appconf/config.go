@@ -72,10 +72,14 @@ func (c *Config) mergeWith(other *Config) {
 		}
 	}
 	// Includes are merged in a special way, we use the FilePath relative to c as the include.
+	// mergeWith serves both loadIncludes (OS paths) and loadIncludesFS (fs.FS paths, always
+	// forward-slash), so normalise to slashes: includes are written that way in config files, and
+	// filepath.Rel would otherwise record `dir\1.json` for an fs.FS load on Windows.
 	relInc, err := filepath.Rel(filepath.Dir(c.FilePath), other.FilePath)
 	if err != nil {
 		return
 	}
+	relInc = filepath.ToSlash(relInc)
 	if !slices.Contains(c.Includes, relInc) {
 		c.Includes = append(c.Includes, relInc)
 	}

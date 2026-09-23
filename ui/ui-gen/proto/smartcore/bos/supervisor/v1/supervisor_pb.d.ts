@@ -61,8 +61,8 @@ export class InstallUpdateRequest extends jspb.Message {
   getDownloadUrl(): string;
   setDownloadUrl(value: string): InstallUpdateRequest;
 
-  getSha256(): string;
-  setSha256(value: string): InstallUpdateRequest;
+  getChecksum(): string;
+  setChecksum(value: string): InstallUpdateRequest;
 
   getDeploymentId(): string;
   setDeploymentId(value: string): InstallUpdateRequest;
@@ -79,7 +79,7 @@ export namespace InstallUpdateRequest {
   export type AsObject = {
     version: string;
     downloadUrl: string;
-    sha256: string;
+    checksum: string;
     deploymentId: string;
   };
 }

@@ -3,9 +3,11 @@ package app
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"net"
 	"testing"
 
+	bolterrors "go.etcd.io/bbolt/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
@@ -15,6 +17,39 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 )
+
+// TestController_closesDatabase checks Bootstrap registers the local bolt database for cleanup, so
+// that Run closes it on the way out. A leaked handle is invisible on Linux — it only shows up on
+// Windows, as a TempDir cleanup failure, because Windows won't unlink an open file — so assert the
+// close directly rather than relying on that symptom.
+func TestController_closesDatabase(t *testing.T) {
+	config := sysconf.Default()
+	config.PolicyMode = sysconf.PolicyOff
+	config.DataDir = t.TempDir()
+	// Don't bind real ports while testing.
+	config.ListenGRPC = ""
+	config.ListenHTTPS = ""
+
+	c, err := Bootstrap(t.Context(), config)
+	if err != nil {
+		t.Fatalf("Bootstrap() error = %v", err)
+	}
+	if c.Database == nil {
+		t.Fatal("Bootstrap() left Database nil, nothing to assert on")
+	}
+
+	// Run executes the deferred closers as it returns; cancel immediately, we don't need it to do
+	// any work first.
+	ctx, cancel := context.WithCancel(t.Context())
+	runErr := make(chan error, 1)
+	go func() { runErr <- c.Run(ctx) }()
+	cancel()
+	<-runErr
+
+	if _, err := c.Database.Bolt().Begin(false); !errors.Is(err, bolterrors.ErrDatabaseNotOpen) {
+		t.Errorf("bolt database still open after Run returned: Begin() error = %v, want %v", err, bolterrors.ErrDatabaseNotOpen)
+	}
+}
 
 // TestController_protoPkgCompat tests that both versioned and unversioned proto packages are served.
 // We had a bug where only dynamically registered services (i.e. traits) were served,

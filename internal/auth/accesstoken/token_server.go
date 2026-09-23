@@ -56,9 +56,14 @@ func NewServer(name string, opts ...ServerOption) (*Server, error) {
 		}
 		s.tokens.Key = key
 	} else {
+		// go-jose signs symmetrically only with a []byte secret, and BOS has no use for the larger
+		// HMAC sizes or the asymmetric families, so a Server is pinned to HS256.
 		keyBytes, ok := s.tokens.Key.Key.([]byte)
 		if !ok || len(keyBytes) == 0 {
-			return nil, fmt.Errorf("WithSigningKey: key must be a non-empty []byte (HS256), got %T", s.tokens.Key.Key)
+			return nil, fmt.Errorf("WithSigningKey: key must be a non-empty []byte, got %T", s.tokens.Key.Key)
+		}
+		if s.tokens.Key.Algorithm != jose.HS256 {
+			return nil, fmt.Errorf("WithSigningKey: algorithm must be %s, got %q", jose.HS256, s.tokens.Key.Algorithm)
 		}
 	}
 
@@ -88,18 +93,13 @@ func WithPasswordFlow(v Verifier, validity time.Duration) ServerOption {
 }
 
 // WithSigningKey sets the signing key used to issue and validate access tokens.
+// The key must be an HS256 algorithm over a non-empty []byte secret; NewServer rejects anything else.
 // When not set, a random ephemeral key is generated at startup.
 // Use LoadOrGenerateSigningKey to load a persistent key from a file that can be shared
 // across multiple server instances so they all accept each other's tokens.
 func WithSigningKey(key jose.SigningKey) ServerOption {
 	return func(ts *Server) {
 		ts.tokens.Key = key
-	}
-}
-
-func WithPermittedSignatureAlgorithms(algs []string) ServerOption {
-	return func(ts *Server) {
-		ts.tokens.SignatureAlgorithms = algs
 	}
 }
 

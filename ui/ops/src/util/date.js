@@ -20,6 +20,19 @@ export function decomposeDuration(ms) {
 }
 
 /**
+ * Formats a date as a zero-padded `YYYY-MM-DD` stamp in local time, suitable for filenames.
+ *
+ * @param {Date} [date] - defaults to now
+ * @return {string}
+ */
+export function dateStamp(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Compares two dates in ascending order.
  * Null values are compared after non-null values.
  *

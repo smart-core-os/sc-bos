@@ -59,3 +59,42 @@ message MqttMessage {
   string topic = 1;
   string payload = 2;  // JSON payload
 }
+
+// UdmiExportApi exposes the points the UDMI automation has published to the MQTT
+// broker, so a caller can render a points list export.
+//
+// Unlike UdmiService (which drivers implement to produce payloads), UdmiExportApi is
+// implemented by the udmi automation itself: it observes every payload flowing through
+// the automation's publish path, regardless of the source driver. It is announced against
+// the node's name, so a node running more than one udmi automation reports the points of
+// all of them together.
+service UdmiExportApi {
+  // ListExportedPoints returns the points carried by the most recent pointset event
+  // published for each device since the automation last (re)started.
+  rpc ListExportedPoints(ListExportedPointsRequest) returns (ListExportedPointsResponse);
+}
+
+message ListExportedPointsRequest {
+  // name identifies the node to query.
+  string name = 1;
+}
+
+message ListExportedPointsResponse {
+  // devices are ordered by topic then source_name.
+  repeated DevicePoints devices = 1;
+}
+
+// DevicePoints is the set of points a single device carried in the most recent pointset
+// event published for it, one row of a points list export.
+message DevicePoints {
+  // source_name is the Smart Core name of the UdmiService source that produced the event.
+  string source_name = 1;
+  // topic is the MQTT topic the pointset event was published to.
+  string topic = 2;
+  // asset_name is the BDNS functional asset name taken from topic: the path segment
+  // immediately before the "/event(s)/pointset" portion, e.g. "AMP-109151" for
+  // "JLL/GB-LON-1BG/AV/AMP-109151/events/pointset".
+  string asset_name = 3;
+  // points are the names of the points the event carried, sorted.
+  repeated string points = 4;
+}

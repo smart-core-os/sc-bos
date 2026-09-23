@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -100,6 +102,139 @@ type Conn struct {
 	// ClientId is the ID of the client that will be used to connect to the OPC UA server.
 	// Should be unique within the context of a server. If not set, a random ID will be generated.
 	ClientId uint32 `json:"clientId,omitempty,omitzero"`
+
+	// Auth configures the OPC UA user identity token.
+	// When absent the driver connects to the server anonymously.
+	Auth *Auth `json:"auth,omitempty"`
+	// Security configures the secure channel used to talk to the server.
+	// The defaults depend on whether Auth is set, see ResolveSecurity.
+	Security *Security `json:"security,omitempty"`
+}
+
+// Auth configures the OPC UA user identity token used when creating a session.
+type Auth struct {
+	// Username is the OPC UA user to authenticate as.
+	Username string `json:"username,omitempty"`
+	// Password supplies the password for Username.
+	// Only passwordFile is accepted, a plaintext password is rejected by ParseConfig.
+	jsontypes.Password
+}
+
+// Security configures the OPC UA secure channel.
+type Security struct {
+	// Policy is the security policy short name, one of the keys of ua.SecurityPolicyURIs,
+	// e.g. "None", "Basic256Sha256". Defaults to "Basic256Sha256" when Conn.Auth is set,
+	// "None" otherwise.
+	Policy string `json:"policy,omitempty"`
+	// Mode is the message security mode, one of "None", "Sign" or "SignAndEncrypt".
+	// Defaults to "SignAndEncrypt" when Conn.Auth is set, "None" otherwise.
+	Mode string `json:"mode,omitempty"`
+	// CertFile names the client X509 certificate, required for the Sign and SignAndEncrypt modes.
+	// The certificate needs a URI subject alternative name, which the client sends as its
+	// application URI and servers check against the session.
+	CertFile string `json:"certFile,omitempty"`
+	// KeyFile names the RSA private key matching CertFile.
+	// Required for the Sign and SignAndEncrypt modes.
+	KeyFile string `json:"keyFile,omitempty"`
+}
+
+// ResolvedSecurity holds the connection security settings resolved from a Conn,
+// in the form the gopcua client options need them.
+type ResolvedSecurity struct {
+	// PolicyURI is the canonical security policy URI, e.g. ua.SecurityPolicyURIBasic256Sha256.
+	PolicyURI string
+	// Mode is the message security mode of the secure channel.
+	Mode ua.MessageSecurityMode
+	// TokenType selects the user identity token used to create the session.
+	TokenType ua.UserTokenType
+	// CertFile names the client certificate, empty when unset.
+	CertFile string
+	// KeyFile names the client private key, empty when unset.
+	KeyFile string
+}
+
+// AnonymousInsecure reports whether r describes an anonymous session over an unsecured
+// channel, which is what a Conn with neither Auth nor Security resolves to.
+func (r ResolvedSecurity) AnonymousInsecure() bool {
+	return r.TokenType == ua.UserTokenTypeAnonymous &&
+		r.PolicyURI == ua.SecurityPolicyURINone &&
+		r.Mode == ua.MessageSecurityModeNone
+}
+
+// securityModes lists the message security modes we accept in config.
+// ua.MessageSecurityModeFromString maps anything it doesn't recognise to Invalid rather
+// than reporting an error, so we check the configured string against this list ourselves.
+var securityModes = []string{"None", "Sign", "SignAndEncrypt"}
+
+// ResolveSecurity converts the Auth and Security config into the settings the OPC UA
+// client needs, validating them along the way. ParseConfig calls it so that bad security
+// config is reported at parse time rather than on connect.
+//
+// With neither Auth nor Security set it resolves to an anonymous session over an
+// unsecured channel, which is how the driver connected before either was configurable.
+// Setting Auth without Security defaults the channel to Basic256Sha256/SignAndEncrypt:
+// we never pick an unencrypted channel for a password on the operator's behalf, they have
+// to ask for that explicitly.
+//
+// The password itself is not read here. ParseConfig only validates the shape of the
+// config, the password is read from disk on each connect attempt so that a rotated secret
+// is picked up without a restart and never sits in the parsed config.
+func (c Conn) ResolveSecurity() (ResolvedSecurity, error) {
+	res := ResolvedSecurity{
+		PolicyURI: ua.SecurityPolicyURINone,
+		Mode:      ua.MessageSecurityModeNone,
+		TokenType: ua.UserTokenTypeAnonymous,
+	}
+
+	if c.Auth != nil {
+		// Password.Password is the plaintext key of the embedded jsontypes.Password
+		if c.Auth.Password.Password != "" {
+			return ResolvedSecurity{}, fmt.Errorf("auth: plaintext passwords in config are not supported, use passwordFile")
+		}
+		if c.Auth.Username == "" {
+			return ResolvedSecurity{}, fmt.Errorf("auth: username is required")
+		}
+		if c.Auth.PasswordFile == "" {
+			return ResolvedSecurity{}, fmt.Errorf("auth: passwordFile is required")
+		}
+		res.TokenType = ua.UserTokenTypeUserName
+		res.PolicyURI = ua.SecurityPolicyURIBasic256Sha256
+		res.Mode = ua.MessageSecurityModeSignAndEncrypt
+	}
+
+	if c.Security != nil {
+		if p := c.Security.Policy; p != "" {
+			// ua.FormatSecurityPolicyURI turns an unknown name into a URI by prefixing it,
+			// so check the name against the known policies before converting it.
+			uri, ok := ua.SecurityPolicyURIs[p]
+			if !ok {
+				return ResolvedSecurity{}, fmt.Errorf("security: unknown policy %q, want one of %s", p, strings.Join(securityPolicyNames(), ", "))
+			}
+			res.PolicyURI = uri
+		}
+		if m := c.Security.Mode; m != "" {
+			if !slices.Contains(securityModes, m) {
+				return ResolvedSecurity{}, fmt.Errorf("security: unknown mode %q, want one of %s", m, strings.Join(securityModes, ", "))
+			}
+			res.Mode = ua.MessageSecurityModeFromString(m)
+		}
+		res.CertFile, res.KeyFile = c.Security.CertFile, c.Security.KeyFile
+	}
+
+	// gopcua can't sign or encrypt without a client key pair
+	if res.Mode == ua.MessageSecurityModeSign || res.Mode == ua.MessageSecurityModeSignAndEncrypt {
+		if res.CertFile == "" || res.KeyFile == "" {
+			return ResolvedSecurity{}, fmt.Errorf("security: certFile and keyFile are required for mode %s", res.Mode)
+		}
+	}
+
+	return res, nil
+}
+
+// securityPolicyNames returns the accepted security policy names, sorted so that error
+// messages listing them are stable.
+func securityPolicyNames() []string {
+	return slices.Sorted(maps.Keys(ua.SecurityPolicyURIs))
 }
 
 // Variable is an OPC UA VariableNode, which is essentially a data point which we can read/write to (with permission).
@@ -149,6 +284,12 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 	}
 	if cfg.Conn.ClientId == 0 {
 		cfg.Conn.ClientId = rand.Uint32()
+	}
+
+	// resolve the security config now so that bad security settings are reported here
+	// rather than on the first connection attempt
+	if _, err := cfg.Conn.ResolveSecurity(); err != nil {
+		return cfg, fmt.Errorf("conn: %w", err)
 	}
 
 	for _, d := range cfg.Devices {

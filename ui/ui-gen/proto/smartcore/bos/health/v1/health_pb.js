@@ -592,6 +592,7 @@ reliability: (f = msg.getReliability()) && proto.smartcore.bos.health.v1.HealthC
 normality: jspb.Message.getFieldWithDefault(msg, 21, 0),
 normalTime: (f = msg.getNormalTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 abnormalTime: (f = msg.getAbnormalTime()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
+deviation: jspb.Message.getFloatingPointFieldWithDefault(msg, 24, 0.0),
 bounds: (f = msg.getBounds()) && proto.smartcore.bos.health.v1.HealthCheck.Bounds.toObject(includeInstance, f),
 faults: (f = msg.getFaults()) && proto.smartcore.bos.health.v1.HealthCheck.Faults.toObject(includeInstance, f)
   };
@@ -678,6 +679,10 @@ proto.smartcore.bos.health.v1.HealthCheck.deserializeBinaryFromReader = function
       var value = new google_protobuf_timestamp_pb.Timestamp;
       reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
       msg.setAbnormalTime(value);
+      break;
+    case 24:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setDeviation(value);
       break;
     case 30:
       var value = new proto.smartcore.bos.health.v1.HealthCheck.Bounds;
@@ -798,6 +803,13 @@ proto.smartcore.bos.health.v1.HealthCheck.serializeBinaryToWriter = function(mes
       23,
       f,
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
+    );
+  }
+  f = message.getDeviation();
+  if (f !== 0.0) {
+    writer.writeDouble(
+      24,
+      f
     );
   }
   f = message.getBounds();
@@ -4209,6 +4221,24 @@ proto.smartcore.bos.health.v1.HealthCheck.prototype.clearAbnormalTime = function
  */
 proto.smartcore.bos.health.v1.HealthCheck.prototype.hasAbnormalTime = function() {
   return jspb.Message.getField(this, 23) != null;
+};
+
+
+/**
+ * optional double deviation = 24;
+ * @return {number}
+ */
+proto.smartcore.bos.health.v1.HealthCheck.prototype.getDeviation = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 24, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.health.v1.HealthCheck} returns this
+ */
+proto.smartcore.bos.health.v1.HealthCheck.prototype.setDeviation = function(value) {
+  return jspb.Message.setProto3FloatField(this, 24, value);
 };
 
 

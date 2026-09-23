@@ -410,6 +410,20 @@ type HealthCheck struct {
 	NormalTime *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=normal_time,json=normalTime,proto3" json:"normal_time,omitempty"`
 	// The time when normality last entered a non-NORMAL state.
 	AbnormalTime *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=abnormal_time,json=abnormalTime,proto3" json:"abnormal_time,omitempty"`
+	// Deviation is how far the measured value sits outside its expected range,
+	// as a fraction of the range width. 0.1 means the value is 10% of the range
+	// width beyond the crossed bound. Open-ended ranges have no width, so there
+	// it is a fraction of the crossed bound's magnitude instead.
+	//
+	// Zero means there is no excursion to measure: the value is within range, the
+	// check is held out of NORMAL only by deadband hysteresis, or the check has no
+	// magnitude at all - equality and value-set checks, and open-ended timestamp
+	// ranges, whose bounds are offsets from an arbitrary epoch.
+	//
+	// Quantised to two decimal places so that noise smaller than 1% of the range
+	// doesn't churn every consumer of the check. Real excursions round up, so a
+	// non-zero deviation always means the value is genuinely out of range.
+	Deviation float64 `protobuf:"fixed64,24,opt,name=deviation,proto3" json:"deviation,omitempty"`
 	// Details about the check being performed.
 	// Optional, but strongly recommended.
 	// HealthChecks should not change their type of check after creation.
@@ -528,6 +542,13 @@ func (x *HealthCheck) GetAbnormalTime() *timestamppb.Timestamp {
 		return x.AbnormalTime
 	}
 	return nil
+}
+
+func (x *HealthCheck) GetDeviation() float64 {
+	if x != nil {
+		return x.Deviation
+	}
+	return 0
 }
 
 func (x *HealthCheck) GetCheck() isHealthCheck_Check {
@@ -2123,7 +2144,7 @@ var File_smartcore_bos_health_v1_health_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\n" +
-	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\x90\x1f\n" +
+	"$smartcore/bos/health/v1/health.proto\x12\x17smartcore.bos.health.v1\x1a\x1egoogle/protobuf/duration.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a#smartcore/bos/types/v1/change.proto\"\xae\x1f\n" +
 	"\vHealthCheck\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
@@ -2138,7 +2159,8 @@ const file_smartcore_bos_health_v1_health_proto_rawDesc = "" +
 	"\tnormality\x18\x15 \x01(\x0e2..smartcore.bos.health.v1.HealthCheck.NormalityR\tnormality\x12;\n" +
 	"\vnormal_time\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"normalTime\x12?\n" +
-	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12E\n" +
+	"\rabnormal_time\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\fabnormalTime\x12\x1c\n" +
+	"\tdeviation\x18\x18 \x01(\x01R\tdeviation\x12E\n" +
 	"\x06bounds\x18\x1e \x01(\v2+.smartcore.bos.health.v1.HealthCheck.BoundsH\x00R\x06bounds\x12E\n" +
 	"\x06faults\x18\x1f \x01(\v2+.smartcore.bos.health.v1.HealthCheck.FaultsH\x00R\x06faults\x1a\xdb\x03\n" +
 	"\x10ComplianceImpact\x12Z\n" +

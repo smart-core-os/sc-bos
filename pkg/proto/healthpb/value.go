@@ -77,3 +77,29 @@ func AddValues(val, delta *HealthCheck_Value) *HealthCheck_Value {
 	}
 	return val
 }
+
+// valueAsFloat converts an ordered value to a float64 for magnitude calculations.
+// It returns ok=false for bool and string values, which have no meaningful
+// numeric magnitude. Timestamps use Unix nanoseconds; durations use nanoseconds.
+func valueAsFloat(v *HealthCheck_Value) (float64, bool) {
+	switch x := v.GetValue().(type) {
+	case *HealthCheck_Value_IntValue:
+		return float64(x.IntValue), true
+	case *HealthCheck_Value_UintValue:
+		return float64(x.UintValue), true
+	case *HealthCheck_Value_FloatValue:
+		return x.FloatValue, true
+	case *HealthCheck_Value_TimestampValue:
+		return float64(x.TimestampValue.AsTime().UnixNano()), true
+	case *HealthCheck_Value_DurationValue:
+		return float64(x.DurationValue.AsDuration().Nanoseconds()), true
+	}
+	return 0, false
+}
+
+// isTimestampValue reports whether v holds a timestamp. Timestamps are measured
+// from an arbitrary epoch, so their absolute magnitude is not a meaningful scale.
+func isTimestampValue(v *HealthCheck_Value) bool {
+	_, ok := v.GetValue().(*HealthCheck_Value_TimestampValue)
+	return ok
+}

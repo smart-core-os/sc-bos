@@ -227,6 +227,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -247,6 +250,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -268,6 +274,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -289,6 +298,9 @@
             },
             {
               "name": "smartcore.traits.OnOff"
+            },
+            {
+              "name": "smartcore.bos.UDMI"
             }
           ],
           "membership": {
@@ -4590,6 +4602,14 @@
         "qos": 1
       },
       "fetchTimeout": "5s"
+    },
+    {
+      "name": "van/uk/brum/ugs/automation/udmi-export",
+      "type": "udmi",
+      "broker": {
+        "host": "tcp://localhost:1883"
+      },
+      "discoverSources": true
     }
   ]
 }

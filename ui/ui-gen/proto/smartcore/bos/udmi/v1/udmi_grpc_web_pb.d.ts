@@ -34,6 +34,20 @@ export class UdmiServiceClient {
 
 }
 
+export class UdmiExportApiClient {
+  constructor (hostname: string,
+               credentials?: null | { [index: string]: string; },
+               options?: null | { [index: string]: any; });
+
+  listExportedPoints(
+    request: smartcore_bos_udmi_v1_udmi_pb.ListExportedPointsRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.RpcError,
+               response: smartcore_bos_udmi_v1_udmi_pb.ListExportedPointsResponse) => void
+  ): grpcWeb.ClientReadableStream<smartcore_bos_udmi_v1_udmi_pb.ListExportedPointsResponse>;
+
+}
+
 export class UdmiServicePromiseClient {
   constructor (hostname: string,
                credentials?: null | { [index: string]: string; },
@@ -58,6 +72,18 @@ export class UdmiServicePromiseClient {
     request: smartcore_bos_udmi_v1_udmi_pb.GetExportMessageRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<smartcore_bos_udmi_v1_udmi_pb.MqttMessage>;
+
+}
+
+export class UdmiExportApiPromiseClient {
+  constructor (hostname: string,
+               credentials?: null | { [index: string]: string; },
+               options?: null | { [index: string]: any; });
+
+  listExportedPoints(
+    request: smartcore_bos_udmi_v1_udmi_pb.ListExportedPointsRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<smartcore_bos_udmi_v1_udmi_pb.ListExportedPointsResponse>;
 
 }
 

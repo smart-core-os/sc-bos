@@ -540,7 +540,7 @@ proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.toObject = function(inclu
   var f, obj = {
 version: jspb.Message.getFieldWithDefault(msg, 1, ""),
 downloadUrl: jspb.Message.getFieldWithDefault(msg, 2, ""),
-sha256: jspb.Message.getFieldWithDefault(msg, 3, ""),
+checksum: jspb.Message.getFieldWithDefault(msg, 3, ""),
 deploymentId: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
@@ -588,7 +588,7 @@ proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.deserializeBinaryFromRead
       break;
     case 3:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
-      msg.setSha256(value);
+      msg.setChecksum(value);
       break;
     case 4:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
@@ -637,7 +637,7 @@ proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.serializeBinaryToWriter =
       f
     );
   }
-  f = message.getSha256();
+  f = message.getChecksum();
   if (f.length > 0) {
     writer.writeString(
       3,
@@ -691,10 +691,10 @@ proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.setDownloadUrl 
 
 
 /**
- * optional string sha256 = 3;
+ * optional string checksum = 3;
  * @return {string}
  */
-proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.getSha256 = function() {
+proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.getChecksum = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
@@ -703,7 +703,7 @@ proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.getSha256 = fun
  * @param {string} value
  * @return {!proto.smartcore.bos.supervisor.v1.InstallUpdateRequest} returns this
  */
-proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.setSha256 = function(value) {
+proto.smartcore.bos.supervisor.v1.InstallUpdateRequest.prototype.setChecksum = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
 };
 

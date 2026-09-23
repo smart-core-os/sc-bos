@@ -1,0 +1,64 @@
+name: Protobuf Generated Code Check
+on:
+  # check generated proto code on any commit that touches the generator or its inputs
+  pull_request:
+    paths:
+      - 'proto/**'
+      - 'pkg/proto/**'
+      - 'ui/ui-gen/proto/**'
+      - 'cmd/tools/genproto/**'
+      - 'cmd/tools/protoc-gen-router/**'
+      - 'cmd/tools/protoc-gen-wrapper/**'
+      - 'scripts/gen-proto.sh'
+      - 'scripts/dev-container/install-protoc.sh'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/proto-check.yml'
+
+jobs:
+  gen-proto:
+    runs-on: ubuntu-latest
+    # keep in step with cmd/tools/genproto/internal/toolchain/versions.go, which rejects
+    # any other version, and with dev.Dockerfile
+    env:
+      PROTOC_VERSION: '35.1'
+      PROTOC_GEN_JS_VERSION: '4.0.2'
+      PROTOC_GEN_GRPC_WEB_VERSION: '2.0.2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          cache: true
+          go-version: '^1.26.x'
+
+      # the go plugins come from the go.mod tool directives, so only the native tools
+      # need installing. the script writes to /opt and /usr/local/bin, hence sudo.
+      - name: Install protoc toolchain
+        run: |
+          sudo bash scripts/dev-container/install-protoc.sh \
+            --protoc "$PROTOC_VERSION" \
+            --protoc-gen-js "$PROTOC_GEN_JS_VERSION" \
+            --protoc-gen-grpc-web "$PROTOC_GEN_GRPC_WEB_VERSION"
+
+      - name: Generate
+        run: bash scripts/gen-proto.sh
+
+      - name: Check generated code is up to date
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          echo "::error::Generated proto code is out of date. Run 'bash scripts/gen-proto.sh' with the pinned toolchain and commit the result."
+          git diff --cached --stat
+          git diff --cached
+          git diff --cached > proto-gen.patch
+          exit 1
+
+      - name: Upload patch
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proto-gen-patch
+          path: proto-gen.patch
+          if-no-files-found: ignore

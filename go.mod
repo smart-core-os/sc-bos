@@ -12,7 +12,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/gopcua/opcua v0.8.0
+	github.com/gopcua/opcua v0.9.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/improbable-eng/grpc-web v0.15.0

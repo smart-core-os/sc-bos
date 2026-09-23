@@ -172,7 +172,7 @@ var testdata embed.FS
 
 func readTestData(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := testdata.ReadFile(filepath.Join("testdata", name))
+	data, err := testdata.ReadFile(path.Join("testdata", name))
 	if err != nil {
 		t.Fatalf("read test data %q: %v", name, err)
 	}

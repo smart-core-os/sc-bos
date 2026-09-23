@@ -414,6 +414,172 @@ func (x *MqttMessage) GetPayload() string {
 	return ""
 }
 
+type ListExportedPointsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name identifies the node to query.
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListExportedPointsRequest) Reset() {
+	*x = ListExportedPointsRequest{}
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListExportedPointsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListExportedPointsRequest) ProtoMessage() {}
+
+func (x *ListExportedPointsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListExportedPointsRequest.ProtoReflect.Descriptor instead.
+func (*ListExportedPointsRequest) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListExportedPointsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListExportedPointsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// devices are ordered by topic then source_name.
+	Devices       []*DevicePoints `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListExportedPointsResponse) Reset() {
+	*x = ListExportedPointsResponse{}
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListExportedPointsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListExportedPointsResponse) ProtoMessage() {}
+
+func (x *ListExportedPointsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListExportedPointsResponse.ProtoReflect.Descriptor instead.
+func (*ListExportedPointsResponse) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListExportedPointsResponse) GetDevices() []*DevicePoints {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+// DevicePoints is the set of points a single device carried in the most recent pointset
+// event published for it, one row of a points list export.
+type DevicePoints struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// source_name is the Smart Core name of the UdmiService source that produced the event.
+	SourceName string `protobuf:"bytes,1,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
+	// topic is the MQTT topic the pointset event was published to.
+	Topic string `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
+	// asset_name is the BDNS functional asset name taken from topic: the path segment
+	// immediately before the "/event(s)/pointset" portion, e.g. "AMP-109151" for
+	// "JLL/GB-LON-1BG/AV/AMP-109151/events/pointset".
+	AssetName string `protobuf:"bytes,3,opt,name=asset_name,json=assetName,proto3" json:"asset_name,omitempty"`
+	// points are the names of the points the event carried, sorted.
+	Points        []string `protobuf:"bytes,4,rep,name=points,proto3" json:"points,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DevicePoints) Reset() {
+	*x = DevicePoints{}
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DevicePoints) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DevicePoints) ProtoMessage() {}
+
+func (x *DevicePoints) ProtoReflect() protoreflect.Message {
+	mi := &file_smartcore_bos_udmi_v1_udmi_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DevicePoints.ProtoReflect.Descriptor instead.
+func (*DevicePoints) Descriptor() ([]byte, []int) {
+	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DevicePoints) GetSourceName() string {
+	if x != nil {
+		return x.SourceName
+	}
+	return ""
+}
+
+func (x *DevicePoints) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+func (x *DevicePoints) GetAssetName() string {
+	if x != nil {
+		return x.AssetName
+	}
+	return ""
+}
+
+func (x *DevicePoints) GetPoints() []string {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
 var File_smartcore_bos_udmi_v1_udmi_proto protoreflect.FileDescriptor
 
 const file_smartcore_bos_udmi_v1_udmi_proto_rawDesc = "" +
@@ -439,12 +605,25 @@ const file_smartcore_bos_udmi_v1_udmi_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"=\n" +
 	"\vMqttMessage\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\tR\apayload2\xcc\x03\n" +
+	"\apayload\x18\x02 \x01(\tR\apayload\"/\n" +
+	"\x19ListExportedPointsRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"[\n" +
+	"\x1aListExportedPointsResponse\x12=\n" +
+	"\adevices\x18\x01 \x03(\v2#.smartcore.bos.udmi.v1.DevicePointsR\adevices\"|\n" +
+	"\fDevicePoints\x12\x1f\n" +
+	"\vsource_name\x18\x01 \x01(\tR\n" +
+	"sourceName\x12\x14\n" +
+	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x1d\n" +
+	"\n" +
+	"asset_name\x18\x03 \x01(\tR\tassetName\x12\x16\n" +
+	"\x06points\x18\x04 \x03(\tR\x06points2\xcc\x03\n" +
 	"\vUdmiService\x12x\n" +
 	"\x11PullControlTopics\x12/.smartcore.bos.udmi.v1.PullControlTopicsRequest\x1a0.smartcore.bos.udmi.v1.PullControlTopicsResponse0\x01\x12^\n" +
 	"\tOnMessage\x12'.smartcore.bos.udmi.v1.OnMessageRequest\x1a(.smartcore.bos.udmi.v1.OnMessageResponse\x12{\n" +
 	"\x12PullExportMessages\x120.smartcore.bos.udmi.v1.PullExportMessagesRequest\x1a1.smartcore.bos.udmi.v1.PullExportMessagesResponse0\x01\x12f\n" +
-	"\x10GetExportMessage\x12..smartcore.bos.udmi.v1.GetExportMessageRequest\x1a\".smartcore.bos.udmi.v1.MqttMessageB2Z0github.com/smart-core-os/sc-bos/pkg/proto/udmipbb\x06proto3"
+	"\x10GetExportMessage\x12..smartcore.bos.udmi.v1.GetExportMessageRequest\x1a\".smartcore.bos.udmi.v1.MqttMessage2\x8a\x01\n" +
+	"\rUdmiExportApi\x12y\n" +
+	"\x12ListExportedPoints\x120.smartcore.bos.udmi.v1.ListExportedPointsRequest\x1a1.smartcore.bos.udmi.v1.ListExportedPointsResponseB2Z0github.com/smart-core-os/sc-bos/pkg/proto/udmipbb\x06proto3"
 
 var (
 	file_smartcore_bos_udmi_v1_udmi_proto_rawDescOnce sync.Once
@@ -458,7 +637,7 @@ func file_smartcore_bos_udmi_v1_udmi_proto_rawDescGZIP() []byte {
 	return file_smartcore_bos_udmi_v1_udmi_proto_rawDescData
 }
 
-var file_smartcore_bos_udmi_v1_udmi_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_smartcore_bos_udmi_v1_udmi_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_smartcore_bos_udmi_v1_udmi_proto_goTypes = []any{
 	(*PullControlTopicsRequest)(nil),   // 0: smartcore.bos.udmi.v1.PullControlTopicsRequest
 	(*PullControlTopicsResponse)(nil),  // 1: smartcore.bos.udmi.v1.PullControlTopicsResponse
@@ -468,23 +647,29 @@ var file_smartcore_bos_udmi_v1_udmi_proto_goTypes = []any{
 	(*PullExportMessagesResponse)(nil), // 5: smartcore.bos.udmi.v1.PullExportMessagesResponse
 	(*GetExportMessageRequest)(nil),    // 6: smartcore.bos.udmi.v1.GetExportMessageRequest
 	(*MqttMessage)(nil),                // 7: smartcore.bos.udmi.v1.MqttMessage
+	(*ListExportedPointsRequest)(nil),  // 8: smartcore.bos.udmi.v1.ListExportedPointsRequest
+	(*ListExportedPointsResponse)(nil), // 9: smartcore.bos.udmi.v1.ListExportedPointsResponse
+	(*DevicePoints)(nil),               // 10: smartcore.bos.udmi.v1.DevicePoints
 }
 var file_smartcore_bos_udmi_v1_udmi_proto_depIdxs = []int32{
-	7, // 0: smartcore.bos.udmi.v1.OnMessageRequest.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
-	7, // 1: smartcore.bos.udmi.v1.PullExportMessagesResponse.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
-	0, // 2: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:input_type -> smartcore.bos.udmi.v1.PullControlTopicsRequest
-	2, // 3: smartcore.bos.udmi.v1.UdmiService.OnMessage:input_type -> smartcore.bos.udmi.v1.OnMessageRequest
-	4, // 4: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:input_type -> smartcore.bos.udmi.v1.PullExportMessagesRequest
-	6, // 5: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:input_type -> smartcore.bos.udmi.v1.GetExportMessageRequest
-	1, // 6: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:output_type -> smartcore.bos.udmi.v1.PullControlTopicsResponse
-	3, // 7: smartcore.bos.udmi.v1.UdmiService.OnMessage:output_type -> smartcore.bos.udmi.v1.OnMessageResponse
-	5, // 8: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:output_type -> smartcore.bos.udmi.v1.PullExportMessagesResponse
-	7, // 9: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:output_type -> smartcore.bos.udmi.v1.MqttMessage
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	7,  // 0: smartcore.bos.udmi.v1.OnMessageRequest.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
+	7,  // 1: smartcore.bos.udmi.v1.PullExportMessagesResponse.message:type_name -> smartcore.bos.udmi.v1.MqttMessage
+	10, // 2: smartcore.bos.udmi.v1.ListExportedPointsResponse.devices:type_name -> smartcore.bos.udmi.v1.DevicePoints
+	0,  // 3: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:input_type -> smartcore.bos.udmi.v1.PullControlTopicsRequest
+	2,  // 4: smartcore.bos.udmi.v1.UdmiService.OnMessage:input_type -> smartcore.bos.udmi.v1.OnMessageRequest
+	4,  // 5: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:input_type -> smartcore.bos.udmi.v1.PullExportMessagesRequest
+	6,  // 6: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:input_type -> smartcore.bos.udmi.v1.GetExportMessageRequest
+	8,  // 7: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:input_type -> smartcore.bos.udmi.v1.ListExportedPointsRequest
+	1,  // 8: smartcore.bos.udmi.v1.UdmiService.PullControlTopics:output_type -> smartcore.bos.udmi.v1.PullControlTopicsResponse
+	3,  // 9: smartcore.bos.udmi.v1.UdmiService.OnMessage:output_type -> smartcore.bos.udmi.v1.OnMessageResponse
+	5,  // 10: smartcore.bos.udmi.v1.UdmiService.PullExportMessages:output_type -> smartcore.bos.udmi.v1.PullExportMessagesResponse
+	7,  // 11: smartcore.bos.udmi.v1.UdmiService.GetExportMessage:output_type -> smartcore.bos.udmi.v1.MqttMessage
+	9,  // 12: smartcore.bos.udmi.v1.UdmiExportApi.ListExportedPoints:output_type -> smartcore.bos.udmi.v1.ListExportedPointsResponse
+	8,  // [8:13] is the sub-list for method output_type
+	3,  // [3:8] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_udmi_v1_udmi_proto_init() }
@@ -498,9 +683,9 @@ func file_smartcore_bos_udmi_v1_udmi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc), len(file_smartcore_bos_udmi_v1_udmi_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_smartcore_bos_udmi_v1_udmi_proto_goTypes,
 		DependencyIndexes: file_smartcore_bos_udmi_v1_udmi_proto_depIdxs,

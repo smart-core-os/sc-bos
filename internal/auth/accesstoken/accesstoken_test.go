@@ -1,7 +1,9 @@
 package accesstoken
 
 import (
+	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +23,40 @@ func TestTokenSource_createAndVerify(t *testing.T) {
 	_, err = ts.ValidateAccessToken(t.Context(), token)
 	if err != nil {
 		t.Fatalf("ValidateAccessToken %v", err)
+	}
+}
+
+// A Source only ever permits the algorithm it signs with, so a token carrying any other algorithm
+// is refused even though the key itself would verify the signature.
+func TestTokenSource_rejectsForeignAlgorithm(t *testing.T) {
+	ts := newTestSource(t)
+	// HS512 needs a 64-byte secret, so this signer carries its own key; the algorithm is rejected
+	// during parsing, before the signature is ever checked, so the differing key is immaterial
+	secret := make([]byte, 64)
+	if _, err := rand.Read(secret); err != nil {
+		t.Fatal(err)
+	}
+	foreign := &Source{
+		Key:    jose.SigningKey{Algorithm: jose.HS512, Key: secret},
+		Issuer: ts.Issuer,
+		Now:    ts.Now,
+	}
+	token, err := foreign.GenerateAccessToken(SecretData{TenantID: "Foo"}, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("GenerateAccessToken %v", err)
+	}
+
+	_, err = ts.ValidateAccessToken(t.Context(), token)
+	if err == nil {
+		t.Fatal("ValidateAccessToken accepted an HS512 token from an HS256 source")
+	}
+	// pin the reason, so the test can't pass because validation failed for some unrelated cause
+	var algErr *jose.ErrUnexpectedSignatureAlgorithm
+	if !errors.As(err, &algErr) {
+		t.Fatalf("error = %v, want ErrUnexpectedSignatureAlgorithm", err)
+	}
+	if algErr.Got != jose.HS512 {
+		t.Errorf("rejected algorithm = %q, want %q", algErr.Got, jose.HS512)
 	}
 }
 
@@ -180,9 +216,8 @@ func newTestSource(t *testing.T) *Source {
 		t.Fatal(err)
 	}
 	return &Source{
-		Key:                 key,
-		Issuer:              "test",
-		Now:                 time.Now,
-		SignatureAlgorithms: []string{string(jose.HS256)},
+		Key:    key,
+		Issuer: "test",
+		Now:    time.Now,
 	}
 }

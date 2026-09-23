@@ -772,7 +772,7 @@ proto.smartcore.bos.devices.v1.Device.Query.serializeBinaryToWriter = function(m
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_ = [[2,3,4,5,6,7,8,9,20,21,22,23,24,30,31,32,33,40,50,51]];
+proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_ = [[2,3,4,5,6,7,8,9,10,11,12,13,20,21,22,23,24,30,31,32,33,40,50,51]];
 
 /**
  * @enum {number}
@@ -787,6 +787,10 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.ValueCase = {
   STRING_IN_FOLD: 7,
   STRING_NOT_EQUAL: 8,
   STRING_NOT_EQUAL_FOLD: 9,
+  FLOAT_GT: 10,
+  FLOAT_GTE: 11,
+  FLOAT_LT: 12,
+  FLOAT_LTE: 13,
   TIMESTAMP_EQUAL: 20,
   TIMESTAMP_GT: 21,
   TIMESTAMP_GTE: 22,
@@ -848,6 +852,10 @@ stringIn: (f = msg.getStringIn()) && proto.smartcore.bos.devices.v1.Device.Query
 stringInFold: (f = msg.getStringInFold()) && proto.smartcore.bos.devices.v1.Device.Query.StringList.toObject(includeInstance, f),
 stringNotEqual: (f = jspb.Message.getField(msg, 8)) == null ? undefined : f,
 stringNotEqualFold: (f = jspb.Message.getField(msg, 9)) == null ? undefined : f,
+floatGt: (f = jspb.Message.getOptionalFloatingPointField(msg, 10)) == null ? undefined : f,
+floatGte: (f = jspb.Message.getOptionalFloatingPointField(msg, 11)) == null ? undefined : f,
+floatLt: (f = jspb.Message.getOptionalFloatingPointField(msg, 12)) == null ? undefined : f,
+floatLte: (f = jspb.Message.getOptionalFloatingPointField(msg, 13)) == null ? undefined : f,
 timestampEqual: (f = msg.getTimestampEqual()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 timestampGt: (f = msg.getTimestampGt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
 timestampGte: (f = msg.getTimestampGte()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
@@ -934,6 +942,22 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.deserializeBinaryFromReade
     case 9:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setStringNotEqualFold(value);
+      break;
+    case 10:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setFloatGt(value);
+      break;
+    case 11:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setFloatGte(value);
+      break;
+    case 12:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setFloatLt(value);
+      break;
+    case 13:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setFloatLte(value);
       break;
     case 20:
       var value = new google_protobuf_timestamp_pb.Timestamp;
@@ -1088,6 +1112,34 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.serializeBinaryToWriter = 
   if (f != null) {
     writer.writeString(
       9,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 10));
+  if (f != null) {
+    writer.writeDouble(
+      10,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 11));
+  if (f != null) {
+    writer.writeDouble(
+      11,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 12));
+  if (f != null) {
+    writer.writeDouble(
+      12,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 13));
+  if (f != null) {
+    writer.writeDouble(
+      13,
       f
     );
   }
@@ -1509,6 +1561,150 @@ proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearStringNotEq
  */
 proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasStringNotEqualFold = function() {
   return jspb.Message.getField(this, 9) != null;
+};
+
+
+/**
+ * optional double float_gt = 10;
+ * @return {number}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getFloatGt = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 10, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setFloatGt = function(value) {
+  return jspb.Message.setOneofField(this, 10, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearFloatGt = function() {
+  return jspb.Message.setOneofField(this, 10, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasFloatGt = function() {
+  return jspb.Message.getField(this, 10) != null;
+};
+
+
+/**
+ * optional double float_gte = 11;
+ * @return {number}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getFloatGte = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 11, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setFloatGte = function(value) {
+  return jspb.Message.setOneofField(this, 11, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearFloatGte = function() {
+  return jspb.Message.setOneofField(this, 11, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasFloatGte = function() {
+  return jspb.Message.getField(this, 11) != null;
+};
+
+
+/**
+ * optional double float_lt = 12;
+ * @return {number}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getFloatLt = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 12, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setFloatLt = function(value) {
+  return jspb.Message.setOneofField(this, 12, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearFloatLt = function() {
+  return jspb.Message.setOneofField(this, 12, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasFloatLt = function() {
+  return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional double float_lte = 13;
+ * @return {number}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.getFloatLte = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 13, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.setFloatLte = function(value) {
+  return jspb.Message.setOneofField(this, 13, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.devices.v1.Device.Query.Condition} returns this
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.clearFloatLte = function() {
+  return jspb.Message.setOneofField(this, 13, proto.smartcore.bos.devices.v1.Device.Query.Condition.oneofGroups_[0], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.devices.v1.Device.Query.Condition.prototype.hasFloatLte = function() {
+  return jspb.Message.getField(this, 13) != null;
 };
 
 

@@ -144,6 +144,7 @@ function deviceQueryConditionFromObject(obj) {
   setProperties(dst, obj, 'field', 'matcher',
       'stringEqual', 'stringEqualFold',
       'stringContains', 'stringContainsFold',
+      'floatGt', 'floatGte', 'floatLt', 'floatLte',
       'nameDescendant', 'nameDescendantInc'
   );
   if (obj.stringIn) {
