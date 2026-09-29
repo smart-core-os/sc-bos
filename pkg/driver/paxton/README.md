@@ -65,3 +65,46 @@ cannot set `disablePolling: true` and `enableSignalR: false` together).
   "securityEventsName": "building/paxton/security-events"
 }
 ```
+
+## Managing user tokens (Go)
+
+Net2 calls a user's cards, fobs and other credentials *tokens*. Code that imports this
+package can manage them through `paxton.Client`. There's no gRPC API for this yet
+(SCB-1466).
+
+Build a client with the same HTTP and TLS settings the driver uses. The password can be
+set directly; no password file is needed:
+
+```go
+cfg := config.Root{
+    BaseUrl: "https://paxton.example.com",
+    Auth:    config.Auth{Username: "sc-bos", Password: pw, ClientId: "smart-core"},
+}
+client := paxton.NewClientFromConfig(cfg, logger, nil) // nil: no system check
+```
+
+Then, for the Net2 user `userID`:
+
+```go
+tokens, err := client.GetUserTokens(ctx, userID)
+token, err := client.GetUserToken(ctx, userID, tokenID)
+created, err := client.AddUserToken(ctx, userID, paxton.UserToken{TokenType: paxton.TokenTypeProxCard, TokenValue: "12345678"})
+err = client.UpdateUserToken(ctx, userID, created.ID, paxton.UserToken{TokenType: created.TokenType, TokenValue: created.TokenValue, IsLost: true})
+err = client.DeleteUserToken(ctx, userID, created.ID)
+```
+
+- The caller picks the `TokenType`. Every Net2 type has a `TokenType...` constant, and
+  nothing is assumed for any particular kind of credential.
+- `IsLost: true` disables the token but keeps its record in Net2. `DeleteUserToken`
+  removes it entirely.
+- An empty `TokenValue` or unknown `TokenType` is rejected before anything is sent.
+- A non-2xx response from Net2 is a `*paxton.StatusError`; use `errors.As` to check
+  `StatusCode`, for example 404 for an unknown user or token. A 400 or 404 doesn't mark
+  the system check failed, since it means the request was wrong rather than Net2 being
+  unhealthy.
+- Net2 rejects a token value that's already issued with a 400
+  (`Card ... has already been issued`). This is also what a caller sees if a POST is
+  retried after Net2 created the token but replied with a 5xx, so on a 400 from
+  `AddUserToken` it's worth checking `GetUserTokens` before treating the add as failed.
+- Token values are credentials, so keep them out of logs. Net2 can echo the value in an
+  error body, which ends up in `StatusError.Body`, so take care logging those errors too.

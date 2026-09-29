@@ -2,15 +2,12 @@ package paxton
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
-	"net/http"
 	"slices"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-retryablehttp"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -98,19 +95,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 	}
 
-	cli := retryablehttp.NewClient()
-	cli.RetryMax = 3
-	cli.RetryWaitMax = 10 * time.Second
-
-	if cfg.InsecureSkipVerify {
-		cli.HTTPClient.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	} else {
-		cli.HTTPClient.Transport = &http.Transport{}
-	}
-
-	d.client = NewClient(cli, d.logger.Named("client"), cfg, d.systemCheck)
+	d.client = NewClientFromConfig(cfg, d.logger.Named("client"), d.systemCheck)
 	d.seen = newSeenEvents()
 
 	announcer := d.announcer.Replace(ctx)

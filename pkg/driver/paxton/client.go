@@ -3,6 +3,7 @@ package paxton
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,6 +40,34 @@ type Client struct {
 	expiry       time.Time
 
 	mtx sync.Mutex
+}
+
+// NewClientFromConfig builds a Client with the HTTP retry and TLS settings the driver uses.
+// It lets code outside the driver, such as projects importing this package, talk to Net2
+// directly. cfg.Auth.Password may be set directly; ParseConfig and a password file aren't
+// needed. GrantType and Scope default the same way ParseConfig defaults them.
+// systemCheck may be nil.
+func NewClientFromConfig(cfg config.Root, logger *zap.Logger, systemCheck service.SystemCheck) *Client {
+	cli := retryablehttp.NewClient()
+	cli.RetryMax = 3
+	cli.RetryWaitMax = 10 * time.Second
+
+	if cfg.InsecureSkipVerify {
+		cli.HTTPClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	} else {
+		cli.HTTPClient.Transport = &http.Transport{}
+	}
+
+	if cfg.Auth.GrantType == "" {
+		cfg.Auth.GrantType = "password"
+	}
+	if cfg.Auth.Scope == "" {
+		cfg.Auth.Scope = "offline_access"
+	}
+
+	return NewClient(cli, logger, cfg, systemCheck)
 }
 
 func NewClient(cli *retryablehttp.Client, logger *zap.Logger, cfg config.Root, systemCheck service.SystemCheck) *Client {
@@ -87,16 +116,32 @@ func (c *Client) Do(ctx context.Context, req *retryablehttp.Request) (*http.Resp
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		err := fmt.Errorf("unexpected status %d: %s", resp.StatusCode, readErrBody(resp.Body))
+		err := &StatusError{StatusCode: resp.StatusCode, Body: readErrBody(resp.Body)}
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			c.logger.Error("failed to close response body", zap.Error(closeErr))
 		}
-		c.updateSystemCheck(err)
+		// A 400 or 404 means the request was wrong (a bad token, an unknown user ID), not
+		// that Net2 is unhealthy, so it leaves the system check as it was.
+		if resp.StatusCode != http.StatusBadRequest && resp.StatusCode != http.StatusNotFound {
+			c.updateSystemCheck(err)
+		}
 		return nil, err
 	}
 
 	c.updateSystemCheck(nil)
 	return resp, nil
+}
+
+// StatusError is returned by Do when Net2 responds with a non-2xx status.
+// Use errors.As to inspect StatusCode, for example to tell a 404 from a 400.
+type StatusError struct {
+	StatusCode int
+	// Body holds the start of the response body, for diagnostics.
+	Body string
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("unexpected status %d: %s", e.StatusCode, e.Body)
 }
 
 // auth ensures the access token is valid and returns it.
