@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/mock/control"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesscredentialpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
@@ -389,6 +390,21 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 		return []node.Feature{node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(accesspb.NewModelServer(model)))}, auto.Access(model),
 			ctrl.Register(deviceName, traitMd.Name, forceJSON(func() *accesspb.AccessAttempt { return new(accesspb.AccessAttempt) },
 				func(v *accesspb.AccessAttempt, opts ...resource.WriteOption) error { _, err := model.UpdateLastAccessAttempt(v, opts...); return err }))
+	case accesscredentialpb.TraitName:
+		model := accesscredentialpb.NewModel(nil)
+		for _, c := range []*accesscredentialpb.Credential{
+			{Type: "card", Value: "10000001"},
+			{Type: "fob", Value: "20000001", State: accesscredentialpb.Credential_LOST},
+		} {
+			if _, err := model.CreateCredential(c); err != nil {
+				logger.Warn("failed to seed mock credential", zap.Error(err))
+			}
+		}
+		srv := accesscredentialpb.NewModelServer(model)
+		return []node.Feature{
+			node.HasServer(accesscredentialpb.RegisterAccessCredentialApiServer, accesscredentialpb.AccessCredentialApiServer(srv)),
+			node.HasServer(accesscredentialpb.RegisterAccessCredentialInfoServer, accesscredentialpb.AccessCredentialInfoServer(srv)),
+		}, nil, nil
 	case buttonpb.TraitName:
 		model := buttonpb.NewModel(buttonpb.ButtonState_UNPRESSED)
 		return []node.Feature{node.HasServer(buttonpb.RegisterButtonApiServer, buttonpb.ButtonApiServer(buttonpb.NewModelServer(model)))}, auto.ButtonAuto(model),

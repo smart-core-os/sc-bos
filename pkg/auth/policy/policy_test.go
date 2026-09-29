@@ -256,6 +256,53 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 	}
 }
 
+// tests that tenant trait permissions don't reach the AccessCredential APIs via the blanket trait rules,
+// walking the full query hierarchy rather than evaluating the package in isolation.
+func TestDefaultPolicy_AccessCredential(t *testing.T) {
+	policy := Default(false)
+
+	roles := func(r ...string) token.Claims { return token.Claims{SystemRoles: r} }
+	perms := func(p ...permission.ID) token.Claims {
+		var claims token.Claims
+		for _, id := range p {
+			claims.Permissions = append(claims.Permissions, token.PermissionAssignment{Permission: id})
+		}
+		return claims
+	}
+	tests := []struct {
+		name    string
+		service string
+		method  string
+		claims  token.Claims
+		wantErr error
+	}{
+		{"admin create", "AccessCredentialApi", "CreateCredential", roles("admin"), nil},
+		{"operator create", "AccessCredentialApi", "CreateCredential", roles("operator"), nil},
+		{"operator describe", "AccessCredentialInfo", "DescribeCredential", roles("operator"), nil},
+		{"viewer list", "AccessCredentialApi", "ListCredentials", roles("viewer"), ErrPermissionDenied},
+		{"trait:write create", "AccessCredentialApi", "CreateCredential", perms(permission.TraitWrite), ErrPermissionDenied},
+		{"trait:read get", "AccessCredentialApi", "GetCredential", perms(permission.TraitRead), ErrPermissionDenied},
+		{"trait:read describe", "AccessCredentialInfo", "DescribeCredential", perms(permission.TraitRead), ErrPermissionDenied},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attrs := Attributes{
+				Protocol:     ProtocolGRPC,
+				Service:      "smartcore.bos.accesscredential.v1." + tt.service,
+				Method:       tt.method,
+				Request:      json.RawMessage(`{"name":"paxton/cardholder/24"}`),
+				TokenPresent: true,
+				TokenValid:   true,
+				TokenClaims:  tt.claims,
+			}
+			_, err := Validate(context.Background(), policy, attrs)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want %v, got %v", tt.wantErr, err)
+			}
+		})
+	}
+}
+
 // benchmarkScenarios is a mix of realistic server requests that exercise different
 // hierarchy depths and auth contexts, representative of a loaded BOS server:
 //

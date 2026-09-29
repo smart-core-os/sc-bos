@@ -46,6 +46,11 @@ type Root struct {
 	// EnableSignalR enables SignalR live event streaming. Disabled by default.
 	EnableSignalR bool `json:"enableSignalR,omitempty"`
 
+	// EnableCredentialManagement announces the AccessCredential trait on every cardholder,
+	// allowing Net2 user tokens (cards, fobs, number plates, ...) to be listed, issued, marked lost and removed.
+	// Disabled by default.
+	EnableCredentialManagement bool `json:"enableCredentialManagement,omitempty"`
+
 	// InsecureSkipVerify skips TLS certificate verification for HTTPS requests. Use only in development.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 

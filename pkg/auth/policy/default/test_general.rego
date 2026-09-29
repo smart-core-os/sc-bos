@@ -322,3 +322,63 @@ test_boot_trait_write_GetBootState if {
   data.smartcore.bos.boot.v1.BootApi.allow
     with input as permission_request(boot_service, "GetBootState", {}, ["trait:write"])
 }
+
+# --- AccessCredential: default-deny; credential values can clone a card, so trait:* is not sufficient ---
+
+access_credential_service := "smartcore.bos.accesscredential.v1.AccessCredentialApi"
+
+access_credential_info_service := "smartcore.bos.accesscredential.v1.AccessCredentialInfo"
+
+# Admin, super-admin, cert, and commissioner have unrestricted access.
+test_access_credential_admin_Create if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "CreateCredential", {}, ["admin"])
+}
+test_access_credential_super_admin_Delete if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "DeleteCredential", {}, ["super-admin"])
+}
+test_access_credential_cert_Create if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as cert_request(access_credential_service, "CreateCredential", {})
+}
+test_access_credential_commissioner_Create if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "CreateCredential", {}, ["commissioner"])
+}
+
+# Operators may read and write credentials.
+test_access_credential_operator_Create if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "CreateCredential", {}, ["operator"])
+}
+test_access_credential_operator_List if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "ListCredentials", {}, ["operator"])
+}
+test_access_credential_operator_Describe if {
+  data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_info_service, "DescribeCredential", {}, ["operator"])
+}
+
+# Viewers can't see credential values.
+test_access_credential_viewer_List_denied if {
+  not data.smartcore.bos.accesscredential.v1.allow
+    with input as user_request(access_credential_service, "ListCredentials", {}, ["viewer"])
+}
+
+# Tenant trait permissions are NOT sufficient — the package-level
+# `default allow := false` short-circuits the hierarchy before the blanket
+# smartcore.bos.allow trait:read/trait:write rules are ever reached.
+test_access_credential_trait_write_Create_denied if {
+  not data.smartcore.bos.accesscredential.v1.allow
+    with input as permission_request(access_credential_service, "CreateCredential", {}, ["trait:write"])
+}
+test_access_credential_trait_star_Create_denied if {
+  not data.smartcore.bos.accesscredential.v1.allow
+    with input as permission_request(access_credential_service, "CreateCredential", {}, ["trait:*"])
+}
+test_access_credential_trait_read_Get_denied if {
+  not data.smartcore.bos.accesscredential.v1.allow
+    with input as permission_request(access_credential_service, "GetCredential", {}, ["trait:read"])
+}

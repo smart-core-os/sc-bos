@@ -203,7 +203,7 @@ func (d *Driver) runDoors(ctx context.Context, announcer node.Announcer, cfg con
 // runCardholders periodically refreshes the cardholder list.
 func (d *Driver) runCardholders(ctx context.Context, announcer node.Announcer, cfg config.Root) error {
 	refresh := func() {
-		if err := d.refreshCardholders(ctx, announcer, cfg.CardHolderPrefix); err != nil {
+		if err := d.refreshCardholders(ctx, announcer, cfg); err != nil {
 			d.logger.Error("failed to refresh cardholders", zap.Error(err))
 		}
 	}

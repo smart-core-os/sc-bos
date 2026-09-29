@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesscredentialpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
@@ -90,27 +91,28 @@ var serviceRegistry = map[trait.Name][]grpc.ServiceDesc{
 	trait.Vending:          {vendingpb.VendingApi_ServiceDesc, vendingpb.VendingInfo_ServiceDesc},
 
 	// sc-bos private traits
-	allocationpb.TraitName:     {allocationpb.AllocationApi_ServiceDesc, allocationpb.AllocationHistory_ServiceDesc},
-	bootpb.TraitName:           {bootpb.BootApi_ServiceDesc, bootpb.BootHistory_ServiceDesc},
-	logpb.TraitName:            {logpb.LogApi_ServiceDesc},
-	accesspb.TraitName:         {accesspb.AccessApi_ServiceDesc},
-	anprcamerapb.TraitName:     {anprcamerapb.AnprCameraApi_ServiceDesc},
-	buttonpb.TraitName:         {buttonpb.ButtonApi_ServiceDesc},
-	dalipb.TraitName:           {dalipb.DaliApi_ServiceDesc},
-	dataretentionpb.TraitName:  {dataretentionpb.DataRetentionApi_ServiceDesc, dataretentionpb.DataRetentionInfo_ServiceDesc},
-	emergencylightpb.TraitName: {dalipb.DaliApi_ServiceDesc, emergencylightpb.EmergencyLightApi_ServiceDesc},
-	healthpb.TraitName:         {healthpb.HealthApi_ServiceDesc, healthpb.HealthHistory_ServiceDesc},
-	meterpb.TraitName:          {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
-	mqttpb.TraitName:           {mqttpb.MqttService_ServiceDesc},
-	reportpb.TraitName:         {reportpb.ReportApi_ServiceDesc},
-	resourceusepb.TraitName:    {resourceusepb.ResourceUseApi_ServiceDesc, resourceusepb.ResourceUseHistory_ServiceDesc},
-	securityeventpb.TraitName:  {securityeventpb.SecurityEventApi_ServiceDesc},
-	serviceticketpb.TraitName:  {serviceticketpb.ServiceTicketApi_ServiceDesc, serviceticketpb.ServiceTicketInfo_ServiceDesc},
-	soundsensorpb.TraitName:    {soundsensorpb.SoundSensorApi_ServiceDesc, soundsensorpb.SoundSensorInfo_ServiceDesc},
-	temperaturepb.TraitName:    {temperaturepb.TemperatureApi_ServiceDesc},
-	transportpb.TraitName:      {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
-	udmipb.TraitName:           {udmipb.UdmiService_ServiceDesc},
-	wastepb.TraitName:          {wastepb.WasteApi_ServiceDesc, wastepb.WasteInfo_ServiceDesc},
+	allocationpb.TraitName:       {allocationpb.AllocationApi_ServiceDesc, allocationpb.AllocationHistory_ServiceDesc},
+	bootpb.TraitName:             {bootpb.BootApi_ServiceDesc, bootpb.BootHistory_ServiceDesc},
+	logpb.TraitName:              {logpb.LogApi_ServiceDesc},
+	accesspb.TraitName:           {accesspb.AccessApi_ServiceDesc},
+	accesscredentialpb.TraitName: {accesscredentialpb.AccessCredentialApi_ServiceDesc, accesscredentialpb.AccessCredentialInfo_ServiceDesc},
+	anprcamerapb.TraitName:       {anprcamerapb.AnprCameraApi_ServiceDesc},
+	buttonpb.TraitName:           {buttonpb.ButtonApi_ServiceDesc},
+	dalipb.TraitName:             {dalipb.DaliApi_ServiceDesc},
+	dataretentionpb.TraitName:    {dataretentionpb.DataRetentionApi_ServiceDesc, dataretentionpb.DataRetentionInfo_ServiceDesc},
+	emergencylightpb.TraitName:   {dalipb.DaliApi_ServiceDesc, emergencylightpb.EmergencyLightApi_ServiceDesc},
+	healthpb.TraitName:           {healthpb.HealthApi_ServiceDesc, healthpb.HealthHistory_ServiceDesc},
+	meterpb.TraitName:            {meterpb.MeterApi_ServiceDesc, meterpb.MeterInfo_ServiceDesc, meterpb.MeterHistory_ServiceDesc},
+	mqttpb.TraitName:             {mqttpb.MqttService_ServiceDesc},
+	reportpb.TraitName:           {reportpb.ReportApi_ServiceDesc},
+	resourceusepb.TraitName:      {resourceusepb.ResourceUseApi_ServiceDesc, resourceusepb.ResourceUseHistory_ServiceDesc},
+	securityeventpb.TraitName:    {securityeventpb.SecurityEventApi_ServiceDesc},
+	serviceticketpb.TraitName:    {serviceticketpb.ServiceTicketApi_ServiceDesc, serviceticketpb.ServiceTicketInfo_ServiceDesc},
+	soundsensorpb.TraitName:      {soundsensorpb.SoundSensorApi_ServiceDesc, soundsensorpb.SoundSensorInfo_ServiceDesc},
+	temperaturepb.TraitName:      {temperaturepb.TemperatureApi_ServiceDesc},
+	transportpb.TraitName:        {transportpb.TransportApi_ServiceDesc, transportpb.TransportInfo_ServiceDesc, transportpb.TransportHistory_ServiceDesc},
+	udmipb.TraitName:             {udmipb.UdmiService_ServiceDesc},
+	wastepb.TraitName:            {wastepb.WasteApi_ServiceDesc, wastepb.WasteInfo_ServiceDesc},
 }
 
 func Names() []trait.Name {
@@ -126,4 +128,3 @@ func Names() []trait.Name {
 func ServiceDesc(t trait.Name) []grpc.ServiceDesc {
 	return serviceRegistry[t]
 }
-

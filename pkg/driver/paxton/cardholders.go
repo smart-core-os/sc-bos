@@ -16,7 +16,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/smart-core-os/sc-bos/pkg/driver/paxton/config"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/accesscredentialpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -69,7 +71,7 @@ func (c *Cardholder) PullAccessAttempts(request *accesspb.PullAccessAttemptsRequ
 	return nil
 }
 
-func (d *Driver) refreshCardholders(ctx context.Context, announcer node.Announcer, cardholderPrefix string) error {
+func (d *Driver) refreshCardholders(ctx context.Context, announcer node.Announcer, cfg config.Root) error {
 	users, err := d.client.GetUsers(ctx)
 
 	if err != nil {
@@ -79,7 +81,7 @@ func (d *Driver) refreshCardholders(ctx context.Context, announcer node.Announce
 	// announce cardholders found in the API and add to map
 	for _, user := range users {
 		if _, ok := d.cardholders.Load(user.ID); !ok {
-			scName := path.Join(cardholderPrefix, "cardholder", strconv.Itoa(user.ID))
+			scName := path.Join(cfg.CardHolderPrefix, "cardholder", strconv.Itoa(user.ID))
 
 			meta := &metadatapb.Metadata{
 				Appearance: &metadatapb.Metadata_Appearance{
@@ -99,6 +101,17 @@ func (d *Driver) refreshCardholders(ctx context.Context, announcer node.Announce
 
 			undo := announcer.Announce(scName, node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(cardholder)), node.HasTrait(accesspb.TraitName))
 			cardholder.undo = append(cardholder.undo, undo)
+
+			if cfg.EnableCredentialManagement {
+				// Capturing d.client is safe: a reconfigure replaces the announcer and re-announces every cardholder.
+				creds := newCredentialServer(d.client, user.ID, d.logger.Named("credentials"))
+				undo = announcer.Announce(scName,
+					node.HasServer(accesscredentialpb.RegisterAccessCredentialApiServer, accesscredentialpb.AccessCredentialApiServer(creds)),
+					node.HasServer(accesscredentialpb.RegisterAccessCredentialInfoServer, accesscredentialpb.AccessCredentialInfoServer(creds)),
+					node.HasTrait(accesscredentialpb.TraitName),
+				)
+				cardholder.undo = append(cardholder.undo, undo)
+			}
 
 			undo = announcer.Announce(scName, node.HasMetadata(meta))
 			cardholder.undo = append(cardholder.undo, undo)
