@@ -25,7 +25,9 @@ The `conn` block says where the server is and how to authenticate against it.
 | Field | Type | Notes |
 |---|---|---|
 | `endpoint` | string | **Required.** OPC UA server endpoint, e.g. `opc.tcp://server.example.com:4840`. |
-| `subscriptionInterval` | duration | How often the server publishes subscription updates. Defaults to `5s`. |
+| `subscriptionInterval` | duration | How often the server publishes subscription updates. Defaults to `5s`. Must be a positive whole number of milliseconds. |
+| `samplingInterval` | duration | How often the server samples each monitored node. Defaults to `subscriptionInterval`. Must be a positive whole number of milliseconds. |
+| `queueSize` | number | Server-side queue depth per monitored node. Defaults to `1`, so only the most recent sample is published. |
 | `clientId` | number | Client ID, unique within a server. A random one is generated when unset. |
 | `auth.username` | string | OPC UA user to authenticate as. Omit the whole `auth` block to connect anonymously. |
 | `auth.passwordFile` | string | **Required with `auth`.** Path to a file containing that user's password. A plaintext `password` in the config is rejected. |
@@ -33,6 +35,34 @@ The `conn` block says where the server is and how to authenticate against it.
 | `security.mode` | string | Message security mode: `None`, `Sign` or `SignAndEncrypt`. Defaults to `SignAndEncrypt` when `auth` is set, `None` otherwise. |
 | `security.certFile` | string | Client X509 certificate. **Required for `Sign` and `SignAndEncrypt`.** |
 | `security.keyFile` | string | RSA private key matching `certFile`. **Required for `Sign` and `SignAndEncrypt`.** |
+
+If you sample faster than the server publishes, raise `queueSize` to match or the server's
+queue overflows and discards samples. The server reports this by setting the Overflow info bit
+on the values it does send: `0x480` is Good with the Overflow bit set, and the driver consumes
+such values normally. The defaults (sample once per publish, queue of one) never overflow.
+
+### Guards on the monitoring parameters
+
+`ParseConfig` rejects an interval that is not a positive whole number of milliseconds:
+
+- OPC UA carries intervals as integer milliseconds, so anything finer would be silently truncated.
+- An interval of 0 means "as fast as possible", which should not happen by accident.
+
+Omit a field to take its default.
+
+Parameters that are workable but risky are logged as warnings at connect, and the driver
+carries on:
+
+| Warning | Trigger |
+|---|---|
+| queue too small | `queueSize` is smaller than the number of samples a publishing cycle holds, i.e. `subscriptionInterval / samplingInterval` rounded up. The server discards the excess and sets the Overflow bit. |
+| aggressive sampling | `samplingInterval` under 100 ms. Many servers clamp this to their `MinSupportedSampleRate`. |
+| aggressive publishing | `subscriptionInterval` under 100 ms. The driver creates one subscription per monitored variable, so this multiplies. |
+
+The 100 ms threshold is a rough guide; the real floor is the server's
+`Server/ServerCapabilities/MinSupportedSampleRate`. Servers may also revise the requested
+parameters, so the driver logs the sampling interval and queue size the server settled on when
+they differ from the request.
 
 With neither `auth` nor `security` the driver connects anonymously over an unsecured
 channel, which is how it has always behaved, so existing configs keep working unchanged.
@@ -63,6 +93,8 @@ Two notes on how the connection is made once security is configured:
   "conn": {
     "endpoint": "opc.tcp://server.example.com:4840",
     "subscriptionInterval": "5s",
+    "samplingInterval": "5s",
+    "queueSize": 1,
     "auth": {
       "username": "sc-bos",
       "passwordFile": "/etc/sc-bos/secrets/opcua-password"
