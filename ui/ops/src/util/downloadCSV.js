@@ -15,7 +15,7 @@ import {toValue} from 'vue';
  * @param {*} field
  * @return {string}
  */
-function escapeCSVField(field) {
+export function escapeCSVField(field) {
   let str = field === null || field === undefined ? '' : String(field);
   if (/^[=+\-@\t\r]/.test(str) && isNaN(Number(str))) {
     str = `'${str}`;
