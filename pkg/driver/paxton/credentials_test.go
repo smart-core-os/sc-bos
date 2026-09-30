@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
+	"slices"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +21,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -100,8 +105,8 @@ func (f *fakeNet2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodPost:
 		var in UserToken
 		_ = json.NewDecoder(r.Body).Decode(&in)
-		if f.issued(in.TokenValue) {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": fmt.Sprintf(": Card %s has already been issued.", in.TokenValue)})
+		if f.issued(in.TokenValue, -1) {
+			writeAlreadyIssued(w, in.TokenValue)
 			return
 		}
 		f.lastID++
@@ -111,6 +116,10 @@ func (f *fakeNet2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodPut:
 		var in UserToken
 		_ = json.NewDecoder(r.Body).Decode(&in)
+		if f.issued(in.TokenValue, tokens[idx].ID) {
+			writeAlreadyIssued(w, in.TokenValue)
+			return
+		}
 		tokens[idx] = in
 		w.WriteHeader(http.StatusNoContent)
 	case r.Method == http.MethodDelete:
@@ -121,15 +130,32 @@ func (f *fakeNet2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (f *fakeNet2) issued(value string) bool {
+// issued reports whether a token other than exceptID (-1 for none) holds value.
+func (f *fakeNet2) issued(value string, exceptID int) bool {
 	for _, tokens := range f.users {
 		for _, t := range tokens {
-			if t.TokenValue == value {
+			if t.TokenValue == value && t.ID != exceptID {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// writeAlreadyIssued replies the way Net2 does to a duplicate value, naming it.
+func writeAlreadyIssued(w http.ResponseWriter, value string) {
+	writeJSON(w, http.StatusBadRequest, map[string]string{"message": fmt.Sprintf(": Card %s has already been issued.", value)})
+}
+
+func (f *fakeNet2) token(userID, tokenID int) (UserToken, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, t := range f.users[userID] {
+		if t.ID == tokenID {
+			return t, true
+		}
+	}
+	return UserToken{}, false
 }
 
 func (f *fakeNet2) fail(code int) {
@@ -390,6 +416,10 @@ func TestCredentialServer_UpdateCredential_invalid(t *testing.T) {
 			Credential: &accesscredentialpb.Credential{Id: "5"},
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"value"}},
 		}, codes.InvalidArgument},
+		{"no id", &accesscredentialpb.UpdateCredentialRequest{
+			Credential: &accesscredentialpb.Credential{State: accesscredentialpb.Credential_LOST},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"state"}},
+		}, codes.InvalidArgument},
 		{"malformed id", &accesscredentialpb.UpdateCredentialRequest{
 			Credential: &accesscredentialpb.Credential{Id: "abc", State: accesscredentialpb.Credential_LOST},
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"state"}},
@@ -406,6 +436,154 @@ func TestCredentialServer_UpdateCredential_invalid(t *testing.T) {
 			assert.Equal(t, tt.code, status.Code(err), err)
 			for _, r := range *requests {
 				assert.NotEqual(t, http.MethodPut, r.method, "nothing should be written")
+			}
+		})
+	}
+}
+
+// Leaving state out of an update must not re-activate a lost card.
+func TestCredentialServer_UpdateCredential_unsetStateKeepsLost(t *testing.T) {
+	tests := []struct {
+		name string
+		req  *accesscredentialpb.UpdateCredentialRequest
+	}{
+		{"no mask", &accesscredentialpb.UpdateCredentialRequest{
+			Credential: &accesscredentialpb.Credential{Id: "5", Type: "ProxIsoCard", Value: "111"},
+		}},
+		{"state in mask", &accesscredentialpb.UpdateCredentialRequest{
+			Credential: &accesscredentialpb.Credential{Id: "5", Type: "ProxIsoCard"},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"type", "state"}},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			net2 := newFakeNet2(UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111", IsLost: true})
+			s, _ := setupCredentialServer(t, net2)
+			got, err := s.UpdateCredential(context.Background(), tt.req)
+			require.NoError(t, err)
+			assert.Equal(t, accesscredentialpb.Credential_LOST, got.GetState())
+			stored, _ := net2.token(testUserID, 5)
+			assert.Equal(t, UserToken{ID: 5, TokenType: TokenTypeProxIsoCard, TokenValue: "111", IsLost: true}, stored)
+		})
+	}
+}
+
+func TestCredentialServer_UpdateCredential_duplicate(t *testing.T) {
+	const value = "222"
+	net2 := newFakeNet2(
+		UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111"},
+		UserToken{ID: 6, TokenType: TokenTypeProxCard, TokenValue: value},
+	)
+	s, _ := setupCredentialServer(t, net2)
+	_, err := s.UpdateCredential(context.Background(), &accesscredentialpb.UpdateCredentialRequest{
+		Credential: &accesscredentialpb.Credential{Id: "5", Value: value},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"value"}},
+	})
+	assert.Equal(t, codes.AlreadyExists, status.Code(err), err)
+	assert.NotContains(t, err.Error(), value)
+}
+
+// Two updates to the same token, each changing a different field, must both be kept.
+func TestCredentialServer_UpdateCredential_concurrent(t *testing.T) {
+	net2 := newFakeNet2(UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111"})
+	// The first PUT waits until another GET arrives, which only happens if the updates overlap,
+	// or for long enough that it would have.
+	var gets atomic.Int32
+	anotherGet := make(chan struct{})
+	c, _, _ := setupTokenClient(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			if gets.Add(1) == 2 {
+				close(anotherGet)
+			}
+		case http.MethodPut:
+			select {
+			case <-anotherGet:
+			case <-time.After(200 * time.Millisecond):
+			}
+		}
+		net2.ServeHTTP(w, r)
+	})
+	s := newCredentialServer(c, testUserID, zap.NewNop())
+
+	var wg sync.WaitGroup
+	for _, req := range []*accesscredentialpb.UpdateCredentialRequest{
+		{Credential: &accesscredentialpb.Credential{Id: "5", State: accesscredentialpb.Credential_LOST}, UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"state"}}},
+		{Credential: &accesscredentialpb.Credential{Id: "5", Value: "222"}, UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"value"}}},
+	} {
+		wg.Go(func() {
+			_, err := s.UpdateCredential(context.Background(), req)
+			assert.NoError(t, err)
+		})
+	}
+	wg.Wait()
+
+	stored, _ := net2.token(testUserID, 5)
+	assert.Equal(t, UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "222", IsLost: true}, stored)
+}
+
+// A token whose type this driver doesn't know can't be written back, which is the caller's problem, not Net2 being down.
+func TestCredentialServer_UpdateCredential_unknownCurrentType(t *testing.T) {
+	s, requests := setupCredentialServer(t, newFakeNet2(UserToken{ID: 5, TokenType: "AppleWallet", TokenValue: "111"}))
+	_, err := s.UpdateCredential(context.Background(), &accesscredentialpb.UpdateCredentialRequest{
+		Credential: &accesscredentialpb.Credential{Id: "5", State: accesscredentialpb.Credential_LOST},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"state"}},
+	})
+	assert.Equal(t, codes.InvalidArgument, status.Code(err), err)
+	for _, r := range *requests {
+		assert.NotEqual(t, http.MethodPut, r.method, "nothing should be written")
+	}
+}
+
+func TestCredentialServer_readMask(t *testing.T) {
+	s, _ := setupCredentialServer(t, newFakeNet2(UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111"}))
+	ctx := context.Background()
+
+	got, err := s.GetCredential(ctx, &accesscredentialpb.GetCredentialRequest{Id: "5", ReadMask: &fieldmaskpb.FieldMask{Paths: []string{"id", "state"}}})
+	require.NoError(t, err)
+	assert.Empty(t, cmpDiff(&accesscredentialpb.Credential{Id: "5", State: accesscredentialpb.Credential_ACTIVE}, got))
+
+	for _, paths := range [][]string{{"more.x"}, {"no_such_field"}} {
+		mask := &fieldmaskpb.FieldMask{Paths: paths}
+		_, err := s.GetCredential(ctx, &accesscredentialpb.GetCredentialRequest{Id: "5", ReadMask: mask})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), "get %v: %v", paths, err)
+		_, err = s.ListCredentials(ctx, &accesscredentialpb.ListCredentialsRequest{ReadMask: mask})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), "list %v: %v", paths, err)
+	}
+}
+
+// Every Credential field is either writable, ignored as output only, or rejected,
+// so a field added to the proto can't be silently dropped.
+func TestCheckUnsupportedFields(t *testing.T) {
+	fields := (&accesscredentialpb.Credential{}).ProtoReflect().Descriptor().Fields()
+	for i := range fields.Len() {
+		fd := fields.Get(i)
+		name := string(fd.Name())
+		t.Run(name, func(t *testing.T) {
+			c := &accesscredentialpb.Credential{}
+			m := c.ProtoReflect()
+			switch {
+			case fd.IsMap():
+				m.Mutable(fd).Map().Set(protoreflect.ValueOfString("k").MapKey(), protoreflect.ValueOfString("v"))
+			case fd.Message() != nil:
+				m.Mutable(fd)
+			case fd.Kind() == protoreflect.StringKind:
+				m.Set(fd, protoreflect.ValueOfString("x"))
+			case fd.Kind() == protoreflect.EnumKind:
+				m.Set(fd, protoreflect.ValueOfEnum(1))
+			case fd.Kind() == protoreflect.Int32Kind:
+				m.Set(fd, protoreflect.ValueOfInt32(1))
+			default:
+				t.Fatalf("test doesn't know how to set a %v field", fd.Kind())
+			}
+			require.True(t, m.Has(fd))
+
+			err := checkUnsupportedFields(c)
+			supported := slices.Contains(credentialWritableFields.GetPaths(), name) || slices.Contains(credentialOutputOnlyFields, name)
+			if supported {
+				assert.NoError(t, err)
+			} else {
+				assert.Equal(t, codes.InvalidArgument, status.Code(err), err)
 			}
 		})
 	}
@@ -475,6 +653,42 @@ func TestCredentialServer_DeleteCredential(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = s.DeleteCredential(ctx, &accesscredentialpb.DeleteCredentialRequest{Id: "not-a-number", AllowMissing: true})
 	assert.NoError(t, err)
+}
+
+// If Net2 deletes the token but replies with a 5xx, the retried DELETE gets a 404 for a delete that worked.
+func TestCredentialServer_DeleteCredential_retried(t *testing.T) {
+	net2 := newFakeNet2(UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111"})
+	var deletes atomic.Int32
+	c, _, _ := setupTokenClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete && deletes.Add(1) == 1 {
+			net2.ServeHTTP(httptest.NewRecorder(), r) // delete it, then lose the reply
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		net2.ServeHTTP(w, r)
+	})
+	c.cli.RetryMax = 1
+	c.cli.RetryWaitMin = time.Millisecond
+	c.cli.RetryWaitMax = time.Millisecond
+	s := newCredentialServer(c, testUserID, zap.NewNop())
+
+	_, err := s.DeleteCredential(context.Background(), &accesscredentialpb.DeleteCredentialRequest{Id: "5"})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, deletes.Load(), "the DELETE should have been retried")
+	_, held := net2.token(testUserID, 5)
+	assert.False(t, held)
+}
+
+func TestCredentialServer_emptyID(t *testing.T) {
+	s, requests := setupCredentialServer(t, newFakeNet2(UserToken{ID: 5, TokenType: TokenTypeProxCard, TokenValue: "111"}))
+	ctx := context.Background()
+	_, err := s.GetCredential(ctx, &accesscredentialpb.GetCredentialRequest{})
+	assert.Equal(t, codes.InvalidArgument, status.Code(err), err)
+	for _, allowMissing := range []bool{false, true} {
+		_, err = s.DeleteCredential(ctx, &accesscredentialpb.DeleteCredentialRequest{AllowMissing: allowMissing})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), "allow_missing=%v: %v", allowMissing, err)
+	}
+	assert.Empty(t, *requests, "nothing should be sent to Net2")
 }
 
 func TestCredentialServer_errorCodes(t *testing.T) {

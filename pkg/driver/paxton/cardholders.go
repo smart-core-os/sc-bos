@@ -99,19 +99,21 @@ func (d *Driver) refreshCardholders(ctx context.Context, announcer node.Announce
 				state:      resource.NewValue(resource.WithNoDuplicates()),
 			}
 
-			undo := announcer.Announce(scName, node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(cardholder)), node.HasTrait(accesspb.TraitName))
-			cardholder.undo = append(cardholder.undo, undo)
-
+			features := []node.Feature{
+				node.HasServer(accesspb.RegisterAccessApiServer, accesspb.AccessApiServer(cardholder)),
+				node.HasTrait(accesspb.TraitName),
+			}
 			if cfg.EnableCredentialManagement {
 				// Capturing d.client is safe: a reconfigure replaces the announcer and re-announces every cardholder.
 				creds := newCredentialServer(d.client, user.ID, d.logger.Named("credentials"))
-				undo = announcer.Announce(scName,
+				features = append(features,
 					node.HasServer(accesscredentialpb.RegisterAccessCredentialApiServer, accesscredentialpb.AccessCredentialApiServer(creds)),
 					node.HasServer(accesscredentialpb.RegisterAccessCredentialInfoServer, accesscredentialpb.AccessCredentialInfoServer(creds)),
 					node.HasTrait(accesscredentialpb.TraitName),
 				)
-				cardholder.undo = append(cardholder.undo, undo)
 			}
+			undo := announcer.Announce(scName, features...)
+			cardholder.undo = append(cardholder.undo, undo)
 
 			undo = announcer.Announce(scName, node.HasMetadata(meta))
 			cardholder.undo = append(cardholder.undo, undo)

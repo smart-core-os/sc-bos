@@ -64,12 +64,19 @@ type UserToken struct {
 	IsLost bool `json:"IsLost"`
 }
 
+// ErrInvalidToken is wrapped by the error AddUserToken or UpdateUserToken returns when the
+// token is rejected before anything is sent to Net2.
+var ErrInvalidToken = errors.New("invalid token")
+
+// errEmptyBody is returned by doTokenRequest when a 2xx response that should have a body has none.
+var errEmptyBody = errors.New("empty response body")
+
 func (t UserToken) validate() error {
 	if t.TokenValue == "" {
-		return errors.New("token value is required")
+		return fmt.Errorf("%w: value is required", ErrInvalidToken)
 	}
 	if !t.TokenType.Valid() {
-		return fmt.Errorf("unknown token type %q", t.TokenType)
+		return fmt.Errorf("%w: unknown type %q", ErrInvalidToken, t.TokenType)
 	}
 	return nil
 }
@@ -77,7 +84,12 @@ func (t UserToken) validate() error {
 // GetUserTokens returns all the tokens assigned to the Net2 user with the given ID.
 func (c *Client) GetUserTokens(ctx context.Context, userID int) ([]UserToken, error) {
 	var tokens []UserToken
-	if err := c.doTokenRequest(ctx, http.MethodGet, nil, &tokens, userID); err != nil {
+	err := c.doTokenRequest(ctx, http.MethodGet, nil, &tokens, userID)
+	if errors.Is(err, errEmptyBody) {
+		// Net2 answers an empty events query with no body rather than [], so allow the same here.
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	return tokens, nil
@@ -125,7 +137,9 @@ func (c *Client) DeleteUserToken(ctx context.Context, userID, tokenID int) error
 }
 
 // doTokenRequest sends a request to api/v1/users/{userID}/tokens[/{tokenID}].
-// A non-nil body is sent as JSON; a non-nil out is decoded from the JSON response.
+// A non-nil body is sent as JSON; a non-nil out is decoded from the JSON response, and a
+// response with no body is errEmptyBody.
+// Unlike the driver's polls, token requests don't update the system check, see Client.do.
 func (c *Client) doTokenRequest(ctx context.Context, method string, body, out any, userID int, tokenID ...int) error {
 	elems := []string{"api", "v1", "users", strconv.Itoa(userID), "tokens"}
 	for _, id := range tokenID {
@@ -153,7 +167,7 @@ func (c *Client) doTokenRequest(ctx context.Context, method string, body, out an
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	resp, err := c.Do(ctx, req)
+	resp, err := c.do(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -167,5 +181,9 @@ func (c *Client) doTokenRequest(ctx context.Context, method string, body, out an
 	if out == nil {
 		return nil
 	}
-	return json.NewDecoder(resp.Body).Decode(out)
+	err = json.NewDecoder(resp.Body).Decode(out)
+	if errors.Is(err, io.EOF) {
+		return errEmptyBody
+	}
+	return err
 }

@@ -238,7 +238,7 @@ type Credential struct {
 	// May be empty on create if the type allocates values itself, see CredentialType.value_source.
 	Value string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	// The state of the credential.
-	// Absent (STATE_UNSPECIFIED) on create means ACTIVE.
+	// Absent (STATE_UNSPECIFIED) on create means ACTIVE, on update it leaves the state unchanged.
 	State Credential_State `protobuf:"varint,5,opt,name=state,proto3,enum=smartcore.bos.accesscredential.v1.Credential_State" json:"state,omitempty"`
 	// The name of the state in the underlying access control system, e.g. "Damaged".
 	// Output only.
@@ -1129,13 +1129,13 @@ var File_smartcore_bos_accesscredential_v1_access_credential_proto protoreflect.
 
 const file_smartcore_bos_accesscredential_v1_access_credential_proto_rawDesc = "" +
 	"\n" +
-	"9smartcore/bos/accesscredential/v1/access_credential.proto\x12!smartcore.bos.accesscredential.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xcf\a\n" +
+	"9smartcore/bos/accesscredential/v1/access_credential.proto\x12!smartcore.bos.accesscredential.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\"\xd4\a\n" +
 	"\n" +
 	"Credential\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12F\n" +
-	"\x04kind\x18\x03 \x01(\x0e22.smartcore.bos.accesscredential.v1.Credential.KindR\x04kind\x12\x14\n" +
-	"\x05value\x18\x04 \x01(\tR\x05value\x12I\n" +
+	"\x04kind\x18\x03 \x01(\x0e22.smartcore.bos.accesscredential.v1.Credential.KindR\x04kind\x12\x19\n" +
+	"\x05value\x18\x04 \x01(\tB\x03\x80\x01\x01R\x05value\x12I\n" +
 	"\x05state\x18\x05 \x01(\x0e23.smartcore.bos.accesscredential.v1.Credential.StateR\x05state\x12!\n" +
 	"\fnative_state\x18\x06 \x01(\tR\vnativeState\x12;\n" +
 	"\vactive_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +

@@ -5,12 +5,14 @@ import (
 	"context"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestModelServer_crud(t *testing.T) {
@@ -78,6 +80,8 @@ func TestModelServer_CreateCredential_errors(t *testing.T) {
 		{"missing invitation", &Credential{Type: "mobile"}, codes.InvalidArgument},
 		{"unwritable state", &Credential{Type: "plate", Value: "AB12CDE", State: Credential_LOST}, codes.InvalidArgument},
 		{"duplicate", &Credential{Type: "fob", Value: "existing"}, codes.AlreadyExists},
+		{"expires before active", &Credential{Type: "fob", Value: "1", ActiveTime: timestamppb.New(time.Unix(200, 0)), ExpireTime: timestamppb.New(time.Unix(100, 0))}, codes.InvalidArgument},
+		{"nil", nil, codes.InvalidArgument},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -138,6 +142,21 @@ func TestModelServer_UpdateCredential_errors(t *testing.T) {
 			Credential: &Credential{Id: "1"},
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"value"}},
 		}, codes.InvalidArgument},
+		{"clear required invitation", &UpdateCredentialRequest{
+			Credential: &Credential{Id: "3"},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"invitation"}},
+		}, codes.InvalidArgument},
+		{"change to a system allocated type", &UpdateCredentialRequest{
+			Credential: &Credential{Id: "1", Type: "mobile", Invitation: &Credential_Invitation{Email: "a@b"}},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"type", "invitation"}},
+		}, codes.InvalidArgument},
+		{"expires before active", &UpdateCredentialRequest{
+			Credential: &Credential{Id: "1", ActiveTime: timestamppb.New(time.Unix(200, 0)), ExpireTime: timestamppb.New(time.Unix(100, 0))},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"active_time", "expire_time"}},
+		}, codes.InvalidArgument},
+	}
+	if _, err := srv.CreateCredential(ctx, &CreateCredentialRequest{Credential: &Credential{Type: "mobile", Invitation: &Credential_Invitation{Email: "a@b"}}}); err != nil {
+		t.Fatalf("seed mobile: %v", err)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -146,6 +165,76 @@ func TestModelServer_UpdateCredential_errors(t *testing.T) {
 				t.Fatalf("want %v, got %v", tt.code, err)
 			}
 		})
+	}
+}
+
+// Leaving state out of an update keeps the state, rather than re-activating a lost credential.
+func TestModelServer_UpdateCredential_unsetStateKeepsLost(t *testing.T) {
+	ctx := context.Background()
+	srv := NewModelServer(NewModel(nil))
+	if _, err := srv.CreateCredential(ctx, &CreateCredentialRequest{Credential: &Credential{Type: "fob", Value: "1", State: Credential_LOST}}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	for _, req := range []*UpdateCredentialRequest{
+		{Credential: &Credential{Id: "1", Type: "card", Value: "1"}},
+		{Credential: &Credential{Id: "1", Type: "fob"}, UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"type", "state"}}},
+	} {
+		got, err := srv.UpdateCredential(ctx, req)
+		if err != nil {
+			t.Fatalf("UpdateCredential(%v): %v", req, err)
+		}
+		if got.State != Credential_LOST {
+			t.Errorf("UpdateCredential(%v): want LOST, got %v", req, got.State)
+		}
+	}
+}
+
+func TestModelServer_UpdateCredential_invitationStatus(t *testing.T) {
+	ctx := context.Background()
+	srv := NewModelServer(NewModel(nil))
+	if _, err := srv.CreateCredential(ctx, &CreateCredentialRequest{Credential: &Credential{Type: "fob", Value: "1"}}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	got, err := srv.UpdateCredential(ctx, &UpdateCredentialRequest{
+		Credential: &Credential{Id: "1", Invitation: &Credential_Invitation{Email: "a@b", Status: "accepted"}},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"invitation"}},
+	})
+	if err != nil {
+		t.Fatalf("UpdateCredential: %v", err)
+	}
+	if got.Invitation.GetEmail() != "a@b" || got.Invitation.GetStatus() != "" {
+		t.Errorf("invitation.status is output only, want only the email set, got %v", got.Invitation)
+	}
+}
+
+func TestModelServer_readMask(t *testing.T) {
+	ctx := context.Background()
+	srv := NewModelServer(NewModel(nil))
+	if _, err := srv.CreateCredential(ctx, &CreateCredentialRequest{Credential: &Credential{Type: "fob", Value: "1", More: map[string]string{"x": "y"}}}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	// a path into the more map used to panic, taking the process down with it
+	for _, paths := range [][]string{{"more.x"}, {"no_such_field"}} {
+		mask := &fieldmaskpb.FieldMask{Paths: paths}
+		if _, err := srv.GetCredential(ctx, &GetCredentialRequest{Id: "1", ReadMask: mask}); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("GetCredential %v: want InvalidArgument, got %v", paths, err)
+		}
+		if _, err := srv.ListCredentials(ctx, &ListCredentialsRequest{ReadMask: mask}); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("ListCredentials %v: want InvalidArgument, got %v", paths, err)
+		}
+	}
+}
+
+func TestModelServer_emptyID(t *testing.T) {
+	ctx := context.Background()
+	srv := NewModelServer(NewModel(nil))
+	if _, err := srv.GetCredential(ctx, &GetCredentialRequest{}); status.Code(err) != codes.InvalidArgument {
+		t.Errorf("GetCredential: want InvalidArgument, got %v", err)
+	}
+	for _, allowMissing := range []bool{false, true} {
+		if _, err := srv.DeleteCredential(ctx, &DeleteCredentialRequest{AllowMissing: allowMissing}); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("DeleteCredential allow_missing=%v: want InvalidArgument, got %v", allowMissing, err)
+		}
 	}
 }
 

@@ -24,6 +24,11 @@ const (
 // others to be skipped or repeated.
 // all is sorted in place and must not be modified by the caller afterwards, returned credentials are clones.
 func ListPage(all []*Credential, req *ListCredentialsRequest) (*ListCredentialsResponse, error) {
+	filter := masks.NewResponseFilter(masks.WithFieldMask(req.GetReadMask()))
+	// FilterClone panics on a path it can't follow, e.g. into the more map
+	if err := filter.Validate(&Credential{}); err != nil {
+		return nil, err
+	}
 	pageToken := &typespb.PageToken{}
 	if err := decodePageToken(req.GetPageToken(), pageToken); err != nil {
 		return nil, err
@@ -58,7 +63,6 @@ func ListPage(all []*Credential, req *ListCredentialsRequest) (*ListCredentialsR
 		}
 	}
 
-	filter := masks.NewResponseFilter(masks.WithFieldMask(req.GetReadMask()))
 	for _, c := range all[nextIndex:upperBound] {
 		res.Credentials = append(res.Credentials, filter.FilterClone(c).(*Credential))
 	}

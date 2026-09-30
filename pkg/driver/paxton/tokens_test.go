@@ -198,45 +198,117 @@ func TestClient_DeleteUserToken(t *testing.T) {
 	assert.Empty(t, (*requests)[0].body)
 }
 
-func TestClient_TokenCallerErrorsLeaveSystemCheck(t *testing.T) {
-	for _, status := range []int{http.StatusBadRequest, http.StatusNotFound} {
+// Token requests are made for callers, so neither their failures nor their successes reach the system check.
+func TestClient_TokenRequestsLeaveSystemCheck(t *testing.T) {
+	for _, status := range []int{http.StatusBadRequest, http.StatusForbidden, http.StatusNotFound, http.StatusInternalServerError} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
 			c, check, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
 				http.Error(w, "User not found", status)
 			})
+			pollErr := errors.New("events poll failed")
+			check.MarkFailed(pollErr)
 
 			_, err := c.GetUserTokens(context.Background(), 404)
 			var statusErr *StatusError
-			require.ErrorAs(t, err, &statusErr)
+			require.ErrorAs(t, err, &statusErr, "a %d should be a StatusError, 5xx included", status)
 			assert.Equal(t, status, statusErr.StatusCode)
 			assert.Contains(t, statusErr.Body, "User not found")
-			assert.NoError(t, check.lastFailure())
+			assert.Equal(t, pollErr, check.lastFailure())
+		})
+	}
+
+	t.Run("success", func(t *testing.T) {
+		c, check, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
+			writeJSON(w, http.StatusOK, []UserToken{})
+		})
+		pollErr := errors.New("events poll failed")
+		check.MarkFailed(pollErr)
+
+		_, err := c.GetUserTokens(context.Background(), 7)
+		require.NoError(t, err)
+		assert.Equal(t, pollErr, check.lastFailure(), "a successful token request mustn't clear a poll's fault")
+	})
+}
+
+// The polls go through Do, which marks the system check failed for any failure, 400 and 404 included.
+func TestClient_DoMarksSystemCheck(t *testing.T) {
+	for _, status := range []int{http.StatusBadRequest, http.StatusNotFound, http.StatusInternalServerError} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			c, check, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
+				http.Error(w, "nope", status)
+			})
+
+			_, err := c.GetUsers(context.Background())
+			var statusErr *StatusError
+			require.ErrorAs(t, err, &statusErr)
+			assert.Equal(t, status, statusErr.StatusCode)
+			assert.Equal(t, err, check.lastFailure())
 		})
 	}
 }
 
-func TestClient_TokenServerErrorMarksSystemCheckFailed(t *testing.T) {
-	// retryablehttp treats a 5xx as retryable, so once it gives up Do sees a transport
-	// error rather than a StatusError. Either way the system check must go red.
-	c, check, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "boom", http.StatusInternalServerError)
-	})
+func TestClient_GetUserTokens_emptyBody(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusNoContent} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			c, _, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(status)
+			})
+			got, err := c.GetUserTokens(context.Background(), 7)
+			require.NoError(t, err)
+			assert.Empty(t, got)
 
-	_, err := c.GetUserTokens(context.Background(), 7)
-	require.Error(t, err)
-	assert.Error(t, check.lastFailure())
+			// a single token can't be empty
+			_, err = c.GetUserToken(context.Background(), 7, 1)
+			assert.Error(t, err)
+		})
+	}
 }
 
-func TestClient_TokenAuthErrorMarksSystemCheckFailed(t *testing.T) {
-	c, check, _ := setupTokenClient(t, func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+// A caller with a deadline mustn't queue behind a token request that Net2 never answers.
+func TestClient_authStall(t *testing.T) {
+	release := make(chan struct{})
+	var authCalls atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/authorization/tokens", func(w http.ResponseWriter, r *http.Request) {
+		authCalls.Add(1)
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
 	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(func() { close(release) })
 
-	err := c.DeleteUserToken(context.Background(), 7, 42)
-	var statusErr *StatusError
-	require.ErrorAs(t, err, &statusErr)
-	assert.Equal(t, http.StatusForbidden, statusErr.StatusCode)
-	assert.Error(t, check.lastFailure())
+	check := &fakeSystemCheck{}
+	c := NewClientFromConfig(config.Root{BaseUrl: srv.URL}, zap.NewNop(), check)
+	c.cli.RetryMax = 0
+	c.cli.Logger = nil
+	c.authTimeout = 500 * time.Millisecond
+
+	// a poll, with no deadline, starts refreshing the token and holds the lock
+	pollDone := make(chan error, 1)
+	go func() {
+		_, err := c.GetUsers(context.Background())
+		pollDone <- err
+	}()
+	require.Eventually(t, func() bool { return authCalls.Load() == 1 }, time.Second, 5*time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	_, err := c.GetUserTokens(ctx, 7)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Less(t, time.Since(start), 400*time.Millisecond, "should give up at its own deadline, not wait for the token request")
+
+	// the stalled token request gives up by itself, and the poll reports it
+	select {
+	case err := <-pollDone:
+		assert.ErrorIs(t, err, errAuthTimeout)
+	case <-time.After(5 * time.Second):
+		t.Fatal("token request never timed out")
+	}
+	assert.ErrorIs(t, check.lastFailure(), errAuthTimeout)
 }
 
 func TestClient_TokenValidation(t *testing.T) {

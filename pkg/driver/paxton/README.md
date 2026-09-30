@@ -81,21 +81,37 @@ user token, and its `id` is the Net2 token ID.
   supplied by the caller.
 - Only `type`, `value` and `state` can be written. Net2 has nowhere to store validity times,
   issue levels, invitations or `more`, so setting any of them is `InvalidArgument`.
-- `state` maps onto `IsLost`: `LOST` sets it, `ACTIVE` (or unset) clears it. Other states are
-  `InvalidArgument`.
+- `state` maps onto `IsLost`: `LOST` sets it and `ACTIVE` clears it. Other states are
+  `InvalidArgument`. An unset state means `ACTIVE` on create and leaves the state as it was
+  on update, so leaving it out never re-activates a lost card.
 - Net2 only supports replacing a whole token, so `UpdateCredential` reads the token, applies
-  `update_mask` to it, and writes it all back.
+  `update_mask` to it, and writes it all back. Writes to one cardholder are serialised, so two
+  sc-bos callers can't undo each other's changes. Edits made in Net2 itself can still overlap.
 - Net2 errors map to gRPC codes: 404 is `NotFound`, 400 is `InvalidArgument`, and anything
-  else is `Unavailable`. A value that's already issued is `AlreadyExists`, unless this
-  cardholder already holds the same type and value (for example after a retried POST), in
-  which case the existing credential is returned. Error messages never include the value or
-  who holds it, and logs only include the token ID and type.
+  else is `Unavailable`. A value that's already issued is `AlreadyExists` on create and update,
+  unless a create finds this cardholder already holds the same type and value (for example
+  after a retried POST), in which case the existing credential is returned. A missing `id` is
+  `InvalidArgument`, and one that isn't a Net2 token ID is `NotFound`.
+- Without `allow_missing`, `DeleteCredential` checks the credential exists before deleting it,
+  so a DELETE that Net2 applied but answered with a 5xx, then retried, isn't reported as
+  `NotFound`.
+- Error messages never include the value or who holds it, and the driver only logs the token
+  ID and type. `Credential.value` is marked `debug_redact`, so when the auth policy logs a
+  request it has denied, the value shows as `[REDACTED]`.
+- Credential requests don't affect the driver's System Status Check. The background polls
+  report whether Net2 is reachable, and a caller's mistake or missing Net2 permission is the
+  caller's error rather than a fault.
 - A user created in Net2 only gets a device, and so this API, after the next cardholder
   refresh (`cardsInterval`, 5 minutes by default).
 - Card numbers can be cloned, so the default policy
   (`pkg/auth/policy/default/smartcore.bos.accesscredential.v1.rego`) denies this trait to
   viewers and to tenant `trait:read`/`trait:write` permissions. Admins, commissioners,
   operators and valid certificates are allowed.
+- That policy only applies on nodes that have it. A gateway forwards requests with its own
+  certificate, which this node trusts, so only turn `enableCredentialManagement` on once every
+  node that can proxy to this one runs a release with the policy file. A custom policy bundle
+  loaded with `policy.FromFS` needs its own copy of the file too, otherwise its generic rules
+  let viewers and tenants in.
 
 ## Managing user tokens (Go)
 
@@ -127,11 +143,13 @@ err = client.DeleteUserToken(ctx, userID, created.ID)
   nothing is assumed for any particular kind of credential.
 - `IsLost: true` disables the token but keeps its record in Net2. `DeleteUserToken`
   removes it entirely.
-- An empty `TokenValue` or unknown `TokenType` is rejected before anything is sent.
-- A non-2xx response from Net2 is a `*paxton.StatusError`; use `errors.As` to check
-  `StatusCode`, for example 404 for an unknown user or token. A 400 or 404 doesn't mark
-  the system check failed, since it means the request was wrong rather than Net2 being
-  unhealthy.
+- An empty `TokenValue` or unknown `TokenType` is rejected before anything is sent, with an
+  error wrapping `paxton.ErrInvalidToken`.
+- A non-2xx response from Net2 is a `*paxton.StatusError`, including a 5xx once retries run
+  out. Use `errors.As` to check `StatusCode`, for example 404 for an unknown user or token.
+- The token methods never update the system check passed to `NewClientFromConfig`. Their
+  errors are the caller's to handle. Only `Do` and `GetAccessToken`, which the driver's polls
+  and SignalR use, report to it.
 - Net2 rejects a token value that's already issued with a 400
   (`Card ... has already been issued`). This is also what a caller sees if a POST is
   retried after Net2 created the token but replied with a 5xx, so on a 400 from

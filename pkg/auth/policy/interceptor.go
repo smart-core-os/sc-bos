@@ -198,17 +198,14 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 	// Using protojson is important, not only because it's a better defined proto-json mapping, but also because json.Marshal doesn't handle
 	// messages created via the dynamicpb package.
 	if m, ok := input.Request.(proto.Message); ok {
-		jsonBytes, err := protojson.MarshalOptions{
-			AllowPartial:      true, // avoid errors, this is not part of an RPC flow
-			EmitDefaultValues: true, // make the policy files easier to write
-		}.Marshal(m)
+		jsonBytes, err := requestJSON(m)
 		if err != nil {
 			// Keep the original message, but let people know that things aren't quite right.
 			// We hope to never see this log message.
 			i.logger.Warn("failed to marshal proto message to json during policy check", zap.Error(err))
 		} else {
 			// Avoid a json.Unmarshal(map[string]any), which would be followed by a json.Marshal in rego.Eval anyway
-			input.Request = json.RawMessage(jsonBytes)
+			input.Request = jsonBytes
 		}
 	}
 
@@ -218,11 +215,13 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 		addr = p.Addr.String()
 	}
 	if err != nil {
-		i.logger.Debug("request blocked by policy",
-			zap.Any("attributes", input),
-			zap.String("addr", addr),
-			zap.Strings("queries", queries),
-		)
+		if ce := i.logger.Check(zap.DebugLevel, "request blocked by policy"); ce != nil {
+			ce.Write(
+				zap.Any("attributes", loggableAttributes(input, req)),
+				zap.String("addr", addr),
+				zap.Strings("queries", queries),
+			)
+		}
 	}
 	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
 	if isWriteMethod(method) && !isAuditExcluded(service, method) && !stream.Open {
@@ -293,6 +292,30 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	return creds, err
+}
+
+func requestJSON(m proto.Message) (json.RawMessage, error) {
+	return protojson.MarshalOptions{
+		AllowPartial:      true, // avoid errors, this is not part of an RPC flow
+		EmitDefaultValues: true, // make the policy files easier to write
+	}.Marshal(m)
+}
+
+// loggableAttributes returns input with the request replaced by a copy of req whose [debug_redact = true]
+// fields, such as credential values, are removed.
+// The policy still sees the whole request, only the log is redacted.
+func loggableAttributes(input Attributes, req any) Attributes {
+	m, ok := req.(proto.Message)
+	if !ok {
+		return input
+	}
+	jsonBytes, err := requestJSON(redacted(m))
+	if err != nil {
+		input.Request = nil // never fall back to the unredacted request
+		return input
+	}
+	input.Request = jsonBytes
+	return input
 }
 
 type InterceptorOption func(interceptor *Interceptor)

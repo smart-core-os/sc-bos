@@ -29,11 +29,16 @@ func (m *ModelServer) Unwrap() any {
 }
 
 func (m *ModelServer) GetCredential(_ context.Context, request *GetCredentialRequest) (*Credential, error) {
+	filter := masks.NewResponseFilter(masks.WithFieldMask(request.GetReadMask()))
+	// Filter panics on a path it can't follow, e.g. into the more map
+	if err := filter.Validate(&Credential{}); err != nil {
+		return nil, err
+	}
 	c, err := m.model.GetCredential(request.GetId())
 	if err != nil {
 		return nil, err
 	}
-	masks.NewResponseFilter(masks.WithFieldMask(request.GetReadMask())).Filter(c)
+	filter.Filter(c)
 	return c, nil
 }
 

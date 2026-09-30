@@ -361,24 +361,26 @@ test_access_credential_operator_Describe if {
     with input as user_request(access_credential_info_service, "DescribeCredential", {}, ["operator"])
 }
 
+# The denied tests check `allow == false` rather than `not allow`, which would also pass if allow were undefined.
+# An undefined allow sends the query up the hierarchy, where smartcore.allow lets viewers read
+# and smartcore.bos.allow lets trait:read and trait:write tenants in, so `default allow := false` is what these test.
+
 # Viewers can't see credential values.
 test_access_credential_viewer_List_denied if {
-  not data.smartcore.bos.accesscredential.v1.allow
+  data.smartcore.bos.accesscredential.v1.allow == false
     with input as user_request(access_credential_service, "ListCredentials", {}, ["viewer"])
 }
 
-# Tenant trait permissions are NOT sufficient — the package-level
-# `default allow := false` short-circuits the hierarchy before the blanket
-# smartcore.bos.allow trait:read/trait:write rules are ever reached.
+# Tenant trait permissions are not sufficient.
 test_access_credential_trait_write_Create_denied if {
-  not data.smartcore.bos.accesscredential.v1.allow
+  data.smartcore.bos.accesscredential.v1.allow == false
     with input as permission_request(access_credential_service, "CreateCredential", {}, ["trait:write"])
 }
 test_access_credential_trait_star_Create_denied if {
-  not data.smartcore.bos.accesscredential.v1.allow
+  data.smartcore.bos.accesscredential.v1.allow == false
     with input as permission_request(access_credential_service, "CreateCredential", {}, ["trait:*"])
 }
 test_access_credential_trait_read_Get_denied if {
-  not data.smartcore.bos.accesscredential.v1.allow
+  data.smartcore.bos.accesscredential.v1.allow == false
     with input as permission_request(access_credential_service, "GetCredential", {}, ["trait:read"])
 }

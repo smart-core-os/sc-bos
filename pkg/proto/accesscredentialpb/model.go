@@ -80,6 +80,9 @@ func (m *Model) DescribeCredential() *CredentialSupport {
 
 // GetCredential returns the credential with the given id.
 func (m *Model) GetCredential(id string) (*Credential, error) {
+	if id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	c, ok := m.byID[id]
@@ -101,8 +104,11 @@ func (m *Model) ListCredentials() []*Credential {
 }
 
 // CreateCredential stores a new credential, assigning it an id.
-// The id, kind and native_state of c are ignored.
+// The id, kind, native_state and invitation.status of c are ignored.
 func (m *Model) CreateCredential(c *Credential) (*Credential, error) {
+	if c == nil {
+		return nil, status.Error(codes.InvalidArgument, "credential is required")
+	}
 	c = proto.Clone(c).(*Credential)
 	c.Id = ""
 	c.NativeState = ""
@@ -125,10 +131,10 @@ func (m *Model) CreateCredential(c *Credential) (*Credential, error) {
 	case t.ValueSource != CredentialType_CALLER_SUPPLIED && c.Value == "":
 		c.Value = m.allocateValue()
 	}
-	if t.InvitationRequired && c.Invitation.GetEmail() == "" && c.Invitation.GetPhoneNumber() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "credential type %q requires an invitation", t.Id)
+	if err := checkState(c, t); err != nil {
+		return nil, err
 	}
-	if err := m.checkCommon(c, t); err != nil {
+	if err := m.checkStored(c, t); err != nil {
 		return nil, err
 	}
 
@@ -140,6 +146,7 @@ func (m *Model) CreateCredential(c *Credential) (*Credential, error) {
 
 // UpdateCredential updates the credential identified by c.id, applying only the fields in updateMask.
 // A nil updateMask updates all writable fields.
+// Output only fields are ignored, and an unset state leaves the state unchanged.
 func (m *Model) UpdateCredential(c *Credential, updateMask *fieldmaskpb.FieldMask) (*Credential, error) {
 	if c.GetId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "credential.id is required")
@@ -163,29 +170,29 @@ func (m *Model) UpdateCredential(c *Credential, updateMask *fieldmaskpb.FieldMas
 	// never let a merge change output only fields
 	updated.Id = old.Id
 	updated.NativeState = old.NativeState
-	if old.Invitation != nil && updated.Invitation != nil {
-		updated.Invitation.Status = old.Invitation.Status
+	if updated.Invitation != nil {
+		updated.Invitation.Status = old.Invitation.GetStatus()
 	}
 	if updated.State == Credential_STATE_UNSPECIFIED {
-		updated.State = Credential_ACTIVE
+		// treating unset as ACTIVE, as create does, would re-activate a lost card whenever a client left state out
+		updated.State = old.State
 	}
 
 	t, err := m.checkType(updated)
 	if err != nil {
 		return nil, err
 	}
-	if t.ValueSource == CredentialType_SYSTEM_ALLOCATED && updated.Value != old.Value {
+	// the system allocates values for this type, so they can't be edited or carried over from another type
+	if t.ValueSource == CredentialType_SYSTEM_ALLOCATED && updated.Value != "" &&
+		(updated.Value != old.Value || updated.Type != old.Type) {
 		return nil, status.Errorf(codes.InvalidArgument, "credential type %q does not accept a value", t.Id)
-	}
-	if updated.Value == "" {
-		return nil, status.Error(codes.InvalidArgument, "credential.value is required")
 	}
 	if updated.State != old.State || updated.Type != old.Type {
 		if err := checkState(updated, t); err != nil {
 			return nil, err
 		}
 	}
-	if err := m.checkDuplicate(updated); err != nil {
+	if err := m.checkStored(updated, t); err != nil {
 		return nil, err
 	}
 
@@ -196,6 +203,9 @@ func (m *Model) UpdateCredential(c *Credential, updateMask *fieldmaskpb.FieldMas
 // DeleteCredential removes the credential with the given id.
 // If allowMissing is false, deleting a credential that doesn't exist is a NotFound error.
 func (m *Model) DeleteCredential(id string, allowMissing bool) error {
+	if id == "" {
+		return status.Error(codes.InvalidArgument, "id is required")
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if _, ok := m.byID[id]; !ok {
@@ -222,12 +232,16 @@ func (m *Model) checkType(c *Credential) (*CredentialType, error) {
 	return t, nil
 }
 
-func (m *Model) checkCommon(c *Credential, t *CredentialType) error {
+// checkStored checks the rules every stored credential follows, however it was created or last updated.
+func (m *Model) checkStored(c *Credential, t *CredentialType) error {
 	if c.Value == "" {
 		return status.Error(codes.InvalidArgument, "credential.value is required")
 	}
-	if err := checkState(c, t); err != nil {
-		return err
+	if t.InvitationRequired && c.Invitation.GetEmail() == "" && c.Invitation.GetPhoneNumber() == "" {
+		return status.Errorf(codes.InvalidArgument, "credential type %q requires an invitation", t.Id)
+	}
+	if c.ActiveTime != nil && c.ExpireTime != nil && !c.ExpireTime.AsTime().After(c.ActiveTime.AsTime()) {
+		return status.Error(codes.InvalidArgument, "credential.expire_time must be after active_time")
 	}
 	return m.checkDuplicate(c)
 }
