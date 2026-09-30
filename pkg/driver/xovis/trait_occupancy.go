@@ -35,6 +35,11 @@ type occupancyServer struct {
 var errDataFormat = status.Error(codes.FailedPrecondition, "data received from sensor did not match expected format")
 
 func (o *occupancyServer) GetOccupancy(ctx context.Context, request *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
+	return o.read(ctx)
+}
+
+// read fetches the occupancy from the sensor and records it in OccupancyTotal.
+func (o *occupancyServer) read(ctx context.Context) (*occupancysensorpb.Occupancy, error) {
 	res, err := getLiveLogic(ctx, o.client, o.multiSensor, o.logicID, o.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -45,8 +50,14 @@ func (o *occupancyServer) GetOccupancy(ctx context.Context, request *occupancyse
 		return nil, errDataFormat
 	}
 
-	o.OccupancyTotal.Set(occupancy)
+	_, _ = o.OccupancyTotal.Set(occupancy)
 	return occupancy, nil
+}
+
+// watch polls the sensor, keeping OccupancyTotal current, until ctx is done.
+func (o *occupancyServer) watch(ctx context.Context) {
+	o.doPollInit()
+	_ = o.poll.Attach(ctx) // can't error
 }
 
 func (o *occupancyServer) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
@@ -164,6 +175,9 @@ func (o *occupancyServer) doPollInit() {
 			if err != nil {
 				// todo: log error
 				return
+			}
+			if occupancy := decodeOccupancyCounts(res.Logic.Counts); occupancy != nil {
+				_, _ = o.OccupancyTotal.Set(occupancy)
 			}
 			o.polls.Send(ctx, res)
 

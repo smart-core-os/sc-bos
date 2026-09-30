@@ -98,6 +98,11 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 			return err
 		}
 
+		// reads and watches are the live read and poll of each configured logic, for UDMI
+		var (
+			reads   []func(context.Context) error
+			watches []func(context.Context)
+		)
 		var occupancyVal *resource.Value
 		if dev.Occupancy != nil {
 			occupancy := &occupancyServer{
@@ -113,6 +118,11 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				node.HasTrait(trait.OccupancySensor),
 			)
 			occupancyVal = occupancy.OccupancyTotal
+			reads = append(reads, func(ctx context.Context) error {
+				_, err := occupancy.read(ctx)
+				return err
+			})
+			watches = append(watches, occupancy.watch)
 		}
 		var enterLeaveVal *resource.Value
 		if dev.EnterLeave != nil {
@@ -130,10 +140,28 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 				node.HasTrait(trait.EnterLeaveSensor),
 			)
 			enterLeaveVal = enterLeave.EnterLeaveTotal
+			reads = append(reads, func(ctx context.Context) error {
+				_, err := enterLeave.read(ctx)
+				return err
+			})
+			watches = append(watches, enterLeave.watch)
 		}
 
 		if enterLeaveVal != nil || occupancyVal != nil {
-			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix)
+			refresh := func(ctx context.Context) error {
+				for _, read := range reads {
+					if err := read(ctx); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+			watch := func(ctx context.Context) {
+				for _, w := range watches {
+					w(ctx)
+				}
+			}
+			server := newUdmiServiceServer(d.logger.Named("udmiServiceServer"), enterLeaveVal, occupancyVal, dev.UDMITopicPrefix, refresh, watch)
 			d.udmiServers = append(d.udmiServers, server)
 			features = append(features,
 				node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(server)),

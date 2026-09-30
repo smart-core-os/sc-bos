@@ -33,29 +33,29 @@ type enterLeaveServer struct {
 }
 
 func (e *enterLeaveServer) GetEnterLeaveEvent(ctx context.Context, request *enterleavesensorpb.GetEnterLeaveEventRequest) (*enterleavesensorpb.EnterLeaveEvent, error) {
+	return e.read(ctx)
+}
+
+// read fetches the enter and leave totals from the sensor and records them in EnterLeaveTotal.
+func (e *enterLeaveServer) read(ctx context.Context) (*enterleavesensorpb.EnterLeaveEvent, error) {
 	res, err := getLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	_, forwardCount, fwOK := findCountByName(res.Logic.Counts, "fw")
-	_, backwardCount, bwOK := findCountByName(res.Logic.Counts, "bw")
-	if !fwOK || !bwOK {
-		return nil, status.Error(codes.FailedPrecondition,
-			"Counts don't match expected structure; check that this is an InOut logic")
+	totals := decodeEnterLeaveTotals(res.Logic.Counts)
+	if totals == nil {
+		return nil, errNotInOutLogic
 	}
 
-	forwardCount32, backwardCount32 := int32(forwardCount), int32(backwardCount)
+	_, _ = e.EnterLeaveTotal.Set(totals)
+	return totals, nil
+}
 
-	e.EnterLeaveTotal.Set(&enterleavesensorpb.EnterLeaveEvent{
-		EnterTotal: &forwardCount32,
-		LeaveTotal: &backwardCount32,
-	})
-
-	return &enterleavesensorpb.EnterLeaveEvent{
-		EnterTotal: &forwardCount32,
-		LeaveTotal: &backwardCount32,
-	}, nil
+// watch polls the sensor, keeping EnterLeaveTotal current, until ctx is done.
+func (e *enterLeaveServer) watch(ctx context.Context) {
+	e.doPollInit()
+	_ = e.poll.Attach(ctx) // can't error
 }
 
 func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *enterleavesensorpb.ResetEnterLeaveTotalsRequest) (*enterleavesensorpb.ResetEnterLeaveTotalsResponse, error) {
@@ -69,20 +69,17 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 		return status.Error(codes.Unavailable, err.Error())
 	}
 
-	fwID, forwardCount, fwOK := findCountByName(res.Logic.Counts, "fw")
-	bwID, backwardCount, bwOK := findCountByName(res.Logic.Counts, "bw")
-	if !fwOK || !bwOK {
-		return status.Error(codes.FailedPrecondition,
-			"Counts don't match expected structure; check that this is an InOut logic")
+	totals := decodeEnterLeaveTotals(res.Logic.Counts)
+	if totals == nil {
+		return errNotInOutLogic
 	}
+	// push data identifies counts by id rather than name
+	fwID, _, _ := findCountByName(res.Logic.Counts, "fw")
+	bwID, _, _ := findCountByName(res.Logic.Counts, "bw")
 
 	var lastSent *enterleavesensorpb.EnterLeaveEvent
 	if !request.UpdatesOnly {
-		enterTotal, leaveTotal := int32(forwardCount), int32(backwardCount)
-		elEvent := &enterleavesensorpb.EnterLeaveEvent{
-			EnterTotal: &enterTotal,
-			LeaveTotal: &leaveTotal,
-		}
+		elEvent := totals
 		err := server.Send(&enterleavesensorpb.PullEnterLeaveEventsResponse{Changes: []*enterleavesensorpb.PullEnterLeaveEventsResponse_Change{
 			{
 				Name:            request.Name,
@@ -100,8 +97,8 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 	accumulator := countAccumulator{
 		forwardCountID:     fwID,
 		backwardCountID:    bwID,
-		forwardCountValue:  forwardCount,
-		backwardCountValue: backwardCount,
+		forwardCountValue:  int(totals.GetEnterTotal()),
+		backwardCountValue: int(totals.GetLeaveTotal()),
 	}
 	ctx := server.Context()
 	e.doPollInit()
@@ -152,8 +149,8 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 					ChangeTime: timestamppb.New(event.time),
 					EnterLeaveEvent: &enterleavesensorpb.EnterLeaveEvent{
 						Direction:  event.direction,
-						EnterTotal: &enterTotal,
-						LeaveTotal: &leaveTotal,
+						EnterTotal: new(enterTotal),
+						LeaveTotal: new(leaveTotal),
 					},
 				})
 			}
@@ -186,7 +183,7 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 				if c > accumulator.backwardCountValue {
 					direction = enterleavesensorpb.EnterLeaveEvent_LEAVE
 				}
-				if c < accumulator.forwardCountValue {
+				if c < accumulator.backwardCountValue {
 					reset = true
 				}
 				leaveTotal = c
@@ -230,9 +227,29 @@ func (e *enterLeaveServer) doPollInit() {
 				// todo: log error
 				return
 			}
+			if totals := decodeEnterLeaveTotals(res.Logic.Counts); totals != nil {
+				_, _ = e.EnterLeaveTotal.Set(totals)
+			}
 			e.polls.Send(ctx, res)
 		}, 30*time.Second)
 	})
+}
+
+var errNotInOutLogic = status.Error(codes.FailedPrecondition,
+	"Counts don't match expected structure; check that this is an InOut logic")
+
+// decodeEnterLeaveTotals returns the totals of an InOut logic's counts, or nil if
+// the counts don't have the fw and bw counts an InOut logic has.
+func decodeEnterLeaveTotals(counts []Count) *enterleavesensorpb.EnterLeaveEvent {
+	_, forwardCount, fwOK := findCountByName(counts, "fw")
+	_, backwardCount, bwOK := findCountByName(counts, "bw")
+	if !fwOK || !bwOK {
+		return nil
+	}
+	return &enterleavesensorpb.EnterLeaveEvent{
+		EnterTotal: new(int32(forwardCount)),
+		LeaveTotal: new(int32(backwardCount)),
+	}
 }
 
 func findLogicRecords(data *LogicsPushData, logicID int) (records []LogicRecord, ok bool) {
