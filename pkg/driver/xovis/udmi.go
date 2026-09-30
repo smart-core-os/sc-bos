@@ -46,17 +46,28 @@ type udmiServiceServer struct {
 
 	logger *zap.Logger
 
+	// enterLeave and occupancy are nil when the device doesn't have that logic configured.
 	enterLeave      *resource.Value
 	occupancy       *resource.Value
 	udmiTopicPrefix string
+
+	// refresh reads every configured logic from the sensor, writing the result
+	// through the values above. GetExportMessage calls it so that a pointset it
+	// returns always follows a real read.
+	refresh func(context.Context) error
+	// watch keeps the values above current until ctx is done. Nothing else feeds
+	// them, so PullExportMessages has nothing to send without it.
+	watch func(context.Context)
 }
 
-func newUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string) *udmiServiceServer {
+func newUdmiServiceServer(logger *zap.Logger, e *resource.Value, o *resource.Value, udmiPrefix string, refresh func(context.Context) error, watch func(context.Context)) *udmiServiceServer {
 	return &udmiServiceServer{
 		logger:          logger,
 		enterLeave:      e,
 		occupancy:       o,
 		udmiTopicPrefix: udmiPrefix,
+		refresh:         refresh,
+		watch:           watch,
 	}
 }
 
@@ -69,8 +80,40 @@ func (u *udmiServiceServer) OnMessage(_ context.Context, _ *udmipb.OnMessageRequ
 	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (u *udmiServiceServer) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+// GetExportMessage reads the sensor and returns a full pointset of every configured
+// logic, unlike PullExportMessages which only carries the logic that changed.
+// It returns Unavailable if the sensor couldn't be read, or the read's own status,
+// such as FailedPrecondition for a logic of the wrong type, or Canceled/DeadlineExceeded
+// if ctx ends first.
+func (u *udmiServiceServer) GetExportMessage(ctx context.Context, _ *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
+	if u.refresh == nil {
+		return nil, status.Error(codes.Unavailable, "sensor not polled")
+	}
+	if err := u.refresh(ctx); err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Errorf(codes.Unavailable, "read sensor: %v", err)
+	}
+
+	eventPoints := EventPoints{
+		DeviceType: &EventPoint[string]{PresentValue: DriverName},
+	}
+	if u.enterLeave != nil {
+		appendEnterLeaveEventPoints(u.enterLeave.Get().(*enterleavesensorpb.EnterLeaveEvent), &eventPoints)
+	}
+	if u.occupancy != nil {
+		appendOccupancyEventPoints(u.occupancy.Get().(*occupancysensorpb.Occupancy), &eventPoints)
+	}
+
+	eventEnc, err := json.Marshal(newPointsetMessage(eventPoints, false))
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to encode UDMI message")
+	}
+	return &udmipb.MqttMessage{Topic: u.pointsetTopic(), Payload: string(eventEnc)}, nil
 }
 
 func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
@@ -89,6 +132,12 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 		occupancyChanges = u.occupancy.Pull(ctx,
 			resource.WithUpdatesOnly(true),
 		)
+	}
+
+	// Subscribe before starting the poll, which could otherwise change the values
+	// before we're listening.
+	if u.watch != nil {
+		u.watch(ctx)
 	}
 
 	for {
@@ -120,7 +169,7 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 				appendOccupancyEventPoints(temperature, &eventPoints)
 			}
 		}
-		msg := getPointsetMessage(eventPoints)
+		msg := newPointsetMessage(eventPoints, true)
 		eventEnc, err := json.Marshal(msg)
 		if err != nil {
 			return status.Error(codes.Internal, "failed to encode UDMI message")
@@ -129,7 +178,7 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 		err = server.Send(&udmipb.PullExportMessagesResponse{
 			Name: request.GetName(),
 			Message: &udmipb.MqttMessage{
-				Topic:   path.Join(u.udmiTopicPrefix, "events/pointset"),
+				Topic:   u.pointsetTopic(),
 				Payload: string(eventEnc),
 			},
 		})
@@ -139,9 +188,18 @@ func (u *udmiServiceServer) PullExportMessages(request *udmipb.PullExportMessage
 	}
 }
 
+func (u *udmiServiceServer) pointsetTopic() string {
+	return path.Join(u.udmiTopicPrefix, "events/pointset")
+}
+
 func appendEnterLeaveEventPoints(e *enterleavesensorpb.EnterLeaveEvent, eventPoints *EventPoints) {
-	eventPoints.EnterCount = &EventPoint[int32]{PresentValue: *e.EnterTotal}
-	eventPoints.LeaveCount = &EventPoint[int32]{PresentValue: *e.LeaveTotal}
+	// the totals are unset until the sensor has been read
+	if e.EnterTotal != nil {
+		eventPoints.EnterCount = &EventPoint[int32]{PresentValue: *e.EnterTotal}
+	}
+	if e.LeaveTotal != nil {
+		eventPoints.LeaveCount = &EventPoint[int32]{PresentValue: *e.LeaveTotal}
+	}
 }
 
 func appendOccupancyEventPoints(o *occupancysensorpb.Occupancy, eventPoints *EventPoints) {
@@ -149,11 +207,13 @@ func appendOccupancyEventPoints(o *occupancysensorpb.Occupancy, eventPoints *Eve
 	eventPoints.OccupancyState = &EventPoint[string]{PresentValue: o.State.String()}
 }
 
-func getPointsetMessage(points EventPoints) PointsetEventMessage {
+// newPointsetMessage wraps points in a pointset event. partial marks a message that
+// carries only the points that changed, rather than every configured point.
+func newPointsetMessage(points EventPoints, partial bool) PointsetEventMessage {
 	return PointsetEventMessage{
 		Version:       PointsetVersion,
 		Timestamp:     time.Now(),
-		PartialUpdate: true,
+		PartialUpdate: partial,
 		Points:        points,
 	}
 }
