@@ -3,6 +3,9 @@ package healthpb
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -221,4 +224,69 @@ type customError struct {
 
 func (e *customError) Error() string {
 	return e.msg
+}
+
+// TestCheckBase_concurrent drives one check from several goroutines, as drivers do when
+// separate polls share a device's check. Run with -race.
+func TestCheckBase_concurrent(t *testing.T) {
+	var (
+		lastMu   sync.Mutex
+		last     *HealthCheck
+		disposed atomic.Bool
+	)
+	reg := NewRegistry(WithOnCheckUpdate(func(_ string, c *HealthCheck) {
+		if disposed.Load() {
+			t.Error("commit after Dispose returned")
+		}
+		lastMu.Lock()
+		last = c
+		lastMu.Unlock()
+	}))
+	fc, err := reg.ForOwner("owner").NewFaultCheck("dev", &HealthCheck{Id: "comms"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	const n = 100
+	updaters := []func(i int){
+		func(i int) {
+			if i%2 == 0 {
+				fc.UpdateReliability(ctx, &HealthCheck_Reliability{State: HealthCheck_Reliability_RELIABLE})
+			} else {
+				fc.UpdateReliability(ctx, &HealthCheck_Reliability{State: HealthCheck_Reliability_NO_RESPONSE})
+			}
+		},
+		func(i int) { fc.SetFault(&HealthCheck_Error{SummaryText: fmt.Sprint("set ", i)}) },
+		func(i int) { fc.AddOrUpdateFault(&HealthCheck_Error{SummaryText: fmt.Sprint("add ", i%3)}) },
+		func(i int) { fc.UpdateMetadata(ctx, &HealthCheck{DisplayName: fmt.Sprint("name ", i)}) },
+		func(int) { reg.GetCheck("dev", "owner:comms").GetReliability().GetState() },
+	}
+	runAll := func() *sync.WaitGroup {
+		var wg sync.WaitGroup
+		for _, f := range updaters {
+			wg.Go(func() {
+				for i := range n {
+					f(i)
+				}
+			})
+		}
+		return &wg
+	}
+
+	runAll().Wait()
+	// commits reach the registry in order, so the last one seen is the current state
+	lastMu.Lock()
+	gotLast := last
+	lastMu.Unlock()
+	if got := reg.GetCheck("dev", "owner:comms"); got != gotLast {
+		t.Errorf("last commit isn't the current state:\ncurrent %v\nlast    %v", got, gotLast)
+	}
+
+	wg := runAll()
+	fc.Dispose()
+	disposed.Store(true)
+	wg.Wait()
+	if got := reg.GetCheck("dev", "owner:comms"); got != nil {
+		t.Errorf("check still registered after Dispose: %v", got)
+	}
 }

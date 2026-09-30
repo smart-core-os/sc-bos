@@ -3,6 +3,7 @@ package healthpb
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,7 +12,10 @@ import (
 )
 
 // checkBase provides common functionality for health checks of different types.
+// It is safe for concurrent use.
 type checkBase struct {
+	// mu guards check and serialises onCommit calls, so they see commits in order.
+	mu    sync.Mutex
 	check *HealthCheck // nil when disposed
 	lifecycle
 }
@@ -27,6 +31,8 @@ type lifecycle struct {
 
 // write commits changes made by f as an atomic update.
 func (cb *checkBase) write(f func(dst *HealthCheck)) {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
 	if cb.check == nil {
 		return // disposed
 	}
@@ -124,13 +130,26 @@ func (cb *checkBase) UpdateReliability(_ context.Context, nr *HealthCheck_Reliab
 	})
 }
 
+// load returns the current state of the check, or nil if disposed.
+// The returned value must not be modified.
+func (cb *checkBase) load() *HealthCheck {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	return cb.check
+}
+
 // Dispose signals that no more updates to the check will be made.
+// Updates made after Dispose are ignored.
 func (cb *checkBase) Dispose() {
-	if cb.check == nil {
-		return // already disposed
-	}
+	cb.mu.Lock()
 	c := cb.check
 	cb.check = nil
+	cb.mu.Unlock()
+	if c == nil {
+		return // already disposed
+	}
+	// onDispose takes the registry lock, which is held while calling load,
+	// so call it without holding mu.
 	if cb.onDispose != nil {
 		cb.onDispose(c)
 	}
