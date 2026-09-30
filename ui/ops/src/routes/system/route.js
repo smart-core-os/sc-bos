@@ -82,6 +82,17 @@ export default [
             rolesRequired: ['admin', 'superAdmin']
           }
         }
+      },
+      {
+        path: 'audit',
+        components: {
+          default: () => import('./components/pages/AuditLogsPage.vue')
+        },
+        meta: {
+          authentication: {
+            rolesRequired: ['admin', 'superAdmin']
+          }
+        }
       }
     ],
     meta: {
