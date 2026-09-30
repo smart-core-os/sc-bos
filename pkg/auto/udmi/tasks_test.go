@@ -7,13 +7,13 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 // fakeMessage is an mqtt.Message with a fixed topic and payload.
@@ -26,19 +26,23 @@ type fakeMessage struct {
 func (m fakeMessage) Topic() string   { return m.topic }
 func (m fakeMessage) Payload() []byte { return m.payload }
 
-// fakeUdmiClient records OnMessage calls and returns err from each.
-type fakeUdmiClient struct {
-	udmipb.UdmiServiceClient
+// fakeUdmiServer records OnMessage calls and returns err from each.
+type fakeUdmiServer struct {
+	udmipb.UnimplementedUdmiServiceServer
 	err   error
 	calls []*udmipb.OnMessageRequest
 }
 
-func (c *fakeUdmiClient) OnMessage(_ context.Context, req *udmipb.OnMessageRequest, _ ...grpc.CallOption) (*udmipb.OnMessageResponse, error) {
-	c.calls = append(c.calls, req)
-	if c.err != nil {
-		return nil, c.err
+func (s *fakeUdmiServer) OnMessage(_ context.Context, req *udmipb.OnMessageRequest) (*udmipb.OnMessageResponse, error) {
+	s.calls = append(s.calls, req)
+	if s.err != nil {
+		return nil, s.err
 	}
 	return &udmipb.OnMessageResponse{}, nil
+}
+
+func (s *fakeUdmiServer) client() udmipb.UdmiServiceClient {
+	return udmipb.NewUdmiServiceClient(wrap.ServerToClient(udmipb.UdmiService_ServiceDesc, s))
 }
 
 // captureAuditor records every entry it is given.
@@ -79,14 +83,14 @@ func deliverMessages(t *testing.T, client udmipb.UdmiServiceClient, auditor *cap
 }
 
 func TestHandleTopicChanges_Audit(t *testing.T) {
-	client := &fakeUdmiClient{}
+	srv := &fakeUdmiServer{}
 	auditor := &captureAuditor{}
-	deliverMessages(t, client, auditor, map[string][]string{
+	deliverMessages(t, srv.client(), auditor, map[string][]string{
 		"site/dev1/config": {`{"a":1}`, `{"a":2}`},
 	})
 
-	if len(client.calls) != 2 {
-		t.Fatalf("OnMessage called %d times, want 2", len(client.calls))
+	if len(srv.calls) != 2 {
+		t.Fatalf("OnMessage called %d times, want 2", len(srv.calls))
 	}
 	if len(auditor.entries) != 2 {
 		t.Fatalf("got %d audit entries, want one per message (2)", len(auditor.entries))
@@ -122,25 +126,26 @@ func TestHandleTopicChanges_Audit(t *testing.T) {
 // A message the driver rejects is still a write attempt and must be audited.
 func TestHandleTopicChanges_AuditFailed(t *testing.T) {
 	wantErr := status.Error(codes.InvalidArgument, "bad payload")
-	client := &fakeUdmiClient{err: wantErr}
+	srv := &fakeUdmiServer{err: wantErr}
 	auditor := &captureAuditor{}
-	deliverMessages(t, client, auditor, map[string][]string{
+	deliverMessages(t, srv.client(), auditor, map[string][]string{
 		"site/dev1/config": {`not json`},
 	})
 
 	if len(auditor.entries) != 1 {
 		t.Fatalf("got %d audit entries, want 1", len(auditor.entries))
 	}
-	if got := auditor.entries[0].Err; got != wantErr {
-		t.Errorf("err = %v, want %v", got, wantErr)
+	// compare by status, as the error has crossed the client/server boundary
+	if got := status.Convert(auditor.entries[0].Err); got.Code() != codes.InvalidArgument || got.Message() != "bad payload" {
+		t.Errorf("err = %v, want %v", auditor.entries[0].Err, wantErr)
 	}
 }
 
 func TestHandleTopicChanges_AuditTruncatesPayload(t *testing.T) {
 	payload := strings.Repeat("x", 2000)
-	client := &fakeUdmiClient{}
+	srv := &fakeUdmiServer{}
 	auditor := &captureAuditor{}
-	deliverMessages(t, client, auditor, map[string][]string{
+	deliverMessages(t, srv.client(), auditor, map[string][]string{
 		"site/dev1/config": {payload},
 	})
 
@@ -158,18 +163,18 @@ func TestHandleTopicChanges_AuditTruncatesPayload(t *testing.T) {
 		t.Errorf("payloadTruncated = %q, want %q", f["payloadTruncated"], "true")
 	}
 	// the driver still gets the whole payload
-	if got := client.calls[0].GetMessage().GetPayload(); got != payload {
+	if got := srv.calls[0].GetMessage().GetPayload(); got != payload {
 		t.Errorf("OnMessage payload was %d bytes, want %d", len(got), len(payload))
 	}
 }
 
 func TestHandleTopicChanges_NilAuditor(t *testing.T) {
-	client := &fakeUdmiClient{}
-	deliverMessages(t, client, nil, map[string][]string{
+	srv := &fakeUdmiServer{}
+	deliverMessages(t, srv.client(), nil, map[string][]string{
 		"site/dev1/config": {`{}`},
 	})
-	if len(client.calls) != 1 {
-		t.Errorf("OnMessage called %d times, want 1", len(client.calls))
+	if len(srv.calls) != 1 {
+		t.Errorf("OnMessage called %d times, want 1", len(srv.calls))
 	}
 }
 

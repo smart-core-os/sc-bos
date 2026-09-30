@@ -41,6 +41,10 @@ type Interceptor struct {
 	auditQueue chan auditRecord
 	auditDone  chan struct{}
 	closeOnce  sync.Once
+	// auditMu guards sends on auditQueue against it being closed. Senders hold the read lock
+	// for the send; Close takes the write lock to set auditClosed and close the queue.
+	auditMu     sync.RWMutex
+	auditClosed bool
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -61,10 +65,14 @@ func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
 
 // Close drains and shuts down the background audit worker. Safe to call more than once.
 // Must be called before closing or syncing the audit logger.
+// Audit entries written after Close are dropped.
 func (i *Interceptor) Close() error {
 	if i.auditQueue != nil {
 		i.closeOnce.Do(func() {
+			i.auditMu.Lock()
+			i.auditClosed = true
 			close(i.auditQueue)
+			i.auditMu.Unlock()
 			<-i.auditDone
 		})
 	}
@@ -309,7 +317,7 @@ type IngressEntry struct {
 }
 
 // AuditIngress records e. No principal is known, so the entry carries no subject, cert or token.
-// Fields cannot override the standard audit fields; any that collide are dropped.
+// Fields cannot override the standard audit fields; those take precedence.
 // Nil-safe; a no-op when no audit sink is configured.
 func (i *Interceptor) AuditIngress(e IngressEntry) {
 	if i == nil || i.auditQueue == nil {
@@ -321,18 +329,16 @@ func (i *Interceptor) AuditIngress(e IngressEntry) {
 	if e.Err != nil {
 		outcome = outcomeFailed
 	}
+	// Later fields win, so the standard fields go after e.Fields.
 	extra := make([]auditField, 0, 3+len(e.Fields))
+	for _, k := range slices.Sorted(maps.Keys(e.Fields)) {
+		extra = append(extra, auditField{k, e.Fields[k]})
+	}
 	extra = append(extra,
 		auditField{"service", e.Service},
 		auditField{"method", e.Method},
 		auditField{"ingress", e.Ingress},
 	)
-	for _, k := range slices.Sorted(maps.Keys(e.Fields)) {
-		if reservedIngressFields[k] {
-			continue
-		}
-		extra = append(extra, auditField{k, e.Fields[k]})
-	}
 	i.writeAuditEntry(outcome, nil, e.Peer, extra...)
 }
 
@@ -409,14 +415,6 @@ const (
 	outcomeFailed  = "failed"
 )
 
-// reservedIngressFields are the fields AuditIngress and doWriteAuditEntry set themselves, which
-// IngressEntry.Fields may not override.
-var reservedIngressFields = map[string]bool{
-	"outcome": true, "peer": true, "subject": true, "name": true,
-	"cert": true, "certSubject": true, "token": true,
-	"service": true, "method": true, "ingress": true,
-}
-
 // auditField is a protocol-specific key/value pair appended to every audit entry.
 type auditField struct {
 	key   string
@@ -459,6 +457,13 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 			rec.name = creds.tokenClaims.Name
 		}
 	}
+	i.auditMu.RLock()
+	defer i.auditMu.RUnlock()
+	if i.auditClosed {
+		// e.g. an MQTT write landing during shutdown, after the audit worker has stopped.
+		i.logger.Debug("dropping audit entry written after Close", zap.String("outcome", rec.outcome))
+		return
+	}
 	i.auditQueue <- rec
 }
 
@@ -470,6 +475,10 @@ func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 		lvl = logpb.Level_LEVEL_WARN
 	}
 	fields := make(map[string]string, 7+len(rec.extra))
+	// The standard fields are set last so extra fields cannot override them.
+	for _, f := range rec.extra {
+		fields[f.key] = f.value
+	}
 	fields["outcome"] = rec.outcome
 	fields["peer"] = rec.addr
 	fields["subject"] = rec.subject
@@ -477,9 +486,6 @@ func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 	fields["cert"] = strconv.FormatBool(rec.certValid)
 	fields["certSubject"] = rec.certSubject
 	fields["token"] = strconv.FormatBool(rec.hasToken)
-	for _, f := range rec.extra {
-		fields[f.key] = f.value
-	}
 	i.auditSink.Write(&logpb.LogMessage{
 		Timestamp: timestamppb.New(rec.ts),
 		Level:     lvl,

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"sync"
+	"time"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -363,6 +364,8 @@ func TestInterceptor_AuditIngress(t *testing.T) {
 			// must not be able to override the standard fields
 			"outcome": "allowed",
 			"subject": "someone",
+			"service": "spoofed.Service",
+			"ingress": "grpc",
 		},
 	})
 	interceptor.Close() // drain the async audit queue before asserting
@@ -429,4 +432,34 @@ func TestInterceptor_AuditIngress_NoSink(t *testing.T) {
 
 	var nilInterceptor *Interceptor
 	nilInterceptor.AuditIngress(e)
+}
+
+// Writes can race Close during shutdown, e.g. MQTT handlers still running after the gRPC server
+// has stopped. They must be dropped rather than sent on the closed audit queue.
+func TestInterceptor_AuditAfterClose(t *testing.T) {
+	for range 20 {
+		sink := &captureSink{}
+		interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+		e := IngressEntry{Ingress: "mqtt", Service: "s", Method: "m"}
+
+		stop := make(chan struct{})
+		var wg sync.WaitGroup
+		for range 8 {
+			wg.Go(func() {
+				for {
+					select {
+					case <-stop:
+						return
+					default:
+						interceptor.AuditIngress(e)
+					}
+				}
+			})
+		}
+		time.Sleep(time.Millisecond) // let the writers get going before closing
+		interceptor.Close()
+		interceptor.AuditIngress(e) // after Close, from this goroutine too
+		close(stop)
+		wg.Wait()
+	}
 }
