@@ -35,6 +35,7 @@ func newInsecureClient(host string, username string, password string) *client {
 			Path:   "/api/v5",
 		},
 		Client: &http.Client{
+			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
@@ -121,8 +122,8 @@ type Count struct {
 	Value int    `json:"value"`
 }
 
-func doGet(conn *client, target any, endpoint string) error {
-	req := conn.newRequest("GET", endpoint)
+func doGet(ctx context.Context, conn *client, target any, endpoint string) error {
+	req := conn.newRequest("GET", endpoint).WithContext(ctx)
 	res, err := conn.Client.Do(req)
 	if err != nil {
 		return err
@@ -131,8 +132,8 @@ func doGet(conn *client, target any, endpoint string) error {
 	return err
 }
 
-func doPost(conn *client, target any, endpoint string, body any) error {
-	req := conn.newRequest("POST", endpoint)
+func doPost(ctx context.Context, conn *client, target any, endpoint string, body any) error {
+	req := conn.newRequest("POST", endpoint).WithContext(ctx)
 	if body != nil {
 		req.Header.Add("Content-Type", "application/json")
 		bs, err := json.Marshal(body)
@@ -152,9 +153,9 @@ func doPost(conn *client, target any, endpoint string, body any) error {
 func getLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int, fc *healthpb.FaultCheck) (res LiveLogicResponse, err error) {
 
 	if multiSensor {
-		err = doGet(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d", id))
+		err = doGet(ctx, conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d", id))
 	} else {
-		err = doGet(conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d", id))
+		err = doGet(ctx, conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d", id))
 	}
 
 	updateReliability(ctx, fc, err)
@@ -165,9 +166,9 @@ func resetLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int,
 	var res []byte
 	var err error
 	if multiSensor {
-		err = doPost(conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d/reset", id), nil)
+		err = doPost(ctx, conn, &res, fmt.Sprintf("/multisensor/data/live/logics/%d/reset", id), nil)
 	} else {
-		err = doPost(conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d/reset", id), nil)
+		err = doPost(ctx, conn, &res, fmt.Sprintf("/singlesensor/data/live/logics/%d/reset", id), nil)
 	}
 
 	updateReliability(ctx, fc, err)
@@ -175,10 +176,15 @@ func resetLiveLogic(ctx context.Context, conn *client, multiSensor bool, id int,
 }
 
 func updateReliability(ctx context.Context, fc *healthpb.FaultCheck, err error) {
+	// A request abandoned by its caller says nothing about the device.
+	if ctx.Err() != nil {
+		return
+	}
 	if err != nil {
 		h := noResponse
 		var unsupportedTypeErr *json.UnmarshalTypeError
-		if errors.Is(err, unsupportedTypeErr) {
+		var syntaxErr *json.SyntaxError
+		if errors.As(err, &unsupportedTypeErr) || errors.As(err, &syntaxErr) {
 			h = badResponse
 		}
 		fc.UpdateReliability(ctx, h)
