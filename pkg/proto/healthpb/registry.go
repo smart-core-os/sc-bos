@@ -94,7 +94,7 @@ func (r *Registry) GetCheck(name, id string) *HealthCheck {
 	if !ok {
 		return nil
 	}
-	return c.check
+	return c.load()
 }
 
 // ForOwner returns a Checks instance that can create checks owned by the given owner.
