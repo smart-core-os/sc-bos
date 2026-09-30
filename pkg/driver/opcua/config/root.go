@@ -136,19 +136,12 @@ const (
 	aggressiveInterval = 100 * time.Millisecond
 )
 
-// validateMonitoring rejects monitoring parameters the server cannot act on sensibly.
-// A non-positive interval is the case worth failing on: OPC UA reads a sampling interval of 0
-// as "sample as fast as you practicably can", so a config asking for "0s" quietly opts into
-// the fastest rate the server will run and is the usual way queue overflow starts. Wanting the
-// fastest available rate is a legitimate thing to want, but it should be a deliberate choice
-// expressed as a real duration rather than something a zero value falls into.
+// validateMonitoring rejects intervals that OPC UA cannot carry as configured.
+// The request holds intervals as integer milliseconds, so anything finer would be silently
+// truncated. An interval of 0 means "as fast as possible", which should not be reached by
+// accident, so it is rejected too.
 //
-// An interval finer than a millisecond is the same case wearing a disguise: the request only
-// carries whole milliseconds, so "500us" would be truncated to that same 0 on the way out.
-// Requiring a whole number of milliseconds shuts that door and makes the conversion exact.
-//
-// ParseConfig defaults the absent fields before calling this, so both interval pointers are
-// set by the time it runs and only an explicit value reaches it.
+// ParseConfig applies the defaults before calling this, so both interval pointers are set.
 func (c Conn) validateMonitoring() error {
 	if err := validateInterval("subscriptionInterval", c.SubscriptionInterval.Duration); err != nil {
 		return fmt.Errorf("%w; omit it to publish every %s", err, DefaultSubscriptionInterval)
@@ -159,11 +152,7 @@ func (c Conn) validateMonitoring() error {
 	return nil
 }
 
-// validateInterval rejects an interval the request cannot carry faithfully.
-// Both intervals reach the server as a count of whole milliseconds — Client.Subscribe
-// converts the sampling interval, gopcua converts the publishing interval — and both
-// conversions truncate, so anything finer is silently altered and anything under a
-// millisecond arrives as 0, which is the spec's "use the fastest practical rate".
+// validateInterval requires d to be a positive whole number of milliseconds.
 func validateInterval(name string, d time.Duration) error {
 	if d <= 0 {
 		return fmt.Errorf("%s must be positive, got %s", name, d)

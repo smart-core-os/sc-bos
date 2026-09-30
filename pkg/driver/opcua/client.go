@@ -81,17 +81,11 @@ func (c *Client) Subscribe(ctx context.Context, nodeId *ua.NodeID) (<-chan *opcu
 	return notifyCh, nil
 }
 
-// warnIfRevised reports monitoring parameters the server declined to honour.
-// A server is free to revise what we ask for, typically clamping a sampling interval to its
-// MinSupportedSampleRate or a queue to the depth it is willing to hold, and it tells us what
-// it settled on rather than failing. That revision is the authoritative version of the
-// config-time warnings in config.Conn.MonitoringWarnings, so it is worth surfacing: a queue
-// revised down below a publishing cycle's worth of samples is exactly the setup that makes
-// the server flag every value with the Overflow info bit. A revision that can only help,
-// meanwhile, is worth a record but not an operator's attention.
+// warnIfRevised logs monitoring parameters the server revised rather than honoured.
+// Servers may clamp the sampling interval to their MinSupportedSampleRate or change the queue
+// depth; a queue revised below a publishing cycle's worth of samples overflows every cycle.
 func (c *Client) warnIfRevised(nodeId *ua.NodeID, res *ua.MonitoredItemCreateResult) {
-	// floatEqual rather than !=: the revised interval is a float off the wire, and a server
-	// echoing back what we asked for should not read as a revision
+	// the revised interval is a float off the wire, so compare with a tolerance
 	requested := float64(c.samplingInterval.Milliseconds())
 	if !floatEqual(res.RevisedSamplingInterval, requested) {
 		c.logger.Warn("server revised the sampling interval",
@@ -99,10 +93,7 @@ func (c *Client) warnIfRevised(nodeId *ua.NodeID, res *ua.MonitoredItemCreateRes
 			zap.Float64("requestedMs", requested),
 			zap.Float64("revisedMs", res.RevisedSamplingInterval))
 	}
-	// only a shallower queue than we asked for is a warning: that is the one that overflows.
-	// A server is entitled to hand back a deeper queue than requested, typically its own
-	// minimum depth, and a deeper queue only discards fewer samples. Warning on it would mean
-	// a line per monitored item on every config load for a server behaving perfectly well.
+	// only a shallower queue can overflow; a deeper one is harmless, so log it at debug
 	switch {
 	case res.RevisedQueueSize < c.queueSize:
 		c.logger.Warn("server revised the queue size down",
