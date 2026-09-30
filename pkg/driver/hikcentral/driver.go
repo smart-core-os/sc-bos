@@ -86,7 +86,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		faultChecks = append(faultChecks, faultCheck)
 
-		cam := NewCamera(client, logger, camera, faultCheck)
+		cam := NewCamera(client, logger, camera, faultCheck, cfg.Settings)
 		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
 			node.HasServer(mqttpb.RegisterMqttServiceServer, mqttpb.MqttServiceServer(cam)),

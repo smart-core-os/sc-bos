@@ -22,6 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/mqttpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ptzpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 type Camera struct {
@@ -35,19 +36,58 @@ type Camera struct {
 
 	conf *config.Camera
 
-	lock       sync.Mutex
-	state      *CameraState
+	lock  sync.Mutex
+	state *CameraState
+	// readAt is when each poll last wrote state, which only follows a successful read.
+	readAt [pollCount]time.Time
+	// staleAfter is how long the point each poll owns stays current after readAt.
+	// It's zero for a poll that isn't configured.
+	staleAfter [pollCount]time.Duration
 	bus        minibus.Bus[*CameraState]
 	faultCheck *healthpb.FaultCheck
 }
 
-func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *healthpb.FaultCheck) *Camera {
+// A poll is one of the independent polls that feed a Camera's state.
+type poll int
+
+const (
+	infoPoll poll = iota
+	occupancyPoll
+	eventsPoll
+	streamPoll
+	pollCount
+)
+
+// pollFields names the CameraState fields each poll owns.
+var pollFields = [pollCount][]string{
+	infoPoll:      {"CamState", "CamStateTime"},
+	occupancyPoll: {"CamOcc"},
+	eventsPoll:    {"CamFlt", "CamFltTime"},
+	streamPoll:    {"CamVideo"},
+}
+
+// NewCamera returns a Camera polled as polls configures. Each point counts as current
+// for twice the interval of the poll that owns it, so a single late or failed poll
+// doesn't make it stale.
+func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *healthpb.FaultCheck, polls *config.Settings) *Camera {
+	var staleAfter [pollCount]time.Duration
+	for p, interval := range [pollCount]*jsontypes.Duration{
+		infoPoll:      polls.InfoPoll,
+		occupancyPoll: polls.OccupancyPoll,
+		eventsPoll:    polls.EventsPoll,
+		streamPoll:    polls.StreamPoll,
+	} {
+		if interval != nil {
+			staleAfter[p] = 2 * interval.Duration
+		}
+	}
 	return &Camera{
 		client:     client,
 		conf:       conf,
 		faultCheck: fc,
 		logger:     logger,
 		state:      &CameraState{},
+		staleAfter: staleAfter,
 	}
 }
 
@@ -163,6 +203,45 @@ func (c *Camera) OnMessage(ctx context.Context, request *udmipb.OnMessageRequest
 	return c.UnimplementedUdmiServiceServer.OnMessage(ctx, request)
 }
 
+// GetExportMessage returns the camera's state, leaving out any point whose poll
+// hasn't succeeded recently, or Unavailable if that leaves nothing.
+//
+// Unlike the drivers that read their device here, this returns what the polls last
+// read: the state is assembled from several independent polls, and reading through
+// them would also publish the result on PullExportMessages.
+func (c *Camera) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
+	c.lock.Lock()
+	readAt := c.readAt
+	state := c.copyState()
+	c.lock.Unlock()
+
+	now := c.now()
+	stale := make(map[string]bool)
+	var lastRead time.Time
+	for p, fields := range pollFields {
+		if readAt[p].IsZero() || now.Sub(readAt[p]) > c.staleAfter[p] {
+			for _, f := range fields {
+				stale[f] = true
+			}
+		}
+		if readAt[p].After(lastRead) {
+			lastRead = readAt[p]
+		}
+	}
+	points := udmiPoints(state, stale)
+	if len(points) == 0 {
+		if lastRead.IsZero() {
+			return nil, status.Error(codes.Unavailable, "camera not read yet")
+		}
+		return nil, status.Errorf(codes.Unavailable, "camera last read %s ago", now.Sub(lastRead).Round(time.Second))
+	}
+	asJson, err := json.Marshal(points)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to encode UDMI message")
+	}
+	return &udmipb.MqttMessage{Topic: c.udmiTopic(), Payload: string(asJson)}, nil
+}
+
 func (c *Camera) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
 	changes := c.bus.Listen(server.Context())
 
@@ -175,7 +254,7 @@ func (c *Camera) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server 
 		msg := &udmipb.PullExportMessagesResponse{
 			Name: c.conf.Name,
 			Message: &udmipb.MqttMessage{
-				Topic:   c.conf.Topic + "/event/pointset/points",
+				Topic:   c.udmiTopic(),
 				Payload: string(asJson),
 			},
 		}
@@ -187,11 +266,22 @@ func (c *Camera) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server 
 	return server.Context().Err()
 }
 
+func (c *Camera) udmiTopic() string {
+	return c.conf.Topic + "/event/pointset/points"
+}
+
+type udmiPoint struct {
+	PresentValue any `json:"present_value"`
+}
+
 func marshalUDMIPayload(msg any) ([]byte, error) {
-	type val struct {
-		PresentValue any `json:"present_value"`
-	}
-	out := make(map[string]val)
+	return json.Marshal(udmiPoints(msg, nil))
+}
+
+// udmiPoints returns the fields of msg, a struct, as UDMI points, leaving out the
+// fields named in skip.
+func udmiPoints(msg any, skip map[string]bool) map[string]udmiPoint {
+	out := make(map[string]udmiPoint)
 	mt := reflect.TypeOf(msg)
 	if mt.Kind() == reflect.Pointer {
 		mt = mt.Elem()
@@ -202,6 +292,9 @@ func marshalUDMIPayload(msg any) ([]byte, error) {
 	}
 	for i := 0; i < mt.NumField(); i++ {
 		field := mt.Field(i)
+		if skip[field.Name] {
+			continue
+		}
 		key := field.Name
 		var omitEmpty bool
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
@@ -215,11 +308,9 @@ func marshalUDMIPayload(msg any) ([]byte, error) {
 		if value.IsZero() && omitEmpty {
 			continue
 		}
-		out[key] = val{PresentValue: value.Interface()}
+		out[key] = udmiPoint{PresentValue: value.Interface()}
 	}
-
-	bs, err := json.Marshal(out)
-	return bs, err
+	return out
 }
 
 func (c *Camera) getEvents(ctx context.Context) {
@@ -372,42 +463,38 @@ func (c *Camera) getInfo(ctx context.Context) {
 }
 
 func (c *Camera) updateCount(ctx context.Context, count string) {
-	c.updateAndNotify(ctx, func() {
+	c.updateAndNotify(ctx, occupancyPoll, func() {
 		c.state.CamOcc = count
 	})
 }
 
 func (c *Camera) updateVideo(ctx context.Context, video string) {
-	c.updateAndNotify(ctx, func() {
+	c.updateAndNotify(ctx, streamPoll, func() {
 		c.state.CamVideo = video
 	})
 }
 
 func (c *Camera) updateFault(ctx context.Context, fault bool) {
-	c.updateAndNotify(ctx, func() {
+	c.updateAndNotify(ctx, eventsPoll, func() {
 		c.state.CamFlt = fault
 		c.state.CamFltTime = c.now()
 	})
 }
 
 func (c *Camera) updateActive(ctx context.Context, active bool) {
-	c.updateAndNotify(ctx, func() {
+	c.updateAndNotify(ctx, infoPoll, func() {
 		c.state.CamState = active
 		c.state.CamStateTime = c.now()
 	})
 }
 
-func (c *Camera) updateState(ctx context.Context, new *CameraState) {
-	c.updateAndNotify(ctx, func() {
-		c.state = new
-	})
-}
-
-// updateAndNotify safely updates the camera state and notifies listeners.
+// updateAndNotify safely updates the camera state, following a successful read by p,
+// and notifies listeners.
 // The updateFn is called while holding the lock, then a copy is made and sent to the bus.
-func (c *Camera) updateAndNotify(ctx context.Context, updateFn func()) {
+func (c *Camera) updateAndNotify(ctx context.Context, p poll, updateFn func()) {
 	c.lock.Lock()
 	updateFn()
+	c.readAt[p] = c.now()
 	stateCopy := c.copyState()
 	c.lock.Unlock()
 	c.bus.Send(ctx, stateCopy)
