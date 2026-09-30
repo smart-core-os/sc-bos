@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/json"
+	"maps"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -39,6 +41,10 @@ type Interceptor struct {
 	auditQueue chan auditRecord
 	auditDone  chan struct{}
 	closeOnce  sync.Once
+	// auditMu guards sends on auditQueue against it being closed. Senders hold the read lock
+	// for the send; Close takes the write lock to set auditClosed and close the queue.
+	auditMu     sync.RWMutex
+	auditClosed bool
 }
 
 func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
@@ -59,10 +65,14 @@ func NewInterceptor(policy Policy, opts ...InterceptorOption) *Interceptor {
 
 // Close drains and shuts down the background audit worker. Safe to call more than once.
 // Must be called before closing or syncing the audit logger.
+// Audit entries written after Close are dropped.
 func (i *Interceptor) Close() error {
 	if i.auditQueue != nil {
 		i.closeOnce.Do(func() {
+			i.auditMu.Lock()
+			i.auditClosed = true
 			close(i.auditQueue)
+			i.auditMu.Unlock()
 			<-i.auditDone
 		})
 	}
@@ -226,9 +236,9 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 	}
 	// Only audit once per RPC, not for every message on an open client/bidirectional stream.
 	if isWriteMethod(method) && !isAuditExcluded(service, method) && !stream.Open {
-		outcome := "allowed"
+		outcome := outcomeAllowed
 		if err != nil {
-			outcome = "denied"
+			outcome = outcomeDenied
 		}
 		i.writeAuditEntry(outcome, creds, addr,
 			auditField{"service", service},
@@ -283,9 +293,9 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	if isHTTPWriteMethod(r.Method) {
-		outcome := "allowed"
+		outcome := outcomeAllowed
 		if err != nil {
-			outcome = "denied"
+			outcome = outcomeDenied
 		}
 		i.writeAuditEntry(outcome, creds, addr,
 			auditField{"path", r.URL.Path},
@@ -293,6 +303,43 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	return creds, err
+}
+
+// IngressEntry describes a write that entered the controller through a non-gRPC ingress, such
+// as an MQTT subscription, and so never passed through the server interceptors.
+type IngressEntry struct {
+	Ingress string            // e.g. "mqtt"
+	Peer    string            // where it came from, e.g. the broker URL
+	Service string            // gRPC service the write was dispatched to
+	Method  string            // gRPC method the write was dispatched to
+	Err     error             // result of dispatching the write
+	Fields  map[string]string // ingress-specific detail, e.g. topic, payload
+}
+
+// AuditIngress records e. No principal is known, so the entry carries no subject, cert or token.
+// Fields cannot override the standard audit fields; those take precedence.
+// Nil-safe; a no-op when no audit sink is configured.
+func (i *Interceptor) AuditIngress(e IngressEntry) {
+	if i == nil || i.auditQueue == nil {
+		return
+	}
+	// There is no policy decision to report, so the outcome describes whether the dispatched
+	// write succeeded.
+	outcome := outcomeOK
+	if e.Err != nil {
+		outcome = outcomeFailed
+	}
+	// Later fields win, so the standard fields go after e.Fields.
+	extra := make([]auditField, 0, 3+len(e.Fields))
+	for _, k := range slices.Sorted(maps.Keys(e.Fields)) {
+		extra = append(extra, auditField{k, e.Fields[k]})
+	}
+	extra = append(extra,
+		auditField{"service", e.Service},
+		auditField{"method", e.Method},
+		auditField{"ingress", e.Ingress},
+	)
+	i.writeAuditEntry(outcome, nil, e.Peer, extra...)
 }
 
 type InterceptorOption func(interceptor *Interceptor)
@@ -358,6 +405,16 @@ func httpPeerCert(r *http.Request) *x509.Certificate {
 	return r.TLS.VerifiedChains[0][0]
 }
 
+// Audit entry outcomes. allowed/denied report a policy decision and are used for calls that
+// pass through the server interceptors. ok/failed report the result of the write itself and are
+// used for writes from other ingresses (see AuditIngress), where no policy is evaluated.
+const (
+	outcomeAllowed = "allowed"
+	outcomeDenied  = "denied"
+	outcomeOK      = "ok"
+	outcomeFailed  = "failed"
+)
+
 // auditField is a protocol-specific key/value pair appended to every audit entry.
 type auditField struct {
 	key   string
@@ -400,6 +457,13 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 			rec.name = creds.tokenClaims.Name
 		}
 	}
+	i.auditMu.RLock()
+	defer i.auditMu.RUnlock()
+	if i.auditClosed {
+		// e.g. an MQTT write landing during shutdown, after the audit worker has stopped.
+		i.logger.Debug("dropping audit entry written after Close", zap.String("outcome", rec.outcome))
+		return
+	}
 	i.auditQueue <- rec
 }
 
@@ -407,10 +471,14 @@ func (i *Interceptor) writeAuditEntry(outcome string, creds *verifiedCreds, addr
 // Called only from the background worker goroutine.
 func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 	lvl := logpb.Level_LEVEL_INFO
-	if rec.outcome == "denied" {
+	if rec.outcome == outcomeDenied || rec.outcome == outcomeFailed {
 		lvl = logpb.Level_LEVEL_WARN
 	}
 	fields := make(map[string]string, 7+len(rec.extra))
+	// The standard fields are set last so extra fields cannot override them.
+	for _, f := range rec.extra {
+		fields[f.key] = f.value
+	}
 	fields["outcome"] = rec.outcome
 	fields["peer"] = rec.addr
 	fields["subject"] = rec.subject
@@ -418,9 +486,6 @@ func (i *Interceptor) doWriteAuditEntry(rec auditRecord) {
 	fields["cert"] = strconv.FormatBool(rec.certValid)
 	fields["certSubject"] = rec.certSubject
 	fields["token"] = strconv.FormatBool(rec.hasToken)
-	for _, f := range rec.extra {
-		fields[f.key] = f.value
-	}
 	i.auditSink.Write(&logpb.LogMessage{
 		Timestamp: timestamppb.New(rec.ts),
 		Level:     lvl,

@@ -104,7 +104,7 @@ func (e *udmiAuto) applyConfig(ctx context.Context, cfg config.Root) error {
 	var tasks namedTasks
 	pullFrom := func(name string) {
 		logger := e.services.Logger.With(zap.String("name", name))
-		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector, hbInterval),
+		err := tasks.Run(ctx, name, tasksForSource(name, logger, udmiClient, pubSub, e.collector, hbInterval, e.services.Auditor, cfg.Broker.Host),
 			task.WithRetry(task.RetryUnlimited), task.WithBackoff(time.Millisecond*100, time.Second*10))
 		if errors.Is(err, ErrAlreadyRunning) {
 			// cool, I guess someone else beat us to it

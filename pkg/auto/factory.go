@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -33,6 +34,10 @@ type Services struct {
 	Now             func() time.Time
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks
+	// Auditor records writes an automation accepts from its own ingress, such as an MQTT
+	// subscription, which the gRPC/HTTP audit interceptors never see.
+	// It may be nil, and is a no-op when no audit log is configured.
+	Auditor Auditor
 }
 
 // CloudCredentialSource exposes the node's current Connect leaf certificate and
@@ -45,6 +50,9 @@ type CloudCredentialSource interface {
 	// NodeID returns the SCC node id (the leaf Subject CN), stable across renewals.
 	NodeID() string
 }
+
+// Auditor records writes that an automation accepts from its own ingress (e.g. MQTT).
+type Auditor interface{ AuditIngress(policy.IngressEntry) }
 
 // Factory constructs new automation instances.
 type Factory interface {

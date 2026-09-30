@@ -45,6 +45,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/auth/token"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/history/dataretention"
 	"github.com/smart-core-os/sc-bos/pkg/manage/enrollment"
 	"github.com/smart-core-os/sc-bos/pkg/node"
@@ -223,6 +224,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	c.Defer(closeHealthStore)
 	c.Defer(ci.DataRoot.Close)
 	if ai.Interceptor != nil {
+		// Only set when non-nil, so a typed-nil pointer never ends up in the interface.
+		c.Auditor = ai.Interceptor
 		c.Defer(ai.Interceptor.Close)
 	}
 	if ai.AuditSetup != nil {
@@ -718,6 +721,7 @@ type Controller struct {
 	Stores          *stores.Stores
 	Accounts        *account.Store
 	CheckRegistry   *healthpb.Registry
+	Auditor         auto.Auditor // records writes automations accept from non-gRPC ingresses; nil when there is no policy interceptor
 
 	ReflectionServer *reflectionapi.Server
 
