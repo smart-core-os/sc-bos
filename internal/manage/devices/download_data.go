@@ -79,7 +79,7 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 			},
 		},
 		string(meterpb.TraitName): {
-			headers: []string{"meter.usage", "meter.unit"},
+			headers: []string{"meter.usage", "meter.unit", "meter.produced", "meter.producedunit"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
 				c := meterpb.NewMeterApiClient(s.m.ClientConn())
 				data, err := c.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: name})
@@ -87,23 +87,23 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 					return nil, err
 				}
 
-				var unit string
+				var unit, producedUnit string
 				ci := meterpb.NewMeterInfoClient(s.m.ClientConn())
 				if info, err := ci.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: name}); err == nil {
-					unit = info.GetUsageUnit()
+					unit, producedUnit = info.GetUsageUnit(), info.GetProducedUnit()
 				}
-				return meterReadingToRow(data, unit), nil
+				return meterReadingToRow(data, unit, producedUnit), nil
 			},
 			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
 				c := meterpb.NewMeterHistoryClient(s.m.ClientConn())
 				ci := meterpb.NewMeterInfoClient(s.m.ClientConn())
-				var unit string
+				var unit, producedUnit string
 				return &historyCursor{
 					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
 						if token == "" {
 							// fetch info the first time
 							if info, err := ci.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: name}); err == nil {
-								unit = info.GetUsageUnit()
+								unit, producedUnit = info.GetUsageUnit(), info.GetProducedUnit()
 							}
 						}
 
@@ -121,7 +121,7 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 						for _, record := range page.MeterReadingRecords {
 							records = append(records, historyRecord{
 								at:   record.GetRecordTime().AsTime(),
-								vals: meterReadingToRow(record.GetMeterReading(), unit),
+								vals: meterReadingToRow(record.GetMeterReading(), unit, producedUnit),
 							})
 						}
 						return records, page.NextPageToken, nil
@@ -442,11 +442,24 @@ func accessAttemptToRow(d *accesspb.AccessAttempt) map[string]string {
 	return vals
 }
 
-func meterReadingToRow(d *meterpb.MeterReading, unit string) map[string]string {
-	return map[string]string{
+func meterReadingToRow(d *meterpb.MeterReading, unit, producedUnit string) map[string]string {
+	vals := map[string]string{
 		"meter.usage": fmt.Sprintf("%.3f", d.Usage),
 		"meter.unit":  unit,
+		// Only meters that actually produce get a value, consumption-only meters report 0.
+		// Both keys are always present: history rows are written from a map reused between records,
+		// so omitting a key would leave the previous record's produced value in place.
+		"meter.produced":     "",
+		"meter.producedunit": "",
 	}
+	if produced := d.GetProduced(); produced > 0 {
+		if producedUnit == "" {
+			producedUnit = unit // devices that produce usually declare the one unit and measure both in it
+		}
+		vals["meter.produced"] = fmt.Sprintf("%.3f", produced)
+		vals["meter.producedunit"] = producedUnit
+	}
+	return vals
 }
 
 func airQualityToRow(d *airqualitysensorpb.AirQuality) map[string]string {

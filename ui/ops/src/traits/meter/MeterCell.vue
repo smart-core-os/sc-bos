@@ -7,9 +7,17 @@
         <span v-bind="_props">
           <span>{{ usageAndUnit }}</span>
           <v-icon end size="20">mdi-counter</v-icon>
+          <template v-if="hasProduced">
+            <span class="ml-2">{{ producedAndUnit }}</span>
+            <v-icon end size="20">mdi-transmission-tower-export</v-icon>
+          </template>
         </span>
       </template>
-      <span>Meter reading</span>
+      <template v-if="hasProduced">
+        <div>Usage: {{ usageAndUnit }}</div>
+        <div>Produced: {{ producedAndUnit }}</div>
+      </template>
+      <span v-else>Meter reading</span>
     </v-tooltip>
   </span>
 </template>
@@ -37,7 +45,7 @@ const props = defineProps({
   }
 });
 
-const {usageAndUnit} = useMeterReading(() => props.value, () => props.info);
+const {usageAndUnit, producedAndUnit, hasProduced} = useMeterReading(() => props.value, () => props.info);
 </script>
 
 <style scoped>
