@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -117,18 +118,30 @@ func (d *Driver) applyDeviceConfig(ctx context.Context, announcer node.Announcer
 		)
 		pollSensors = append(pollSensors, airQualitySensor)
 	}
+	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, pollSensors...)
 	if cfg.UDMITopicPrefix != "" {
 		// without a topic prefix devices would all export to the same MQTT topic, so no prefix means no UDMI
+		var airQualityValue *resource.Value
+		if cfg.HasAirQuality() {
+			airQualityValue = airQualitySensor.AirQualityValue
+		}
+		refresh := func(reqCtx context.Context) error {
+			// Abandon the read if the device stops, answering now rather than
+			// waiting on a device we no longer manage until the request times out.
+			reqCtx, cancel := context.WithCancel(reqCtx)
+			defer cancel()
+			stop := context.AfterFunc(ctx, cancel)
+			defer stop()
+			return poller.process(reqCtx)
+		}
 		udmiServiceServer := newUdmiServiceServer(logger.Named("UdmiServiceServer"),
-			airQualitySensor.AirQualityValue, occupancy.OccupancyValue, temperature.TemperatureValue, cfg.UDMITopicPrefix)
+			airQualityValue, occupancy.OccupancyValue, temperature.TemperatureValue, cfg.UDMITopicPrefix, refresh)
 		features = append(features,
 			node.HasServer(udmipb.RegisterUdmiServiceServer, udmipb.UdmiServiceServer(udmiServiceServer)),
 			node.HasTrait(udmipb.TraitName),
 		)
 	}
 	announcer.Announce(cfg.Name, features...)
-
-	poller := newPoller(client, cfg.PollInterval.Or(config.DefaultPollInterval), logger.Named("SteinelPoller"), faultCheck, pollSensors...)
 
 	wg.Go(func() {
 		defer client.Client.CloseIdleConnections()
