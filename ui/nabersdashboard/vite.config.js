@@ -1,0 +1,67 @@
+import vue from '@vitejs/plugin-vue';
+import {globSync} from 'glob';
+import {createRequire} from 'module';
+import {dirname, relative, sep, posix} from 'path';
+import {fileURLToPath, URL} from 'url';
+import {defineConfig} from 'vite';
+import eslintPlugin from 'vite-plugin-eslint';
+import vuetify from 'vite-plugin-vuetify';
+
+const _require = createRequire(import.meta.url);
+
+// Any import that resolves to a local filesystem dependency that isn't an ESM dependency needs to be in this list.
+const optimizeDepsInclude = [];
+// Typically that includes local proto files that are referenced via either `file:../` dependencies in package.json
+// or via yarn/npm linking the generated sources into this project (or both).
+// This snippet will find all *_pb.js files and ensure that they will be handled correctly by vite.
+for (const dep of ['@smart-core-os/sc-bos-ui-gen']) {
+  // find proto files in projects
+  const protoDirRoot = dirname(_require.resolve(dep + '/package.json'));
+  const globPattern = posix.join(protoDirRoot, '!(node_modules)/**/*_pb.js');
+  const protoFiles = globSync(globPattern)
+      .map(p => dep + '/' + relative(protoDirRoot, p).replaceAll(sep, posix.sep));
+  optimizeDepsInclude.push(...protoFiles);
+  // remove the .js extension so import statements without .js still use the bundle
+  optimizeDepsInclude.push(...protoFiles.map(f => f.substring(0, f.length - 3)));
+}
+
+// https://vitejs.dev/config/
+export default defineConfig(() => {
+  return {
+    optimizeDeps: {
+      include: optimizeDepsInclude,
+      // See https://github.com/vueuse/vue-demi
+      exclude: ['vue-demi']
+    },
+    build: {
+      commonjsOptions: {
+        // This should include regexes for any directory that should be processed by the commonjs transform.
+        // The entries match against filesystem paths (not import paths) and resolve after symbolic links.
+        include: [/node_modules/, /ui-gen/]
+      }
+    },
+    plugins: [
+      vue(),
+      vuetify({
+        styles: {
+          configFile: 'src/sass/settings.scss'
+        }
+      }),
+      eslintPlugin()
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    },
+    test: {
+      server: {
+        // Vuetify's components import their own .css, which Node's ESM loader
+        // refuses ("Unknown file extension .css") when the package is left
+        // external. Bundling it lets a component test render an SFC that uses
+        // v-icon or v-progress-circular.
+        deps: {inline: [/vuetify/]}
+      }
+    }
+  };
+});

@@ -1,0 +1,40 @@
+/* ── Smart Core colour palette ─────────────────────────────────────── */
+:root {
+  --sc-white:   #F8F4F1;
+  --sc-black:   #0C0921;
+  --sc-navy:    #26004D;
+  --sc-violet:  #7F00FF;
+  --sc-indigo:  #5A0066;
+  --sc-magenta: #E100FF;
+}
+
+/* ── Poppins (local) ────────────────────────────────────────────────── */
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-ExtraLight.ttf');     font-weight: 200; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-ExtraLightItalic.ttf'); font-weight: 200; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Light.ttf');          font-weight: 300; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-LightItalic.ttf');    font-weight: 300; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Regular.ttf');        font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Italic.ttf');         font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Medium.ttf');         font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-MediumItalic.ttf');   font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-SemiBold.ttf');       font-weight: 600; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-SemiBoldItalic.ttf'); font-weight: 600; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Bold.ttf');           font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-BoldItalic.ttf');     font-weight: 700; font-style: italic; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-Black.ttf');          font-weight: 900; font-style: normal; }
+@font-face { font-family: 'Poppins'; src: url('./assets/poppins/Poppins-BlackItalic.ttf');    font-weight: 900; font-style: italic; }
+
+/* ── Base ───────────────────────────────────────────────────────────── */
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--sc-black);
+  color: var(--sc-white);
+}
+
+.v-application {
+  background-color: var(--sc-black) !important;
+  font-family: 'Poppins', sans-serif !important;
+}
