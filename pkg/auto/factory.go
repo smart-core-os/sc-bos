@@ -27,9 +27,10 @@ type Services struct {
 	ClientTLSConfig *tls.Config
 	// CloudCredential provides the node's Connect leaf certificate for mTLS to the
 	// telemetry broker, plus the node identity. It is supplied by the node's cloud
-	// connection and is nil only when no cloud connection is configured; automations
-	// that need it must fall back or error clearly when it is absent (and its
-	// GetClientCertificate errors while the node is not yet enrolled).
+	// connection and is nil only when the host has none; automations that need it
+	// must fall back or error clearly when it is absent. When present the node may
+	// not be enrolled yet, and can be enrolled, re-enrolled or unlinked at any time -
+	// see connect.Credential for how long-lived connections should follow that.
 	CloudCredential CloudCredentialSource
 	Now             func() time.Time
 	Config          service.ConfigUpdater

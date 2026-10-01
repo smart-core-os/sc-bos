@@ -21,9 +21,10 @@ type Services struct {
 	// Connect API. Distinct from ClientTLSConfig, which is the cohort identity and
 	// will not authenticate to Connect.
 	//
-	// Nil when no cloud connection is configured. Drivers must degrade rather than
-	// fail when absent, and must expect GetClientCertificate to error while the
-	// node is not yet enrolled.
+	// Nil only when the host has no cloud connection; drivers must degrade rather
+	// than fail when absent. When present the node may not be enrolled yet, and
+	// can be enrolled, re-enrolled or unlinked at any time - see connect.Credential
+	// for how long-lived connections should follow that.
 	CloudCredential connect.Credential
 	HTTPMux         *http.ServeMux
 	Config          service.ConfigUpdater

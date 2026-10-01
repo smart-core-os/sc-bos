@@ -29,19 +29,15 @@ import (
 )
 
 // cloudCredentialSource returns the node's Connect credential for drivers,
-// automations and zones, or nil when no cloud connection is configured. The
-// returned Credential reads the connection state per call, so it follows
-// certificate renewals and enrollment on a node that enrols after start-up.
-//
-// The test is on the config, not the connection: initCloud builds a cloud.Conn
-// whether or not a cloud block was configured, so c.Cloud alone would never be
-// nil and the documented "not configured" state would be unreachable. Compare
-// the same test guarding the poll loop in Controller.Run.
+// automations and zones, or nil when the controller has no cloud connection.
+// A node without a cloud block in its config still gets a credential: it can be
+// enrolled from the Ops UI at any time, and the credential reads the connection
+// state per call, so it picks that enrolment up.
 func (c *Controller) cloudCredentialSource() connect.Credential {
-	if c.SystemConfig.Cloud == nil || c.Cloud == nil {
+	if c.Cloud == nil {
 		return nil // plain nil, not a typed nil: callers nil-check the interface
 	}
-	return cloudCredential{state: c.Cloud.State}
+	return cloudCredential{conn: c.Cloud}
 }
 
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
@@ -112,36 +108,90 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 	return m, nil
 }
 
+// cloudConnState is the part of *cloud.Conn that cloudCredential reads, so the
+// adapter can be exercised without opening a connection.
+type cloudConnState interface {
+	State() cloud.ConnState
+	PullState(ctx context.Context) (cloud.ConnState, <-chan cloud.ConnState)
+}
+
 // cloudCredential adapts the node's cloud connection to connect.Credential,
-// presenting the current Connect leaf certificate, node id and API origin. It holds
-// a state function rather than the *cloud.Conn itself so that all three accessors
-// read the connection state per call - tracking certificate renewals and enrollment
-// without reconnecting - and so the adapter can be exercised without opening a
-// connection.
-type cloudCredential struct{ state func() cloud.ConnState }
+// presenting the current Connect leaf certificate, node id and API origin. Every
+// accessor reads the connection state per call, tracking certificate renewals and
+// enrollment without reconnecting.
+type cloudCredential struct{ conn cloudConnState }
 
 var _ connect.Credential = cloudCredential{}
 
 func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-	reg := c.state().Registration
+	reg := c.conn.State().Registration
 	if reg == nil {
 		return nil, fmt.Errorf("cloud connection is not enrolled; no client certificate available")
 	}
 	return reg.TLSCertificate(), nil
 }
 
-func (c cloudCredential) NodeID() string {
-	if reg := c.state().Registration; reg != nil {
-		return reg.NodeID()
-	}
-	return ""
+func (c cloudCredential) State() connect.State {
+	return toConnectState(c.conn.State())
 }
 
-func (c cloudCredential) APIEndpoint() string {
-	if reg := c.state().Registration; reg != nil {
-		return reg.APIEndpoint
+// PullState forwards the connection's state changes as connect.State.
+//
+// The connection's broadcasts block until every listener accepts them, and some
+// are sent while it holds the lock its check-ins and renewals take, so the
+// forwarder never stops reading them. Changes the reader hasn't taken yet are
+// coalesced to the latest, which is enough because each State is a full
+// snapshot. A value equal to the last one delivered is dropped: the connection
+// re-broadcasts on every check-in, and a renewal swaps the certificate without
+// changing anything connect.State carries.
+func (c cloudCredential) PullState(ctx context.Context) (connect.State, <-chan connect.State) {
+	initial, changes := c.conn.PullState(ctx)
+	first := toConnectState(initial)
+	out := make(chan connect.State)
+	go func() {
+		defer close(out)
+		last := first
+		var pending connect.State
+		var send chan<- connect.State // nil while there is nothing new to deliver
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case st, ok := <-changes:
+				if !ok {
+					return
+				}
+				pending = toConnectState(st)
+				if pending == last {
+					send = nil
+				} else {
+					send = out
+				}
+			case send <- pending:
+				last, send = pending, nil
+			}
+		}
+	}()
+	return first, out
+}
+
+func toConnectState(st cloud.ConnState) connect.State {
+	var s connect.State
+	switch st.Connectivity {
+	case cloud.Unconfigured:
+		s.Connectivity = connect.NotEnrolled
+	case cloud.Connecting:
+		s.Connectivity = connect.Connecting
+	case cloud.Connected:
+		s.Connectivity = connect.Connected
+	case cloud.Failed:
+		s.Connectivity = connect.Failed
 	}
-	return ""
+	if reg := st.Registration; reg != nil {
+		s.NodeID = reg.NodeID()
+		s.APIEndpoint = reg.APIEndpoint
+	}
+	return s
 }
 
 func (c *Controller) startSystems() (*service.Map, error) {
