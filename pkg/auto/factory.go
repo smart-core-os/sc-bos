@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
 	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -35,11 +36,18 @@ type Services struct {
 	Now             func() time.Time
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks
+	// Auditor records writes an automation accepts from its own ingress, such as an MQTT
+	// subscription, which the gRPC/HTTP audit interceptors never see.
+	// It may be nil, and is a no-op when no audit log is configured.
+	Auditor Auditor
 }
 
 // CloudCredentialSource is an alias for connect.Credential, retained so existing
 // automations continue to compile. Prefer connect.Credential in new code.
 type CloudCredentialSource = connect.Credential
+
+// Auditor records writes that an automation accepts from its own ingress (e.g. MQTT).
+type Auditor interface{ AuditIngress(policy.IngressEntry) }
 
 // Factory constructs new automation instances.
 type Factory interface {

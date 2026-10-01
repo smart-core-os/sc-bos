@@ -2,6 +2,11 @@ package udmi
 
 import (
 	"context"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+	"unicode/utf8"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"go.uber.org/zap"
@@ -9,15 +14,25 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
 // tasksForSource returns an array of tasks to run for each UdmiService source/name
-// all of these need to be run for the implementation to work
-func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub, collector *exportCollector) []task.Task {
+// all of these need to be run for the implementation to work.
+// hbInterval is how long a source may stay quiet before it is asked for a
+// current message to publish; zero or less disables that.
+// Writes received over MQTT are recorded with auditor, if non-nil, attributed to brokerHost.
+func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceClient, pubsub *PubSub, collector *exportCollector, hbInterval time.Duration, auditor auto.Auditor, brokerHost string) []task.Task {
 	var tasks []task.Task
+
+	// Built out here, not inside the task below, so the quiet-since deadline
+	// survives the task being retried after a publish error, and a retry resumes
+	// the countdown rather than restarting it.
+	hb := newHeartbeat(hbInterval, logger)
 
 	tasks = append(tasks, func(ctx context.Context) (task.Next, error) {
 		logger.Debug("subscribing")
@@ -28,7 +43,7 @@ func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceCl
 			return pullTopics(ctx, name, logger, client, topicChanges)
 		})
 		grp.Go(func() error {
-			return handleTopicChanges(ctx, name, logger, client, topicChanges, pubsub.Subscriber)
+			return handleTopicChanges(ctx, name, logger, client, topicChanges, pubsub.Subscriber, auditor, brokerHost)
 		})
 		err := grp.Wait() // this waits for all go routines to finish, so we are safe to then close the channel
 		return task.Normal, err
@@ -41,7 +56,7 @@ func tasksForSource(name string, logger *zap.Logger, client udmipb.UdmiServiceCl
 			return pullMessages(ctx, name, logger, client, messageChanges)
 		})
 		grp.Go(func() error {
-			return handleMessages(ctx, name, messageChanges, pubsub.Publisher, collector)
+			return handleMessages(ctx, name, client, messageChanges, pubsub.Publisher, collector, hb)
 		})
 		err := grp.Wait() // this waits for all go routines to finish, so we are safe to then close the channel
 		return task.Normal, err
@@ -65,7 +80,11 @@ func pullTopics(ctx context.Context, name string, logger *zap.Logger, client udm
 
 // handleTopicChanges will wait for topic messages on the channel, and for each topic an MQTT subscription is created (via
 // Subscriber). Messages received for each of those subscriptions is then passed onto the UdmiService using OnMessage.
-func handleTopicChanges(ctx context.Context, name string, logger *zap.Logger, client udmipb.UdmiServiceClient, changes <-chan *udmipb.PullControlTopicsResponse, subscriber Subscriber) error {
+//
+// This is the only production caller of OnMessage, so it is where MQTT-originated writes are audited: they never pass
+// through the gRPC server interceptors that audit writes arriving over the network. auditor may be nil.
+func handleTopicChanges(ctx context.Context, name string, logger *zap.Logger, client udmipb.UdmiServiceClient, changes <-chan *udmipb.PullControlTopicsResponse, subscriber Subscriber, auditor auto.Auditor, brokerHost string) error {
+	peer := redactBrokerURL(brokerHost)
 	subscribeTopic := func(ctx context.Context, topic string) error {
 		return subscriber.Subscribe(ctx, topic, func(_ mqtt.Client, message mqtt.Message) {
 			payload := string(message.Payload())
@@ -79,6 +98,9 @@ func handleTopicChanges(ctx context.Context, name string, logger *zap.Logger, cl
 			})
 			if err != nil {
 				logger.Warn("unable to call OnMessage", zap.Error(err))
+			}
+			if auditor != nil {
+				auditor.AuditIngress(onMessageAuditEntry(peer, name, message.Topic(), payload, err))
 			}
 		})
 	}
@@ -102,6 +124,55 @@ func handleTopicChanges(ctx context.Context, name string, logger *zap.Logger, cl
 	return nil
 }
 
+// maxAuditPayload caps how much of an MQTT payload is copied into its audit entry.
+const maxAuditPayload = 1024
+
+// onMessageAuditEntry describes an MQTT message that was dispatched to UdmiService.OnMessage for target, with err
+// being the result. The broker supplies no identity for the publisher, so none is recorded.
+func onMessageAuditEntry(peer, target, topic, payload string, err error) policy.IngressEntry {
+	// Audit entries are served over the LogApi, where invalid UTF-8 would fail to marshal.
+	auditPayload, truncated := truncatePayload(strings.ToValidUTF8(payload, string(utf8.RuneError)), maxAuditPayload)
+	fields := map[string]string{
+		// "name" is taken by the token name, so the device is recorded as the target.
+		"target":      target,
+		"topic":       topic,
+		"payload":     auditPayload,
+		"payloadSize": strconv.Itoa(len(payload)),
+	}
+	if truncated {
+		fields["payloadTruncated"] = "true"
+	}
+	return policy.IngressEntry{
+		Ingress: "mqtt",
+		Peer:    peer,
+		Service: udmipb.UdmiService_ServiceDesc.ServiceName,
+		Method:  "OnMessage",
+		Err:     err,
+		Fields:  fields,
+	}
+}
+
+// truncatePayload returns s cut to at most limit bytes without splitting a UTF-8 rune, and whether it was cut.
+func truncatePayload(s string, limit int) (string, bool) {
+	if len(s) <= limit {
+		return s, false
+	}
+	cut := limit
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut], true
+}
+
+// redactBrokerURL masks any password embedded in the broker URL so it isn't written to the audit log.
+func redactBrokerURL(host string) string {
+	u, err := url.Parse(host)
+	if err != nil || u.User == nil {
+		return host
+	}
+	return u.Redacted()
+}
+
 // pullMessages calls pull for export messages (with default backoff/delay) and sends each message on the given channel
 func pullMessages(ctx context.Context, name string, logger *zap.Logger, client udmipb.UdmiServiceClient, changes chan<- *udmipb.PullExportMessagesResponse) error {
 	puller := &udmiExportMessagePuller{
@@ -118,20 +189,94 @@ func pullMessages(ctx context.Context, name string, logger *zap.Logger, client u
 // handleMessages waits for messages on the given channel and sends them to the publisher
 // ultimately these end up getting sent as MQTT messages. Each message is also offered to
 // the collector (when non-nil), which keeps the pointset events for the points list export.
-func handleMessages(ctx context.Context, name string, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector) error {
-	for change := range changes {
-		if change.Message == nil {
-			continue
+// Between messages it runs hb's timer: once the source has been quiet for longer than the
+// heartbeat interval it is asked, via GetExportMessage, for a current message to publish.
+func handleMessages(ctx context.Context, name string, client exportMessageGetter, changes <-chan *udmipb.PullExportMessagesResponse, publisher Publisher, collector *exportCollector, hb *heartbeat) error {
+	for {
+		// beat is nil, and so never ready, until the source has published a pointset
+		// event: there is nothing to keep alive yet. Recomputing it each iteration is
+		// what re-arms the heartbeat, and since hb's deadline is absolute a task retry
+		// resumes the countdown rather than restarting it.
+		var beat <-chan time.Time
+		if d, ok := hb.wait(time.Now()); ok {
+			beat = time.After(d)
 		}
-		err := publisher.Publish(ctx, change.Message.Topic, change.Message.Payload)
-		if err != nil {
-			return err
-		}
-		// Record only after a successful publish so the export reflects what was actually
-		// sent to the broker rather than what we tried to send.
-		if collector != nil {
-			collector.Record(name, change.Message.Topic, change.Message.Payload)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case change, ok := <-changes:
+			if !ok {
+				return nil
+			}
+			if change.Message == nil {
+				continue
+			}
+			err := publisher.Publish(ctx, change.Message.Topic, change.Message.Payload)
+			if err != nil {
+				return err
+			}
+			// Record only after a successful publish so the export reflects what was actually
+			// sent to the broker rather than what we tried to send.
+			if collector != nil {
+				collector.Record(name, change.Message.Topic, change.Message.Payload)
+			}
+			hb.record(change.Message.Topic, time.Now())
+		case now := <-beat:
+			if !hb.due(now) {
+				break
+			}
+			// Ask the source for a message rather than replaying one of our own: what
+			// comes back is collected and stamped by the driver, so a heartbeat asserts
+			// nothing about the device that the device didn't just say.
+			msg, err := client.GetExportMessage(ctx, &udmipb.GetExportMessageRequest{Name: name})
+			if err != nil {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				switch status.Code(err) {
+				case codes.Unimplemented:
+					// The source can't collect on demand, so stop asking it every interval.
+					// pullTopics and pullMessages treat Unimplemented the same way.
+					hb.logger.Debug("source does not implement GetExportMessage, heartbeat disabled")
+					hb.disable()
+				case codes.Unavailable:
+					// The source has nothing current to say. Publishing nothing is the point:
+					// a dead device produces silence.
+					hb.logger.Debug("no heartbeat message available", zap.Error(err))
+				default:
+					// Unlike a live message, a missed heartbeat isn't worth tearing down a
+					// working subscription for; the next one will retry.
+					hb.logger.Warn("unable to collect heartbeat message", zap.Error(err))
+				}
+				break
+			}
+			// We asked for telemetry; a state or metadata re-announce does not answer
+			// the question a heartbeat asks, so do not pass it off as one. That leaves
+			// this beat unanswered, so ask again shortly rather than going quiet for a
+			// whole interval: a source is free to answer with its last published
+			// message, which may be telemetry again by then.
+			if msg == nil || !isPointsetEventTopic(msg.Topic) {
+				topic := ""
+				if msg != nil {
+					topic = msg.Topic
+				}
+				hb.logger.Debug("heartbeat answered without telemetry",
+					zap.String("topic", topic), zap.Bool("retrying", hb.retry(time.Now())))
+				break
+			}
+			if err := publisher.Publish(ctx, msg.Topic, msg.Payload); err != nil {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				hb.logger.Warn("unable to publish heartbeat",
+					zap.String("topic", msg.Topic), zap.Error(err))
+				break
+			}
+			if collector != nil {
+				collector.Record(name, msg.Topic, msg.Payload)
+			}
+			hb.record(msg.Topic, time.Now())
 		}
 	}
-	return nil
 }

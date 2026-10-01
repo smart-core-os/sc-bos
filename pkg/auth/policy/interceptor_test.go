@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"sync"
+	"time"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -345,4 +346,120 @@ allow if {
 allow if input.method == "GET"
 allow if input.path == "/foo"
 `,
+}
+
+// A write from a non-gRPC ingress is recorded with the ingress detail and no invented principal.
+func TestInterceptor_AuditIngress(t *testing.T) {
+	sink := &captureSink{}
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+
+	interceptor.AuditIngress(IngressEntry{
+		Ingress: "mqtt",
+		Peer:    "tcp://broker:1883",
+		Service: "smartcore.bos.udmi.v1.UdmiService",
+		Method:  "OnMessage",
+		Fields: map[string]string{
+			"topic":  "site/dev1/config",
+			"target": "dev1",
+			// must not be able to override the standard fields
+			"outcome": "allowed",
+			"subject": "someone",
+			"service": "spoofed.Service",
+			"ingress": "grpc",
+		},
+	})
+	interceptor.Close() // drain the async audit queue before asserting
+
+	msgs := sink.all()
+	if len(msgs) != 1 {
+		t.Fatalf("got %d audit entries, want 1", len(msgs))
+	}
+	msg := msgs[0]
+	if msg.Level != logpb.Level_LEVEL_INFO {
+		t.Errorf("level = %v, want INFO", msg.Level)
+	}
+	for key, want := range map[string]string{
+		"service": "smartcore.bos.udmi.v1.UdmiService",
+		"method":  "OnMessage",
+		"ingress": "mqtt",
+		"peer":    "tcp://broker:1883",
+		"outcome": "ok",
+		"topic":   "site/dev1/config",
+		"target":  "dev1",
+		// no principal is knowable for a write from another ingress
+		"subject": "",
+		"name":    "",
+		"cert":    "false",
+		"token":   "false",
+	} {
+		if got := msg.Fields[key]; got != want {
+			t.Errorf("field %q = %q, want %q", key, got, want)
+		}
+	}
+}
+
+// A failed ingress write is still recorded, and at WARN so it stands out.
+func TestInterceptor_AuditIngress_Failed(t *testing.T) {
+	sink := &captureSink{}
+	interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+
+	interceptor.AuditIngress(IngressEntry{
+		Ingress: "mqtt",
+		Service: "smartcore.bos.udmi.v1.UdmiService",
+		Method:  "OnMessage",
+		Err:     status.Error(codes.Internal, "boom"),
+	})
+	interceptor.Close()
+
+	msgs := sink.all()
+	if len(msgs) != 1 {
+		t.Fatalf("got %d audit entries, want 1", len(msgs))
+	}
+	if got := msgs[0].Fields["outcome"]; got != "failed" {
+		t.Errorf("outcome = %q, want %q", got, "failed")
+	}
+	if msgs[0].Level != logpb.Level_LEVEL_WARN {
+		t.Errorf("level = %v, want WARN", msgs[0].Level)
+	}
+}
+
+// Without an audit sink, or without an interceptor at all, AuditIngress does nothing.
+func TestInterceptor_AuditIngress_NoSink(t *testing.T) {
+	e := IngressEntry{Ingress: "mqtt", Service: "s", Method: "m"}
+	interceptor := NewInterceptor(AllowAll)
+	interceptor.AuditIngress(e)
+	interceptor.Close()
+
+	var nilInterceptor *Interceptor
+	nilInterceptor.AuditIngress(e)
+}
+
+// Writes can race Close during shutdown, e.g. MQTT handlers still running after the gRPC server
+// has stopped. They must be dropped rather than sent on the closed audit queue.
+func TestInterceptor_AuditAfterClose(t *testing.T) {
+	for range 20 {
+		sink := &captureSink{}
+		interceptor := NewInterceptor(AllowAll, WithAuditSink(sink))
+		e := IngressEntry{Ingress: "mqtt", Service: "s", Method: "m"}
+
+		stop := make(chan struct{})
+		var wg sync.WaitGroup
+		for range 8 {
+			wg.Go(func() {
+				for {
+					select {
+					case <-stop:
+						return
+					default:
+						interceptor.AuditIngress(e)
+					}
+				}
+			})
+		}
+		time.Sleep(time.Millisecond) // let the writers get going before closing
+		interceptor.Close()
+		interceptor.AuditIngress(e) // after Close, from this goroutine too
+		close(stop)
+		wg.Wait()
+	}
 }

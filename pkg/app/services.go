@@ -84,6 +84,7 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
 		CloudCredential: c.cloudCredentialSource(),
+		Auditor:         c.Auditor,
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
