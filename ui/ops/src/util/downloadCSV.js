@@ -1,3 +1,4 @@
+import {triggerTextDownload} from '@/components/download/download.js';
 import {camelToSentence} from '@/util/string';
 import {toValue} from 'vue';
 
@@ -163,23 +164,7 @@ export const csvDownload = async (params) => {
  */
 export function downloadCSVRows(filename, data) {
   const csvContent = data.map(e => e.map(escapeCSVField).join(',')).join('\n') + '\n';
-  download(filename, csvContent, 'text/csv;charset=utf-8;');
-}
-
-/**
- * @param {string} filename
- * @param {string} text
- * @param {string} mime
- */
-function download(filename, text, mime) {
-  const element = document.createElement('a');
-  element.setAttribute('href', 'data:' + mime + ',' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+  // A Blob rather than a data: URI - Chrome caps those around 2MB (less elsewhere), and
+  // encodeURIComponent inflation brings a few hundred devices' worth of rows within reach.
+  triggerTextDownload(csvContent, filename, 'text/csv;charset=utf-8;');
 }

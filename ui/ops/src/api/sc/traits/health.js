@@ -128,21 +128,19 @@ export function reliabilityStateToString(state) {
 }
 
 /**
- * @param {HealthCheck.Check.State} state
+ * @param {HealthCheck.Normality} normality
  * @return {string}
  */
-export function checkStateToString(state) {
-  switch (state) {
-    case HealthCheck.Check.State.STATE_UNSPECIFIED:
-      return 'Unknown';
-    case HealthCheck.Check.State.NORMAL:
+export function normalityToString(normality) {
+  switch (normality) {
+    case HealthCheck.Normality.NORMAL:
       return 'Normal';
-    case HealthCheck.Check.State.ABNORMAL:
+    case HealthCheck.Normality.ABNORMAL:
       return 'Abnormal';
-    case HealthCheck.Check.State.LOW:
-      return 'Low';
-    case HealthCheck.Check.State.HIGH:
+    case HealthCheck.Normality.HIGH:
       return 'High';
+    case HealthCheck.Normality.LOW:
+      return 'Low';
     default:
       return 'Unknown';
   }
