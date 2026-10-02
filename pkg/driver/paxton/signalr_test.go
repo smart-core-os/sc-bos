@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/paxton/config"
 )

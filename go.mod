@@ -6,6 +6,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/coder/websocket v1.8.15
 	github.com/eclipse/paho.golang v0.23.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-jose/go-jose/v4 v4.1.4
@@ -50,7 +51,6 @@ require (
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	nhooyr.io/websocket v1.8.10
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -131,6 +131,7 @@ require (
 	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	nhooyr.io/websocket v1.8.10 // indirect
 )
 
 tool (
