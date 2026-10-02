@@ -10,11 +10,13 @@ Triage open Dependabot alerts for `smart-core-os/sc-bos` and govulncheck finding
 
 If `--dry-run` is passed, stop after Phase 1 and only report.
 
+Commands below run from the repo root unless they say `ui/`. Setup specific to one machine (WSL, a VM, a container) belongs in that developer's own `CLAUDE.md`, not here. Follow it where it applies.
+
 ## Efficiency rules
 
 - **Combine related commands** with `&&` in a single Bash call, and **use parallel tool calls** for independent queries (`gh api`, govulncheck, `yarn why`).
 - **Batch fixes.** Apply every safe change, then install and run the gate once.
-- **Use `gh --jq`, not `jq`.** There is no `jq` on this host.
+- **Use `gh --jq`, not `jq`.** It needs nothing installed beyond `gh`.
 - **One fix per package range, not per alert.** Dependabot raises one alert per advisory, so a package often has several (fast-uri has seven). The fix is the highest patched version within each major range.
 
 ## Phase 1: Discover
@@ -39,7 +41,7 @@ go version
 go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 ```
 
-Pure Go, so it runs natively on Windows. It adds two things Dependabot can't give:
+It adds two things Dependabot can't give:
 
 - **Symbol-level reachability.** "Your code is affected" with example traces means the vulnerable symbol is reachable. The "doesn't appear to call" footer lists the unreachable findings (`-show verbose` for detail). Only that second group can ever be dismissed as `not_used`.
 - **Stdlib and toolchain vulns,** which Dependabot never raises.
@@ -92,7 +94,7 @@ If `--dry-run`, stop here.
 go get <module>@v<fixed> && go mod tidy
 ```
 
-Move OpenTelemetry as a family, never one module alone: `go get go.opentelemetry.io/otel@v<fixed> go.opentelemetry.io/otel/sdk@v<fixed> go.opentelemetry.io/otel/metric@v<fixed> go.opentelemetry.io/otel/trace@v<fixed>`. That is the same lockstep as the `opentelemetry` group in `.github/dependabot.yml`. Check `git diff go.mod` afterwards: anything that moved besides the target is MVS pulling it forward, and belongs in the summary.
+Move OpenTelemetry as a family, never one module alone: `go get go.opentelemetry.io/otel@v<fixed> go.opentelemetry.io/otel/sdk@v<fixed> go.opentelemetry.io/otel/metric@v<fixed> go.opentelemetry.io/otel/trace@v<fixed>`. otel/sdk at 1.N requires its siblings at exactly 1.N, so MVS lifts them anyway, and naming them keeps the intent visible. Check `git diff go.mod` afterwards: anything that moved besides the target is MVS pulling it forward, and belongs in the summary.
 
 ### Go stdlib (govulncheck only)
 
@@ -124,20 +126,10 @@ package.json can't hold a comment, so give the reason for each resolution in the
 
 ### Install
 
-`yarn.lock` (v1) is platform-independent, but `ui/node_modules` isn't. Install on the platform that last installed it, or you swap the native binaries out from under the other one:
+From `ui/`:
 
 ```bash
-ls ui/node_modules/@rolldown/    # binding-win32-* → native, binding-linux-* → WSL
-```
-
-```powershell
-# Native (win32 binding)
-Set-Location ui; yarn install
-```
-
-```bash
-# WSL (linux binding). Source nvm or WSL picks up the Windows yarn and finds no node.
-wsl.exe -e bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; cd /mnt/c/Users/DeanRedfern/dev/sc-bos/ui && yarn install'
+yarn install
 ```
 
 After the install, check the lock:
@@ -164,25 +156,25 @@ Dismissals are outward-facing. List them and confirm with the user before sendin
 
 ## Phase 3: Verify
 
-The local gate from `.claude/CLAUDE.md`. On Windows, `go test ./...` has known host failures, so run the full suite from WSL.
+This mirrors the CI checks a dependency change can break.
 
 **Go** (if `go.mod`, a Dockerfile or the toolchain moved):
 
 ```bash
 go build ./... && go vet -lostcancel=false ./... && staticcheck ./...
 go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-wsl.exe -e bash -lc 'cd /mnt/c/Users/DeanRedfern/dev/sc-bos && go test ./...'
+go test ./...
 ```
 
 govulncheck should show no remaining reachable findings for what you fixed.
 
-**UI** (if `ui/yarn.lock` or `ui/package.json` moved). Lint every workspace, as CI does, from WSL:
+**UI** (if `ui/yarn.lock` or `ui/package.json` moved). Lint every workspace, as CI does, from `ui/`:
 
 ```bash
-wsl.exe -e bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; cd /mnt/c/Users/DeanRedfern/dev/sc-bos/ui && for d in ops panzoom-package space signage ui-gen; do yarn --cwd "$d" lint:nofix || exit 1; done'
+for d in ops panzoom-package space signage ui-gen; do yarn --cwd "$d" lint:nofix || exit 1; done
 ```
 
-Then `yarn --cwd <ws> build` for `ops`, `space` and `signage`, on whichever platform matches `node_modules` (see Install). A lock change can move a transitive build dependency under any of them, not just the one you were thinking of.
+Then `yarn --cwd <ws> build` for `ops`, `space` and `signage`. A lock change can move a transitive build dependency under any of them, not just the one you were thinking of.
 
 If something fails:
 
@@ -199,4 +191,4 @@ Report:
 - **Needs attention:** what's blocking each one, and the suggested next step.
 - **Already fixed:** alerts that should close on the next scan of `main`.
 
-Show the `go.mod` require diff and any `resolutions` added or removed. Hand off to `/raise-pr`, and keep fixes separate from any change to `.github/dependabot.yml` so each can be reviewed on its own. Alerts close on their own once the fix reaches `main`.
+Show the `go.mod` require diff and any `resolutions` added or removed. Hand off to `/raise-pr`. Alerts close on their own once the fix reaches `main`.
