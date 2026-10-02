@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/hashicorp/go-retryablehttp"
 	"go.uber.org/zap"
-	"nhooyr.io/websocket"
 )
 
 const (
