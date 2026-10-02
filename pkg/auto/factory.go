@@ -10,6 +10,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/app/stores"
 	"github.com/smart-core-os/sc-bos/pkg/auth/policy"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
@@ -27,9 +28,10 @@ type Services struct {
 	ClientTLSConfig *tls.Config
 	// CloudCredential provides the node's Connect leaf certificate for mTLS to the
 	// telemetry broker, plus the node identity. It is supplied by the node's cloud
-	// connection and is nil only when no cloud connection is configured; automations
-	// that need it must fall back or error clearly when it is absent (and its
-	// GetClientCertificate errors while the node is not yet enrolled).
+	// connection and is nil only when the host has none; automations that need it
+	// must fall back or error clearly when it is absent. When present the node may
+	// not be enrolled yet, and can be enrolled, re-enrolled or unlinked at any time -
+	// see connect.Credential for how long-lived connections should follow that.
 	CloudCredential CloudCredentialSource
 	Now             func() time.Time
 	Config          service.ConfigUpdater
@@ -40,16 +42,9 @@ type Services struct {
 	Auditor Auditor
 }
 
-// CloudCredentialSource exposes the node's current Connect leaf certificate and
-// identity for authenticating to the Connect telemetry (Event Grid MQTT) broker.
-// It is satisfied by the node's cloud connection; GetClientCertificate reflects
-// credential renewals live so callers can install it directly as
-// tls.Config.GetClientCertificate.
-type CloudCredentialSource interface {
-	GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error)
-	// NodeID returns the SCC node id (the leaf Subject CN), stable across renewals.
-	NodeID() string
-}
+// CloudCredentialSource is an alias for connect.Credential, retained so existing
+// automations continue to compile. Prefer connect.Credential in new code.
+type CloudCredentialSource = connect.Credential
 
 // Auditor records writes that an automation accepts from its own ingress (e.g. MQTT).
 type Auditor interface{ AuditIngress(policy.IngressEntry) }

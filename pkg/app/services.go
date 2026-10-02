@@ -13,6 +13,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/cloud"
 	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -27,11 +28,24 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
+// cloudCredentialSource returns the node's Connect credential for drivers,
+// automations and zones, or nil when the controller has no cloud connection.
+// A node without a cloud block in its config still gets a credential: it can be
+// enrolled from the Ops UI at any time, and the credential reads the connection
+// state per call, so it picks that enrolment up.
+func (c *Controller) cloudCredentialSource() connect.Credential {
+	if c.Cloud == nil {
+		return nil // plain nil, not a typed nil: callers nil-check the interface
+	}
+	return cloudCredential{conn: c.Cloud}
+}
+
 func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, error) {
 	ctxServices := driver.Services{
 		Logger:          c.Logger.Named("driver"),
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		HTTPMux:         c.Mux,
 		Database:        c.Database,
 	}
@@ -69,13 +83,8 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 		GRPCServices:    c.GRPC,
 		CohortManager:   c.ManagerConn,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		Auditor:         c.Auditor,
-	}
-	// Give automations the node's Connect leaf credential (for mTLS to the Event
-	// Grid telemetry broker). The adapter reads the current registration per call,
-	// so it follows certificate renewals live.
-	if c.Cloud != nil {
-		ctxServices.CloudCredential = cloudCredential{conn: c.Cloud}
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
@@ -100,11 +109,20 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 	return m, nil
 }
 
-// cloudCredential adapts the cloud connection to auto.CloudCredentialSource,
-// presenting the node's current Connect leaf certificate and node id for mTLS to
-// the telemetry broker. Both accessors read cloud.Conn.State() per call, so they
-// track certificate renewals (and enrollment) without reconnecting.
-type cloudCredential struct{ conn *cloud.Conn }
+// cloudConnState is the part of *cloud.Conn that cloudCredential reads, so the
+// adapter can be exercised without opening a connection.
+type cloudConnState interface {
+	State() cloud.ConnState
+	PullState(ctx context.Context) (cloud.ConnState, <-chan cloud.ConnState)
+}
+
+// cloudCredential adapts the node's cloud connection to connect.Credential,
+// presenting the current Connect leaf certificate, node id and API origin. Every
+// accessor reads the connection state per call, tracking certificate renewals and
+// enrollment without reconnecting.
+type cloudCredential struct{ conn cloudConnState }
+
+var _ connect.Credential = cloudCredential{}
 
 func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	reg := c.conn.State().Registration
@@ -114,11 +132,67 @@ func (c cloudCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls
 	return reg.TLSCertificate(), nil
 }
 
-func (c cloudCredential) NodeID() string {
-	if reg := c.conn.State().Registration; reg != nil {
-		return reg.NodeID()
+func (c cloudCredential) State() connect.State {
+	return toConnectState(c.conn.State())
+}
+
+// PullState forwards the connection's state changes as connect.State.
+//
+// The connection's broadcasts block until every listener accepts them, and some
+// are sent while it holds the lock its check-ins and renewals take, so the
+// forwarder never stops reading them. Changes the reader hasn't taken yet are
+// coalesced to the latest, which is enough because each State is a full
+// snapshot. A value equal to the last one delivered is dropped: the connection
+// re-broadcasts on every check-in, and a renewal swaps the certificate without
+// changing anything connect.State carries.
+func (c cloudCredential) PullState(ctx context.Context) (connect.State, <-chan connect.State) {
+	initial, changes := c.conn.PullState(ctx)
+	first := toConnectState(initial)
+	out := make(chan connect.State)
+	go func() {
+		defer close(out)
+		last := first
+		var pending connect.State
+		var send chan<- connect.State // nil while there is nothing new to deliver
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case st, ok := <-changes:
+				if !ok {
+					return
+				}
+				pending = toConnectState(st)
+				if pending == last {
+					send = nil
+				} else {
+					send = out
+				}
+			case send <- pending:
+				last, send = pending, nil
+			}
+		}
+	}()
+	return first, out
+}
+
+func toConnectState(st cloud.ConnState) connect.State {
+	var s connect.State
+	switch st.Connectivity {
+	case cloud.Unconfigured:
+		s.Connectivity = connect.NotEnrolled
+	case cloud.Connecting:
+		s.Connectivity = connect.Connecting
+	case cloud.Connected:
+		s.Connectivity = connect.Connected
+	case cloud.Failed:
+		s.Connectivity = connect.Failed
 	}
-	return ""
+	if reg := st.Registration; reg != nil {
+		s.NodeID = reg.NodeID()
+		s.APIEndpoint = reg.APIEndpoint
+	}
+	return s
 }
 
 func (c *Controller) startSystems() (*service.Map, error) {
@@ -185,6 +259,7 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 		Logger:          c.Logger.Named("zone"),
 		Node:            c.Node,
 		ClientTLSConfig: c.ClientTLSConfig,
+		CloudCredential: c.cloudCredentialSource(),
 		HTTPMux:         c.Mux,
 		DriverFactories: c.SystemConfig.DriverFactories,
 	}

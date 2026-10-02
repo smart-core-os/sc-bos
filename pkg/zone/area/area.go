@@ -134,6 +134,7 @@ func (a *Area) applyConfig(ctx context.Context, cfg config.Root) error {
 		Logger:          services.Logger.Named("driver"),
 		Node:            services.Node,
 		ClientTLSConfig: services.ClientTLSConfig,
+		CloudCredential: services.CloudCredential,
 		HTTPMux:         services.HTTPMux,
 	}
 	for _, d := range cfg.Drivers {

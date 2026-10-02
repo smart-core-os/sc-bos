@@ -59,7 +59,7 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 
 	var nodeID string
 	if cred != nil {
-		nodeID = cred.NodeID()
+		nodeID = cred.State().NodeID
 	}
 
 	clientID := cfg.ClientId
@@ -145,7 +145,7 @@ func (p *publisher) close(ctx context.Context) {
 func buildTLSConfig(cfg config.Mqtt, cred auto.CloudCredentialSource) (*tls.Config, error) {
 	if cfg.UseCloudCredential {
 		if cred == nil {
-			return nil, fmt.Errorf("mqtt.useCloudCredential is set but no cloud credential is available (no cloud connection configured)")
+			return nil, fmt.Errorf("mqtt.useCloudCredential is set but no cloud credential is available (host has no cloud connection)")
 		}
 		return &tls.Config{
 			GetClientCertificate: cred.GetClientCertificate,
