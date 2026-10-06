@@ -24,6 +24,9 @@
 //  2. Ask the supervisor to install the new update
 //  3. Upon restarting, BOS will check in with the new version
 //
+// If no supervisor integration is available, any binary updates offered by the server will be rejected.
+// The client's capability to accept binary updates is indicated by the check-in `capabilities` object.
+//
 // The "running version" BOS commits and compares is embedded at build time, and can be overridden by the
 // BOS_VERSION_OVERRIDE environment variable for development and testing. In production this version MUST equal the
 // artefact/image tag version, otherwise updates may not install correctly.

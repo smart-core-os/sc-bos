@@ -656,3 +656,39 @@ func TestCheckIn_FirstReportSetsPlatform(t *testing.T) {
 		t.Errorf("node platform = %s/%s, want %s/%s", node.OS, node.Arch, want.OS, want.Arch)
 	}
 }
+
+func TestCheckIn_RecordsBinaryUpdates(t *testing.T) {
+	e := setupCheckInEnv(t)
+
+	// checkInThenGet sends a check-in with the given running block and returns the node's recorded
+	// binaryUpdates capability.
+	checkInThenGet := func(running map[string]any) *bool {
+		t.Helper()
+		resp := doCheckIn(t, e.deviceClient, checkInURL(e.testServer.URL), map[string]any{"running": running}, nil)
+		assertStatus(t, resp, http.StatusOK)
+		var node Node
+		resp = doRequest(t, e.client, "GET", nodeURL(e.testServer.URL, e.node.ID), nil, &node)
+		assertStatus(t, resp, http.StatusOK)
+		return node.Capabilities.BinaryUpdates
+	}
+
+	if got := e.node.Capabilities.BinaryUpdates; got != nil {
+		t.Fatalf("new node binaryUpdates = %v, want nil (unknown)", *got)
+	}
+	steps := []struct {
+		name    string
+		running map[string]any
+		want    *bool
+	}{
+		{"absent stays unknown", map[string]any{}, nil},
+		{"reported true", map[string]any{"capabilities": map[string]any{"binaryUpdates": true}}, new(true)},
+		{"absent leaves it unchanged", map[string]any{}, new(true)},
+		{"reported false", map[string]any{"capabilities": map[string]any{"binaryUpdates": false}}, new(false)},
+		{"empty capabilities leaves it unchanged", map[string]any{"capabilities": map[string]any{}}, new(false)},
+	}
+	for _, s := range steps {
+		if diff := cmp.Diff(s.want, checkInThenGet(s.running)); diff != "" {
+			t.Errorf("%s: binaryUpdates (-want +got):\n%s", s.name, diff)
+		}
+	}
+}

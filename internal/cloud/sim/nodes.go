@@ -13,16 +13,17 @@ import (
 
 // Node is the JSON representation of a node.
 type Node struct {
-	ID         int64     `json:"id,string"`
-	Hostname   string    `json:"hostname"`
-	SiteID     int64     `json:"siteId,string"`
-	OS         string    `json:"os"`   // GOOS, empty until the node reports its platform on check-in
-	Arch       string    `json:"arch"` // GOARCH, empty until the node reports its platform on check-in
-	CreateTime time.Time `json:"createTime"`
+	ID           int64        `json:"id,string"`
+	Hostname     string       `json:"hostname"`
+	SiteID       int64        `json:"siteId,string"`
+	OS           string       `json:"os"`           // GOOS, empty until the node reports its platform on check-in
+	Arch         string       `json:"arch"`         // GOARCH, empty until the node reports its platform on check-in
+	Capabilities Capabilities `json:"capabilities"` // as last reported on check-in; nil fields are unknown
+	CreateTime   time.Time    `json:"createTime"`
 }
 
 func toNode(n queries.Node) Node {
-	return Node{
+	node := Node{
 		ID:         n.ID,
 		Hostname:   n.Hostname,
 		SiteID:     n.SiteID,
@@ -30,6 +31,10 @@ func toNode(n queries.Node) Node {
 		Arch:       n.Arch,
 		CreateTime: n.CreateTime,
 	}
+	if n.BinaryUpdates.Valid {
+		node.Capabilities.BinaryUpdates = new(n.BinaryUpdates.Bool)
+	}
+	return node
 }
 
 // validOS reports whether os is a GOOS value the system supports.

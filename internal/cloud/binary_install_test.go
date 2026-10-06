@@ -255,12 +255,62 @@ func TestBinaryInstall_TransientFailuresCapAtThree(t *testing.T) {
 	}
 }
 
-// TestBinaryInstall_DisabledSupervisor: with no Supervisor wired, no install is attempted and the
-// deployment is left untouched (still pending).
+// getNodeBinaryUpdates fetches the node from the sim server and returns the binaryUpdates capability it
+// last reported, or nil when unknown.
+func getNodeBinaryUpdates(t *testing.T, env *clientEnv) *bool {
+	t.Helper()
+	var node sim.Node
+	resp := doSimRequest(t, env.httpClient, "GET",
+		fmt.Sprintf("%s/api/v1/management/nodes/%d", env.testServer.URL, env.nodeID),
+		nil, &node)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("get node: expected 200, got %d", resp.StatusCode)
+	}
+	return node.Capabilities.BinaryUpdates
+}
+
+// TestBinaryInstall_DisabledSupervisor: with no Supervisor wired, no install is attempted and a new
+// deployment is reported failed with a reason, so the cloud stops offering it.
 func TestBinaryInstall_DisabledSupervisor(t *testing.T) {
+	tests := []struct {
+		name string
+		opts []BinaryUpdaterOption // no WithBinaryInstaller
+	}{
+		{name: "unknown running version"},
+		{name: "older running version", opts: []BinaryUpdaterOption{WithBinaryVersion("1.0.0")}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			env := setupClientEnv(t)
+			conn := newConnEnv(t, env, tt.opts...)
+
+			artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "9.9.9", []byte("dummy-artefact-payload"))
+			depID := createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
+
+			if _, err := conn.Update(ctx); err != nil {
+				t.Fatalf("Update: %v", err)
+			}
+			dep := getBinaryDeployment(t, env.httpClient, env.testServer.URL, depID)
+			if dep.Status != "failed" {
+				t.Errorf("binary deployment status = %q, want failed (Supervisor disabled)", dep.Status)
+			}
+			if dep.Reason != noSupervisorReason {
+				t.Errorf("binary deployment reason = %q, want %q", dep.Reason, noSupervisorReason)
+			}
+			if got := getNodeBinaryUpdates(t, env); got == nil || *got {
+				t.Errorf("node binaryUpdates = %v, want false", got)
+			}
+		})
+	}
+}
+
+// TestBinaryInstall_DisabledSupervisorAlreadyCurrent: with no Supervisor wired but BOS already running
+// the target version, the deployment is reported current rather than failed.
+func TestBinaryInstall_DisabledSupervisorAlreadyCurrent(t *testing.T) {
 	ctx := context.Background()
 	env := setupClientEnv(t)
-	conn := newConnEnv(t, env) // no WithBinaryInstaller
+	conn := newConnEnv(t, env, WithBinaryVersion("9.9.9")) // no WithBinaryInstaller
 
 	artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "9.9.9", []byte("dummy-artefact-payload"))
 	depID := createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
@@ -269,8 +319,61 @@ func TestBinaryInstall_DisabledSupervisor(t *testing.T) {
 		t.Fatalf("Update: %v", err)
 	}
 	dep := getBinaryDeployment(t, env.httpClient, env.testServer.URL, depID)
-	if dep.Status != "pending" {
-		t.Errorf("binary deployment status = %q, want pending (Supervisor disabled)", dep.Status)
+	if dep.Status != "completed" {
+		t.Errorf("binary deployment status = %q, want completed", dep.Status)
+	}
+}
+
+// TestBinaryInstall_UnreachableSupervisor: a Supervisor that is configured but not answering is a
+// temporary fault. The poll fails, the deployment isn't reported failed, and the next poll retries.
+func TestBinaryInstall_UnreachableSupervisor(t *testing.T) {
+	ctx := context.Background()
+	env := setupClientEnv(t)
+
+	// A real Supervisor client whose socket has nothing listening on it.
+	dir, err := os.MkdirTemp("", "sup-*")
+	if err != nil {
+		t.Fatalf("os.MkdirTemp: %v", err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	supConn, err := supervisor.Dial(filepath.Join(dir, "s.sock"))
+	if err != nil {
+		t.Fatalf("supervisor.Dial() = %v", err)
+	}
+	t.Cleanup(func() { _ = supConn.Close() })
+	conn := newConnEnv(t, env, WithBinaryInstaller(supervisorpb.NewSupervisorApiClient(supConn)))
+
+	artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "9.9.9", []byte("dummy-artefact-payload"))
+	depID := createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
+
+	for i := 1; i <= 2; i++ {
+		if _, err := conn.Update(ctx); err == nil {
+			t.Fatalf("Update %d: want error from unreachable Supervisor, got nil", i)
+		}
+		if dep := getBinaryDeployment(t, env.httpClient, env.testServer.URL, depID); dep.Status != "pending" {
+			t.Fatalf("after Update %d: binary deployment status = %q, want pending", i, dep.Status)
+		}
+	}
+	if got := getNodeBinaryUpdates(t, env); got == nil || !*got {
+		t.Errorf("node binaryUpdates = %v, want true", got)
+	}
+}
+
+// TestBinaryInstall_ReportsCapability: with a Supervisor wired, the check-in reports the node can
+// install software updates.
+func TestBinaryInstall_ReportsCapability(t *testing.T) {
+	ctx := context.Background()
+	env := setupClientEnv(t)
+	conn := newConnEnv(t, env, WithBinaryInstaller(dialFakeSupervisor(t, &fakeSupervisor{})))
+
+	if got := getNodeBinaryUpdates(t, env); got != nil {
+		t.Fatalf("node binaryUpdates before check-in = %v, want nil (unknown)", *got)
+	}
+	if _, err := conn.Update(ctx); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if got := getNodeBinaryUpdates(t, env); got == nil || !*got {
+		t.Errorf("node binaryUpdates = %v, want true", got)
 	}
 }
 

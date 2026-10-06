@@ -265,7 +265,7 @@ const createNode = `-- name: CreateNode :one
 
 INSERT INTO nodes (hostname, site_id, os, arch, create_time)
 VALUES (?1, ?2, ?3, ?4, datetime('now', 'subsec'))
-RETURNING id, hostname, site_id, create_time, os, arch
+RETURNING id, hostname, site_id, create_time, os, arch, binary_updates
 `
 
 type CreateNodeParams struct {
@@ -291,6 +291,7 @@ func (q *Queries) CreateNode(ctx context.Context, arg CreateNodeParams) (Node, e
 		&i.CreateTime,
 		&i.Os,
 		&i.Arch,
+		&i.BinaryUpdates,
 	)
 	return i, err
 }
@@ -723,7 +724,7 @@ func (q *Queries) GetCredentialsByNode(ctx context.Context, nodeID int64) ([]Cre
 }
 
 const getNode = `-- name: GetNode :one
-SELECT id, hostname, site_id, create_time, os, arch
+SELECT id, hostname, site_id, create_time, os, arch, binary_updates
 FROM nodes
 WHERE id = ?1
 `
@@ -738,6 +739,7 @@ func (q *Queries) GetNode(ctx context.Context, id int64) (Node, error) {
 		&i.CreateTime,
 		&i.Os,
 		&i.Arch,
+		&i.BinaryUpdates,
 	)
 	return i, err
 }
@@ -1258,7 +1260,7 @@ func (q *Queries) ListNodeCheckInsByNode(ctx context.Context, arg ListNodeCheckI
 }
 
 const listNodes = `-- name: ListNodes :many
-SELECT id, hostname, site_id, create_time, os, arch
+SELECT id, hostname, site_id, create_time, os, arch, binary_updates
 FROM nodes
 WHERE id > ?1
 ORDER BY id
@@ -1286,6 +1288,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 			&i.CreateTime,
 			&i.Os,
 			&i.Arch,
+			&i.BinaryUpdates,
 		); err != nil {
 			return nil, err
 		}
@@ -1301,7 +1304,7 @@ func (q *Queries) ListNodes(ctx context.Context, arg ListNodesParams) ([]Node, e
 }
 
 const listNodesBySite = `-- name: ListNodesBySite :many
-SELECT id, hostname, site_id, create_time, os, arch
+SELECT id, hostname, site_id, create_time, os, arch, binary_updates
 FROM nodes
 WHERE site_id = ?1 AND id > ?2
 ORDER BY id
@@ -1330,6 +1333,7 @@ func (q *Queries) ListNodesBySite(ctx context.Context, arg ListNodesBySiteParams
 			&i.CreateTime,
 			&i.Os,
 			&i.Arch,
+			&i.BinaryUpdates,
 		); err != nil {
 			return nil, err
 		}
@@ -1514,7 +1518,7 @@ const updateNode = `-- name: UpdateNode :one
 UPDATE nodes
 SET hostname = ?1, site_id = ?2, os = ?3, arch = ?4
 WHERE id = ?5
-RETURNING id, hostname, site_id, create_time, os, arch
+RETURNING id, hostname, site_id, create_time, os, arch, binary_updates
 `
 
 type UpdateNodeParams struct {
@@ -1541,15 +1545,32 @@ func (q *Queries) UpdateNode(ctx context.Context, arg UpdateNodeParams) (Node, e
 		&i.CreateTime,
 		&i.Os,
 		&i.Arch,
+		&i.BinaryUpdates,
 	)
 	return i, err
+}
+
+const updateNodeBinaryUpdates = `-- name: UpdateNodeBinaryUpdates :exec
+UPDATE nodes
+SET binary_updates = ?1
+WHERE id = ?2
+`
+
+type UpdateNodeBinaryUpdatesParams struct {
+	BinaryUpdates sql.NullBool
+	ID            int64
+}
+
+func (q *Queries) UpdateNodeBinaryUpdates(ctx context.Context, arg UpdateNodeBinaryUpdatesParams) error {
+	_, err := q.db.ExecContext(ctx, updateNodeBinaryUpdates, arg.BinaryUpdates, arg.ID)
+	return err
 }
 
 const updateNodePlatform = `-- name: UpdateNodePlatform :one
 UPDATE nodes
 SET os = ?1, arch = ?2
 WHERE id = ?3
-RETURNING id, hostname, site_id, create_time, os, arch
+RETURNING id, hostname, site_id, create_time, os, arch, binary_updates
 `
 
 type UpdateNodePlatformParams struct {
@@ -1568,6 +1589,7 @@ func (q *Queries) UpdateNodePlatform(ctx context.Context, arg UpdateNodePlatform
 		&i.CreateTime,
 		&i.Os,
 		&i.Arch,
+		&i.BinaryUpdates,
 	)
 	return i, err
 }

@@ -24,3 +24,10 @@ func nullString(v string) sql.NullString {
 	}
 	return sql.NullString{String: v, Valid: true}
 }
+
+func nullBool(v *bool) sql.NullBool {
+	if v == nil {
+		return sql.NullBool{}
+	}
+	return sql.NullBool{Bool: *v, Valid: true}
+}

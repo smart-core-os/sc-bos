@@ -174,6 +174,46 @@ func TestInterlock_ConfigWinsSamePollTie(t *testing.T) {
 	}
 }
 
+// TestInterlock_DisabledSupervisorConfigProceeds: with no Supervisor wired, a poll that offers both a
+// config and a binary deployment still installs the config, while the binary is reported failed.
+func TestInterlock_DisabledSupervisorConfigProceeds(t *testing.T) {
+	ctx := context.Background()
+	env := setupClientEnv(t)
+	conn := newConnEnv(t, env) // no WithBinaryInstaller
+
+	// config channel: a pending config deployment.
+	cvPayload := txtarToTarGZ(t, "single.txtar")
+	cvID := createConfigVersion(t, env.httpClient, env.testServer.URL, env.nodeID, cvPayload)
+	cfgDepID := createPendingDeployment(t, env.httpClient, env.testServer.URL, cvID)
+
+	// binary channel: a pending binary deployment.
+	artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "4.5.6", []byte("dummy-artefact-payload"))
+	updDepID := createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
+
+	needReboot, err := conn.Update(ctx)
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	// config channel: staged the deployment and asked for a reboot.
+	if !needReboot {
+		t.Error("expected needReboot=true from config channel")
+	}
+	if !symlinkExists(env.storePath, "deployments/installing") {
+		t.Error("expected config deployment staged as installing")
+	}
+	cfgDep := getDeployment(t, env.httpClient, env.testServer.URL, cfgDepID)
+	if cfgDep.Status != "in_progress" {
+		t.Errorf("config deployment status = %q, want in_progress", cfgDep.Status)
+	}
+
+	// binary channel: reported failed.
+	updDep := getBinaryDeployment(t, env.httpClient, env.testServer.URL, updDepID)
+	if updDep.Status != "failed" {
+		t.Errorf("binary deployment status = %q, want failed (Supervisor disabled)", updDep.Status)
+	}
+}
+
 // TestInterlock_BinaryInFlightBlocksConfig: with a binary install already in flight (the Supervisor is
 // INSTALLING), a newly-offered config deployment must not be staged - it waits for the binary to settle.
 func TestInterlock_BinaryInFlightBlocksConfig(t *testing.T) {
