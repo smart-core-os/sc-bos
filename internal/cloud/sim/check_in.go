@@ -127,13 +127,27 @@ type CheckInRequest struct {
 	Progress []ProgressReport `json:"progress,omitempty"`
 }
 
-// RunningState reports what the node is running and its platform. Only Platform is acted on here (it
-// reconciles the node's os/arch); Config/Binary versions are accepted for wire compatibility but the
-// deployment lifecycle is driven by Progress.
+// RunningState reports what the node is running, its platform and its capabilities. Platform is
+// reconciled onto the node and Capabilities is recorded on it; Config/Binary versions are accepted for
+// wire compatibility but the deployment lifecycle is driven by Progress.
 type RunningState struct {
-	Config   *RunningArtefact `json:"config,omitempty"`
-	Binary   *RunningArtefact `json:"binary,omitempty"`
-	Platform *Platform        `json:"platform,omitempty"`
+	Config       *RunningArtefact `json:"config,omitempty"`
+	Binary       *RunningArtefact `json:"binary,omitempty"`
+	Platform     *Platform        `json:"platform,omitempty"`
+	Capabilities *Capabilities    `json:"capabilities,omitempty"`
+}
+
+// Capabilities reports what the node can do. Each field is nil when the node doesn't report it.
+type Capabilities struct {
+	BinaryUpdates *bool `json:"binaryUpdates,omitempty"` // whether the node can install software updates
+}
+
+// binaryUpdates returns c.BinaryUpdates, or nil when c is nil.
+func (c *Capabilities) binaryUpdates() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.BinaryUpdates
 }
 
 // RunningArtefact identifies the version a stream is running.
@@ -360,6 +374,18 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 				}
 			} else if p.OS != node.Os || p.Arch != node.Arch {
 				return errChangePlatform(Platform{OS: node.Os, Arch: node.Arch}, *p)
+			}
+		}
+
+		// Record whether the node can install software updates. Unlike the platform this can change (the
+		// node's Supervisor may be enabled or disabled), so the latest check-in that reports it wins. A
+		// check-in that doesn't report it leaves it unchanged. Cloudsim records this but doesn't enforce it.
+		if b := nullBool(req.Running.Capabilities.binaryUpdates()); b.Valid && b != node.BinaryUpdates {
+			if err := tx.UpdateNodeBinaryUpdates(r.Context(), queries.UpdateNodeBinaryUpdatesParams{
+				ID:            node.ID,
+				BinaryUpdates: b,
+			}); err != nil {
+				return err
 			}
 		}
 

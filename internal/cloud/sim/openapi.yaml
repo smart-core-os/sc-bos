@@ -887,6 +887,10 @@ components:
         arch:
           type: string
           description: GOARCH the node reports; empty until first reported on check-in
+        capabilities:
+          allOf:
+            - $ref: '#/components/schemas/Capabilities'
+          description: Capabilities the node last reported on check-in
         createTime:
           type: string
           format: date-time
@@ -1138,6 +1142,19 @@ components:
           allOf:
             - $ref: '#/components/schemas/Platform'
           description: The node's GOOS/GOARCH; reconciled onto the node
+        capabilities:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Capabilities'
+          description: What the node can do; recorded on the node
+
+    Capabilities:
+      type: object
+      description: What a node can do. An absent field means the capability is unknown, not false.
+      properties:
+        binaryUpdates:
+          type: boolean
+          description: Whether the node can install software (binary) updates
 
     RunningArtefact:
       type: object

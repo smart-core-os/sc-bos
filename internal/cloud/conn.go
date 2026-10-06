@@ -369,8 +369,8 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	// record whatever happens in this check-in
 	defer func() { c.recordCheckIn(cred, time.Now(), err) }()
 
-	// Build the combined request: the config stream's progress, this node's platform, and the binary
-	// version it runs. Perform one check-in, then dispatch the response to each handler.
+	// Build the combined request: the config stream's progress, this node's platform, the binary
+	// version it runs, and its capabilities. Perform one check-in, then dispatch the response to each handler.
 	// Note: this doesn't include binary update progress, that happens in a separate check-in based on info
 	// from the supervisor.
 	req, err := u.CheckInRequest(ctx)
@@ -380,6 +380,7 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	req.Running.Platform = new(c.platform)
 	if c.binaryUpdater != nil {
 		req.Running.Binary = c.binaryUpdater.runningBinary()
+		req.Running.Capabilities = &Capabilities{BinaryUpdates: new(c.binaryUpdater.canInstall())}
 	}
 
 	resp, err := u.client.CheckIn(ctx, req)

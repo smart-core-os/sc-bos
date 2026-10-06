@@ -78,6 +78,11 @@ SET os = :os, arch = :arch
 WHERE id = :id
 RETURNING *;
 
+-- name: UpdateNodeBinaryUpdates :exec
+UPDATE nodes
+SET binary_updates = :binary_updates
+WHERE id = :id;
+
 -- name: DeleteNode :execrows
 DELETE FROM nodes
 WHERE id = :id;

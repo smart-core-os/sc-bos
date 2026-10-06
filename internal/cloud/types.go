@@ -15,11 +15,18 @@ type CheckInRequest struct {
 	Progress []ProgressReport `json:"progress,omitempty"`
 }
 
-// RunningState reports what the node is currently running, plus its platform. Every field is optional.
+// RunningState reports what the node is currently running, plus its platform and capabilities. Every
+// field is optional.
 type RunningState struct {
-	Config   *RunningArtefact `json:"config,omitempty"`
-	Binary   *RunningArtefact `json:"binary,omitempty"`
-	Platform *Platform        `json:"platform,omitempty"`
+	Config       *RunningArtefact `json:"config,omitempty"`
+	Binary       *RunningArtefact `json:"binary,omitempty"`
+	Platform     *Platform        `json:"platform,omitempty"`
+	Capabilities *Capabilities    `json:"capabilities,omitempty"`
+}
+
+// Capabilities reports what the node can do. A nil field means the capability is unknown, not false.
+type Capabilities struct {
+	BinaryUpdates *bool `json:"binaryUpdates,omitempty"` // whether the node can install software updates
 }
 
 // RunningArtefact identifies the version a stream is currently running. VersionID and Hash are

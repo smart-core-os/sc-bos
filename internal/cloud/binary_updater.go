@@ -20,13 +20,16 @@ const supervisorCallTimeout = 10 * time.Second
 // rollbackReasonFallback is reported when the Supervisor rolled an update back but gave no reason.
 const rollbackReasonFallback = "update rolled back: running version does not match the target"
 
+// noSupervisorReason is reported when BOS is offered an update it can't install because it has no Supervisor.
+const noSupervisorReason = "software updates are not supported on this node: no Supervisor configured"
+
 // BinaryUpdater handles the binary channel of a check-in. It is stateless: the
 // Supervisor is the source of truth for an update's outcome, and the cloud re-offers the active
 // deployment on every poll until BOS reports a terminal result, so BOS persists nothing.
 type BinaryUpdater struct {
 	// installer is the Supervisor's gRPC client, or nil when the integration is disabled. When nil the
 	// binary channel attempts no install (BOS cannot apply an update without a Supervisor) and reports
-	// nothing.
+	// any update it isn't already running as failed.
 	installer supervisorpb.SupervisorApiClient
 	version   string // the version BOS currently runs; "" when unknown
 	logger    *zap.Logger
@@ -41,8 +44,8 @@ func WithBinaryLogger(logger *zap.Logger) BinaryUpdaterOption {
 }
 
 // WithBinaryInstaller sets the Supervisor client the binary channel drives. When unset (or nil) the
-// Supervisor integration is treated as disabled: no install is attempted and no result is reported,
-// since BOS cannot apply an update without a Supervisor.
+// Supervisor integration is treated as disabled: no install is attempted, and an update BOS isn't
+// already running is reported failed, since BOS cannot apply an update without a Supervisor.
 func WithBinaryInstaller(installer supervisorpb.SupervisorApiClient) BinaryUpdaterOption {
 	return func(u *BinaryUpdater) { u.installer = installer }
 }
@@ -60,6 +63,11 @@ func (u *BinaryUpdater) runningBinary() *RunningArtefact {
 		return nil
 	}
 	return &RunningArtefact{Version: u.version}
+}
+
+// canInstall reports whether BOS can install software updates, which needs a Supervisor.
+func (u *BinaryUpdater) canInstall() bool {
+	return u.installer != nil
 }
 
 // NewBinaryUpdater creates a BinaryUpdater.
@@ -115,8 +123,8 @@ func installInFlight(st *supervisorpb.UpdateStatus) bool {
 //   - otherwise the deployment is new: return with startable=true
 //
 // Does not start an installation. The returned installState tells the caller whether an update is already in flight
-// (per st) and whether a new deployment is available to install. With no Supervisor configured BOS can
-// only report current when it already runs the target.
+// (per st) and whether a new deployment is available to install. With no Supervisor configured BOS
+// reports current when it already runs the target, and failed otherwise.
 func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp CheckInResponse, st *supervisorpb.UpdateStatus) (installState, error) {
 	// The Supervisor's status is the authoritative in-flight signal, independent of what the server offers:
 	// a running install must block a config reboot even on a poll where the binary is not offered.
@@ -133,18 +141,17 @@ func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp Ch
 	version := latest.Version
 	runningTarget := u.version != "" && version.Version == u.version
 
-	// Without a Supervisor BOS can neither apply nor confirm an update. The only signal available is
-	// whether BOS already runs the target version; report that current, otherwise stay quiet (typical in
-	// dev, where there is no Supervisor).
-	if u.installer == nil {
+	// Without a Supervisor BOS can neither apply nor confirm an update. If BOS already runs the target,
+	// report it current; otherwise the update can never be installed here, so report it failed.
+	if !u.canInstall() {
 		if runningTarget {
 			u.logger.Info("running the deployment's target version, reporting current to server",
 				zap.String("deploymentId", deploymentID), zap.String("version", version.Version))
 			return installState{}, u.reportApplied(ctx, client, deploymentID)
 		}
-		u.logger.Debug("binary deployment available but Supervisor integration disabled, not installing",
+		u.logger.Warn("binary deployment received but no Supervisor configured, reporting failure to server",
 			zap.String("deploymentId", deploymentID), zap.String("version", version.Version))
-		return installState{}, nil
+		return installState{}, u.reportFailed(ctx, client, deploymentID, noSupervisorReason)
 	}
 
 	// The Supervisor correlates its version-keyed outcome with this deployment via the opaque id BOS
@@ -167,12 +174,7 @@ func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp Ch
 				zap.String("runningVersion", u.version),
 				zap.String("reason", reason),
 			)
-			if _, err := client.CheckIn(ctx, CheckInRequest{
-				Progress: []ProgressReport{{DeploymentID: deploymentID, State: ProgressFailed, Reason: reason}},
-			}); err != nil {
-				return installState{}, fmt.Errorf("check-in to report failed update: %w", err)
-			}
-			return installState{}, nil
+			return installState{}, u.reportFailed(ctx, client, deploymentID, reason)
 		case supervisorpb.UpdateStatus_DOWNLOADING, supervisorpb.UpdateStatus_INSTALLING:
 			// In flight: report installing and wait for a later poll to see the outcome. This holds even
 			// when BOS already runs the target version - the Supervisor has not yet confirmed the commit
@@ -244,10 +246,8 @@ func (u *BinaryUpdater) installBinary(ctx context.Context, client Client, latest
 			zap.String("version", version.Version),
 			zap.String("reason", reason),
 		)
-		_, reportErr := client.CheckIn(ctx, CheckInRequest{
-			Progress: []ProgressReport{{DeploymentID: deploymentID, State: ProgressFailed, Reason: reason}},
-		})
-		return errors.Join(fmt.Errorf("install update via supervisor: %w", err), reportErr)
+		return errors.Join(fmt.Errorf("install update via supervisor: %w", err),
+			u.reportFailed(ctx, client, deploymentID, reason))
 	default:
 		// A transient or unknown failure: report installing-with-error and let a later poll retry.
 		installing.Error = err.Error()
@@ -263,6 +263,17 @@ func (u *BinaryUpdater) reportApplied(ctx context.Context, client Client, deploy
 		Progress: []ProgressReport{{DeploymentID: deploymentID, State: ProgressApplied}},
 	}); err != nil {
 		return fmt.Errorf("check-in to report current update: %w", err)
+	}
+	return nil
+}
+
+// reportFailed reports the deployment as permanently failed with reason (progress:failed) via a follow-up
+// check-in. The server stops offering a failed deployment.
+func (u *BinaryUpdater) reportFailed(ctx context.Context, client Client, deploymentID, reason string) error {
+	if _, err := client.CheckIn(ctx, CheckInRequest{
+		Progress: []ProgressReport{{DeploymentID: deploymentID, State: ProgressFailed, Reason: reason}},
+	}); err != nil {
+		return fmt.Errorf("check-in to report failed update: %w", err)
 	}
 	return nil
 }
