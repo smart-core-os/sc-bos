@@ -3,7 +3,7 @@
 // automatically if the new version is unhealthy.
 //
 // Callers talk to the Supervisor through the generated supervisorpb.SupervisorApiClient built on the
-// connection from Dial. RunStartupCommit orchestrates the once-per-boot Commit.
+// connection from Dial. Commit and CommitUntilAccepted confirm the version BOS is running.
 package supervisor
 
 import (

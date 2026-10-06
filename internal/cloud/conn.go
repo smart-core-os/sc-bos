@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 )
 
 // ErrNotRegistered is returned by Update, Renew, CommitInstall, and FailInstall
@@ -344,6 +345,20 @@ func (c *Conn) WaitConnected(ctx context.Context) error {
 	}
 }
 
+// supervisorBusy reports whether the Supervisor is downloading or installing an update, waiting up to
+// supervisorCallTimeout for the Supervisor to become available. It reports false when the Supervisor
+// integration is disabled.
+func (c *Conn) supervisorBusy(ctx context.Context) (bool, error) {
+	if c.binaryUpdater == nil {
+		return false, nil
+	}
+	st, err := c.binaryUpdater.updateStatus(ctx)
+	if err != nil {
+		return false, err
+	}
+	return installInFlight(st), nil
+}
+
 // Update performs a single shared check-in using the current registration and dispatches the
 // response to both channels: the config channel (ConfigUpdater) and, when enabled, the update
 // channel (BinaryUpdater). One check-in carries both channels' current state.
@@ -353,6 +368,14 @@ func (c *Conn) WaitConnected(ctx context.Context) error {
 // needReboot reflects the config channel only; the binary channel that records an install intent does
 // not itself trigger a reboot here (the Supervisor restarts BOS in a later phase).
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
+	// Read the Supervisor's status before taking the lock, so waiting for the Supervisor doesn't block other
+	// users of the connection.
+	var supStatus *supervisorpb.UpdateStatus
+	var supErr error
+	if c.binaryUpdater != nil {
+		supStatus, supErr = c.binaryUpdater.updateStatus(ctx)
+	}
+
 	if !c.lockSerial(ctx) {
 		return false, ctx.Err()
 	}
@@ -398,9 +421,8 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 
 	var bin installState
 	if c.binaryUpdater != nil {
-		supStatus, serr := c.binaryUpdater.updateStatus(ctx)
-		if serr != nil {
-			return needReboot, fmt.Errorf("get supervisor update status: %w", serr)
+		if supErr != nil {
+			return needReboot, fmt.Errorf("get supervisor update status: %w", supErr)
 		}
 		if bin, err = c.binaryUpdater.reportBinary(ctx, u.client, resp, supStatus); err != nil {
 			return needReboot, fmt.Errorf("handle update: %w", err)
@@ -414,12 +436,12 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	case cfg.startable:
 		needReboot, err = u.installConfig(ctx, resp.LatestConfig)
 		if err = c.capInstall(ctx, u.client, resp.LatestConfig.Deployment.ID, err); err != nil {
-			return needReboot, fmt.Errorf("handle config: %w", err)
+			return needReboot, fmt.Errorf("handle config: %w", installError{err})
 		}
 	case bin.startable:
 		err = c.binaryUpdater.installBinary(ctx, u.client, resp.LatestBinary)
 		if err = c.capInstall(ctx, u.client, resp.LatestBinary.Deployment.ID, err); err != nil {
-			return needReboot, fmt.Errorf("handle update: %w", err)
+			return needReboot, fmt.Errorf("handle update: %w", installError{err})
 		}
 	}
 	return needReboot, nil
@@ -427,6 +449,12 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 
 // how many transient install failures to permit before giving up on a deployment permanently.
 const maxInstallAttempts = 3
+
+// installError is an Update error from a failed install attempt, which counts towards maxInstallAttempts.
+type installError struct{ err error }
+
+func (e installError) Error() string { return e.err.Error() }
+func (e installError) Unwrap() error { return e.err }
 
 // capInstall records the outcome of an install attempt for install attempt capping.
 //

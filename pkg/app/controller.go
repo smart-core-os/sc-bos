@@ -860,19 +860,26 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 // commitToSupervisor tells the Supervisor which version BOS is now running. This prevents the supervisor from assuming
 // that an update has failed, and rolling us back.
 //
-// It is best-effort and blocks until complete.
+// It blocks until the Supervisor accepts or rejects the commit, or ctx is done.
 // Requires c.Supervisor to be non-nil.
 func (c *Controller) commitToSupervisor(ctx context.Context) {
 	log := c.Logger.Named("supervisor")
-	// If we expect to connect to the cloud, don't commit until we confirm it's working, so that an update which breaks
-	// cloud connection will be rolled back.
+	// If we expect to connect to the cloud, don't commit until a poll fully succeeds: the check-in and handling its
+	// response. An update that breaks either is then rolled back.
 	if c.Cloud != nil && c.Cloud.State().Connectivity != cloud.Unconfigured {
 		if err := c.Cloud.WaitConnected(ctx); err != nil {
 			log.Debug("supervisor commit skipped: no successful check-in before shutdown", zap.Error(err))
 			return
 		}
 	}
-	supervisor.RunStartupCommit(ctx, c.Supervisor, EffectiveVersion(), log)
+	version := EffectiveVersion()
+	switch err := supervisor.CommitUntilAccepted(ctx, c.Supervisor, version, log); {
+	case err == nil:
+		log.Debug("supervisor commit succeeded", zap.String("version", version))
+	case ctx.Err() != nil:
+	default:
+		log.Error("supervisor rejected commit", zap.String("version", version), zap.Error(err))
+	}
 }
 
 const (

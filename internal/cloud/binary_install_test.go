@@ -38,9 +38,10 @@ func getBinaryDeployment(t *testing.T, client *http.Client, baseURL string, depl
 type fakeSupervisor struct {
 	supervisorpb.UnimplementedSupervisorApiServer
 
-	locked        bool // if true, InstallUpdate returns FailedPrecondition
-	installFails  bool // if true, InstallUpdate returns a generic (non-FailedPrecondition) error
-	installReject bool // if true, InstallUpdate returns InvalidArgument (a permanent rejection)
+	locked        bool  // if true, InstallUpdate returns FailedPrecondition
+	installFails  bool  // if true, InstallUpdate returns a generic (non-FailedPrecondition) error
+	installReject bool  // if true, InstallUpdate returns InvalidArgument (a permanent rejection)
+	statusErr     error // if set, GetUpdateStatus returns it
 
 	mu             sync.Mutex
 	status         *supervisorpb.UpdateStatus // returned by GetUpdateStatus; nil yields an empty status
@@ -51,6 +52,9 @@ type fakeSupervisor struct {
 func (f *fakeSupervisor) GetUpdateStatus(_ context.Context, _ *supervisorpb.GetUpdateStatusRequest) (*supervisorpb.GetUpdateStatusResponse, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.statusErr != nil {
+		return nil, f.statusErr
+	}
 	return &supervisorpb.GetUpdateStatusResponse{Status: f.status}, nil
 }
 
