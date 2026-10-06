@@ -5,6 +5,9 @@
 # what :current resolves to and restarts this unit.
 [Unit]
 Description=Smart Core BOS (demo)
+# Start the Supervisor with BOS so BOS can confirm an update over its socket. Wants= (not Requires=) keeps
+# BOS running when the Supervisor stops or restarts.
+Wants=sc-bos-supervisor.service
 
 [Container]
 # The tag the Supervisor swaps — never a version. 03-install.sh seeds this to v1.

@@ -860,7 +860,7 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 // commitToSupervisor tells the Supervisor which version BOS is now running. This prevents the supervisor from assuming
 // that an update has failed, and rolling us back.
 //
-// It is best-effort and blocks until complete.
+// It blocks until the Supervisor accepts or rejects the commit, or ctx is done.
 // Requires c.Supervisor to be non-nil.
 func (c *Controller) commitToSupervisor(ctx context.Context) {
 	log := c.Logger.Named("supervisor")
@@ -872,7 +872,14 @@ func (c *Controller) commitToSupervisor(ctx context.Context) {
 			return
 		}
 	}
-	supervisor.RunStartupCommit(ctx, c.Supervisor, EffectiveVersion(), log)
+	version := EffectiveVersion()
+	switch err := supervisor.CommitUntilAccepted(ctx, c.Supervisor, version, log); {
+	case err == nil:
+		log.Debug("supervisor commit succeeded", zap.String("version", version))
+	case ctx.Err() != nil:
+	default:
+		log.Error("supervisor rejected commit", zap.String("version", version), zap.Error(err))
+	}
 }
 
 const (

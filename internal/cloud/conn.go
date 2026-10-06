@@ -344,6 +344,19 @@ func (c *Conn) WaitConnected(ctx context.Context) error {
 	}
 }
 
+// supervisorBusy reports whether the Supervisor is downloading or installing an update. It reports false
+// when the Supervisor integration is disabled.
+func (c *Conn) supervisorBusy(ctx context.Context) (bool, error) {
+	if c.binaryUpdater == nil {
+		return false, nil
+	}
+	st, err := c.binaryUpdater.updateStatus(ctx)
+	if err != nil {
+		return false, err
+	}
+	return installInFlight(st), nil
+}
+
 // Update performs a single shared check-in using the current registration and dispatches the
 // response to both channels: the config channel (ConfigUpdater) and, when enabled, the update
 // channel (BinaryUpdater). One check-in carries both channels' current state.
@@ -414,12 +427,12 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	case cfg.startable:
 		needReboot, err = u.installConfig(ctx, resp.LatestConfig)
 		if err = c.capInstall(ctx, u.client, resp.LatestConfig.Deployment.ID, err); err != nil {
-			return needReboot, fmt.Errorf("handle config: %w", err)
+			return needReboot, fmt.Errorf("handle config: %w", installError{err})
 		}
 	case bin.startable:
 		err = c.binaryUpdater.installBinary(ctx, u.client, resp.LatestBinary)
 		if err = c.capInstall(ctx, u.client, resp.LatestBinary.Deployment.ID, err); err != nil {
-			return needReboot, fmt.Errorf("handle update: %w", err)
+			return needReboot, fmt.Errorf("handle update: %w", installError{err})
 		}
 	}
 	return needReboot, nil
@@ -427,6 +440,12 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 
 // how many transient install failures to permit before giving up on a deployment permanently.
 const maxInstallAttempts = 3
+
+// installError is an Update error from a failed install attempt, which counts towards maxInstallAttempts.
+type installError struct{ err error }
+
+func (e installError) Error() string { return e.err.Error() }
+func (e installError) Unwrap() error { return e.err }
 
 // capInstall records the outcome of an install attempt for install attempt capping.
 //

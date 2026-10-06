@@ -49,7 +49,7 @@ func Default() Config {
 		StateDir:               "/var/lib/sc-bos-supervisor",
 		ImageRepo:              "localhost/smartcore/bos",
 		Unit:                   "sc-bos",
-		CommitDeadline:         jsontypes.Duration{Duration: 2 * time.Minute},
+		CommitDeadline:         jsontypes.Duration{Duration: 5 * time.Minute},
 		AllowInsecureDownloads: false,
 	}
 }
