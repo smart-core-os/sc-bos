@@ -24,7 +24,8 @@ const (
 
 // CommitUntilAccepted commits version to the Supervisor, retrying with backoff until the Supervisor accepts or
 // rejects the commit, or ctx is done. It returns nil once accepted, the Supervisor's error if it rejects the
-// request as invalid, or ctx.Err(). Each failed attempt that will be retried is logged to logger.
+// request as invalid, or ctx.Err(). The first failed attempt is logged to logger as a warning, later ones at
+// debug level.
 //
 // The commit confirms an in-progress Supervisor update (stopping its auto-rollback), but is also safe to call
 // when running a version that was previously committed.
@@ -34,6 +35,7 @@ func CommitUntilAccepted(ctx context.Context, client supervisorpb.SupervisorApiC
 		backoff.WithMaxInterval(commitRetryMax),
 		backoff.WithMaxElapsedTime(0),
 	)
+	var warned bool
 	return backoff.RetryNotify(
 		func() error {
 			err := Commit(ctx, client, version)
@@ -44,7 +46,11 @@ func CommitUntilAccepted(ctx context.Context, client supervisorpb.SupervisorApiC
 		},
 		backoff.WithContext(retry, ctx),
 		func(err error, next time.Duration) {
-			logger.Warn("supervisor commit failed, will retry",
+			log := logger.Debug
+			if !warned {
+				log, warned = logger.Warn, true
+			}
+			log("supervisor commit failed, will retry",
 				zap.String("version", version), zap.Duration("retryIn", next), zap.Error(err))
 		},
 	)
