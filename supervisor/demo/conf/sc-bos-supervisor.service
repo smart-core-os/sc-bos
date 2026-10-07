@@ -12,8 +12,9 @@ ExecStart=/usr/local/bin/sc-bos-supervisor
 Restart=always
 RestartSec=5
 # Give a stop mid-install time to finish rolling back before SIGKILL; a cut-off is re-driven by
-# reconcile on the next start anyway.
-TimeoutStopSec=300
+# reconcile on the next start anyway. Covers the Supervisor's own stop limit with the default
+# commitDeadline: 15s for the API to stop plus twice commitDeadline.
+TimeoutStopSec=660
 
 [Install]
 WantedBy=multi-user.target
