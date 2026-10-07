@@ -162,20 +162,11 @@ func newRegisteredConn(t *testing.T, client Client, opts ...testConnOption) *tes
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	regStore, depStore := newStores(t)
-	if err := regStore.Save(context.Background(), testRegistration(t, "node-a")); err != nil {
-		t.Fatalf("save registration: %v", err)
-	}
-	connOpts := []ConnOption{WithClientFactory(func(*Registration) Client { return client })}
+	var installer supervisorpb.SupervisorApiClient
 	if cfg.sup != nil {
-		installer := supervisorpb.NewSupervisorApiClient(wrap.ServerToClient(supervisorpb.SupervisorApi_ServiceDesc, cfg.sup))
-		connOpts = append(connOpts, WithBinaryUpdater(NewBinaryUpdater(WithBinaryInstaller(installer))))
+		installer = supervisorpb.NewSupervisorApiClient(wrap.ServerToClient(supervisorpb.SupervisorApi_ServiceDesc, cfg.sup))
 	}
-	conn, err := OpenConn(context.Background(), regStore, depStore, "", connOpts...)
-	if err != nil {
-		t.Fatalf("OpenConn: %v", err)
-	}
-	return &testConn{Conn: conn, interval: cfg.interval}
+	return &testConn{Conn: openConnWithInstaller(t, client, installer), interval: cfg.interval}
 }
 
 // scriptedClient is a Client whose check-ins return results in order, then fail (or nil once exhausted).

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 )
 
@@ -344,13 +346,14 @@ func (c *Conn) WaitConnected(ctx context.Context) error {
 	}
 }
 
-// supervisorBusy reports whether the Supervisor is downloading or installing an update. It reports false
-// when the Supervisor integration is disabled.
+// supervisorBusy reports whether the Supervisor is downloading or installing an update, waiting up to
+// supervisorCallTimeout for the Supervisor to become available. It reports false when the Supervisor
+// integration is disabled.
 func (c *Conn) supervisorBusy(ctx context.Context) (bool, error) {
 	if c.binaryUpdater == nil {
 		return false, nil
 	}
-	st, err := c.binaryUpdater.updateStatus(ctx)
+	st, err := c.binaryUpdater.updateStatus(ctx, grpc.WaitForReady(true))
 	if err != nil {
 		return false, err
 	}
