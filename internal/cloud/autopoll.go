@@ -26,10 +26,10 @@ const checkInRetryMin = 5 * time.Second
 // Otherwise, AutoPoll waits a random duration in [0, min(interval, 1 minute)) before its first poll,
 // to spread check-in load across many nodes starting simultaneously.
 //
-// The first check-in after boot is retried with exponential backoff, from checkInRetryMin up to the poll interval,
-// so the node shows as online in the cloud as soon as possible.
-// This does not include install attempts - the next attempt after a failed install will be at the next poll cycle.
-// Subsequent check-ins (after the first success) are not retried until the next poll interval.
+// Until a check-in reaches the cloud, a check-in that can't connect to the cloud is retried with exponential backoff,
+// from checkInRetryMin up to the poll interval, so the node shows as online in the cloud as soon as possible.
+// Other failures, such as a failed install or an unavailable Supervisor, wait for the next poll.
+// Once a check-in has reached the cloud, failures are not retried until the next poll interval.
 func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *zap.Logger) bool {
 	initial, changes := conn.PullState(ctx)
 	changes = concurrent.BreakBackpressure(changes) // only care about the latest value, drop others
@@ -41,8 +41,8 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 	}
 	ticker := time.NewTicker(interval)
 	var (
-		checkedIn bool // a check-in has reached the cloud since AutoPoll started
-		retryTick <-chan time.Time
+		reachedCloud bool // a check-in has got past connecting to the cloud since AutoPoll started
+		retryTick    <-chan time.Time
 	)
 	retry := backoff.NewExponentialBackOff(
 		backoff.WithInitialInterval(checkInRetryMin),
@@ -88,9 +88,9 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 		} else if err != nil {
 			logger.Error("failed to check for deployment updates", zap.Error(err))
 		}
-		if _, installFailed := errors.AsType[installError](err); err == nil || installFailed {
-			checkedIn = true
-		} else if !checkedIn {
+		if _, installFailed := errors.AsType[installError](err); !IsConnectionError(err) || installFailed {
+			reachedCloud = true
+		} else if !reachedCloud {
 			retryTick = time.After(retry.NextBackOff())
 		}
 		if needReboot {

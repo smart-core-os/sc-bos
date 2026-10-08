@@ -8,9 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
+	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 )
 
 // ErrNotRegistered is returned by Update, Renew, CommitInstall, and FailInstall
@@ -353,7 +352,7 @@ func (c *Conn) supervisorBusy(ctx context.Context) (bool, error) {
 	if c.binaryUpdater == nil {
 		return false, nil
 	}
-	st, err := c.binaryUpdater.updateStatus(ctx, grpc.WaitForReady(true))
+	st, err := c.binaryUpdater.updateStatus(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -369,6 +368,14 @@ func (c *Conn) supervisorBusy(ctx context.Context) (bool, error) {
 // needReboot reflects the config channel only; the binary channel that records an install intent does
 // not itself trigger a reboot here (the Supervisor restarts BOS in a later phase).
 func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
+	// Read the Supervisor's status before taking the lock, so waiting for the Supervisor doesn't block other
+	// users of the connection.
+	var supStatus *supervisorpb.UpdateStatus
+	var supErr error
+	if c.binaryUpdater != nil {
+		supStatus, supErr = c.binaryUpdater.updateStatus(ctx)
+	}
+
 	if !c.lockSerial(ctx) {
 		return false, ctx.Err()
 	}
@@ -413,9 +420,8 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 
 	var bin installState
 	if c.binaryUpdater != nil {
-		supStatus, serr := c.binaryUpdater.updateStatus(ctx)
-		if serr != nil {
-			return needReboot, fmt.Errorf("get supervisor update status: %w", serr)
+		if supErr != nil {
+			return needReboot, fmt.Errorf("get supervisor update status: %w", supErr)
 		}
 		if bin, err = c.binaryUpdater.reportBinary(ctx, u.client, resp, supStatus); err != nil {
 			return needReboot, fmt.Errorf("handle update: %w", err)
