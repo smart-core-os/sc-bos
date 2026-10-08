@@ -864,8 +864,8 @@ func (c *Controller) Run(ctx context.Context) (err error) {
 // Requires c.Supervisor to be non-nil.
 func (c *Controller) commitToSupervisor(ctx context.Context) {
 	log := c.Logger.Named("supervisor")
-	// If we expect to connect to the cloud, don't commit until we confirm it's working, so that an update which breaks
-	// cloud connection will be rolled back.
+	// If we expect to connect to the cloud, don't commit until a poll fully succeeds: the check-in and handling its
+	// response. An update that breaks either is then rolled back.
 	if c.Cloud != nil && c.Cloud.State().Connectivity != cloud.Unconfigured {
 		if err := c.Cloud.WaitConnected(ctx); err != nil {
 			log.Debug("supervisor commit skipped: no successful check-in before shutdown", zap.Error(err))

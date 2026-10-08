@@ -26,10 +26,10 @@ const checkInRetryMin = 5 * time.Second
 // Otherwise, AutoPoll waits a random duration in [0, min(interval, 1 minute)) before its first poll,
 // to spread check-in load across many nodes starting simultaneously.
 //
-// Until a check-in reaches the cloud, a check-in that can't connect to the cloud is retried with exponential backoff,
-// from checkInRetryMin up to the poll interval, so the node shows as online in the cloud as soon as possible.
-// Other failures, such as a failed install or an unavailable Supervisor, wait for the next poll.
-// Once a check-in has reached the cloud, failures are not retried until the next poll interval.
+// A check-in that can't connect to the cloud is retried with exponential backoff, from checkInRetryMin up to the
+// poll interval, so the node shows as online in the cloud as soon as possible. This stops after the first check-in
+// that connects (even if a following step fails, such as a failed install or an unavailable Supervisor. From then
+// on, failures wait for the next poll.
 func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *zap.Logger) bool {
 	initial, changes := conn.PullState(ctx)
 	changes = concurrent.BreakBackpressure(changes) // only care about the latest value, drop others
@@ -41,7 +41,7 @@ func AutoPoll(ctx context.Context, conn *Conn, interval time.Duration, logger *z
 	}
 	ticker := time.NewTicker(interval)
 	var (
-		reachedCloud bool // a check-in has got past connecting to the cloud since AutoPoll started
+		reachedCloud bool // a check-in has connected to the cloud, or failed for another reason, since AutoPoll started
 		retryTick    <-chan time.Time
 	)
 	retry := backoff.NewExponentialBackOff(
