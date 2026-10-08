@@ -86,8 +86,9 @@ The important directories are:
       code goes in `gentrait`.
 - `ui/*`: Web applications like the [Ops UI](ui/ops) and [Space UI](ui/space).
 - `example/config`: Example config files and setups for running sc bos in different ways. Of note is
-  the [vanti-ugs](example/config/vanti-ugs) example which is the setup we do most development against, and 
-  [hub](example/config/hub) for creating a cohort of controllers.
+  the [vanti-ugs](example/config/vanti-ugs) example which is the setup we do most development against,
+  [hub](example/config/hub) for creating a cohort of controllers, and [connect-node](example/config/connect-node)
+  for testing the cloud connection against Smart Core Connect.
 - `proto`: APIs defined by this project. Service specific APIs can also be found in the system packages.
 - `docs`: Detailed documentation and design docs for different features of sc bos.
 - `demo`: Pre-built demo applications suitable for non-developers to run and present to clients.
