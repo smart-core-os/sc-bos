@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/url"
 	"slices"
 	"sync"
 	"testing"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -20,7 +23,7 @@ import (
 // rather than waiting for the next poll interval, and stop once one succeeds.
 func TestAutoPoll_RetriesFailedCheckInsUntilSuccess(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		client := &scriptedClient{results: []error{errors.New("offline"), errors.New("offline"), nil}}
+		client := &scriptedClient{results: []error{errOffline, errOffline, nil}}
 		conn := newRegisteredConn(t, client)
 
 		runAutoPoll(t, conn, 4*time.Minute)
@@ -41,7 +44,7 @@ func TestAutoPoll_RetriesFailedCheckInsUntilSuccess(t *testing.T) {
 // for the next poll interval.
 func TestAutoPoll_NoFastRetryAfterSuccess(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		client := &scriptedClient{results: []error{nil, errors.New("offline"), nil}}
+		client := &scriptedClient{results: []error{nil, errOffline, nil}}
 		conn := newRegisteredConn(t, client)
 
 		runAutoPoll(t, conn, 11*time.Minute)
@@ -54,10 +57,33 @@ func TestAutoPoll_NoFastRetryAfterSuccess(t *testing.T) {
 	})
 }
 
+// TestAutoPoll_NoFastRetryWhenSupervisorUnavailable verifies an unavailable Supervisor doesn't cause extra
+// check-ins: the cloud was reached, so the next attempt waits for the poll interval.
+func TestAutoPoll_NoFastRetryWhenSupervisorUnavailable(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sup := &fakeSupervisor{statusErr: status.Error(codes.Unavailable, "supervisor not running")}
+		client := &scriptedClient{}
+		conn := newRegisteredConn(t, client, withSupervisor(sup))
+
+		runAutoPoll(t, conn, 16*time.Minute)
+
+		gaps := client.gaps()
+		if len(gaps) != 3 {
+			t.Errorf("gaps between check-ins = %v, want 3", gaps)
+		}
+		for _, gap := range gaps {
+			if gap != 5*time.Minute {
+				t.Errorf("gaps between check-ins = %v, want each 5m", gaps)
+				break
+			}
+		}
+	})
+}
+
 // TestAutoPoll_RetryDelayCapsAtInterval verifies the retry delay stops growing at the poll interval.
 func TestAutoPoll_RetryDelayCapsAtInterval(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		client := &scriptedClient{fail: errors.New("offline")}
+		client := &scriptedClient{fail: errOffline}
 		conn := newRegisteredConn(t, client, withPollInterval(30*time.Second))
 
 		runAutoPoll(t, conn, 3*time.Minute)
@@ -120,6 +146,9 @@ func TestAutoPoll_SkipsInitialDelayWhileInstalling(t *testing.T) {
 		}
 	})
 }
+
+// errOffline is a check-in failure from not being able to connect to the cloud.
+var errOffline = &url.Error{Op: "Post", URL: "https://scc.example/checkin", Err: errors.New("connection refused")}
 
 // runAutoPoll runs AutoPoll on conn for d of fake time, then stops it.
 func runAutoPoll(t *testing.T, conn *testConn, d time.Duration) {

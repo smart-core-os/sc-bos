@@ -83,16 +83,16 @@ func NewBinaryUpdater(opts ...BinaryUpdaterOption) *BinaryUpdater {
 	return u
 }
 
-// updateStatus reports the Supervisor's current update status. It returns nil (no error) when the Supervisor
-// integration is disabled, so callers treat a disabled updater as having no update in flight. opts apply to the
-// GetUpdateStatus call, which is limited to supervisorCallTimeout.
-func (u *BinaryUpdater) updateStatus(ctx context.Context, opts ...grpc.CallOption) (*supervisorpb.UpdateStatus, error) {
+// updateStatus reports the Supervisor's current update status, waiting up to supervisorCallTimeout for the
+// Supervisor to become available. It returns nil (no error) when the Supervisor integration is disabled, so
+// callers treat a disabled updater as having no update in flight.
+func (u *BinaryUpdater) updateStatus(ctx context.Context) (*supervisorpb.UpdateStatus, error) {
 	if u.installer == nil {
 		return nil, nil
 	}
 	statusCtx, cancel := context.WithTimeout(ctx, supervisorCallTimeout)
 	defer cancel()
-	resp, err := u.installer.GetUpdateStatus(statusCtx, &supervisorpb.GetUpdateStatusRequest{}, opts...)
+	resp, err := u.installer.GetUpdateStatus(statusCtx, &supervisorpb.GetUpdateStatusRequest{}, grpc.WaitForReady(true))
 	if err != nil {
 		return nil, err
 	}
