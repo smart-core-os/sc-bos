@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/eclipse/paho.golang/autopaho"
@@ -30,6 +31,9 @@ type publisher struct {
 	qos            byte
 	nodeID         string // set as the v5 user property when non-empty
 	publishTimeout time.Duration
+
+	connUpMu sync.Mutex
+	connUp   chan struct{} // closed, and replaced, each time the connection comes up
 }
 
 // newPublisher builds an MQTT v5 connection manager for the Connect telemetry
@@ -67,6 +71,13 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 		clientID = nodeID
 	}
 
+	p := &publisher{
+		qos:            byte(*cfg.Qos),
+		nodeID:         nodeID,
+		publishTimeout: cfg.PublishTimeout.Duration,
+		connUp:         make(chan struct{}),
+	}
+
 	clientCfg := autopaho.ClientConfig{
 		ServerUrls:                    []*url.URL{u},
 		TlsCfg:                        tlsCfg,
@@ -76,6 +87,7 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 		ConnectTimeout:                cfg.ConnectTimeout.Duration,
 		OnConnectionUp: func(*autopaho.ConnectionManager, *paho.Connack) {
 			logger.Info("connected to Connect telemetry broker", zap.String("host", cfg.Host))
+			p.signalConnectionUp()
 		},
 		OnConnectError: func(err error) {
 			logger.Warn("Connect telemetry broker connection error", zap.Error(err))
@@ -89,13 +101,8 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 	if err != nil {
 		return nil, err
 	}
-
-	return &publisher{
-		cm:             cm,
-		qos:            byte(*cfg.Qos),
-		nodeID:         nodeID,
-		publishTimeout: cfg.PublishTimeout.Duration,
-	}, nil
+	p.cm = cm
+	return p, nil
 }
 
 // publish sends payload to topic at the configured QoS, waiting up to
@@ -110,6 +117,41 @@ func (p *publisher) publish(ctx context.Context, topic string, payload []byte) e
 	}
 
 	_, err := p.cm.Publish(ctx, p.newPublishPacket(topic, payload))
+	return err
+}
+
+// awaitConnection blocks until the connection is up, or ctx is done.
+func (p *publisher) awaitConnection(ctx context.Context) error {
+	return p.cm.AwaitConnection(ctx)
+}
+
+// connectionUp returns a channel that is closed the next time the connection comes up.
+func (p *publisher) connectionUp() <-chan struct{} {
+	p.connUpMu.Lock()
+	defer p.connUpMu.Unlock()
+	return p.connUp
+}
+
+func (p *publisher) signalConnectionUp() {
+	p.connUpMu.Lock()
+	defer p.connUpMu.Unlock()
+	close(p.connUp)
+	p.connUp = make(chan struct{})
+}
+
+// publishAcked publishes payload to topic at QoS 1, whatever the configured QoS,
+// returning nil only once the broker has acknowledged it (PUBACK).
+// It waits for the connection for as long as ctx allows, then up to publishTimeout for the acknowledgement.
+func (p *publisher) publishAcked(ctx context.Context, topic string, payload []byte) error {
+	if err := p.cm.AwaitConnection(ctx); err != nil {
+		return fmt.Errorf("await connection: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, p.publishTimeout)
+	defer cancel()
+	pkt := p.newPublishPacket(topic, payload)
+	pkt.QoS = 1
+	_, err := p.cm.Publish(ctx, pkt)
 	return err
 }
 

@@ -4,6 +4,9 @@
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
 // periodic device-metadata (discovery). Only the Meter trait is supported today.
 //
+// When health is enabled it also publishes the health checks this node evaluates,
+// over the same connection.
+//
 // See docs/connect-telemetry-ingest.md for the topic grammar and payload contract.
 package connecttelemetry
 
@@ -77,6 +80,30 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
+	if len(cfg.Traits) > 0 {
+		a.runTelemetry(autoCtx, grp, cfg, pub)
+	}
+	if cfg.HealthEnabled() {
+		a.runHealth(autoCtx, grp, cfg, pub)
+	}
+
+	// applyConfig returns immediately; background tasks run until ctx is cancelled
+	// (on reconfigure or stop), after which we disconnect cleanly.
+	go func() {
+		err := grp.Wait()
+		disconnectCtx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		pub.close(disconnectCtx)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			a.Logger.Error("connecttelemetry automation stopped with error", zap.Error(err))
+		}
+	}()
+
+	return nil
+}
+
+// runTelemetry starts polling the configured traits and publishing their telemetry and discovery.
+func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, pub *publisher) {
 	allDevices := make(map[string]*device)
 	t := a.now()
 	iterationCount := 0
@@ -110,20 +137,17 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 			a.publishCycle(autoCtx, cfg, pub, allDevices, publishDiscovery)
 		}
 	})
+}
 
-	// applyConfig returns immediately; background tasks run until ctx is cancelled
-	// (on reconfigure or stop), after which we disconnect cleanly.
-	go func() {
-		err := grp.Wait()
-		disconnectCtx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		pub.close(disconnectCtx)
-		if err != nil && !errors.Is(err, context.Canceled) {
-			a.Logger.Error("connecttelemetry automation stopped with error", zap.Error(err))
-		}
-	}()
-
-	return nil
+// runHealth starts publishing this node's own health checks.
+func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, pub *publisher) {
+	if a.LocalHealthChecks == nil {
+		a.Logger.Warn("health publishing is enabled but this node's health checks are unavailable; not publishing health")
+		return
+	}
+	hp := newHealthPublisher(pub, a.LocalHealthChecks, a.Node, cfg.Mqtt.TopicPrefix,
+		cfg.Health.ManifestInterval.Duration, cfg.Health.MaxPublishRate, a.Logger.Named("health"))
+	grp.Go(func() error { return hp.run(autoCtx) })
 }
 
 // publishCycle publishes telemetry (and, when publishDiscovery is set, discovery)

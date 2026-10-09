@@ -12,6 +12,10 @@ each device's data per-device as:
   location}, pointset{points{<name>{units, writable}}}}`), on the first cycle and then
   every `metadataInterval` cycles.
 
+With `health.enabled` it also publishes the health checks this node evaluates, one complete
+set per resource on `tlm/bos/health` whenever the set changes, plus a periodic manifest of every
+set's hash on `tlm/bos/health-manifest`. See the Health section of the ingest doc.
+
 See [`docs/connect-telemetry-ingest.md`](../../../docs/connect-telemetry-ingest.md) for
 the topic grammar and the payload contract agreed with the Connect ingest side.
 
@@ -56,9 +60,7 @@ Two mutually-exclusive credential modes:
 
 - **`useCloudCredential: true`** — presents the node's Connect leaf certificate (mTLS) via
   `GetClientCertificate`, so renewals are picked up live. The broker (server) is verified
-  against system/public roots (Event Grid presents a public Azure TLS cert). *Pending PR
-  #890, which provides the leaf credential to the automation; until then use the file-path
-  mode.*
+  against system/public roots (Event Grid presents a public Azure TLS cert).
 - **File-path certs** (`clientCertPath` + `clientKeyPath`, optional `caCertPath`) — a
   dev/test fallback. `caCertPath` verifies the broker; empty falls back to system roots.
 
@@ -79,9 +81,16 @@ Two mutually-exclusive credential modes:
     "qos": 1,
     "connectTimeout": "5s",
     "publishTimeout": "5s"
+  },
+  "health": {
+    "enabled": true,
+    "manifestInterval": "15m",
+    "maxPublishRate": 10
   }
 }
 ```
+
+To publish health only, leave out `traits`.
 
 For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 
@@ -98,7 +107,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `traits` | yes | — | Traits to export; only `smartcore.bos.Meter` is supported |
+| `traits` | unless health is enabled | — | Traits to export; only `smartcore.bos.Meter` is supported |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
@@ -111,3 +120,6 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `mqtt.qos` | no | `1` | MQTT QoS (0, 1, or 2) |
 | `mqtt.connectTimeout` | no | `5s` | Connect timeout |
 | `mqtt.publishTimeout` | no | `5s` | Per-publish timeout (includes awaiting connection) |
+| `health.enabled` | no | `false` | Publish this node's own health checks |
+| `health.manifestInterval` | no | `15m` | Time between health manifests |
+| `health.maxPublishRate` | no | `10` | Most health messages a second |

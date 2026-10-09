@@ -21,6 +21,9 @@ with the Connect ingest side.
 The exporter discovers devices **by trait**, polls the typed trait API on a schedule, and
 publishes each device's data as UDMI. The first rollout is **meter-only**.
 
+It can also publish the node's **health checks**, over the same connection, in sc-bos's own
+shape rather than UDMI. See [Health](#health).
+
 ## Transport & auth (owned by Connect — `bos-auth.md`, `ingest-infrastructure.md`)
 
 - **Transport: MQTT v5 is required** (`bos-auth.md`). MQTT v3.1.1 is not mentioned as accepted.
@@ -150,6 +153,102 @@ implement the UDMI export trait, and for per-trait rollout granularity (meter-fi
 - No control/command points as telemetry (ingest is read-only w.r.t. the building).
 - No org/site/node identity in the body (comes from the cert/enrichment).
 - No client-side aggregation (Connect lands at full resolution).
+
+## Health
+
+Enabled with `"health": {"enabled": true}`. The contract is Connect's: `docs/health.md` in
+`smart-core-connect` ("Receiving health"). Where this section and that one disagree, Connect's wins.
+
+### What is published
+
+Only the checks this node evaluates itself, from its health registry
+(`auto.Services.LocalHealthChecks`). A gateway also re-announces its cohort's checks into its
+device store; those are never published, since each node publishes its own and Connect judges a
+check's staleness by the node that sent it.
+
+### Messages
+
+All health messages go to two fixed topics, at **QoS 1** whatever `mqtt.qos` says.
+
+A resource's complete set, on `tlm/bos/health`:
+
+```json
+{
+  "version": 1,
+  "timestamp": "2026-10-13T09:12:04Z",
+  "resource": "pier-point/hvac/ctrl-3",
+  "subject": {"kind": "device"},
+  "hash": "9f2c41d07a6be853",
+  "checks": [{"id": "...", "display_name": "...", "normality": "ABNORMAL"}]
+}
+```
+
+- `checks` is every check the node holds for `resource`, each a `smartcore.bos.health.v1.HealthCheck`
+  encoded with `protojson`, proto field names and enum names. An empty list (`[]`) removes them all.
+- `resource` rides in the envelope, not the topic, because resource names contain `/`.
+- `timestamp` is when the message was built. Connect discards a set older than the one it holds.
+
+A manifest of every resource with at least one check, on `tlm/bos/health-manifest`:
+
+```json
+{
+  "version": 1,
+  "timestamp": "2026-10-13T09:15:00Z",
+  "resources": [{"nameHash": "f5b04fb7c61623cf", "hash": "9f2c41d07a6be853"}]
+}
+```
+
+Connect disposes of any resource the manifest leaves out, and marks one whose hash disagrees as
+out of step until a matching set arrives.
+
+### Subject kind
+
+From the resource's `Metadata.device_type`:
+
+| `device_type` | `subject.kind` |
+|---|---|
+| `NODE`, `GATEWAY`, `HUB` | `node` |
+| `SERVICE` | `service` |
+| anything else, or no metadata | `device` |
+
+Drivers' system checks (on the driver's id) and the history stores' checks (on the store's name)
+are announced as `SERVICE` for this.
+
+### Hashes
+
+- **Set hash:** SHA-256 over the kind and each check, sorted by id and deterministically
+  marshalled, with `bounds.current_value` and `deviation` cleared; first 16 hex digits. A value
+  moving within the same state is therefore not a change. Connect only compares it for
+  equality, so the recipe is ours and may change between releases (costing one resend of each set).
+- **Name hash:** the first 16 hex digits of the SHA-256 of the resource name's UTF-8 bytes.
+  This one **is** part of the contract: Connect computes it too.
+
+### When messages are sent
+
+- A set is sent whenever its hash differs from the last one the broker acknowledged (`PUBACK`)
+  for that resource. Sends wait for the connection, so a set that changed while the node was cut
+  off goes when it reconnects. An unacknowledged send is retried with backoff from 1s to 60s,
+  reset when the connection comes back.
+- A resource that loses all its checks is sent as an empty set, and forgotten once that is
+  acknowledged.
+- Every set is also resent once a day, at a minute of the UTC day derived from the name, so
+  resends spread across the day and a set Connect lost is recovered within a day.
+- The manifest goes every `health.manifestInterval` (15 minutes). The first waits a whole
+  interval after start, so Connect doesn't dispose of checks that are still being created.
+- Sending starts 10s after the automation, and runs no faster than `health.maxPublishRate`
+  messages a second (10, inside Connect's 1,000 a minute).
+
+### Limits
+
+Connect drops what is over its per-node limits and flags the node's `connect:health-intake`
+check. The publisher warns about each once, so the cause shows up on the node too:
+
+| Limit | Connect | Publisher |
+|---|---|---|
+| Resources with checks | 5,000 | warns |
+| Checks per set | 50 | warns, still sends |
+| Set size | 64 KB | warns, still sends; over 256 KB skips it until it changes |
+| Manifest size | 512 KB | warns, skips it |
 
 ## Enrichment attributes (owned by Connect)
 

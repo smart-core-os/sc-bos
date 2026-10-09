@@ -119,8 +119,68 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 	assert.Equal(t, "kWh", discRT.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
 }
 
+// TestPublisherPublishesHealthAcked publishes a health set through the real transport,
+// at QoS 1 even when the configured QoS is 0, and checks it lands on tlm/bos/health.
+func TestPublisherPublishesHealthAcked(t *testing.T) {
+	dir, brokerTLS := writeTestCerts(t)
+	addr, msgs := startTLSBroker(t, brokerTLS)
+
+	qos := 0
+	cfg := config.Mqtt{
+		Host:           "tls://" + addr,
+		TopicPrefix:    "tlm",
+		ClientId:       "test-exporter",
+		ClientCertPath: filepath.Join(dir, "client.crt"),
+		ClientKeyPath:  filepath.Join(dir, "client.key"),
+		CaCertPath:     filepath.Join(dir, "ca.crt"),
+		Qos:            &qos,
+		ConnectTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+		PublishTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pub, err := newPublisher(ctx, cfg, nil, zap.NewNop())
+	require.NoError(t, err)
+	defer pub.close(context.Background())
+
+	payload, err := buildHealthSet(time.Now(), "van/uk/brum/ugs/meters/elec-main", subjectKindDevice, "h", nil)
+	require.NoError(t, err)
+	require.NoError(t, pub.publishAcked(ctx, healthTopic(cfg.TopicPrefix), payload))
+
+	select {
+	case m := <-msgs:
+		assert.Equal(t, "tlm/bos/health", m.topic)
+		assert.Equal(t, byte(1), m.qos)
+		var got healthSetMessage
+		require.NoError(t, json.Unmarshal(m.payload, &got))
+		assert.Equal(t, "van/uk/brum/ugs/meters/elec-main", got.Resource)
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for the health set")
+	}
+}
+
+func TestPublisherConnectionUp(t *testing.T) {
+	p := &publisher{connUp: make(chan struct{})}
+	first := p.connectionUp()
+	p.signalConnectionUp()
+	select {
+	case <-first:
+	default:
+		t.Fatal("connectionUp channel not closed by signalConnectionUp")
+	}
+	second := p.connectionUp()
+	select {
+	case <-second:
+		t.Fatal("next connectionUp channel closed before the next connection")
+	default:
+	}
+}
+
 type capturedMsg struct {
 	topic   string
+	qos     byte
 	payload []byte
 	user    map[string]string
 }
@@ -143,7 +203,7 @@ func startTLSBroker(t *testing.T, brokerTLS *tls.Config) (addr string, msgs <-ch
 		for _, u := range pk.Properties.User {
 			user[u.Key] = u.Val
 		}
-		ch <- capturedMsg{topic: pk.TopicName, payload: append([]byte(nil), pk.Payload...), user: user}
+		ch <- capturedMsg{topic: pk.TopicName, qos: pk.FixedHeader.Qos, payload: append([]byte(nil), pk.Payload...), user: user}
 	}))
 
 	return l.Address(), ch

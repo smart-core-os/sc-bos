@@ -35,13 +35,27 @@ type Mqtt struct {
 	MetadataInterval *int                `json:"metadataInterval,omitempty,omitzero"` // how often to publish discovery (every N data sends), defaults to 100
 }
 
+// Health configures publishing this node's health checks to Connect.
+// See docs/connect-telemetry-ingest.md for the messages and when they are sent.
+type Health struct {
+	Enabled bool `json:"enabled,omitempty"`
+	// ManifestInterval is the time between manifests, which list every resource's set hash.
+	// Defaults to 15m, the interval Connect expects.
+	ManifestInterval *jsontypes.Duration `json:"manifestInterval,omitempty,omitzero"`
+	// MaxPublishRate is the most health messages published per second, sustained.
+	// Defaults to 10, keeping a node inside Connect's intake limit of 1,000 a minute.
+	MaxPublishRate float64 `json:"maxPublishRate,omitempty"`
+}
+
 type Root struct {
 	auto.Config
 
 	// Traits is the set of traits to export. Devices implementing one of these
 	// traits are discovered and polled. Only smartcore.bos.Meter is supported today.
+	// May be empty only when health is enabled.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
+	Health *Health  `json:"health,omitempty"`
 	// PointNaming selects the point key emitted on the wire: "dbo" (default) emits DBO
 	// standard field names (so a building-config translation is an identity mapping);
 	// "raw" emits the raw Smart Core point names (usage/produced) and leaves the
@@ -116,5 +130,26 @@ func ParseConfig(data []byte) (Root, error) {
 		root.FetchTimeout = &jsontypes.Duration{Duration: 5 * time.Second}
 	}
 
+	if root.HealthEnabled() {
+		if root.Health.ManifestInterval == nil || root.Health.ManifestInterval.Duration == 0 {
+			root.Health.ManifestInterval = &jsontypes.Duration{Duration: 15 * time.Minute}
+		} else if root.Health.ManifestInterval.Duration < 0 {
+			return Root{}, fmt.Errorf("config parse failed, health.manifestInterval must be positive")
+		}
+		if root.Health.MaxPublishRate == 0 {
+			root.Health.MaxPublishRate = 10
+		} else if root.Health.MaxPublishRate < 0 {
+			return Root{}, fmt.Errorf("config parse failed, health.maxPublishRate must be positive")
+		}
+	}
+	if len(root.Traits) == 0 && !root.HealthEnabled() {
+		return Root{}, fmt.Errorf("config parse failed, nothing to publish: set traits, or enable health")
+	}
+
 	return root, nil
+}
+
+// HealthEnabled reports whether health publishing is configured on.
+func (r Root) HealthEnabled() bool {
+	return r.Health != nil && r.Health.Enabled
 }

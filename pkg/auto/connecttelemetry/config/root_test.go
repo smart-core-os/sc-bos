@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,10 +28,55 @@ func TestParseConfig(t *testing.T) {
 		assert.NotNil(t, root.Mqtt.SendInterval)
 		assert.Equal(t, 5.0, root.FetchTimeout.Seconds())
 		assert.Equal(t, "dbo", root.PointNaming, "pointNaming defaults to dbo")
+		assert.False(t, root.HealthEnabled(), "health defaults to off")
+	})
+
+	t.Run("health defaults", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"health": {"enabled": true}
+		}`))
+		require.NoError(t, err)
+		require.True(t, root.HealthEnabled())
+		assert.Equal(t, 15*time.Minute, root.Health.ManifestInterval.Duration)
+		assert.Equal(t, 10.0, root.Health.MaxPublishRate)
+	})
+
+	t.Run("health only", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"health": {"enabled": true, "manifestInterval": "1m", "maxPublishRate": 2.5}
+		}`))
+		require.NoError(t, err)
+		assert.Empty(t, root.Traits)
+		assert.Equal(t, time.Minute, root.Health.ManifestInterval.Duration)
+		assert.Equal(t, 2.5, root.Health.MaxPublishRate)
+	})
+
+	t.Run("neither traits nor health", func(t *testing.T) {
+		for _, cfg := range []string{
+			`{"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}}`,
+			`{"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}, "health": {"enabled": false}}`,
+		} {
+			_, err := ParseConfig([]byte(cfg))
+			require.Error(t, err, cfg)
+			assert.Contains(t, err.Error(), "nothing to publish")
+		}
+	})
+
+	t.Run("negative health rate", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"health": {"enabled": true, "maxPublishRate": -1}
+		}`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "maxPublishRate")
 	})
 
 	t.Run("pointNaming raw is accepted", func(t *testing.T) {
 		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
 			"pointNaming": "raw",
 			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}
 		}`))
@@ -49,6 +95,7 @@ func TestParseConfig(t *testing.T) {
 
 	t.Run("cloud credential mode", func(t *testing.T) {
 		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
 			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true, "topicPrefix": "tlm/site-a"}
 		}`))
 		require.NoError(t, err)
