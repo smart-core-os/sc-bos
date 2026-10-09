@@ -1,8 +1,10 @@
-// Package install applies BOS update artefacts on a Rocky Linux / Podman host: it loads the artefact
+// Package install applies BOS update artefacts. On a Rocky Linux / Podman host it loads the artefact
 // image, moves the stable :current tag onto it (recording :previous as a rollback pointer), and
-// restarts only the BOS systemd unit. Confirmation that the new version is good is obtained out-of-band:
-// BOS asserts its running version via the Supervisor's Commit RPC (see supervisor/docs/state-model.md),
-// so the Installer itself only applies and rolls back.
+// restarts only the BOS systemd unit. On a FreeBSD host it extracts a release folder, moves the
+// current link onto it (recording previous), and restarts the BOS rc(8) service. Confirmation that
+// the new version is good is obtained out-of-band: BOS asserts its running version via the
+// Supervisor's Commit RPC (see supervisor/docs/state-model.md), so the Installer itself only applies
+// and rolls back.
 package install
 
 import "context"

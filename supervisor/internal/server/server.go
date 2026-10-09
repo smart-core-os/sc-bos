@@ -5,8 +5,8 @@
 // The implementation is designed to still produce correct results if interrupted halfway through an installation
 // (e.g. by a system restart).
 //
-// The server reports the status of the latest installation based on the stored goal and the Podman state. Again,
-// it can correctly determine the installation state even if interrupted.
+// The server reports the status of the latest installation based on the stored goal and the versions BOS has
+// committed. Again, it can correctly determine the installation state even if interrupted.
 package server
 
 import (
@@ -136,8 +136,8 @@ func (s *Service) InstallUpdate(_ context.Context, req *supervisorpb.InstallUpda
 	if req.GetVersion() == "" || req.GetDownloadUrl() == "" || req.GetChecksum() == "" {
 		return nil, status.Error(codes.InvalidArgument, "version, download_url and checksum are required")
 	}
-	// version becomes an image tag; reject anything that isn't a valid OCI tag at the boundary, so a
-	// malformed request fails loudly rather than retargeting the repo via a confusing podman error.
+	// version becomes an image tag or a release folder name; reject anything that isn't a valid OCI tag at
+	// the boundary, so a malformed request fails loudly rather than with a confusing installer error.
 	if !ocitag.Valid(req.GetVersion()) {
 		return nil, status.Error(codes.InvalidArgument, "version is not a valid image tag")
 	}
