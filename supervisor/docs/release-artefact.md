@@ -56,3 +56,47 @@ and `ui.ops`), so a later schema version can relax them without changing the fie
 
 Before installing, the Supervisor checks that `version` matches the version it was asked to install, and that
 `os` and `arch` match the host.
+
+Building an artefact
+--------------------
+
+`scripts/build-release.sh` builds an artefact from any BOS main package. It builds the binary for FreeBSD with
+the version stamped in, builds the Ops UI from the same sc-bos version, writes the manifest, and packs them with
+`tar`. It writes `sc-bos-<version>-freebsd-<arch>.tar.gz` and a matching `.sha256` file in `sha256sum` format.
+
+In this repo, build `./cmd/bos` for FreeBSD on amd64:
+
+```bash
+bash scripts/build-release.sh --version v2026.10.1
+```
+
+In a product module that imports sc-bos, run the script from the sc-bos module source, so the script matches
+the module's sc-bos version. Download the module first, because `go list` prints no folder for a module that
+isn't in the module cache yet:
+
+```bash
+go mod download github.com/smart-core-os/sc-bos
+bash "$(go list -m -f '{{.Dir}}' github.com/smart-core-os/sc-bos)/scripts/build-release.sh" --main ./cmd/my-product
+```
+
+Module cache files aren't executable, so run the script with `bash`.
+
+| Option             | Meaning                                                                                       |
+|--------------------|-----------------------------------------------------------------------------------------------|
+| `--main PKG`       | Go main package to build. Default `./cmd/bos`.                                                |
+| `--module-dir DIR` | Go module to build in. Default: the current folder.                                           |
+| `--version V`      | Release version. Default: `git describe --tags --match 'v[0-9]*' --always --dirty` in the module. |
+| `--arch ARCH`      | Target `GOARCH`. Default `amd64`.                                                             |
+| `--ui-dist DIR`    | Use a prebuilt Ops UI dist folder instead of building one.                                    |
+| `--out DIR`        | Output folder. Default `./.build/release`.                                                    |
+| `--allow-dirty`    | Allow a build from uncommitted changes to tracked files.                                      |
+
+The version must be a valid OCI tag. Without `--allow-dirty`, the script refuses a version ending in `-dirty`,
+and refuses to build when the module's git work tree has uncommitted changes to tracked files.
+
+The script stamps the version into both the binary and the Ops UI. When it builds the UI from a git work tree,
+it uses only tracked files, so local files such as `ui/ops/.env.local` don't change the release.
+
+Building the Ops UI needs `yarn`. Without it, build the UI elsewhere and pass `--ui-dist`.
+
+The archive's timestamps come from `SOURCE_DATE_EPOCH` if it's set, otherwise from the module's last commit time.
