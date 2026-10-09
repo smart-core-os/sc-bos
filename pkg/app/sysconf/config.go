@@ -384,9 +384,6 @@ func (c *Cloud) FillDefaults() *Cloud {
 	return c
 }
 
-// defaultSupervisorSocketPath is the Unix socket path the Supervisor listens on by default.
-const defaultSupervisorSocketPath = "/run/sc-bos-supervisor/supervisor.sock"
-
 // Supervisor configures the optional integration with the local Supervisor process.
 // When Enabled is false (the default), all Supervisor calls are skipped and BOS runs normally
 // without update management — suitable for development environments with no Supervisor present.
@@ -394,7 +391,8 @@ type Supervisor struct {
 	// Enabled controls whether BOS attempts to contact the Supervisor. Defaults to false.
 	Enabled bool `json:"enabled,omitempty"`
 	// SocketPath is the Unix socket path on which the Supervisor's gRPC API listens.
-	// Defaults to /run/sc-bos-supervisor/supervisor.sock.
+	// Defaults to the Supervisor's default socket path on Linux and FreeBSD. Other operating systems have
+	// no default, so the integration stays disabled unless this is set.
 	SocketPath string `json:"socketPath,omitempty"`
 }
 

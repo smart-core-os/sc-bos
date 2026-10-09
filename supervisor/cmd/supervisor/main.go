@@ -36,7 +36,7 @@ func main() {
 }
 
 func run() error {
-	configPath := flag.String("config", "/etc/sc-bos-supervisor/config.json", "path to the JSON config file; if absent, built-in defaults are used")
+	configPath := flag.String("config", config.DefaultPath, "path to the JSON config file; if absent, built-in defaults are used")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
@@ -66,8 +66,25 @@ func run() error {
 	if err := os.Chmod(cfg.Socket, 0o660); err != nil {
 		return fmt.Errorf("chmod socket: %w", err)
 	}
+	if cfg.SocketGroup != "" {
+		gid, err := config.LookupGroup(cfg.SocketGroup)
+		if err != nil {
+			return fmt.Errorf("socket group: %w", err)
+		}
+		if err := os.Chown(cfg.Socket, -1, gid); err != nil {
+			return fmt.Errorf("chown socket: %w", err)
+		}
+	}
 
-	installer := install.NewPodmanInstaller(cfg.ImageRepo, cfg.Unit, logger.Named("installer"))
+	var installer install.Installer
+	switch cfg.Installer {
+	case config.InstallerPodman:
+		installer = install.NewPodmanInstaller(cfg.Podman.ImageRepo, cfg.Podman.Unit, logger.Named("installer"))
+	case config.InstallerFreeBSDRC:
+		return fmt.Errorf("installer %q is not implemented", cfg.Installer)
+	default:
+		return fmt.Errorf("unknown installer %q", cfg.Installer)
+	}
 	svc := server.New(installer, cfg.StateDir, http.DefaultClient, cfg.CommitDeadline.Duration, cfg.AllowInsecureDownloads, logger.Named("server"))
 	// Drive the persisted goal to completion before accepting new requests: an install interrupted by a
 	// previous crash is resumed (or rolled back) here, so the local auto-recovery fires even across a

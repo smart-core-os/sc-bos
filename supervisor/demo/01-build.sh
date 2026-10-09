@@ -20,7 +20,7 @@ mkdir -p "$BUILD"
 # post: $SUP_BIN is a static linux executable installed at /usr/local/bin by 03-install.sh.
 if [[ "$FORCE" == 1 || ! -x "$SUP_BIN" ]]; then
   echo "==> building supervisor -> $SUP_BIN"
-  ( cd "$REPO" && CGO_ENABLED=0 GOOS=linux go build -o "$SUP_BIN" ./supervisor )
+  ( cd "$REPO" && CGO_ENABLED=0 GOOS=linux go build -o "$SUP_BIN" ./supervisor/cmd/supervisor )
 else
   echo "==> supervisor binary present, skipping (FORCE=1 to rebuild)"
 fi
