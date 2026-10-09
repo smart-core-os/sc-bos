@@ -12,6 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/dataretentionpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func announcePostgres(ctx context.Context, n *node.Node, name string, s *stores.Stores, checks *healthpb.Checks, highPct float32, maxSizeBytes uint64, logger *zap.Logger) node.Undo {
@@ -20,7 +21,10 @@ func announcePostgres(ctx context.Context, n *node.Node, name string, s *stores.
 		dataretentionpb.WithItemName("row"),
 	)
 
-	undo := n.Announce(name, node.HasTrait(dataretentionpb.TraitName, node.WithClients(dataretentionpb.WrapApi(server))))
+	undo := n.Announce(name,
+		node.HasTrait(dataretentionpb.TraitName, node.WithClients(dataretentionpb.WrapApi(server))),
+		node.HasDeviceType(metadatapb.Metadata_SERVICE),
+	)
 
 	health := &storageHealth{checks: checks, name: name, highPct: highPct, logger: logger}
 

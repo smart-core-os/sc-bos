@@ -1,6 +1,7 @@
 package auto
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
@@ -36,10 +38,19 @@ type Services struct {
 	Now             func() time.Time
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks
+	// LocalHealthChecks streams the health checks this node evaluates itself, one device per name.
+	// It never includes checks the node only re-announces, such as a gateway's cohort checks,
+	// which Devices does include. Nil if unavailable.
+	LocalHealthChecks HealthCheckSource
 	// Auditor records writes an automation accepts from its own ingress, such as an MQTT
 	// subscription, which the gRPC/HTTP audit interceptors never see.
 	// It may be nil, and is a no-op when no audit log is configured.
 	Auditor Auditor
+}
+
+// HealthCheckSource provides devices carrying health checks, see Services.LocalHealthChecks.
+type HealthCheckSource interface {
+	PullDevices(ctx context.Context, opts ...resource.ReadOption) <-chan devicespb.DevicesChange
 }
 
 // CloudCredentialSource is an alias for connect.Credential, retained so existing

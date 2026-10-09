@@ -174,7 +174,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 	}
 	devicesApi := buildDevicesAPI(rootNode, nodeRouter, downloadRouter)
 
-	checkRegistry, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
+	checkRegistry, localChecks, closeHealthStore, err := setupHealthRegistry(ctx, config, deviceStore, rootNode, logger.Named("health"))
 	if err != nil {
 		return nil, err
 	}
@@ -196,6 +196,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		Node:             rootNode,
 		Devices:          devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
 		CheckRegistry:    checkRegistry,
+		LocalChecks:      localChecks,
 		DeviceStore:      deviceStore,
 		Tasks:            &task.Group{},
 		Database:         db,
@@ -722,6 +723,8 @@ type Controller struct {
 	Accounts        *account.Store
 	CheckRegistry   *healthpb.Registry
 	Auditor         auto.Auditor // records writes automations accept from non-gRPC ingresses; nil when there is no policy interceptor
+	// LocalChecks mirrors CheckRegistry. Unlike DeviceStore it never holds checks re-announced for others.
+	LocalChecks *devicespb.Collection
 
 	ReflectionServer *reflectionapi.Server
 
