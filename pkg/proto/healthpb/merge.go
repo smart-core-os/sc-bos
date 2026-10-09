@@ -10,6 +10,7 @@ import (
 
 // MergeCheck merges src into dst, which must share the same id.
 // This is similar to proto.Merge, but some repeated fields are replaced instead of appended to.
+// The earliest create_time of dst and src is kept. src is not modified.
 func MergeCheck(merge func(dst, src proto.Message), dst, src *HealthCheck) {
 	if src == nil || dst == nil {
 		return
@@ -51,10 +52,15 @@ func MergeCheck(merge func(dst, src proto.Message), dst, src *HealthCheck) {
 		})
 	}
 
-	// manual merging of timestamps
-	dst.CreateTime, src.CreateTime = earliestTimestamp(dst.CreateTime, src.CreateTime), nil
+	// Manual merging of timestamps, applied after merge as it may reset dst (see masks.FieldUpdater.Merge).
+	// Cloned because merge may write into dst's existing timestamp.
+	createTime := earliestTimestamp(dst.CreateTime, src.CreateTime)
+	if createTime != nil {
+		createTime = proto.Clone(createTime).(*timestamppb.Timestamp)
+	}
 
 	merge(dst, src)
+	dst.CreateTime = createTime
 
 	for _, f := range post {
 		f()
@@ -98,6 +104,18 @@ func MergeChecks(merge func(dst, src proto.Message), dst []*HealthCheck, src ...
 	}
 
 	return dst
+}
+
+// SetCheck adds c to dst, replacing any check with the same id, returning the modified slice.
+// Unlike MergeChecks, c replaces the existing check wholesale, create_time included.
+// The dst checks must be sorted by ID in ascending order, and remain so.
+func SetCheck(dst []*HealthCheck, c *HealthCheck) []*HealthCheck {
+	index, found := findCheck(c.Id, dst)
+	if found {
+		dst[index] = c
+		return dst
+	}
+	return slices.Insert(dst, index, c)
 }
 
 // RemoveCheck removes the check with the given id from dst, returning the modified slice.
