@@ -81,7 +81,7 @@ func run() error {
 	case config.InstallerPodman:
 		installer = install.NewPodmanInstaller(cfg.Podman.ImageRepo, cfg.Podman.Unit, logger.Named("installer"))
 	case config.InstallerFreeBSDRC:
-		return fmt.Errorf("installer %q is not implemented", cfg.Installer)
+		installer = install.NewFreeBSDRCInstaller(cfg.FreeBSDRC.Root, cfg.FreeBSDRC.Service, logger.Named("installer"))
 	default:
 		return fmt.Errorf("unknown installer %q", cfg.Installer)
 	}
