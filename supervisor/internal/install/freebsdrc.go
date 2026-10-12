@@ -1,12 +1,16 @@
 package install
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
+	"path"
 	"runtime"
 	"slices"
 
@@ -21,6 +25,9 @@ const (
 	lockName     = ".lock"
 	currentLink  = "current"
 	previousLink = "previous"
+
+	// maxManifestBytes is the size limit for an artefact's manifest.
+	maxManifestBytes = 1 << 20
 )
 
 // FreeBSDRCInstaller implements Installer for hosts that run BOS as a native rc(8) service.
@@ -61,22 +68,93 @@ func (i *FreeBSDRCInstaller) Apply(ctx context.Context, artefactPath, version st
 	if err := checkVersion(version); err != nil {
 		return err
 	}
-	root, unlock, err := i.openLocked()
+	root, unlock, err := i.openLocked(ctx)
 	if err != nil {
 		return err
 	}
 	defer unlock()
 
-	if err := i.install(root, artefactPath, version); err != nil {
+	if _, err := i.install(root, artefactPath, version); err != nil {
 		return err
 	}
 	return i.restart(ctx)
 }
 
+// LocalInstall describes what ApplyLocal did.
+type LocalInstall struct {
+	// Version is the installed release version, read from the artefact's manifest.
+	Version string
+	// OldCurrent is the version current pointed at before, or empty if there was none. It equals
+	// Version if the release was already current.
+	OldCurrent string
+}
+
+// ApplyLocal installs the release artefact at artefactPath as Apply does, taking the version from the
+// artefact's manifest, and restarts the service only if restart is true.
+//
+// ctx bounds only the wait for the lock. If another process holds the lock until ctx is done,
+// ApplyLocal returns an error wrapping ctx.Err() without changing any release or link. Once it holds
+// the lock, it finishes regardless of ctx.
+func (i *FreeBSDRCInstaller) ApplyLocal(ctx context.Context, artefactPath string, restart bool) (LocalInstall, error) {
+	m, err := readArtefactManifest(artefactPath)
+	if err != nil {
+		return LocalInstall{}, err
+	}
+	if err := checkVersion(m.Version); err != nil {
+		return LocalInstall{}, err
+	}
+	root, unlock, err := i.openLocked(ctx)
+	if err != nil {
+		return LocalInstall{}, err
+	}
+	defer unlock()
+
+	oldCurrent, err := i.install(root, artefactPath, m.Version)
+	if err != nil {
+		return LocalInstall{}, err
+	}
+	res := LocalInstall{Version: m.Version, OldCurrent: oldCurrent}
+	if restart {
+		return res, i.restart(context.WithoutCancel(ctx))
+	}
+	return res, nil
+}
+
+// readArtefactManifest reads and validates the manifest in the release artefact at artefactPath, without
+// extracting anything else.
+func readArtefactManifest(artefactPath string) (release.Manifest, error) {
+	f, err := os.Open(artefactPath)
+	if err != nil {
+		return release.Manifest{}, fmt.Errorf("open artefact: %w", err)
+	}
+	defer f.Close()
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return release.Manifest{}, fmt.Errorf("read artefact: %w", err)
+	}
+	defer gz.Close()
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			return release.Manifest{}, fmt.Errorf("artefact has no %s", release.ManifestName)
+		}
+		if err != nil {
+			return release.Manifest{}, fmt.Errorf("read artefact: %w", err)
+		}
+		if hdr.Typeflag == tar.TypeReg && path.Clean(hdr.Name) == release.ManifestName {
+			if hdr.Size > maxManifestBytes {
+				return release.Manifest{}, fmt.Errorf("%s is larger than 1 MiB", release.ManifestName)
+			}
+			return release.ParseManifest(tr)
+		}
+	}
+}
+
 // Rollback points current at previous's target and restarts the service. previous is left unchanged.
 // It returns an error if there is no previous release.
 func (i *FreeBSDRCInstaller) Rollback(ctx context.Context) error {
-	root, unlock, err := i.openLocked()
+	root, unlock, err := i.openLocked(ctx)
 	if err != nil {
 		return err
 	}
@@ -102,8 +180,8 @@ func (i *FreeBSDRCInstaller) Rollback(ctx context.Context) error {
 }
 
 // openLocked creates the releases root if needed, opens it, and takes the exclusive lock on its lock
-// file, waiting until the lock is free. Call unlock to release the lock and close the root.
-func (i *FreeBSDRCInstaller) openLocked() (root *os.Root, unlock func(), err error) {
+// file, waiting until the lock is free or ctx is done. Call unlock to release the lock and close the root.
+func (i *FreeBSDRCInstaller) openLocked(ctx context.Context) (root *os.Root, unlock func(), err error) {
 	if err := os.MkdirAll(i.root, 0o755); err != nil {
 		return nil, nil, fmt.Errorf("create releases root: %w", err)
 	}
@@ -116,7 +194,7 @@ func (i *FreeBSDRCInstaller) openLocked() (root *os.Root, unlock func(), err err
 		_ = root.Close()
 		return nil, nil, fmt.Errorf("open lock file: %w", err)
 	}
-	if err := lock(lockFile); err != nil {
+	if err := lock(ctx, lockFile); err != nil {
 		_ = lockFile.Close()
 		_ = root.Close()
 		return nil, nil, fmt.Errorf("lock releases root: %w", err)
@@ -128,35 +206,36 @@ func (i *FreeBSDRCInstaller) openLocked() (root *os.Root, unlock func(), err err
 }
 
 // install prunes root, stages the release for version from artefactPath unless a valid one is already
-// present, and points current at it, recording the old current as previous. The caller holds the lock and
-// has checked version with checkVersion.
-func (i *FreeBSDRCInstaller) install(root *os.Root, artefactPath, version string) error {
+// present, and points current at it, recording the old current as previous. It returns the version current
+// pointed at before, or "" if there was none. The caller holds the lock and has checked version with
+// checkVersion.
+func (i *FreeBSDRCInstaller) install(root *os.Root, artefactPath, version string) (oldCurrent string, err error) {
 	current, hasCurrent, err := readLink(root, currentLink)
 	if err != nil {
-		return err
+		return "", err
 	}
 	previous, _, err := readLink(root, previousLink)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if err := i.prune(root, current, previous, version); err != nil {
-		return err
+		return "", err
 	}
 	if err := i.stage(root, artefactPath, version); err != nil {
-		return err
+		return "", err
 	}
 	if current != version {
 		if hasCurrent {
 			if err := setLink(root, previousLink, current); err != nil {
-				return err
+				return "", err
 			}
 		}
 		if err := setLink(root, currentLink, version); err != nil {
-			return err
+			return "", err
 		}
 		i.logger.Info("switched current release", zap.String("current", version), zap.String("previous", current))
 	}
-	return syncDir(root)
+	return current, syncDir(root)
 }
 
 // prune removes every entry of root other than the lock file, the links, and the folders named keep.

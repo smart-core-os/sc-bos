@@ -12,7 +12,9 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -476,17 +478,54 @@ func (s *Service) persistState(rec record) {
 // loadState reads a previously persisted record, if any, into s.rec. A missing file is normal (no prior
 // update); a malformed one is logged and ignored, degrading to IDLE rather than reading a torn state.
 func (s *Service) loadState() {
-	data, err := os.ReadFile(s.stateFile)
+	rec, err := readRecord(s.stateFile)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			s.logger.Warn("read state file", zap.Error(err))
-		}
-		return
-	}
-	var rec record
-	if err := json.Unmarshal(data, &rec); err != nil {
-		s.logger.Warn("parse state file", zap.Error(err))
+		s.logger.Warn("load state", zap.Error(err))
 		return
 	}
 	s.rec = rec
+}
+
+// ErrMalformedState is returned, wrapped, when the update record can't be parsed. The Supervisor treats
+// such a record as empty.
+var ErrMalformedState = errors.New("malformed state file")
+
+// readRecord returns the update record stored at path. A missing file gives an empty record. A file that
+// can't be parsed gives an error wrapping ErrMalformedState.
+func readRecord(path string) (record, error) {
+	data, err := os.ReadFile(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return record{}, nil
+	}
+	if err != nil {
+		return record{}, fmt.Errorf("read state file: %w", err)
+	}
+	var rec record
+	if err := json.Unmarshal(data, &rec); err != nil {
+		return record{}, fmt.Errorf("%w %s: %w", ErrMalformedState, path, err)
+	}
+	return rec, nil
+}
+
+// UnfinishedUpdate reports whether the update record under stateDir holds a goal the Supervisor has not
+// finished, and the goal's version if so. A missing record means there is none. A record that can't be
+// parsed gives an error wrapping ErrMalformedState. It never changes the record.
+func UnfinishedUpdate(stateDir string) (version string, ok bool, err error) {
+	rec, err := readRecord(filepath.Join(stateDir, stateFileName))
+	if err != nil || rec.Target == nil || rec.FinishTime != nil {
+		return "", false, err
+	}
+	return rec.Target.Version, true, nil
+}
+
+// SettledCommit reports the committed version in the update record under stateDir when its last update has
+// finished. Until an update completes, the Supervisor keeps that version as the one to roll back to, even if
+// BOS commits a different one. ok is false if the record holds no finished update. A missing or malformed
+// record is treated as in UnfinishedUpdate. It never changes the record.
+func SettledCommit(stateDir string) (version string, ok bool, err error) {
+	rec, err := readRecord(filepath.Join(stateDir, stateFileName))
+	if err != nil || rec.Target == nil || rec.FinishTime == nil {
+		return "", false, err
+	}
+	return rec.Committed, true, nil
 }

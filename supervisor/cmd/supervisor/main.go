@@ -3,6 +3,9 @@
 //
 // It exposes the SupervisorApi gRPC service over a Unix socket for BOS to drive updates. See
 // supervisor/docs/state-model.md for the design.
+//
+// Run as "sc-bos-supervisor install-release [flags] TARBALL", it instead installs a release from a local
+// tarball for the freebsdrc installer, and exits.
 package main
 
 import (
@@ -29,7 +32,13 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	var err error
+	if len(os.Args) > 1 && os.Args[1] == installReleaseCmd {
+		err = runInstallRelease(os.Args[2:])
+	} else {
+		err = run()
+	}
+	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "fatal:", err)
 		os.Exit(1)
 	}
@@ -38,6 +47,9 @@ func main() {
 func run() error {
 	configPath := flag.String("config", config.DefaultPath, "path to the JSON config file; if absent, built-in defaults are used")
 	flag.Parse()
+	if flag.NArg() > 0 {
+		return fmt.Errorf("unknown command %q; subcommands go before flags", flag.Arg(0))
+	}
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
