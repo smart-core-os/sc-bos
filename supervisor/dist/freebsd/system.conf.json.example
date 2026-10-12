@@ -1,0 +1,10 @@
+{
+  "listenHttps": ":8443",
+  "supervisor": {
+    "enabled": true
+  },
+  "staticHosting": [
+    {"path": "/", "filePath": "/usr/local/sc-bos/releases/current/ui/ops"},
+    {"path": "/__/scos/", "filePath": "/usr/local/etc/sc-bos/ui-config"}
+  ]
+}

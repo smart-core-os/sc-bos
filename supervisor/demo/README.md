@@ -6,6 +6,8 @@ everything runs on one Rocky Linux 10. The demo shows a successful update and a 
 Supervisor's local auto-rollback (a target that never commits is reverted). See [`../docs/state-model.md`](../docs/state-model.md) for the 
 update mechanism and crash-safety model behind it.
 
+The demo is Linux-only. For FreeBSD hosts, see [`../docs/freebsd.md`](../docs/freebsd.md).
+
 ## Deployed images
 
 The base image is built from the repo's main `Dockerfile` (Ops UI included). Two versions (`v1`, `v2`)
