@@ -288,6 +288,24 @@ func TestFreeBSDRC_ReplacesInvalidReleaseFolder(t *testing.T) {
 	assertRunsVersion(t, root, "v1")
 }
 
+// Every restart has a deadline, even when the caller's context has none.
+func TestFreeBSDRC_RestartHasDeadline(t *testing.T) {
+	i, _ := newTestRCInstaller(t, restarts(4)...)
+	replay := i.run
+	i.run = func(ctx context.Context, name string, args ...string) (string, error) {
+		if _, ok := ctx.Deadline(); !ok {
+			t.Errorf("%s %s run without a deadline", name, strings.Join(args, " "))
+		}
+		return replay(ctx, name, args...)
+	}
+
+	mustApply(t, i, "v1", "v2")
+	if err := i.Rollback(context.Background()); err != nil {
+		t.Fatalf("Rollback() error = %v", err)
+	}
+	applyLocal(t, i, "v3", true)
+}
+
 func TestFreeBSDRC_Rollback(t *testing.T) {
 	i, root := newTestRCInstaller(t, restarts(3)...)
 	mustApply(t, i, "v1", "v2")

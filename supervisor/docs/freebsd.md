@@ -236,8 +236,9 @@ cloud registration, carries over.
      `/usr/local/opt/areacontroller/releases/current/ui/ops`.
    - Remove the tasks that build and copy `bin/area-controller`, and stop any deployment of the Ops UI to
      `static/ops`. Otherwise Ansible undoes Supervisor updates.
-5. Restart BOS with `service areacontroller restart`, then check that it committed:
-   `/var/db/sc-bos-supervisor/state.json` shows the release version as `committed`.
+5. Restart BOS with `service areacontroller restart`, then check that it committed: the Supervisor log shows
+   `committed version changed` with the release version, and `/var/db/sc-bos-supervisor/state.json` shows it as
+   `committed`.
 
 Keep `bin/area-controller` and `static/ops` until the first Supervisor update has completed. To undo the move,
 revert the Ansible changes and deploy them again.
@@ -252,19 +253,28 @@ Logs and troubleshooting
 
 `newsyslog` rotates both at 10 MB and keeps 7 old files.
 
-To see the update state, read `/var/db/sc-bos-supervisor/state.json` and list the releases root:
+Each update ends with one Supervisor log line. If the Supervisor stops during an update, the line comes once it
+resumes the update on its next start.
+
+- **`update completed`**, at `info`, with the new `version`.
+- **`update failed`**, at `warn`, with the `version` and a `reason`, such as `download: ...`, `apply: ...` or
+  `update v2026.11.0 not confirmed within 5m0s`.
+
+Along the way, a successful install logs `switched current release` with the new `current` and the old one as
+`previous`. An update that BOS doesn't commit in time logs `update not confirmed, rolling back` before it fails, and
+`current` points back at the previous release.
+
+Until its first update finishes, the Supervisor logs `committed version changed` when BOS commits a different
+`version` from the one it last recorded, with the old one as `previous`. After an update finishes, it keeps that
+update's committed version until an update completes, and doesn't log a different commit.
+
+The Supervisor also keeps its update state in `/var/db/sc-bos-supervisor/state.json`. To check it, and the releases
+on disk:
 
 ```sh
 cat /var/db/sc-bos-supervisor/state.json
 ls -l /usr/local/sc-bos/releases
 ```
-
-**A successful update** logs `switched current release` with the new `current` and the old one as `previous`.
-Once BOS commits, `state.json` has `committed` equal to `target.version`, a `finishTime` and no `error`.
-
-**A rollback** logs `update not confirmed, rolling back`, with a reason such as
-`update v2026.11.0 not confirmed within 5m0s`. `current` points back at the previous release, and `state.json` has
-the reason in `error`.
 
 Common problems:
 
@@ -278,8 +288,8 @@ Common problems:
   A permission error means BOS's group can't use the socket: check `socketGroup` and
   `ls -l /var/run/sc-bos-supervisor`. If BOS is enrolled, it also waits for a successful cloud check-in before it
   commits. A release built without a version can't commit either; build releases with `scripts/build-release.sh`.
-- **`state.json` has an `error` starting `apply: restart sc_bos:`.** `service sc_bos restart` failed. Run
-  `service sc_bos restart` by hand to see the error.
+- **The Supervisor logs `update failed` with a `reason` starting `apply: restart sc_bos:`.** `service sc_bos
+  restart` failed or took longer than 5 minutes. Run `service sc_bos restart` by hand to see the error.
 - **BOS doesn't start, and its log shows `permission denied` on a listen address.** See
   [listening ports](#listening-ports).
 - **`install-release` fails with `the Supervisor has an unfinished update`, or `an update is in progress`.** Wait

@@ -13,6 +13,7 @@ import (
 	"path"
 	"runtime"
 	"slices"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -28,6 +29,11 @@ const (
 
 	// maxManifestBytes is the size limit for an artefact's manifest.
 	maxManifestBytes = 1 << 20
+
+	// restartTimeout limits how long a service restart can take. rc(8) waits for the old process to
+	// exit without a limit, so a service that doesn't stop would otherwise block an install while it
+	// holds the lock.
+	restartTimeout = 5 * time.Minute
 )
 
 // FreeBSDRCInstaller implements Installer for hosts that run BOS as a native rc(8) service.
@@ -351,6 +357,8 @@ func checkRelease(root *os.Root, dir, version string) error {
 }
 
 func (i *FreeBSDRCInstaller) restart(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, restartTimeout)
+	defer cancel()
 	if _, err := i.run(ctx, "service", i.service, "restart"); err != nil {
 		return fmt.Errorf("restart %s: %w", i.service, err)
 	}

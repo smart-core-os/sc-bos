@@ -849,3 +849,33 @@ func TestUnfinishedUpdate_Malformed(t *testing.T) {
 		t.Errorf("UnfinishedUpdate() error = %v, want ErrMalformedState naming %s", err, path)
 	}
 }
+
+// Outside an update, recordCommit records each new committed version and reports the one it replaced. A
+// repeated commit of the recorded version changes nothing.
+func TestRecordCommit(t *testing.T) {
+	dir := t.TempDir()
+	svc := newService(t, &fakeInstaller{}, dir, http.DefaultClient)
+
+	for _, step := range []struct {
+		version      string
+		wantPrevious string
+		wantChanged  bool
+	}{
+		{version: "v1", wantPrevious: "", wantChanged: true},
+		{version: "v1", wantPrevious: "", wantChanged: false},
+		{version: "v2", wantPrevious: "v1", wantChanged: true},
+	} {
+		previous, changed := svc.recordCommit(step.version)
+		if previous != step.wantPrevious || changed != step.wantChanged {
+			t.Errorf("recordCommit(%q) = %q, %v, want %q, %v", step.version, previous, changed, step.wantPrevious, step.wantChanged)
+		}
+	}
+
+	rec, err := readRecord(filepath.Join(dir, stateFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Committed != "v2" {
+		t.Errorf("persisted committed version = %q, want v2", rec.Committed)
+	}
+}
