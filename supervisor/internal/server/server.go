@@ -174,30 +174,37 @@ func (s *Service) InstallUpdate(_ context.Context, req *supervisorpb.InstallUpda
 // for it to reach a terminal state.
 func (s *Service) startReconcile(t target) {
 	s.wg.Add(1)
-	go s.reconcile(s.ctx, t)
+	go func() {
+		defer s.wg.Done()
+		defer s.endReconcile()
+		rec, settled := s.reconcile(s.ctx, t)
+		switch {
+		case !settled:
+		case rec.Error == "":
+			s.logger.Info("update completed", zap.String("version", t.Version))
+		default:
+			s.logger.Warn("update failed", zap.String("version", t.Version), zap.String("reason", rec.Error))
+		}
+	}()
 }
 
 // drives BOS to the goal version: download + verify the artefact, apply it, then wait for BOS to assert the new version
 // via Commit. If no commit received within the deadline, rolls back to the previous version.
 // Can also be run to recover to a reasonable state following an unexpected shutdown.
-func (s *Service) reconcile(ctx context.Context, t target) {
-	defer s.wg.Done()
-	defer s.endReconcile()
-
+// It returns the settled record, or settled false if ctx ends before the update settles.
+func (s *Service) reconcile(ctx context.Context, t target) (rec record, settled bool) {
 	s.setPhase(phaseDownloading)
 	want, err := checksum.Parse(t.Checksum)
 	if err != nil {
-		s.settleFailed(fmt.Sprintf("download: invalid checksum: %v", err))
-		return
+		return s.settleFailed(fmt.Sprintf("download: invalid checksum: %v", err)), true
 	}
 	artefact, err := install.DownloadAndVerify(ctx, s.httpClient, t.URL, want, s.stagingDir, install.MaxArtefactBytes, s.allowInsecureDownloads)
 	if err != nil {
 		if ctx.Err() != nil {
 			// host hasn't changed yet - just shut down quickly and the goal will be settled at next startup
-			return
+			return record{}, false
 		}
-		s.settleFailed(fmt.Sprintf("download: %v", err))
-		return
+		return s.settleFailed(fmt.Sprintf("download: %v", err)), true
 	}
 	defer func() { _ = os.Remove(artefact) }()
 
@@ -212,28 +219,27 @@ func (s *Service) reconcile(ctx context.Context, t target) {
 	// Use background context for this so it can't be interrupted - this doesn't download anything so shouldn't take
 	// too long anyway. It's important we don't stop halfway through.
 	if err := s.installer.Apply(context.Background(), artefact, t.Version); err != nil {
-		s.settleFailed(fmt.Sprintf("apply: %v", err))
-		return
+		return s.settleFailed(fmt.Sprintf("apply: %v", err)), true
 	}
 
 	if s.awaitCommit(ctx, t.Version, sinceGen) {
-		s.settleCompleted(t.Version)
-		return
+		return s.settleCompleted(t.Version), true
 	}
 	if ctx.Err() != nil {
 		// context was cancelled before we waited the full duration - can't tell if this is a failure or not
 		// just leave it for next supervisor start to work out
 		s.logger.Info("shutting down before update confirmed", zap.String("version", t.Version))
-		return
+		return record{}, false
 	}
 
-	s.rollback(ctx, fmt.Sprintf("update %s not confirmed within %s", t.Version, s.commitDeadline))
+	return s.rollback(ctx, fmt.Sprintf("update %s not confirmed within %s", t.Version, s.commitDeadline))
 }
 
 // rollback returns BOS to the previous version after the new one failed to commit, then waits for that
 // previous version to assert itself before settling FAILED. Awaiting a fresh commit (newer than sinceGen)
 // is what stops a terminal FAILED being reported while the bad version is still the one running.
-func (s *Service) rollback(ctx context.Context, reason string) {
+// It returns the settled record, or settled false if ctx ends before the rollback settles.
+func (s *Service) rollback(ctx context.Context, reason string) (rec record, settled bool) {
 	s.setPhase(phaseRollingBack)
 	s.logger.Warn("update not confirmed, rolling back", zap.String("reason", reason))
 
@@ -244,18 +250,16 @@ func (s *Service) rollback(ctx context.Context, reason string) {
 
 	// Background context, like Apply above - a rollback restart must not be interrupted halfway.
 	if err := s.installer.Rollback(context.Background()); err != nil {
-		s.settleFailed(fmt.Sprintf("%s; rollback failed: %v", reason, err))
-		return
+		return s.settleFailed(fmt.Sprintf("%s; rollback failed: %v", reason, err)), true
 	}
 	if previous != "" && !s.awaitCommit(ctx, previous, sinceGen) {
 		if ctx.Err() != nil {
 			// shutting down - leave it for the next supervisor start to sort out
-			return
+			return record{}, false
 		}
-		s.settleFailed(fmt.Sprintf("%s; rolled back but %s not confirmed within %s", reason, previous, s.commitDeadline))
-		return
+		return s.settleFailed(fmt.Sprintf("%s; rolled back but %s not confirmed within %s", reason, previous, s.commitDeadline)), true
 	}
-	s.settleFailed(reason)
+	return s.settleFailed(reason), true
 }
 
 // awaitCommit blocks until BOS Commits version with a generation newer than sinceGen, the commit
@@ -292,22 +296,32 @@ func (s *Service) Commit(_ context.Context, req *supervisorpb.CommitRequest) (*s
 		return nil, status.Error(codes.InvalidArgument, "version is required")
 	}
 
-	s.mu.Lock()
-	s.noteCommitLocked(req.GetVersion())
-	var snapshot *record
-	if !s.reconciling && s.rec.FinishTime == nil && s.rec.Committed != req.GetVersion() {
-		// A heartbeat outside an update: record the running version as the rollback baseline for the next
-		// update. Skipped while a reconcile is in flight, or once one has settled, because Committed then
-		// belongs to that update - overwriting it here would misreport the update's status.
-		s.rec.Committed = req.GetVersion()
-		snapshot = new(s.rec)
-	}
-	s.mu.Unlock()
-
-	if snapshot != nil {
-		s.persistState(*snapshot)
+	if previous, changed := s.recordCommit(req.GetVersion()); changed {
+		s.logger.Info("committed version changed", zap.String("version", req.GetVersion()), zap.String("previous", previous))
 	}
 	return &supervisorpb.CommitResponse{}, nil
+}
+
+// recordCommit notes that BOS committed version, waking any reconcile waiting for it. Outside an update, and
+// until an update has settled, it also records version as the committed version. It reports whether that
+// recorded version changed, and the version it replaced.
+func (s *Service) recordCommit(version string) (previous string, changed bool) {
+	s.mu.Lock()
+	s.noteCommitLocked(version)
+	if s.reconciling || s.rec.FinishTime != nil || s.rec.Committed == version {
+		// Skipped while a reconcile is in flight, or once one has settled, because Committed then belongs
+		// to that update - overwriting it here would misreport the update's status.
+		s.mu.Unlock()
+		return "", false
+	}
+	// A heartbeat outside an update: record the running version as the rollback baseline for the next update.
+	previous = s.rec.Committed
+	s.rec.Committed = version
+	snapshot := s.rec
+	s.mu.Unlock()
+
+	s.persistState(snapshot)
+	return previous, true
 }
 
 // noteCommitLocked records the latest commit and wakes any awaitCommit waiter. The generation counter
@@ -406,8 +420,8 @@ func (s *Service) setPhase(p phase) {
 }
 
 // settleCompleted promotes version to the committed (stable) version and marks the goal settled, so the
-// update is reported COMPLETED and a restart does not re-drive it.
-func (s *Service) settleCompleted(version string) {
+// update is reported COMPLETED and a restart does not re-drive it. It returns the settled record.
+func (s *Service) settleCompleted(version string) record {
 	now := time.Now()
 	s.mu.Lock()
 	s.rec.Committed = version
@@ -417,11 +431,12 @@ func (s *Service) settleCompleted(version string) {
 	snapshot := s.rec
 	s.mu.Unlock()
 	s.persistState(snapshot)
+	return snapshot
 }
 
 // settleFailed marks the goal settled without promoting it, so the update is reported FAILED with reason
-// and a restart does not re-drive it.
-func (s *Service) settleFailed(reason string) {
+// and a restart does not re-drive it. It returns the settled record.
+func (s *Service) settleFailed(reason string) record {
 	now := time.Now()
 	s.mu.Lock()
 	s.rec.FinishTime = &now
@@ -430,6 +445,7 @@ func (s *Service) settleFailed(reason string) {
 	snapshot := s.rec
 	s.mu.Unlock()
 	s.persistState(snapshot)
+	return snapshot
 }
 
 // deriveStatusLocked computes the reported UpdateStatus from the durable record plus the in-memory
