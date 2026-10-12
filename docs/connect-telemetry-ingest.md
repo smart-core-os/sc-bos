@@ -122,10 +122,10 @@ Shape matches `ingest.md`'s device-metadata example. Built from the device's
 - `system.location.floor` = metadata location floor → Connect's `floor=` selector. **`site` is
   left empty** — org/site identity is supplied by broker enrichment, not the payload.
 - `pointset.points` is the declared inventory: point name, optional `units`, optional
-  `writable`. Writable/command points are announced here (`writable: true`) but never sent as
-  telemetry.
+  `writable`, optional `ref` (the source's own name for the point, e.g. a disk's mount point).
+  Writable/command points are announced here (`writable: true`) but never sent as telemetry.
 
-### Meter point mapping (the only trait wired today)
+### Meter point mapping
 
 Point names are DBO standard fields (`pkg/dbo`); discovery `units` carry the **raw** device
 unit string (the raw→DBO unit-name mapping, e.g. `kWh`→`kilowatt_hours`, is a building-config
@@ -144,6 +144,54 @@ entity type** (all `METERS/EM_PWM*` require `power_sensor`) — see the DBO conf
 On the trait-poll path there are no raw vendor point names, so the trait's semantic field
 names become the UDMI point names. This is the trade-off for supporting devices that don't
 implement the UDMI export trait, and for per-trait rollout granularity (meter-first).
+
+### Node resources (ResourceUse)
+
+Connect's health spec (`docs/health.md`, "Host resources are telemetry, not a snapshot") wants a
+node's CPU, memory and disk use as ordinary telemetry on the node's entity, judged by a
+`healthbounds` check. The node publishes its own `smartcore.bos.ResourceUse` under its node name,
+which is the `aka.bos.ref` of the node entity Connect registers (`bos-auth.md`). A gateway does
+not republish its cohort's resources.
+
+```json
+{
+  "timestamp": "2026-10-12T09:00:00Z",
+  "version": "1.5.2",
+  "points": {
+    "cpu_utilization":              { "present_value": 12.5 },
+    "memory_utilization":           { "present_value": 41.3 },
+    "memory_usage":                 { "present_value": 6979321856 },
+    "memory_limit":                 { "present_value": 16899117056 },
+    "disk_root_utilization":        { "present_value": 63.2 },
+    "disk_root_usage":              { "present_value": 63215742976 },
+    "disk_root_limit":              { "present_value": 100000000000 },
+    "disk_var_lib_bos_utilization": { "present_value": 18.4 },
+    "disk_var_lib_bos_usage":       { "present_value": 92000000000 },
+    "disk_var_lib_bos_limit":       { "present_value": 500000000000 }
+  }
+}
+```
+
+Discovery declares `units` (`percent` for utilisation, `bytes` for usage and limit) and, for each
+disk point, the raw mount point as `ref`:
+
+```json
+"pointset": {
+  "points": {
+    "cpu_utilization":        { "units": "percent" },
+    "memory_usage":           { "units": "bytes" },
+    "disk_var_lib_bos_usage": { "units": "bytes", "ref": "/var/lib/bos" }
+  }
+}
+```
+
+- The timestamp is the fetch time: ResourceUse carries none.
+- Unset fields are omitted rather than sent as zero.
+- `<mount>` in disk point names is the sanitised mount point (`/` → `root`); see the automation
+  README for the rule and how colliding mounts are disambiguated.
+- **These names await Connect's catalogue.** DBO has no host resource fields, so the names are
+  our proposal and identical in both `pointNaming` modes. SCC-978 adds the matching fields to
+  Connect's catalogue; until it lands, the points have no catalogue field to bind to.
 
 ### Exclusions
 

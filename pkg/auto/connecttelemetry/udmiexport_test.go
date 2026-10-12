@@ -2,6 +2,8 @@ package connecttelemetry
 
 import (
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
 func TestEventTopics(t *testing.T) {
@@ -183,4 +186,106 @@ func TestDiscoveryEventFallsBackToDeviceName(t *testing.T) {
 	assert.Empty(t, ev.System.Tags)
 	assert.Nil(t, ev.System.Location)
 	assert.Nil(t, ev.Pointset, "no inventory ⇒ no pointset block")
+}
+
+func TestResourceUseTelemetry(t *testing.T) {
+	t.Run("full reading maps to utilisation and byte points", func(t *testing.T) {
+		r := &resourceusepb.ResourceUse{
+			Cpu:    &resourceusepb.CpuUse{Utilization: new(float32(12.5)), CorePercent: []float32{10, 15}},
+			Memory: &resourceusepb.MemoryUse{Usage: new(uint64(4 << 30)), Limit: new(uint64(16 << 30)), Utilization: new(float32(25))},
+			Disks: []*resourceusepb.DiskUse{
+				{MountPoint: "/", Usage: new(uint64(100)), FreeBytes: new(uint64(300)), Limit: new(uint64(400)), Utilization: new(float32(25))},
+				{MountPoint: "/var/lib/bos", Usage: new(uint64(50)), Limit: new(uint64(200)), Utilization: new(float32(25))},
+			},
+			Network: &resourceusepb.NetworkUse{ConnectionCount: new(uint64(7))},
+		}
+
+		assert.Equal(t, udmi.PointsEvent{
+			"cpu_utilization":              {PresentValue: float32(12.5)},
+			"memory_utilization":           {PresentValue: float32(25)},
+			"memory_usage":                 {PresentValue: uint64(4 << 30)},
+			"memory_limit":                 {PresentValue: uint64(16 << 30)},
+			"disk_root_utilization":        {PresentValue: float32(25)},
+			"disk_root_usage":              {PresentValue: uint64(100)},
+			"disk_root_limit":              {PresentValue: uint64(400)},
+			"disk_var_lib_bos_utilization": {PresentValue: float32(25)},
+			"disk_var_lib_bos_usage":       {PresentValue: uint64(50)},
+			"disk_var_lib_bos_limit":       {PresentValue: uint64(200)},
+		}, resourceUseTelemetry(r), "core_percent, free_bytes and connection_count are not exported")
+	})
+
+	t.Run("unset optionals are omitted", func(t *testing.T) {
+		r := &resourceusepb.ResourceUse{
+			Cpu:    &resourceusepb.CpuUse{},
+			Memory: &resourceusepb.MemoryUse{Usage: new(uint64(1))},
+			Disks:  []*resourceusepb.DiskUse{{MountPoint: "/data", Utilization: new(float32(0))}},
+		}
+		assert.Equal(t, udmi.PointsEvent{
+			"memory_usage":          {PresentValue: uint64(1)},
+			"disk_data_utilization": {PresentValue: float32(0)},
+		}, resourceUseTelemetry(r), "a set zero is kept, an unset field is not")
+	})
+
+	t.Run("nil reading has no points", func(t *testing.T) {
+		assert.Empty(t, resourceUseTelemetry(nil))
+	})
+}
+
+func TestResourceUseInventory(t *testing.T) {
+	r := &resourceusepb.ResourceUse{
+		Cpu:    &resourceusepb.CpuUse{Utilization: new(float32(1))},
+		Memory: &resourceusepb.MemoryUse{Usage: new(uint64(1)), Limit: new(uint64(2)), Utilization: new(float32(50))},
+		Disks:  []*resourceusepb.DiskUse{{MountPoint: `C:\`, Usage: new(uint64(1)), Limit: new(uint64(2)), Utilization: new(float32(50))}},
+	}
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		"cpu_utilization":    {Units: "percent"},
+		"memory_utilization": {Units: "percent"},
+		"memory_usage":       {Units: "bytes"},
+		"memory_limit":       {Units: "bytes"},
+		"disk_c_utilization": {Units: "percent", Ref: `C:\`},
+		"disk_c_usage":       {Units: "bytes", Ref: `C:\`},
+		"disk_c_limit":       {Units: "bytes", Ref: `C:\`},
+	}, resourceUseInventory(r))
+
+	assert.Empty(t, resourceUseInventory(nil), "no reading yet ⇒ no inventory")
+}
+
+func TestDiskPointPrefixes(t *testing.T) {
+	disks := func(mounts ...string) []*resourceusepb.DiskUse {
+		var ds []*resourceusepb.DiskUse
+		for _, m := range mounts {
+			ds = append(ds, &resourceusepb.DiskUse{MountPoint: m})
+		}
+		return ds
+	}
+
+	t.Run("sanitises mount points", func(t *testing.T) {
+		got := diskPointPrefixes(disks("/", "/var/lib/bos", `C:\`, "/Volumes/My Disk/", "/mnt//data--1"))
+		assert.Equal(t, map[string]string{
+			"/":                 "disk_root",
+			"/var/lib/bos":      "disk_var_lib_bos",
+			`C:\`:               "disk_c",
+			"/Volumes/My Disk/": "disk_volumes_my_disk",
+			"/mnt//data--1":     "disk_mnt_data_1",
+		}, got)
+		assert.Equal(t, map[string]string{"": "disk_root"}, diskPointPrefixes(disks("")))
+	})
+
+	t.Run("colliding mounts get stable hash suffixes", func(t *testing.T) {
+		forward := diskPointPrefixes(disks("/var-lib", "/var/lib", "/opt"))
+		reverse := diskPointPrefixes(disks("/opt", "/var/lib", "/var-lib"))
+		assert.Equal(t, forward, reverse, "names must not depend on disk order")
+
+		assert.Equal(t, "disk_opt", forward["/opt"], "a mount with no collision keeps its plain name")
+		assert.Equal(t, "disk_var_lib_"+fnvHex("/var-lib"), forward["/var-lib"])
+		assert.Equal(t, "disk_var_lib_"+fnvHex("/var/lib"), forward["/var/lib"])
+		assert.NotEqual(t, forward["/var-lib"], forward["/var/lib"])
+	})
+}
+
+func fnvHex(s string) string {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(s))
+	return fmt.Sprintf("%08x", h.Sum32())
 }

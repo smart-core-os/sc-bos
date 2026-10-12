@@ -120,10 +120,12 @@ type MetadataPointset struct {
 
 // MetadataPoint describes a single declared point. Units carries the native
 // engineering unit; Writable marks command/setpoint points (which are announced
-// in discovery but never emitted as telemetry).
+// in discovery but never emitted as telemetry). Ref is the model-point ref: the
+// source's own name for the point, such as a disk's mount point.
 type MetadataPoint struct {
 	Units    string `json:"units,omitempty"`
 	Writable bool   `json:"writable,omitempty"`
+	Ref      string `json:"ref,omitempty"`
 }
 
 // ConfigMessage is a UDMI config message, used for control/settings

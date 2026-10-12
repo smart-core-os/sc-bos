@@ -18,6 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -161,4 +162,60 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	allDevices := make(map[string]*device)
 	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
+}
+
+// TestGetAllTraitImplementorsResourceUse confirms ResourceUse is exported for the
+// local node only, then builds its telemetry and discovery end-to-end.
+func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
+	logger := zap.NewNop()
+	root := node.New("node1")
+
+	nodeUse := &resourceusepb.ResourceUse{
+		Cpu:   &resourceusepb.CpuUse{Utilization: new(float32(12.5))},
+		Disks: []*resourceusepb.DiskUse{{MountPoint: "/", Usage: new(uint64(100)), Limit: new(uint64(400)), Utilization: new(float32(25))}},
+	}
+	cohortUse := &resourceusepb.ResourceUse{Cpu: &resourceusepb.CpuUse{Utilization: new(float32(99))}}
+
+	devicesApi := devices.NewServer(root)
+	for name, use := range map[string]*resourceusepb.ResourceUse{"node1": nodeUse, "cohort": cohortUse} {
+		model := resourceusepb.NewModel(resource.WithInitialValue(use))
+		root.Announce(name,
+			node.HasServer(resourceusepb.RegisterResourceUseApiServer, resourceusepb.ResourceUseApiServer(resourceusepb.NewModelServer(model))),
+			node.HasTrait(resourceusepb.TraitName),
+		)
+	}
+	root.Announce("node1", node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc))
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  logger,
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+
+	allDevices := make(map[string]*device)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, allDevices))
+
+	require.Len(t, allDevices, 1, "a gateway must not republish its cohort's resources")
+	dev := allDevices["node1"]
+	require.NotNil(t, dev)
+	require.Len(t, dev.collectors, 1)
+
+	// Discovery before any telemetry fetch is served from the seeded reading.
+	disc := dev.buildDiscovery(time.Now())
+	require.NotNil(t, disc.Pointset)
+	assert.Equal(t, udmi.MetadataPoint{Units: "percent"}, disc.Pointset.Points["cpu_utilization"])
+	assert.Equal(t, udmi.MetadataPoint{Units: "bytes", Ref: "/"}, disc.Pointset.Points["disk_root_usage"])
+
+	// Telemetry is stamped with now, as ResourceUse carries no timestamp.
+	now := time.Date(2026, 10, 12, 9, 0, 0, 0, time.UTC)
+	ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+	require.True(t, ok)
+	assert.Equal(t, now, ev.Timestamp)
+	assert.Equal(t, udmi.PointsEvent{
+		"cpu_utilization":       {PresentValue: float32(12.5)},
+		"disk_root_utilization": {PresentValue: float32(25)},
+		"disk_root_usage":       {PresentValue: uint64(100)},
+		"disk_root_limit":       {PresentValue: uint64(400)},
+	}, ev.Points)
 }

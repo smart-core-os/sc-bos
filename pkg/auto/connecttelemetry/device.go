@@ -10,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
 // traitCollector fetches telemetry and declares the discovery inventory for one
@@ -93,4 +94,28 @@ func (c *meterCollector) points(ctx context.Context, now time.Time) (udmi.Points
 
 func (c *meterCollector) inventory() map[string]udmi.MetadataPoint {
 	return meterInventory(c.support, c.naming)
+}
+
+// resourceUseCollector exports the smartcore.bos.ResourceUse trait of the local
+// node as host resource points. last is the most recent reading; inventory builds
+// from it so discovery declares the current set of disks. Telemetry is fetched
+// before discovery in each cycle, and newCollector seeds last with an initial Get.
+// Cycles run one after another, so last needs no lock.
+type resourceUseCollector struct {
+	name   string
+	client resourceusepb.ResourceUseApiClient
+	last   *resourceusepb.ResourceUse
+}
+
+func (c *resourceUseCollector) points(ctx context.Context, now time.Time) (udmi.PointsEvent, time.Time, error) {
+	r, err := c.client.GetResourceUse(ctx, &resourceusepb.GetResourceUseRequest{Name: c.name})
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	c.last = r
+	return resourceUseTelemetry(r), now, nil
+}
+
+func (c *resourceUseCollector) inventory() map[string]udmi.MetadataPoint {
+	return resourceUseInventory(c.last)
 }

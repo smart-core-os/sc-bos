@@ -2,7 +2,9 @@
 // instance to Smart Core Connect (SCC). It discovers devices by trait, polls the
 // typed trait API on a schedule, and publishes each device's data to the Connect
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
-// periodic device-metadata (discovery). Only the Meter trait is supported today.
+// periodic device-metadata (discovery). The Meter trait is exported for every
+// device that implements it; the ResourceUse trait only for the local node, which
+// publishes its own host resources.
 //
 // See docs/connect-telemetry-ingest.md for the topic grammar and payload contract.
 package connecttelemetry
@@ -22,6 +24,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -38,6 +41,8 @@ type AutoImpl struct {
 
 	meterClient     meterpb.MeterApiClient
 	meterInfoClient meterpb.MeterInfoClient
+
+	resourceUseClient resourceusepb.ResourceUseApiClient
 
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
@@ -56,6 +61,7 @@ func (f factory) New(services auto.Services) service.Lifecycle {
 func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.meterClient = meterpb.NewMeterApiClient(n.ClientConn())
 	a.meterInfoClient = meterpb.NewMeterInfoClient(n.ClientConn())
+	a.resourceUseClient = resourceusepb.NewResourceUseApiClient(n.ClientConn())
 }
 
 func (a *AutoImpl) now() time.Time {
@@ -198,9 +204,14 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 		return err
 	}
 	for _, deviceInfo := range resp.Devices {
-		collector := a.newCollector(ctx, traitName, deviceInfo.Name)
-		if collector == nil {
+		collector, supported := a.newCollector(ctx, traitName, deviceInfo.Name)
+		if !supported {
 			a.Logger.Warn("trait is configured but not supported",
+				zap.String("trait", string(traitName)), zap.String("device", deviceInfo.Name))
+			continue
+		}
+		if collector == nil {
+			a.Logger.Debug("trait not exported for this device",
 				zap.String("trait", string(traitName)), zap.String("device", deviceInfo.Name))
 			continue
 		}
@@ -214,10 +225,26 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	return nil
 }
 
-// newCollector builds a collector for traitName, or nil if the trait is not
-// supported for export.
-func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, deviceName string) traitCollector {
+// newCollector builds a collector for traitName. supported is false if the trait
+// can't be exported at all; a nil collector with supported true means the trait
+// is exported, but not for this device.
+func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, deviceName string) (_ traitCollector, supported bool) {
 	switch traitName {
+	case resourceusepb.TraitName:
+		// The reporting node publishes its own resources: a gateway sees its
+		// cohort's ResourceUse too, but leaves those nodes to publish their own.
+		if deviceName != a.Node.Name() {
+			return nil, true
+		}
+		c := &resourceUseCollector{name: deviceName, client: a.resourceUseClient}
+		// Seed the reading so discovery has an inventory even if the first
+		// telemetry fetch fails.
+		if r, err := a.resourceUseClient.GetResourceUse(ctx, &resourceusepb.GetResourceUseRequest{Name: deviceName}); err != nil {
+			a.Logger.Warn("failed to get resource use", zap.String("device", deviceName), zap.Error(err))
+		} else {
+			c.last = r
+		}
+		return c, true
 	case meterpb.TraitName:
 		c := &meterCollector{name: deviceName, client: a.meterClient, naming: a.pointNaming}
 		// Fetch the reading support once; its units and production capability drive
@@ -227,8 +254,8 @@ func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, devic
 		} else {
 			c.support = support
 		}
-		return c
+		return c, true
 	default:
-		return nil
+		return nil, false
 	}
 }
