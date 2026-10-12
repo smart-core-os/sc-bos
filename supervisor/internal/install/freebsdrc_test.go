@@ -537,3 +537,101 @@ func TestFreeBSDRC_RestartFails(t *testing.T) {
 	assertLink(t, root, currentLink, "v2")
 	assertLink(t, root, previousLink, "v1")
 }
+
+// applyLocal runs ApplyLocal with a valid artefact for version and fails the test on error.
+func applyLocal(t *testing.T, i *FreeBSDRCInstaller, version string, restart bool) LocalInstall {
+	t.Helper()
+	got, err := i.ApplyLocal(context.Background(), writeArtefact(t, releaseEntries(version)), restart)
+	if err != nil {
+		t.Fatalf("ApplyLocal(%s) error = %v", version, err)
+	}
+	return got
+}
+
+// ApplyLocal takes the version from the manifest and doesn't restart unless asked.
+func TestFreeBSDRC_ApplyLocal_FirstInstall(t *testing.T) {
+	i, root := newTestRCInstaller(t)
+	got := applyLocal(t, i, "v1", false)
+
+	if want := (LocalInstall{Version: "v1"}); got != want {
+		t.Errorf("ApplyLocal() = %+v, want %+v", got, want)
+	}
+	assertEntries(t, root, ".lock", "current", "v1")
+	assertLink(t, root, currentLink, "v1")
+	assertRunsVersion(t, root, "v1")
+}
+
+func TestFreeBSDRC_ApplyLocal_Restart(t *testing.T) {
+	i, root := newTestRCInstaller(t, restarts(2)...)
+	mustApply(t, i, "v1")
+	got := applyLocal(t, i, "v2", true)
+
+	if want := (LocalInstall{Version: "v2", OldCurrent: "v1"}); got != want {
+		t.Errorf("ApplyLocal() = %+v, want %+v", got, want)
+	}
+	assertLink(t, root, currentLink, "v2")
+	assertLink(t, root, previousLink, "v1")
+}
+
+// Installing the current release again changes nothing and reports it was already current.
+func TestFreeBSDRC_ApplyLocal_AlreadyCurrent(t *testing.T) {
+	i, root := newTestRCInstaller(t, restarts(2)...)
+	mustApply(t, i, "v1", "v2")
+	got := applyLocal(t, i, "v2", false)
+
+	if want := (LocalInstall{Version: "v2", OldCurrent: "v2"}); got != want {
+		t.Errorf("ApplyLocal() = %+v, want %+v", got, want)
+	}
+	assertEntries(t, root, ".lock", "current", "previous", "v1", "v2")
+	assertLink(t, root, currentLink, "v2")
+	assertLink(t, root, previousLink, "v1")
+}
+
+// The manifest may be named with a leading "./".
+func TestFreeBSDRC_ApplyLocal_DotSlashNames(t *testing.T) {
+	i, root := newTestRCInstaller(t)
+	entries := releaseEntries("v1")
+	for j := range entries {
+		entries[j].name = "./" + entries[j].name
+	}
+	if _, err := i.ApplyLocal(context.Background(), writeArtefact(t, entries), false); err != nil {
+		t.Fatalf("ApplyLocal() error = %v", err)
+	}
+	assertLink(t, root, currentLink, "v1")
+}
+
+// An artefact without a usable manifest, or for another platform, leaves the host unchanged.
+func TestFreeBSDRC_ApplyLocal_BadArtefact(t *testing.T) {
+	otherOS := "freebsd"
+	if runtime.GOOS == otherOS {
+		otherOS = "linux"
+	}
+	badManifest := tarEntry{name: "manifest.json", typ: tar.TypeReg, mode: 0o644, body: `{"schemaVersion": 2}`}
+	// A valid manifest followed by enough whitespace to exceed the limit.
+	bigManifest := releaseEntries("v2")[0]
+	bigManifest.body += strings.Repeat(" ", maxManifestBytes)
+	tests := []struct {
+		name    string
+		entries []tarEntry
+		wantErr string
+	}{
+		{"no manifest", releaseEntries("v2")[1:], "no manifest.json"},
+		{"invalid manifest", append([]tarEntry{badManifest}, releaseEntries("v2")[1:]...), "schemaVersion"},
+		{"large manifest", append([]tarEntry{bigManifest}, releaseEntries("v2")[1:]...), "larger than 1 MiB"},
+		{"wrong platform", releaseEntriesFor("v2", otherOS, runtime.GOARCH), "platform"},
+		{"version current", releaseEntries(currentLink), "reserved"},
+		{"version previous", releaseEntries(previousLink), "reserved"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i, root := newTestRCInstaller(t, restarts(1)...)
+			mustApply(t, i, "v1")
+			_, err := i.ApplyLocal(context.Background(), writeArtefact(t, tt.entries), true)
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("ApplyLocal() error = %v, want it to contain %q", err, tt.wantErr)
+			}
+			assertEntries(t, root, ".lock", "current", "v1")
+			assertLink(t, root, currentLink, "v1")
+		})
+	}
+}
