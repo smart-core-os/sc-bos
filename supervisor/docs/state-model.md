@@ -68,6 +68,12 @@ The crash points in the table below have the same outcome. A crash during extrac
 which the next Apply removes before extracting again. Releases are never written over in place, so the running
 binary is never replaced while it runs.
 
+The Supervisor runs as root and BOS as the unprivileged `sc-bos` user, each as an `rc(8)` service under `daemon -r`,
+which starts each one again whenever it exits. The Supervisor's socket is owned by the `sc-bos` group (`socketGroup`), so
+BOS can reach it. `sc-bos-supervisor install-release` lays down the first release from a local tarball, without the
+cloud. See [`freebsd.md`](freebsd.md) for the host layout, the reference service files and the install guide, and
+[`release-artefact.md`](release-artefact.md) for the artefact format.
+
 Update Completion
 -----------------
 

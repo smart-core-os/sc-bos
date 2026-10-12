@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# PROVIDE: sc_bos
+# REQUIRE: LOGIN sc_bos_supervisor
+# KEYWORD: shutdown
+#
+# Smart Core BOS, run from the release the Supervisor selects through ${sc_bos_root}/current.
+# Runs as ${sc_bos_user} under daemon(8), which starts BOS again whenever it exits, including after a cloud
+# config deployment. See supervisor/docs/freebsd.md.
+#
+# Install to /usr/local/etc/rc.d/sc_bos (mode 0555) and set in /etc/rc.conf:
+#
+# sc_bos_enable (bool):  Set to YES to start BOS at boot. When it's NO, "service sc_bos restart" doesn't
+#                        restart BOS, so Supervisor updates fail. Default: NO.
+# sc_bos_user (str):     User BOS runs as. Default: sc-bos.
+# sc_bos_group (str):    Group that owns the log file and pidfile folder. Default: sc-bos.
+# sc_bos_root (path):    Releases root, matching freebsdrc.root in the Supervisor config.
+#                        Default: /usr/local/sc-bos/releases.
+# sc_bos_log (path):     BOS log file. Default: /var/log/sc-bos.log.
+# sc_bos_flags (str):    BOS command line flags.
+#                        Default: --data /var/db/sc-bos
+#                                 --sysconf /usr/local/etc/sc-bos/system.conf.json
+#                                 --appconf /usr/local/etc/sc-bos/app.conf.json
+
+. /etc/rc.subr
+
+name="sc_bos"
+rcvar="sc_bos_enable"
+
+load_rc_config $name
+
+: ${sc_bos_enable:="NO"}
+: ${sc_bos_user:="sc-bos"}
+: ${sc_bos_group:="sc-bos"}
+: ${sc_bos_root:="/usr/local/sc-bos/releases"}
+: ${sc_bos_log:="/var/log/sc-bos.log"}
+: ${sc_bos_flags:="--data /var/db/sc-bos --sysconf /usr/local/etc/sc-bos/system.conf.json --appconf /usr/local/etc/sc-bos/app.conf.json"}
+
+# daemon(8) flags:
+#   -f  detach from the caller's stdin, stdout and stderr, so the caller doesn't wait on them
+#   -H  reopen the log file on SIGHUP, after newsyslog rotates it
+#   -r  start BOS again whenever it exits
+#   -P  write daemon's own pid, so stop ends daemon and with it BOS
+#   -o  write BOS's output to the log file
+# The pidfile is in a folder owned by ${sc_bos_user}, so daemon can remove it when it exits.
+piddir="/var/run/${name}"
+pidfile="${piddir}/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-f -H -r -P ${pidfile} -o ${sc_bos_log} ${sc_bos_root}/current/bin/sc-bos ${sc_bos_flags}"
+# rc.subr passes ${name}_flags to ${command}, which is daemon(8) here. They are BOS flags and are already in
+# command_args, so clear them.
+sc_bos_flags=""
+required_files="${sc_bos_root}/current/bin/sc-bos"
+start_precmd="${name}_prestart"
+
+# daemon(8) runs as ${sc_bos_user} and can't create files in /var/log or /var/run, so create them for it.
+sc_bos_prestart()
+{
+	install -d -o "${sc_bos_user}" -g "${sc_bos_group}" -m 755 "${piddir}" &&
+		touch "${sc_bos_log}" &&
+		chown "${sc_bos_user}:${sc_bos_group}" "${sc_bos_log}" &&
+		chmod 640 "${sc_bos_log}"
+}
+
+run_rc_command "$1"
