@@ -195,13 +195,6 @@ func txtarToTarGZ(t *testing.T, testdataName string) []byte {
 				Mode:     0755,
 				Typeflag: tar.TypeDir,
 			})
-		} else if link, target, found := strings.Cut(file.Name, " -> "); found {
-			_ = tarWriter.WriteHeader(&tar.Header{
-				Name:     link,
-				Mode:     0644,
-				Typeflag: tar.TypeSymlink,
-				Linkname: target,
-			})
 		} else {
 			_ = tarWriter.WriteHeader(&tar.Header{
 				Name:     file.Name,
@@ -344,118 +337,34 @@ func countDirectories(t *testing.T, dir string) int {
 	return count
 }
 
-// TestExtractTarGZ is a unit test for the private extractTarGZ function.
-func TestExtractTarGZ(t *testing.T) {
-	t.Run("files and directories", func(t *testing.T) {
-		data := txtarToTarGZ(t, "nested.txtar")
-
-		root, err := os.OpenRoot(t.TempDir())
-		if err != nil {
-			t.Fatalf("open root: %v", err)
-		}
-		defer root.Close()
-
-		if err := extractTarGZ(bytes.NewReader(data), root, -1); err != nil {
-			t.Fatalf("extractTarGZ: %v", err)
-		}
-
-		fsys := root.FS()
-		assertFileContent(t, fsys, "config.json", `{"key":"value"}`)
-		assertFileContent(t, fsys, "sub/nested.txt", "nested content")
-	})
-
-	t.Run("empty archive", func(t *testing.T) {
-		data := txtarToTarGZ(t, "empty.txtar")
-
-		root, err := os.OpenRoot(t.TempDir())
-		if err != nil {
-			t.Fatalf("open root: %v", err)
-		}
-		defer root.Close()
-
-		if err := extractTarGZ(bytes.NewReader(data), root, -1); err != nil {
-			t.Errorf("expected no error for empty archive, got: %v", err)
-		}
-	})
-
-	t.Run("invalid gzip", func(t *testing.T) {
-		root, err := os.OpenRoot(t.TempDir())
-		if err != nil {
-			t.Fatalf("open root: %v", err)
-		}
-		defer root.Close()
-
-		err = extractTarGZ(bytes.NewReader([]byte("not gzip")), root, -1)
-		if err == nil {
-			t.Error("expected error for invalid gzip, got nil")
-		}
-	})
-
-	t.Run("unsupported entry type (symlink)", func(t *testing.T) {
-		data := txtarToTarGZ(t, "symlink.txtar")
-
-		root, err := os.OpenRoot(t.TempDir())
-		if err != nil {
-			t.Fatalf("open root: %v", err)
-		}
-		defer root.Close()
-
-		err = extractTarGZ(bytes.NewReader(data), root, -1)
-		if err == nil {
-			t.Fatal("expected error for symlink entry, got nil")
-		}
-		if !strings.Contains(err.Error(), "unsupported") {
-			t.Errorf("expected error to contain %q, got: %v", "unsupported", err)
-		}
-	})
-
-	t.Run("truncated tar", func(t *testing.T) {
-		// Valid gzip wrapping truncated tar data
-		data := txtarToTarGZ(t, "nested.txtar")
-		data = data[:len(data)/2]
-
-		root, err := os.OpenRoot(t.TempDir())
-		if err != nil {
-			t.Fatalf("open root: %v", err)
-		}
-		defer root.Close()
-
-		err = extractTarGZ(bytes.NewReader(data), root, -1)
-		if err == nil {
-			t.Error("expected error for truncated tar, got nil")
-		}
-	})
-
-	// oversized files of various magnitudes
-	type oversizeTest struct {
+func TestDeploymentStore_WriteInstalling_sizeLimit(t *testing.T) {
+	tests := []struct {
 		name string
 		text string
 		size int64
+	}{
+		{"bytes", "deployment package exceeds size limit of 123 B", 123},
+		{"kibibytes", "deployment package exceeds size limit of 100 KiB", 100 * 1024},
+		{"mebibytes", "deployment package exceeds size limit of 15 MiB", 15 * 1024 * 1024},
 	}
-	oversizeTests := []oversizeTest{
-		{"oversized file bytes", "123 B", 123},
-		{"oversized file kibibytes", "100 KiB", 100 * 1024},
-		{"oversized file mebibytes", "15 MiB", 15 * 1024 * 1024},
-	}
-	for _, ot := range oversizeTests {
-		t.Run(ot.name, func(t *testing.T) {
-			// create a tar.gz with a single file of the specified size
-			// with the tar headers included, this will exceed the size limit
-			data := genLargeFileTarGZ(t, ot.size)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// with the tar headers included, the archive exceeds the size limit
+			data := genLargeFileTarGZ(t, tt.size)
 
-			root, err := os.OpenRoot(t.TempDir())
+			storeDir, err := os.OpenRoot(t.TempDir())
 			if err != nil {
 				t.Fatalf("open root: %v", err)
 			}
-			defer root.Close()
+			store := NewDeploymentStore(storeDir, WithMaxDeploymentSize(tt.size))
+			t.Cleanup(func() { _ = store.Close() })
 
-			err = extractTarGZ(bytes.NewReader(data), root, ot.size)
-			t.Log(err)
+			err = store.WriteInstalling(t.Context(), "c-1", ConfigVersion{}, bytes.NewReader(data))
 			if err == nil {
-				t.Fatalf("expected error for oversized file of size %d, got nil", ot.size)
+				t.Fatalf("expected error for oversized package of size %d, got nil", tt.size)
 			}
-			if !strings.Contains(err.Error(), ot.text) {
-				t.Errorf("expected error to contain %q, got: %v", ot.text, err)
+			if !strings.Contains(err.Error(), tt.text) {
+				t.Errorf("expected error to contain %q, got: %v", tt.text, err)
 			}
 		})
 	}

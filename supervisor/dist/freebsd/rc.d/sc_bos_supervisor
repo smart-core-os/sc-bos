@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# PROVIDE: sc_bos_supervisor
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Smart Core BOS Supervisor: installs BOS updates and rolls them back if the new version doesn't commit.
+# Runs as root under daemon(8), which restarts it if it exits. See supervisor/docs/freebsd.md.
+#
+# Install to /usr/local/etc/rc.d/sc_bos_supervisor (mode 0555) and set in /etc/rc.conf:
+#
+# sc_bos_supervisor_enable (bool): Set to YES to start the Supervisor at boot. Default: NO.
+# sc_bos_supervisor_config (path): Supervisor config file.
+#                                  Default: /usr/local/etc/sc-bos-supervisor/config.json
+
+. /etc/rc.subr
+
+name="sc_bos_supervisor"
+rcvar="sc_bos_supervisor_enable"
+
+load_rc_config $name
+
+: ${sc_bos_supervisor_enable:="NO"}
+: ${sc_bos_supervisor_config:="/usr/local/etc/sc-bos-supervisor/config.json"}
+
+sc_bos_supervisor_log="/var/log/sc-bos-supervisor.log"
+
+# daemon(8) flags:
+#   -f  detach from the caller's stdin, stdout and stderr, so the caller doesn't wait on them
+#   -H  reopen the log file on SIGHUP, after newsyslog rotates it
+#   -r  start the Supervisor again whenever it exits
+#   -P  write daemon's own pid, so stop ends daemon and with it the Supervisor
+#   -o  write the Supervisor's output to the log file
+pidfile="/var/run/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-f -H -r -P ${pidfile} -o ${sc_bos_supervisor_log} /usr/local/sbin/sc-bos-supervisor -config ${sc_bos_supervisor_config}"
+required_files="/usr/local/sbin/sc-bos-supervisor"
+start_precmd="${name}_prestart"
+
+sc_bos_supervisor_prestart()
+{
+	if [ ! -e "${sc_bos_supervisor_log}" ]; then
+		install -o root -g wheel -m 640 /dev/null "${sc_bos_supervisor_log}"
+	fi
+}
+
+run_rc_command "$1"

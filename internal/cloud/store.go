@@ -1,8 +1,6 @@
 package cloud
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,6 +13,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/smart-core-os/sc-bos/internal/util/tarutil"
 )
 
 const (
@@ -204,8 +204,11 @@ func (s *DeploymentStore) WriteInstalling(ctx context.Context, deploymentID stri
 	if err != nil {
 		return fmt.Errorf("open extraction directory: %w", err)
 	}
-	err = extractTarGZ(payload, extractRoot, s.maxDeploymentSize)
+	err = tarutil.ExtractTarGZ(payload, extractRoot, s.maxDeploymentSize)
 	_ = extractRoot.Close()
+	if errors.Is(err, tarutil.ErrSizeLimit) {
+		err = sizeLimitError(s.maxDeploymentSize)
+	}
 	if err != nil {
 		var cleanupErr error
 		if s.preserveDownloads {
@@ -401,94 +404,6 @@ func (s *DeploymentStore) unlock() {
 		panic("unlock called without lock held")
 	}
 }
-
-// maxSize, if positive, limits the size of the decompressed tarball.
-func extractTarGZ(src io.Reader, dst *os.Root, maxSize int64) error {
-	srcUncompressed, err := gzip.NewReader(src)
-	if err != nil {
-		return fmt.Errorf("gzip: %w", err)
-	}
-	defer func() {
-		_ = srcUncompressed.Close()
-	}()
-
-	var srcLimited io.Reader = srcUncompressed
-	if maxSize > 0 {
-		srcLimited = limitReader(srcUncompressed, maxSize)
-	}
-
-	tarReader := tar.NewReader(srcLimited)
-	for {
-		header, err := tarReader.Next()
-		if errors.Is(err, errLimitReached) {
-			return sizeLimitError(maxSize)
-		} else if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("tar: %w", err)
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if err = dst.MkdirAll(header.Name, 0755); err != nil {
-				return fmt.Errorf("create directory: %w", err)
-			}
-		case tar.TypeReg:
-			err = copyFile(dst, header.Name, tarReader, false)
-			if errors.Is(err, errLimitReached) {
-				return sizeLimitError(maxSize)
-			} else if err != nil {
-				return fmt.Errorf("copy file: %w", err)
-			}
-		default:
-			return fmt.Errorf("unsupported tar entry type: %c in file %s", header.Typeflag, header.Name)
-		}
-	}
-	return nil
-}
-
-func copyFile(root *os.Root, path string, src io.Reader, mkdir bool) error {
-	if mkdir {
-		if err := root.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return fmt.Errorf("create parent directories: %w", err)
-		}
-	}
-
-	dstFile, err := root.Create(path)
-	if err != nil {
-		return fmt.Errorf("create destination file: %w", err)
-	}
-	defer dstFile.Close()
-
-	if _, err = io.Copy(dstFile, src); err != nil {
-		return fmt.Errorf("copy file contents: %w", err)
-	}
-	return nil
-}
-
-type limitedReader struct {
-	R io.Reader
-	N int64
-}
-
-func (l *limitedReader) Read(p []byte) (n int, err error) {
-	if l.N <= 0 {
-		return 0, errLimitReached
-	}
-	if int64(len(p)) > l.N {
-		p = p[:l.N]
-	}
-	n, err = l.R.Read(p)
-	l.N -= int64(n)
-	return n, err
-}
-
-func limitReader(src io.Reader, n int64) io.Reader {
-	return &limitedReader{R: src, N: n}
-}
-
-var errLimitReached = errors.New("read limit reached")
 
 func humaniseBytes(n int64) string {
 	units := []string{"B", "KiB", "MiB", "GiB", "TiB"}

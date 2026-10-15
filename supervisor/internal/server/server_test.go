@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -748,5 +749,133 @@ func TestReconcile_TerminalRecord_NoOp(t *testing.T) {
 	assertCalls(t, fake)
 	if got := getStatus(t, testClient(t, svc)).GetState(); got != supervisorpb.UpdateStatus_COMPLETED {
 		t.Errorf("state = %v, want %v", got, supervisorpb.UpdateStatus_COMPLETED)
+	}
+}
+
+func TestUnfinishedUpdate(t *testing.T) {
+	finished := time.Unix(1000, 0).UTC()
+	tests := []struct {
+		name        string
+		rec         *record // nil means no state file
+		wantVersion string
+		wantOK      bool
+	}{
+		{name: "no state file"},
+		{name: "no goal", rec: &record{Committed: "v1"}},
+		{name: "finished goal", rec: &record{Target: &target{Version: "v2"}, Committed: "v1", FinishTime: &finished}},
+		{name: "unfinished goal", rec: &record{Target: &target{Version: "v2"}, Committed: "v1"}, wantVersion: "v2", wantOK: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			if tt.rec != nil {
+				writeStateFile(t, dir, *tt.rec)
+			}
+			version, ok, err := UnfinishedUpdate(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if version != tt.wantVersion || ok != tt.wantOK {
+				t.Errorf("UnfinishedUpdate() = %q, %v, want %q, %v", version, ok, tt.wantVersion, tt.wantOK)
+			}
+		})
+	}
+}
+
+func TestSettledCommit(t *testing.T) {
+	finished := time.Unix(1000, 0).UTC()
+	tests := []struct {
+		name        string
+		rec         *record // nil means no state file
+		wantVersion string
+		wantOK      bool
+	}{
+		{name: "no state file"},
+		{name: "no goal", rec: &record{Committed: "v1"}},
+		{name: "unfinished goal", rec: &record{Target: &target{Version: "v2"}, Committed: "v1"}},
+		{name: "completed goal", rec: &record{Target: &target{Version: "v2"}, Committed: "v2", FinishTime: &finished}, wantVersion: "v2", wantOK: true},
+		{name: "failed goal", rec: &record{Target: &target{Version: "v2"}, Committed: "v1", FinishTime: &finished, Error: "apply: disk full"}, wantVersion: "v1", wantOK: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			if tt.rec != nil {
+				writeStateFile(t, dir, *tt.rec)
+			}
+			version, ok, err := SettledCommit(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if version != tt.wantVersion || ok != tt.wantOK {
+				t.Errorf("SettledCommit() = %q, %v, want %q, %v", version, ok, tt.wantVersion, tt.wantOK)
+			}
+		})
+	}
+}
+
+// A Commit with a different version after an update has finished leaves the settled commit unchanged.
+func TestSettledCommit_IgnoresLaterCommit(t *testing.T) {
+	_, url, sum, client := artefactServer(t)
+	dir := t.TempDir()
+	svc := New(&fakeInstaller{}, dir, client, testDeadline, false, zap.NewNop())
+	c := testClient(t, svc)
+
+	synctest.Test(t, func(t *testing.T) {
+		mustInstall(t, c, "v2", url, sum)
+		synctest.Wait()
+		commit(t, c, "v2")
+		synctest.Wait()
+		commit(t, c, "v3")
+
+		version, ok, err := SettledCommit(dir)
+		if err != nil || !ok || version != "v2" {
+			t.Errorf("SettledCommit() = %q, %v, %v, want v2, true, nil", version, ok, err)
+		}
+	})
+}
+
+// A malformed record gives no unfinished update and an error wrapping ErrMalformedState that names the file.
+func TestUnfinishedUpdate_Malformed(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, stateFileName)
+	if err := os.WriteFile(path, []byte("{"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	version, ok, err := UnfinishedUpdate(dir)
+	if ok {
+		t.Errorf("UnfinishedUpdate() = %q, true, want no unfinished update", version)
+	}
+	if !errors.Is(err, ErrMalformedState) || !strings.Contains(err.Error(), path) {
+		t.Errorf("UnfinishedUpdate() error = %v, want ErrMalformedState naming %s", err, path)
+	}
+}
+
+// Outside an update, recordCommit records each new committed version and reports the one it replaced. A
+// repeated commit of the recorded version changes nothing.
+func TestRecordCommit(t *testing.T) {
+	dir := t.TempDir()
+	svc := newService(t, &fakeInstaller{}, dir, http.DefaultClient)
+
+	for _, step := range []struct {
+		version      string
+		wantPrevious string
+		wantChanged  bool
+	}{
+		{version: "v1", wantPrevious: "", wantChanged: true},
+		{version: "v1", wantPrevious: "", wantChanged: false},
+		{version: "v2", wantPrevious: "v1", wantChanged: true},
+	} {
+		previous, changed := svc.recordCommit(step.version)
+		if previous != step.wantPrevious || changed != step.wantChanged {
+			t.Errorf("recordCommit(%q) = %q, %v, want %q, %v", step.version, previous, changed, step.wantPrevious, step.wantChanged)
+		}
+	}
+
+	rec, err := readRecord(filepath.Join(dir, stateFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Committed != "v2" {
+		t.Errorf("persisted committed version = %q, want v2", rec.Committed)
 	}
 }

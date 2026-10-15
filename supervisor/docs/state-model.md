@@ -1,8 +1,8 @@
 Supervisor operation
 ====================
 
-In this document: How the Supervisor applies a BOS update and correctly tracks state. See `supervisor/internal/server/server.go`
-`supervisor/internal/install/podman.go`, for implementation details.
+In this document: How the Supervisor applies a BOS update and correctly tracks state. See `supervisor/internal/server/server.go`,
+`supervisor/internal/install/podman.go` and `supervisor/internal/install/freebsdrc.go` for implementation details.
 
 The Supervisor must accurately track the state of an update, even if it is interrupted at any point in the process.
 
@@ -40,9 +40,39 @@ On Rocky / Podman the host holds one image per applied version, plus two moving 
 owns: `:current` (what the BOS unit boots) and `:previous` (the rollback pointer). The BOS service is
 recreated from `:current` on restart. 
 
-### FreeBSD support (planned, not yet implemented)
-As BOS does not run in a container on FreeBSD, the supervisor must track an applied version, a recorded previous
-version and the version actually running itself. The overall installation flow will however be similar.
+### FreeBSD
+
+On FreeBSD, BOS runs as a native `rc(8)` service, and the `freebsdrc` installer applies updates. Each installed release
+is a folder under the releases root, named after its version. Two relative symlinks in that root play the part of the
+Podman tags: `current` (what the service runs) and `previous` (the rollback pointer). The service runs
+`<root>/current/bin/sc-bos` and serves `<root>/current/ui/ops`.
+
+```
+<root>/
+├── .lock                   held with flock(2) for the whole of each Apply and Rollback
+├── <version>/              one folder per installed release: manifest.json, bin/sc-bos, ui/ops/
+├── current  -> <version>
+└── previous -> <version>
+```
+
+Applying a release follows the Podman steps, with these differences:
+
+- **Load** becomes: remove every entry except the lock file, the links, the folders they point at and `<version>`,
+  then extract the artefact into a temporary folder, check its manifest and contents, and rename it to `<version>`.
+  A complete `<version>` folder that passes the checks is reused.
+- **Record the rollback pointer** and **select the new version** replace each link atomically, by creating the new
+  link under a temporary name and renaming it over the old one. The root folder is then synced to disk.
+- **Restart BOS** runs `service <name> restart`.
+
+The crash points in the table below have the same outcome. A crash during extraction leaves only a temporary folder,
+which the next Apply removes before extracting again. Releases are never written over in place, so the running
+binary is never replaced while it runs.
+
+The Supervisor runs as root and BOS as the unprivileged `sc-bos` user, each as an `rc(8)` service under `daemon -r`,
+which starts each one again whenever it exits. The Supervisor's socket is owned by the `sc-bos` group (`socketGroup`), so
+BOS can reach it. `sc-bos-supervisor install-release` lays down the first release from a local tarball, without the
+cloud. See [`freebsd.md`](freebsd.md) for the host layout, the reference service files and the install guide, and
+[`release-artefact.md`](release-artefact.md) for the artefact format.
 
 Update Completion
 -----------------

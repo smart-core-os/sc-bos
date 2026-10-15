@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"go.uber.org/zap"
@@ -22,26 +21,21 @@ type PodmanInstaller struct {
 	logger *zap.Logger
 
 	// run executes an external command and returns its combined output. It is a field so tests can
-	// substitute a fake that records the commands and returns prepared output; production uses execRun.
+	// substitute a fake that records the commands and returns prepared output; production uses execRunner.
 	run commandRunner
 }
-
-// commandRunner executes name with args and returns its combined stdout+stderr. A command that runs but
-// exits non-zero yields an *exitCodeError carrying the exit code.
-type commandRunner func(ctx context.Context, name string, args ...string) (string, error)
 
 // NewPodmanInstaller returns an Installer that swaps tags on repo and restarts unit.
 func NewPodmanInstaller(repo, unit string, logger *zap.Logger) *PodmanInstaller {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
-	p := &PodmanInstaller{
+	return &PodmanInstaller{
 		repo:   repo,
 		unit:   unit,
 		logger: logger,
+		run:    execRunner(logger),
 	}
-	p.run = p.execRun
-	return p
 }
 
 func (p *PodmanInstaller) Apply(ctx context.Context, artefactPath, version string) error {
@@ -151,25 +145,3 @@ func (p *PodmanInstaller) podman(ctx context.Context, args ...string) (string, e
 func (p *PodmanInstaller) systemctl(ctx context.Context, args ...string) (string, error) {
 	return p.run(ctx, "systemctl", args...)
 }
-
-func (p *PodmanInstaller) execRun(ctx context.Context, name string, args ...string) (string, error) {
-	p.logger.Debug("exec", zap.String("cmd", name), zap.Strings("args", args))
-	out, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
-	if err == nil {
-		return string(out), nil
-	}
-	wrapped := fmt.Errorf("%s %s %w", name, strings.Join(args, " "), err)
-	if exitErr, ok := errors.AsType[*exec.ExitError](err); ok {
-		return string(out), &exitCodeError{code: exitErr.ExitCode(), err: wrapped}
-	}
-	return string(out), wrapped
-}
-
-type exitCodeError struct {
-	code int
-	err  error
-}
-
-func (e *exitCodeError) Error() string { return e.err.Error() }
-func (e *exitCodeError) Unwrap() error { return e.err }
-func (e *exitCodeError) ExitCode() int { return e.code }

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -349,6 +350,11 @@ func resolveCloudPath(dir, p string) string {
 func initSupervisor(config sysconf.Config, logger *zap.Logger) *grpc.ClientConn {
 	sup := config.Supervisor
 	if sup == nil || !sup.Enabled {
+		return nil
+	}
+	if sup.SocketPath == "" {
+		logger.Warn("supervisor enabled but no socket path is configured and this OS has no default; update integration disabled",
+			zap.String("os", runtime.GOOS))
 		return nil
 	}
 	conn, err := supervisor.Dial(sup.SocketPath)

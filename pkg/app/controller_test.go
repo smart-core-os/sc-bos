@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	bolterrors "go.etcd.io/bbolt/errors"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
@@ -110,5 +111,14 @@ func TestController_protoPkgCompat(t *testing.T) {
 	}
 	if err := cc.Invoke(t.Context(), "/smartcore.bos.meter.v1.MeterApi/GetMeterReading", meterReq, meterRes); err != nil {
 		t.Errorf("versioned GetMeterReading() error = %v", err)
+	}
+}
+
+func TestInitSupervisor_emptySocketPath(t *testing.T) {
+	config := sysconf.Config{Supervisor: &sysconf.Supervisor{Enabled: true}}
+
+	if conn := initSupervisor(config, zap.NewNop()); conn != nil {
+		_ = conn.Close()
+		t.Fatal("initSupervisor returned a connection, want nil when the socket path is empty")
 	}
 }
