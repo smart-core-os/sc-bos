@@ -17,6 +17,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 )
 
 func Test_setupHealthRegistry(t *testing.T) {
@@ -110,6 +111,136 @@ func Test_setupHealthRegistry(t *testing.T) {
 			h.assertDeviceCheckHasNoCurrentValue(t, "dev5")
 		})
 	})
+}
+
+func Test_setupHealthRegistry_localChecks(t *testing.T) {
+	t.Run("create update delete", func(t *testing.T) {
+		h := newHealthTestHarness(t)
+		check := h.createBoundsCheck("dev1", "temperature check", 25.5)
+
+		got := h.getLocalChecks(t, "dev1")
+		if len(got) != 1 {
+			t.Fatalf("expected 1 local check, got %d", len(got))
+		}
+		// the mirror keeps measured values
+		if v := got[0].GetBounds().GetCurrentValue().GetFloatValue(); v != 25.5 {
+			t.Errorf("local check current_value = %v, want 25.5", v)
+		}
+
+		check.UpdateValue(h.ctx, healthpb.FloatValue(120.0))
+		got = h.getLocalChecks(t, "dev1")
+		if v := got[0].GetBounds().GetCurrentValue().GetFloatValue(); v != 120.0 {
+			t.Errorf("local check current_value = %v, want 120", v)
+		}
+		if got[0].Normality != healthpb.HealthCheck_HIGH {
+			t.Errorf("local check normality = %v, want HIGH", got[0].Normality)
+		}
+
+		check.Dispose()
+		if _, err := h.localChecks.GetDevice("dev1"); status.Code(err) != codes.NotFound {
+			t.Errorf("expected local checks for dev1 to be removed, got err %v", err)
+		}
+	})
+
+	t.Run("only one of many removed", func(t *testing.T) {
+		h := newHealthTestHarness(t)
+		c1 := h.createFaultCheck("dev1", "first")
+		c2, err := h.registry.ForOwner("other-owner").NewFaultCheck("dev1", &healthpb.HealthCheck{DisplayName: "second"})
+		if err != nil {
+			t.Fatalf("NewFaultCheck() error = %v", err)
+		}
+		defer c2.Dispose()
+		if got := h.getLocalChecks(t, "dev1"); len(got) != 2 {
+			t.Fatalf("expected 2 local checks, got %d", len(got))
+		}
+		c1.Dispose()
+		got := h.getLocalChecks(t, "dev1")
+		if len(got) != 1 || got[0].DisplayName != "second" {
+			t.Errorf("expected only the second check to remain, got %v", got)
+		}
+	})
+
+	t.Run("seeded value", func(t *testing.T) {
+		h := newHealthTestHarness(t)
+		check1 := h.createFaultCheck("dev1", "seeded check")
+		check1.SetFault(&healthpb.HealthCheck_Error{SummaryText: "historical error"})
+		check1.Dispose()
+
+		check2 := h.createFaultCheck("dev1", "seeded check")
+		defer check2.Dispose()
+		got := h.getLocalChecks(t, "dev1")
+		if len(got) != 1 {
+			t.Fatalf("expected 1 local check, got %d", len(got))
+		}
+		if got[0].Normality != healthpb.HealthCheck_ABNORMAL {
+			t.Errorf("local check normality = %v, want seeded ABNORMAL", got[0].Normality)
+		}
+	})
+
+	t.Run("create_time survives updates", func(t *testing.T) {
+		h := newHealthTestHarness(t)
+		check := h.createFaultCheck("dev1", "check")
+		defer check.Dispose()
+		created := h.getLocalChecks(t, "dev1")[0].GetCreateTime()
+		if created == nil {
+			t.Fatalf("expected create_time to be set")
+		}
+
+		check.SetFault(&healthpb.HealthCheck_Error{SummaryText: "one"})
+		check.ClearFaults()
+		check.SetFault(&healthpb.HealthCheck_Error{SummaryText: "two"})
+
+		id := healthpb.AbsID(h.owner, "")
+		if got := h.registry.GetCheck("dev1", id).GetCreateTime(); !proto.Equal(got, created) {
+			t.Errorf("registry create_time = %v, want %v", got, created)
+		}
+		if got := h.getLocalChecks(t, "dev1")[0].GetCreateTime(); !proto.Equal(got, created) {
+			t.Errorf("local create_time = %v, want %v", got, created)
+		}
+		dev, err := h.devices.GetDevice("dev1")
+		if err != nil {
+			t.Fatalf("GetDevice() error = %v", err)
+		}
+		if got := dev.HealthChecks[0].GetCreateTime(); !proto.Equal(got, created) {
+			t.Errorf("devices create_time = %v, want %v", got, created)
+		}
+	})
+
+	t.Run("excludes checks written to the device store directly", func(t *testing.T) {
+		h := newHealthTestHarness(t)
+		err := devicesToHealthCheckCollection(h.devices).MergeHealthChecks("remote1", &healthpb.HealthCheck{Id: "remote-check"})
+		if err != nil {
+			t.Fatalf("MergeHealthChecks() error = %v", err)
+		}
+		if got := h.localChecks.ListDevices(); len(got) != 0 {
+			t.Errorf("expected no local checks, got %v", got)
+		}
+	})
+}
+
+func Test_newDriverSystemCheck(t *testing.T) {
+	h := newHealthTestHarness(t)
+	check := newDriverSystemCheck(h.node, h.registry.ForOwner("bacnet:drv1"), "drv1", "bacnet", zaptest.NewLogger(t))
+	if check == nil {
+		t.Fatalf("newDriverSystemCheck() = nil")
+	}
+
+	dev, err := h.devices.GetDevice("drv1")
+	if err != nil {
+		t.Fatalf("GetDevice() error = %v", err)
+	}
+	if got := dev.GetMetadata().GetDeviceType(); got != metadatapb.Metadata_SERVICE {
+		t.Errorf("device type = %v, want SERVICE", got)
+	}
+	if len(dev.HealthChecks) != 1 {
+		t.Errorf("expected 1 health check, got %d", len(dev.HealthChecks))
+	}
+
+	check.Dispose()
+	check.Dispose() // safe to call twice
+	if _, err := h.devices.GetDevice("drv1"); status.Code(err) != codes.NotFound {
+		t.Errorf("expected drv1 to be removed once disposed, got err %v", err)
+	}
 }
 
 func Test_removeMeasuredValues(t *testing.T) {
@@ -217,6 +348,8 @@ type healthTestHarness struct {
 	t               *testing.T
 	registry        *healthpb.Registry
 	devices         *devicespb.Collection
+	localChecks     *devicespb.Collection
+	node            *node.Node
 	healthApiClient healthpb.HealthApiClient
 	owner           string
 }
@@ -231,7 +364,7 @@ func newHealthTestHarness(t *testing.T) *healthTestHarness {
 	announcer := node.New("test-node", nodeopts.WithStore(devices))
 	healthApiClient := healthpb.NewHealthApiClient(announcer.ClientConn())
 
-	r, dispose, err := setupHealthRegistry(ctx, cfg, devices, announcer, zaptest.NewLogger(t))
+	r, localChecks, dispose, err := setupHealthRegistry(ctx, cfg, devices, announcer, zaptest.NewLogger(t))
 	if err != nil {
 		t.Fatalf("setupHealthRegistry() error = %v", err)
 	}
@@ -251,6 +384,8 @@ func newHealthTestHarness(t *testing.T) *healthTestHarness {
 		t:               t,
 		registry:        r,
 		devices:         devices,
+		localChecks:     localChecks,
+		node:            announcer,
 		healthApiClient: healthApiClient,
 		owner:           "test-owner",
 	}
@@ -286,6 +421,18 @@ func (h *healthTestHarness) createBoundsCheck(deviceName, displayName string, cu
 	// Set initial value
 	check.UpdateValue(h.ctx, healthpb.FloatValue(currentValue))
 	return check
+}
+
+func (h *healthTestHarness) getLocalChecks(t *testing.T, deviceName string) []*healthpb.HealthCheck {
+	t.Helper()
+	dev, err := h.localChecks.GetDevice(deviceName)
+	if err != nil {
+		t.Fatalf("localChecks.GetDevice() error = %v", err)
+	}
+	if dev.Name != deviceName {
+		t.Errorf("local device name = %q, want %q", dev.Name, deviceName)
+	}
+	return dev.HealthChecks
 }
 
 func (h *healthTestHarness) getOnlyCheck(t *testing.T, deviceName string) *healthpb.HealthCheck {

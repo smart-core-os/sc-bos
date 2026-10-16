@@ -2,11 +2,14 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/internal/health/healthdb"
@@ -21,7 +24,11 @@ import (
 )
 
 // setupHealthRegistry returns a healthpb.Registry that is integrated with the deviceStore and announced on the rootNode.
-func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore *devicespb.Collection, rootNode node.Announcer, logger *zap.Logger) (_ *healthpb.Registry, close func() error, _ error) {
+//
+// The returned localChecks mirrors the registry: one device per name holding only the checks this node evaluates,
+// measured values included.
+// Unlike deviceStore it never holds checks written by other means, such as a gateway re-announcing its cohort's checks.
+func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore *devicespb.Collection, rootNode node.Announcer, logger *zap.Logger) (_ *healthpb.Registry, localChecks *devicespb.Collection, close func() error, _ error) {
 	// persistent storage for health checks and history
 	var dbOpts []healthdb.Option
 	if config.Health.TTL.MaxCount != nil || config.Health.TTL.MaxAge != nil {
@@ -41,7 +48,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 	}
 	healthCheckStore, err := healthdb.Open(ctx, files.Path(config.DataDir, sysconf.HealthDBPath), dbOpts...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("health check store: %w", err)
+		return nil, nil, nil, fmt.Errorf("health check store: %w", err)
 	}
 	close = healthCheckStore.Close
 	// history (including seeding) support
@@ -55,6 +62,7 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 	}
 	var announcedChecksMu sync.Mutex
 	announcedChecks := make(map[string]checkedDevice)
+	localChecks = devicespb.NewCollection()
 
 	checkRegistry := healthpb.NewRegistry(
 		healthpb.WithOnNameCreate(func(name string) {
@@ -89,19 +97,22 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			existing, ok := announcedChecks[name]
 			if !ok {
 				logger.Error("create health check for unknown name", zap.String("name", name), zap.String("checkId", c.Id))
-			}
-			_, err := existing.m.CreateHealthCheck(c)
-			if err != nil {
-				logger.Error("seed health check", zap.String("name", name), zap.String("checkId", oldCheck.Id), zap.Error(err))
+			} else if _, err := existing.m.CreateHealthCheck(c); err != nil {
+				logger.Error("seed health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
 			}
 
 			// update the devices api
-			_, err = deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
+			_, err := deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(mask *masks.FieldUpdater, dst, src proto.Message) {
 				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.MergeChecks(mask.Merge, dstDev.HealthChecks, removeMeasuredValues(c))
 			}))
 			if err != nil {
 				logger.Error("update device with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
+			}
+
+			// update the local checks mirror
+			if err := setLocalCheck(localChecks, name, c, resource.WithCreateIfAbsent()); err != nil {
+				logger.Error("update local checks with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
 			}
 			return c
 		}),
@@ -119,11 +130,9 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			defer announcedChecksMu.Unlock()
 			a, ok := announcedChecks[name]
 			if !ok {
+				// see SCB-1508, carry on so the stores below still track the registry
 				logger.Error("update health check for unknown name", zap.String("name", name), zap.String("checkId", c.Id))
-				return
-			}
-			_, err = a.m.UpdateHealthCheck(c)
-			if err != nil {
+			} else if _, err := a.m.UpdateHealthCheck(c); err != nil {
 				logger.Error("update health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
 			}
 
@@ -135,6 +144,11 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			if err != nil {
 				logger.Error("update device with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
 			}
+
+			// update the local checks mirror
+			if err := setLocalCheck(localChecks, name, c); err != nil {
+				logger.Error("update local checks with health check", zap.String("name", name), zap.String("checkId", c.Id), zap.Error(err))
+			}
 		}),
 		healthpb.WithOnCheckDelete(func(name, id string) {
 			// update the health api
@@ -143,21 +157,40 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			a, ok := announcedChecks[name]
 			if !ok {
 				logger.Error("delete health check for unknown name", zap.String("name", name), zap.String("checkId", id))
-			}
-			err := a.m.DeleteHealthCheck(id)
-			if err != nil {
+			} else if err := a.m.DeleteHealthCheck(id); err != nil {
 				logger.Error("delete health check", zap.String("name", name), zap.String("checkId", id), zap.Error(err))
 			}
 
-			_, err = deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
+			_, err := deviceStore.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
 				dstDev := dst.(*devicespb.Device)
 				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
 			}))
 			if err != nil {
 				logger.Error("update device removing health check", zap.String("name", name), zap.String("checkId", id), zap.Error(err))
 			}
+
+			// update the local checks mirror
+			_, err = localChecks.Update(&devicespb.Device{Name: name}, resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
+				dstDev := dst.(*devicespb.Device)
+				dstDev.HealthChecks = healthpb.RemoveCheck(dstDev.HealthChecks, id)
+			}))
+			if err != nil && status.Code(err) != codes.NotFound {
+				logger.Error("update local checks removing health check", zap.String("name", name), zap.String("checkId", id), zap.Error(err))
+			}
 		}),
 		healthpb.WithOnNameDelete(func(name string) {
+			// A check can be created for name between the registry forgetting it and this callback (SCB-1508),
+			// so only remove the local checks mirror entry if it is still empty.
+			_, err := localChecks.Delete(name, resource.WithAllowMissing(true), resource.WithExpectedCheck(func(msg proto.Message) error {
+				if len(msg.(*devicespb.Device).GetHealthChecks()) > 0 {
+					return errLocalChecksNotEmpty
+				}
+				return nil
+			}))
+			if err != nil && !errors.Is(err, errLocalChecksNotEmpty) {
+				logger.Error("delete local checks", zap.String("name", name), zap.Error(err))
+			}
+
 			// unannounce the health trait
 			announcedChecksMu.Lock()
 			defer announcedChecksMu.Unlock()
@@ -172,10 +205,28 @@ func setupHealthRegistry(ctx context.Context, config sysconf.Config, deviceStore
 			// note: the deviceStore doesn't need updating because undoing will manage that
 		}),
 	)
-	return checkRegistry, close, nil
+	return checkRegistry, localChecks, close, nil
 }
 
-// removeMeasuredValues returns a (possible) copy of c with any measured values removed.
+var errLocalChecksNotEmpty = errors.New("local checks not empty")
+
+// setLocalCheck records a copy of c against name in localChecks, replacing any check with the same id.
+// A NotFound error, for a name localChecks has no entry for, is ignored.
+func setLocalCheck(localChecks *devicespb.Collection, name string, c *healthpb.HealthCheck, opts ...resource.WriteOption) error {
+	c = proto.Clone(c).(*healthpb.HealthCheck)
+	opts = append([]resource.WriteOption{resource.WithMerger(func(_ *masks.FieldUpdater, dst, _ proto.Message) {
+		dstDev := dst.(*devicespb.Device)
+		dstDev.Name = name
+		dstDev.HealthChecks = healthpb.SetCheck(dstDev.HealthChecks, c)
+	})}, opts...)
+	_, err := localChecks.Update(&devicespb.Device{Name: name}, opts...)
+	if status.Code(err) == codes.NotFound {
+		return nil
+	}
+	return err
+}
+
+// removeMeasuredValues returns a copy of c with any measured values removed.
 func removeMeasuredValues(c *healthpb.HealthCheck) *healthpb.HealthCheck {
 	// We do the removal here, instead of in the DevicesApi server,
 	// because here is the write point for those devices.
@@ -185,18 +236,10 @@ func removeMeasuredValues(c *healthpb.HealthCheck) *healthpb.HealthCheck {
 	if c == nil {
 		return nil
 	}
-	// clone clones its argument once only, returning an uncloned value on subsequent calls.
-	var clone func(*healthpb.HealthCheck) *healthpb.HealthCheck
-	clone = func(c *healthpb.HealthCheck) *healthpb.HealthCheck {
-		cc := proto.Clone(c).(*healthpb.HealthCheck)
-		clone = func(c *healthpb.HealthCheck) *healthpb.HealthCheck { return c }
-		return cc
-	}
-
-	if v := c.GetBounds().GetCurrentValue(); v != nil {
-		c = clone(c)
+	// Always clone: c is typically the registry's own copy, and the result may be stored in the device store as is.
+	c = proto.Clone(c).(*healthpb.HealthCheck)
+	if c.GetBounds().GetCurrentValue() != nil {
 		c.GetBounds().CurrentValue = nil
 	}
-
 	return c
 }
