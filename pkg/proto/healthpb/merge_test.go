@@ -193,9 +193,13 @@ func TestCheck(t *testing.T) {
 			if tt.ignore != "" {
 				t.Skipf("skipping test %q: %s", tt.name, tt.ignore)
 			}
+			srcBefore := proto.Clone(tt.src)
 			MergeCheck(proto.Merge, tt.dst, tt.src)
 			if diff := cmp.Diff(tt.want, tt.dst, protocmp.Transform()); diff != "" {
 				t.Errorf("mergeCheck() mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(srcBefore, tt.src, protocmp.Transform()); diff != "" {
+				t.Errorf("mergeCheck() modified src (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -400,6 +404,79 @@ func TestRemove(t *testing.T) {
 			got := RemoveCheck(tt.dst, tt.id)
 			if diff := cmp.Diff(tt.want, got, protocmp.Transform()); diff != "" {
 				t.Errorf("Remove() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCheck_resettingMerge(t *testing.T) {
+	// masks.FieldUpdater.Merge without an update mask resets dst before merging
+	resetMerge := func(dst, src proto.Message) {
+		proto.Reset(dst)
+		proto.Merge(dst, src)
+	}
+	dst := &HealthCheck{CreateTime: timestamppb.New(time.Unix(10, 0)), DisplayName: "old"}
+	src := &HealthCheck{DisplayName: "new"}
+	MergeCheck(resetMerge, dst, src)
+	want := &HealthCheck{CreateTime: timestamppb.New(time.Unix(10, 0)), DisplayName: "new"}
+	if diff := cmp.Diff(want, dst, protocmp.Transform()); diff != "" {
+		t.Errorf("MergeCheck() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestSetCheck(t *testing.T) {
+	t1 := timestamppb.New(time.Unix(100, 0))
+	t2 := timestamppb.New(time.Unix(200, 0))
+	tests := []struct {
+		name string
+		dst  []*HealthCheck
+		c    *HealthCheck
+		want []*HealthCheck
+	}{
+		{
+			name: "empty slice",
+			c:    &HealthCheck{Id: "a"},
+			want: []*HealthCheck{{Id: "a"}},
+		},
+		{
+			name: "insert first",
+			dst:  []*HealthCheck{{Id: "b"}, {Id: "c"}},
+			c:    &HealthCheck{Id: "a"},
+			want: []*HealthCheck{{Id: "a"}, {Id: "b"}, {Id: "c"}},
+		},
+		{
+			name: "insert middle",
+			dst:  []*HealthCheck{{Id: "a"}, {Id: "c"}},
+			c:    &HealthCheck{Id: "b"},
+			want: []*HealthCheck{{Id: "a"}, {Id: "b"}, {Id: "c"}},
+		},
+		{
+			name: "insert last",
+			dst:  []*HealthCheck{{Id: "a"}, {Id: "b"}},
+			c:    &HealthCheck{Id: "c"},
+			want: []*HealthCheck{{Id: "a"}, {Id: "b"}, {Id: "c"}},
+		},
+		{
+			name: "replace wholesale",
+			dst: []*HealthCheck{
+				{Id: "a"},
+				{Id: "b", DisplayName: "old", Description: "gone", CreateTime: t1},
+				{Id: "c"},
+			},
+			c: &HealthCheck{Id: "b", DisplayName: "new", CreateTime: t2},
+			want: []*HealthCheck{
+				{Id: "a"},
+				{Id: "b", DisplayName: "new", CreateTime: t2},
+				{Id: "c"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SetCheck(tt.dst, tt.c)
+			if diff := cmp.Diff(tt.want, got, protocmp.Transform()); diff != "" {
+				t.Errorf("SetCheck() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

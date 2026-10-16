@@ -4601,7 +4601,8 @@
         "metadataInterval": 1,
         "qos": 1
       },
-      "fetchTimeout": "5s"
+      "fetchTimeout": "5s",
+      "health": {"enabled": true}
     },
     {
       "name": "van/uk/brum/ugs/automation/udmi-export",
