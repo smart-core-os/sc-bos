@@ -1,0 +1,47 @@
+{
+  "name": "connect-node",
+  "drivers": [
+    {
+      "type": "mock", "name": "connect-node/mock",
+      "healthCheck": {"faultProbability": 0.15},
+      "devices": [
+        {"name": "meter-01", "traits": [{"name": "smartcore.bos.Meter"}]},
+        {"name": "meter-02", "traits": [{"name": "smartcore.bos.Meter"}]},
+        {"name": "meter-03", "traits": [{"name": "smartcore.bos.Meter", "more": {"unit": "MWh"}}]},
+        {"name": "health-01", "traits": [{"name": "smartcore.bos.Health"}]}
+      ]
+    }
+  ],
+  "automation": [
+    {
+      "type": "healthbounds", "name": "connect-node/auto/meter-health",
+      "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.Meter"}],
+      "source": {"trait": "smartcore.bos.Meter", "value": "usage"},
+      "check": {
+        "displayName": "Meter usage",
+        "description": "Checks the meter reading is within the expected range",
+        "bounds": {
+          "normalRange": {"low": {"floatValue": 0}, "high": {"floatValue": 10000}}
+        }
+      }
+    },
+    {
+      "type": "history", "name": "connect-node/auto/meter-history",
+      "source": {
+        "trait": "smartcore.bos.Meter",
+        "devices": [{"field": "metadata.traits.name", "stringEqual": "smartcore.bos.Meter"}]
+      },
+      "storage": {"type": "memory"}
+    },
+    {
+      "type": "connecttelemetry", "name": "connect-node/auto/connect-telemetry",
+      "traits": ["smartcore.bos.Meter"],
+      "mqtt": {
+        "host": "tls://REPLACE-WITH-BROKER-HOST:8883",
+        "useCloudCredential": true,
+        "sendInterval": "* * * * *",
+        "metadataInterval": 10
+      }
+    }
+  ]
+}
