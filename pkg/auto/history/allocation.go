@@ -11,7 +11,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
 	client := allocationpb.NewAllocationApiClient(a.clients.ClientConn())
 
 	dedupe := newDeduper[*allocationpb.Allocation](cmp.Equal())
@@ -69,7 +69,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

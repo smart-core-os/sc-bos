@@ -36,7 +36,7 @@ func Test_automation_collectOccupancyChanges(t *testing.T) {
 	ctx, stop := context.WithCancel(context.Background())
 	t.Cleanup(stop)
 	go func() {
-		collector.collectOccupancyChanges(ctx, config.Source{Name: "device"}, payloads)
+		collector.collectOccupancyChanges(ctx, config.Source{Name: "device"}, payloads, zap.NewNop())
 	}()
 
 	if err := chans.IsEmptyWithin(payloads, time.Second); err != nil {
