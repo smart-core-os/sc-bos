@@ -15,7 +15,7 @@ demo/vanti-ugs/.env
 # Node dependencies (e.g. scripts/ proto-gen tooling)
 node_modules/
 
-# Throwaway scratch dir (e.g. raise-pr / read-pr-feedback skill bodies)
+# Throwaway scratch dir (gate logs, PR and review bodies written by the workflow skills)
 .tmp/
 
 # sccexporter local demo artifacts (throwaway certs, broker config, generated DBO)

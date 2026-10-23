@@ -1,7 +1,6 @@
-# sc-bos
+@AGENTS.md
 
-## Review voice
+## Claude Code
 
-Before writing anything a reviewer will read — PR review bodies, line comments, or
-replies to review comments — read `.claude/review-voice.md` and follow it. Applies
-to `/code-review`, `/review` and `/read-pr-feedback` alike.
+- Before writing anything a reviewer will read (PR review bodies, line comments, replies to review comments), read
+  `.claude/review-voice.md` and follow it.

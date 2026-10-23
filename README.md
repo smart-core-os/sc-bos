@@ -28,8 +28,8 @@ building.
 Each controller has all the features of SC BOS, though some might be turned on or off depending on the requirements of
 the installation and the capabilities of the hardware running sc bos.
 
-Controllers serve a comprehensive set of APIs, defined in [/proto](proto) and the legacy APIs migrated from the
-sc-api repo are found in [/sc-api/protobuf](sc-api/protobuf).
+Controllers serve a comprehensive set of APIs, defined in [/proto](proto), including the traits migrated from the
+sc-api repo.
 For more detailed SC API documentation see [the API docs](https://smart-core-os.github.com/api/).
 Controllers also serve web applications like the [Ops UI](ui/ops) and [Space UI](ui/space) which provide user interfaces
 into the data and control of the building.
@@ -82,8 +82,8 @@ The important directories are:
     - `pkg/app`: The app entrypoint code and main config file structures
     - `pkg/node`: The main API publication and routing package
     - `pkg/driver`, `pkg/auto`, `pkg/zone`, `pkg/system`: Plugins for sc bos, each sub-package contains a single plugin.
-    - `pkg/gen` and `pkg/gentrait`: The generated protobuf code goes in `gen` and our hand written utilities around this
-      code goes in `gentrait`.
+    - `pkg/proto`: The generated protobuf code, one `<name>pb` package per API, alongside our hand written utilities
+      for that API.
 - `ui/*`: Web applications like the [Ops UI](ui/ops) and [Space UI](ui/space).
 - `example/config`: Example config files and setups for running sc bos in different ways. Of note is
   the [vanti-ugs](example/config/vanti-ugs) example which is the setup we do most development against,

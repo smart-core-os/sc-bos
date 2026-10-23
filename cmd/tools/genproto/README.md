@@ -11,7 +11,7 @@ For go files:
 - All proto files will produce `.pb.go` and _grpc.pb.go files using `protoc-gen-go` and `protoc-gen-go-grpc`.
 - Services where ALL request messages have a `string name` property will generate `_router.pb.go` using `protoc-gen-router`.
 - Any proto file with a `service` definition will generate a `_wrapper.pb.go` using `protoc-gen-wrapper`.
-- Generated files will be placed into the `pkg/gen` directory.
+- Generated files will be placed into `pkg/proto/<name>pb`, following each proto's `go_package` option.
 
 For js/ts files:
 

@@ -1,0 +1,46 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(go build *)",
+      "Bash(go doc *)",
+      "Bash(go env *)",
+      "Bash(go list *)",
+      "Bash(go mod why *)",
+      "Bash(go test *)",
+      "Bash(go vet *)",
+      "Bash(staticcheck *)",
+      "Bash(opa test *)",
+      "Bash(bash scripts/gen-proto.sh)",
+      "Bash(scripts/gate.sh)",
+      "Bash(scripts/gate.sh *)",
+      "Bash(yarn --cwd * build)",
+      "Bash(yarn --cwd * lint)",
+      "Bash(yarn --cwd * lint:nofix)",
+      "Bash(yarn install --frozen-lockfile*)",
+      "Bash(git blame *)",
+      "Bash(git branch --show-current)",
+      "Bash(git diff*)",
+      "Bash(git fetch*)",
+      "Bash(git log*)",
+      "Bash(git merge-base *)",
+      "Bash(git rev-list *)",
+      "Bash(git rev-parse *)",
+      "Bash(git show*)",
+      "Bash(git status*)",
+      "Bash(gh issue view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr view *)",
+      "Bash(gh run list*)",
+      "Bash(gh run view *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:pkg.go.dev)"
+    ],
+    "deny": []
+  }
+}
