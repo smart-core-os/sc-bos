@@ -47,10 +47,11 @@ if [ -z "$BASE" ]; then
   }
 fi
 
-# Committed since BASE, plus uncommitted and untracked changes.
+# Committed since BASE, plus uncommitted and untracked changes. --no-renames lists a moved file under both
+# paths, so the package it left (and that package's importers) is checked too.
 CHANGED=$( {
-  git diff --name-only "$BASE"...HEAD
-  git diff --name-only HEAD
+  git diff --no-renames --name-only "$BASE"...HEAD
+  git diff --no-renames --name-only HEAD
   git ls-files --others --exclude-standard
 } | sort -u)
 
@@ -105,10 +106,11 @@ go_pkgs() {
 }
 
 # affected_pkgs prints the packages in this module that are changed, depend on a changed package,
-# or whose tests import one.
+# or whose tests import one. -e keeps packages that fail to load, so a broken one still reaches vet and fails
+# there rather than silently dropping out.
 affected_pkgs() {
   local changed="$1"
-  go list -f '{{.ImportPath}} {{join .Deps " "}} {{join .TestImports " "}} {{join .XTestImports " "}}' ./... |
+  go list -e -f '{{.ImportPath}} {{join .Deps " "}} {{join .TestImports " "}} {{join .XTestImports " "}}' ./... |
     GATE_CHANGED="$changed" awk '
       BEGIN { n = split(ENVIRON["GATE_CHANGED"], c, "\n"); for (i = 1; i <= n; i++) if (c[i] != "") want[c[i]] = 1 }
       { for (i = 1; i <= NF; i++) if ($i in want) { print $1; next } }
