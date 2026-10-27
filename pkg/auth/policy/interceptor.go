@@ -168,18 +168,27 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 		return nil, status.Error(codes.Internal, "failed to resolve method")
 	}
 
+	addr := "unknown"
+	if p, ok := peer.FromContext(ctx); ok {
+		addr = p.Addr.String()
+	}
+
 	if creds == nil {
+		cert, valid := rpcutil.CertFromServerContext(ctx)
+
 		tkn, err := grpc_auth.AuthFromMD(ctx, "Bearer")
 		var tokenClaims *token.Claims
 		if err == nil && tkn != "" && i.verifier != nil {
 			tokenClaims, err = i.verifier.ValidateAccessToken(ctx, tkn)
 			if err != nil {
 				tokenClaims = nil
-				i.logger.Error("token failed verification", zap.Error(err))
+				i.logTokenFailure(err, cert, valid,
+					zap.String("peer", addr),
+					zap.String("service", service),
+					zap.String("method", method),
+				)
 			}
 		}
-
-		cert, valid := rpcutil.CertFromServerContext(ctx)
 
 		creds = &verifiedCreds{
 			cert:        cert,
@@ -223,10 +232,6 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 	}
 
 	queries, err := Validate(ctx, i.policy, input)
-	addr := "unknown"
-	if p, ok := peer.FromContext(ctx); ok {
-		addr = p.Addr.String()
-	}
 	if err != nil {
 		i.logger.Debug("request blocked by policy",
 			zap.Any("attributes", input),
@@ -249,9 +254,13 @@ func (i *Interceptor) checkPolicyGrpc(ctx context.Context, creds *verifiedCreds,
 }
 
 func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
-	hdr := r.Header.Get("Authorization")
 	creds := &verifiedCreds{}
-	if hdr != "" {
+	if cert := httpPeerCert(r); cert != nil {
+		creds.cert = cert
+		creds.certValid = true
+	}
+	addr := r.RemoteAddr
+	if hdr := r.Header.Get("Authorization"); hdr != "" {
 		tkn, err := splitBearer(hdr)
 		if err != nil {
 			return nil, err
@@ -259,16 +268,17 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		if i.verifier != nil {
 			claims, err := i.verifier.ValidateAccessToken(r.Context(), tkn)
 			if err != nil {
-				i.logger.Error("token failed verification", zap.Error(err))
-				return nil, err
+				// The request is rejected whatever the certificate, so this is never the expected case.
+				i.logTokenFailure(err, creds.cert, false,
+					zap.String("peer", addr),
+					zap.String("path", r.URL.Path),
+					zap.String("httpMethod", r.Method),
+				)
+				return nil, status.Error(codes.Unauthenticated, "invalid access token")
 			}
 			creds.token = tkn
 			creds.tokenClaims = claims
 		}
-	}
-	if cert := httpPeerCert(r); cert != nil {
-		creds.cert = cert
-		creds.certValid = true
 	}
 
 	input := Attributes{
@@ -284,7 +294,6 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 	}
 
 	queries, err := Validate(r.Context(), i.policy, input)
-	addr := r.RemoteAddr
 	if err != nil {
 		i.logger.Debug("request blocked by policy",
 			zap.Any("attributes", input),
@@ -303,6 +312,22 @@ func (i *Interceptor) checkPolicyHTTP(r *http.Request) (*verifiedCreds, error) {
 		)
 	}
 	return creds, err
+}
+
+// logTokenFailure records a bearer token that failed verification.
+// Calls proxied from another node forward the end user's token, which this node can only verify
+// if the nodes share a signing key. Those callers are authenticated by their client certificate,
+// so the failure is expected and logged at debug. Without a valid certificate it's a client problem.
+func (i *Interceptor) logTokenFailure(err error, cert *x509.Certificate, certValid bool, fields ...zap.Field) {
+	fields = append(fields, zap.Error(err))
+	if cert != nil {
+		fields = append(fields, zap.String("certSubject", certSubject(cert)))
+	}
+	if certValid {
+		i.logger.Debug("token failed verification, request authenticated by client certificate", fields...)
+		return
+	}
+	i.logger.Warn("token failed verification", fields...)
 }
 
 // IngressEntry describes a write that entered the controller through a non-gRPC ingress, such

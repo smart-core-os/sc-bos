@@ -2,6 +2,9 @@ package policy
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -10,14 +13,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
+	"github.com/smart-core-os/sc-bos/pkg/auth/token"
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 )
@@ -463,3 +473,124 @@ func TestInterceptor_AuditAfterClose(t *testing.T) {
 		wg.Wait()
 	}
 }
+
+// A proxied call from another node carries a token this node can't verify, but the caller is
+// authenticated by its client certificate. That is expected, so it must not be logged as an error.
+func TestInterceptor_GRPC_BadTokenWithValidCert(t *testing.T) {
+	core, logs := observer.New(zap.DebugLevel)
+	interceptor := NewInterceptor(AllowAll,
+		WithLogger(zap.New(core)),
+		WithTokenVerifier(token.NeverValid(jose.ErrCryptoFailure)),
+	)
+	cert := &x509.Certificate{Subject: pkix.Name{CommonName: "gateway"}}
+	ctx := badTokenContext(credentials.TLSInfo{State: tls.ConnectionState{
+		PeerCertificates: []*x509.Certificate{cert},
+		VerifiedChains:   [][]*x509.Certificate{{cert}},
+	}})
+
+	if _, err := interceptor.checkPolicyGrpc(ctx, nil, nil, StreamAttributes{}); err != nil {
+		t.Fatalf("checkPolicyGrpc: %v", err)
+	}
+	if n := logs.FilterLevelExact(zap.DebugLevel).FilterMessageSnippet("token failed verification").Len(); n != 1 {
+		t.Errorf("got %d debug token failure entries, want 1", n)
+	}
+	for _, e := range logs.All() {
+		if e.Level >= zap.WarnLevel {
+			t.Errorf("unexpected %v entry: %q %v", e.Level, e.Message, e.ContextMap())
+		}
+	}
+	entries := logs.FilterMessageSnippet("token failed verification").All()
+	if len(entries) == 1 {
+		if got := entries[0].ContextMap()["certSubject"]; got != "CN=gateway" {
+			t.Errorf("certSubject = %v, want %q", got, "CN=gateway")
+		}
+	}
+}
+
+// A bad token from a caller with no client certificate is a client problem, so it is a warning.
+func TestInterceptor_GRPC_BadTokenWithoutCert(t *testing.T) {
+	core, logs := observer.New(zap.DebugLevel)
+	interceptor := NewInterceptor(AllowAll,
+		WithLogger(zap.New(core)),
+		WithTokenVerifier(token.NeverValid(jose.ErrCryptoFailure)),
+	)
+	ctx := badTokenContext(nil)
+
+	if _, err := interceptor.checkPolicyGrpc(ctx, nil, nil, StreamAttributes{}); err != nil {
+		t.Fatalf("checkPolicyGrpc: %v", err)
+	}
+	if n := logs.FilterLevelExact(zap.ErrorLevel).Len(); n != 0 {
+		t.Errorf("got %d error entries, want 0", n)
+	}
+	warns := logs.FilterLevelExact(zap.WarnLevel).FilterMessageSnippet("token failed verification").All()
+	if len(warns) != 1 {
+		t.Fatalf("got %d warn token failure entries, want 1", len(warns))
+	}
+	fields := warns[0].ContextMap()
+	for key, want := range map[string]string{
+		"peer":    "192.0.2.1:1234",
+		"service": "smartcore.bos.onoff.v1.OnOffApi",
+		"method":  "GetOnOff",
+	} {
+		if got := fields[key]; got != want {
+			t.Errorf("field %q = %v, want %q", key, got, want)
+		}
+	}
+}
+
+// An HTTP request with a bad token is rejected as unauthenticated, not as a server error.
+func TestInterceptor_HTTP_BadToken(t *testing.T) {
+	core, logs := observer.New(zap.DebugLevel)
+	interceptor := NewInterceptor(AllowAll,
+		WithLogger(zap.New(core)),
+		WithTokenVerifier(token.NeverValid(jose.ErrCryptoFailure)),
+	)
+	server := httptest.NewTLSServer(interceptor.HTTPInterceptor(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		t.Error("handler called for a request with a bad token")
+	})))
+	defer server.Close()
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/foo", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer x")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusUnauthorized)
+	}
+	if n := logs.FilterLevelExact(zap.ErrorLevel).Len(); n != 0 {
+		t.Errorf("got %d error entries, want 0", n)
+	}
+	warns := logs.FilterLevelExact(zap.WarnLevel).FilterMessageSnippet("token failed verification").All()
+	if len(warns) != 1 {
+		t.Fatalf("got %d warn token failure entries, want 1", len(warns))
+	}
+	if got := warns[0].ContextMap()["path"]; got != "/foo" {
+		t.Errorf("path = %v, want %q", got, "/foo")
+	}
+}
+
+// badTokenContext returns a server-side context for a GetOnOff call carrying a bearer token,
+// from a peer with the given auth info.
+func badTokenContext(authInfo credentials.AuthInfo) context.Context {
+	ctx := grpc.NewContextWithServerTransportStream(context.Background(),
+		methodStream{method: "/smartcore.bos.onoff.v1.OnOffApi/GetOnOff"})
+	ctx = peer.NewContext(ctx, &peer.Peer{
+		Addr:     &net.TCPAddr{IP: net.IPv4(192, 0, 2, 1), Port: 1234},
+		AuthInfo: authInfo,
+	})
+	return metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer x"))
+}
+
+// methodStream is a grpc.ServerTransportStream that only reports its method.
+type methodStream struct {
+	grpc.ServerTransportStream
+	method string
+}
+
+func (s methodStream) Method() string { return s.method }
