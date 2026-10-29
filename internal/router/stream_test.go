@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
@@ -158,6 +160,94 @@ func TestStreamHandler_Interceptors(t *testing.T) {
 		t.Errorf("stream.Recv() = %v", err)
 	}
 	cancel()
+}
+
+// tests that the end user's bearer token isn't forwarded to the downstream node, but other metadata is
+func TestStreamHandler_StripsAuthorization(t *testing.T) {
+	var (
+		mu     sync.Mutex
+		gotMDs = map[string]metadata.MD{}
+	)
+	record := func(ctx context.Context, method string) {
+		md, _ := metadata.FromIncomingContext(ctx)
+		mu.Lock()
+		defer mu.Unlock()
+		gotMDs[method] = md
+	}
+	downstream := grpc.NewServer(
+		grpc.UnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			record(ctx, info.FullMethod)
+			return handler(ctx, req)
+		}),
+		grpc.StreamInterceptor(func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+			record(ss.Context(), info.FullMethod)
+			return handler(srv, ss)
+		}),
+	)
+	model := onoffpb.NewModel(onoffpb.WithInitialOnOff(&onoffpb.OnOff{State: onoffpb.OnOff_OFF}))
+	onoffpb.RegisterOnOffApiServer(downstream, onoffpb.NewModelServer(model))
+	downstreamLis := bufconn.Listen(1024 * 1024)
+	t.Cleanup(downstream.Stop)
+	go func() {
+		if err := downstream.Serve(downstreamLis); err != nil {
+			t.Errorf("downstream.Serve() = %v", err)
+		}
+	}()
+	downstreamConn, err := bufConn(downstreamLis)
+	if err != nil {
+		t.Fatalf("bufConn(downstreamLis) = %v", err)
+	}
+	t.Cleanup(func() { downstreamConn.Close() })
+
+	reg := New()
+	registerService(reg, onoffpb.OnOffApi_ServiceDesc.ServiceName, downstreamConn)
+
+	proxyServer := grpc.NewServer(grpc.UnknownServiceHandler(StreamHandler(reg)))
+	proxyLis := bufconn.Listen(1024 * 1024)
+	t.Cleanup(proxyServer.Stop)
+	go func() {
+		if err := proxyServer.Serve(proxyLis); err != nil {
+			t.Errorf("proxyServer.Serve() = %v", err)
+		}
+	}()
+	proxyConn, err := bufConn(proxyLis)
+	if err != nil {
+		t.Fatalf("bufConn(proxyLis) = %v", err)
+	}
+	t.Cleanup(func() { proxyConn.Close() })
+	client := onoffpb.NewOnOffApiClient(proxyConn)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer user-token", "x-keep", "yes")
+
+	if _, err := client.GetOnOff(ctx, &onoffpb.GetOnOffRequest{Name: "n1"}); err != nil {
+		t.Fatalf("client.GetOnOff() = %v", err)
+	}
+	stream, err := client.PullOnOff(ctx, &onoffpb.PullOnOffRequest{Name: "n1"})
+	if err != nil {
+		t.Fatalf("client.PullOnOff() = %v", err)
+	}
+	// the downstream interceptor has run once the first message arrives
+	if _, err := stream.Recv(); err != nil {
+		t.Fatalf("stream.Recv() = %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	for _, method := range []string{onoffpb.OnOffApi_GetOnOff_FullMethodName, onoffpb.OnOffApi_PullOnOff_FullMethodName} {
+		md, ok := gotMDs[method]
+		if !ok {
+			t.Errorf("%s: downstream not called", method)
+			continue
+		}
+		if got := md.Get("authorization"); len(got) != 0 {
+			t.Errorf("%s: downstream authorization = %q, want none", method, got)
+		}
+		if diff := cmp.Diff([]string{"yes"}, md.Get("x-keep")); diff != "" {
+			t.Errorf("%s: downstream x-keep mismatch (-want +got):\n%s", method, diff)
+		}
+	}
 }
 
 type methodResolverFunc func(fullName string) (Method, error)

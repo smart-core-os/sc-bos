@@ -39,6 +39,12 @@ func StreamHandler(r MethodResolver) grpc.StreamHandler {
 		//
 		// See https://github.com/grpc/grpc-go/blob/c04b085930ce33ee83cc3f92dbe7632031e127a9/internal/transport/http2_server.go#L444
 		delete(md, "connection")
+		// The end user's bearer token has already been checked by this node's policy interceptor.
+		// The downstream hop is authenticated by this node's client certificate, and the remote node usually can't
+		// verify a token issued for us, so forwarding it only leaks it and produces verification noise.
+		//
+		// See SCB-1514.
+		delete(md, "authorization")
 		ctx := metadata.NewOutgoingContext(serverStream.Context(), md)
 
 		clientCtx, stopClient := context.WithCancel(ctx)
