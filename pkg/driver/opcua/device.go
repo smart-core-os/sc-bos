@@ -100,7 +100,9 @@ func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check
 // config fault; every other failure is retried, because the alternative - what this replaced -
 // abandoned a working point for the lifetime of the config over a single slow answer.
 func (d *device) subscribe(ctx context.Context) error {
-	if d.stagger(ctx) {
+	// a device with no variables (metadata only, say) has nothing to ask the server for and
+	// nothing it can refuse, so it skips the task rather than being reported as abandoned
+	if len(d.conf.Variables) > 0 && d.stagger(ctx) {
 		err := task.Run(ctx, d.deviceTask(),
 			task.WithRetry(task.RetryUnlimited),
 			task.WithBackoff(subscribeRetryInitial, subscribeRetryMax),
@@ -165,9 +167,8 @@ func (d *device) deviceTask() task.Task {
 		attempt++
 		nodeIds := d.wantedNodes(permanent)
 		if len(nodeIds) == 0 {
-			// either the device configures no variables, or every one of them has been given
-			// up on and the fault naming them is already raised. Either way there is nothing
-			// to ask the server for, so a subscription would carry no items.
+			// every variable has been given up on and the fault naming them is already raised,
+			// so there is nothing to ask the server for and a subscription would carry no items
 			return task.StopNow, errNoWorkablePoints
 		}
 

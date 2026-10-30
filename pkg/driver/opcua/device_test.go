@@ -1240,12 +1240,14 @@ func TestDevice_subscribe_givesUpWhenEveryPointRefused(t *testing.T) {
 }
 
 // TestDevice_subscribe_noConfiguredPoints checks a device with nothing to monitor asks the
-// server for nothing at all, rather than opening a subscription it would put no items on.
+// server for nothing at all, rather than opening a subscription it would put no items on, and
+// isn't logged as abandoned: a metadata-only device is valid config, loaded on every reload.
 func TestDevice_subscribe_noConfiguredPoints(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber(nil)
 		fc, rec := newRecordedFaultCheck(t)
-		dev := newDevice(&config.Device{Name: "test-device"}, zaptest.NewLogger(t), sub, fc, nil)
+		core, logs := observer.New(zap.DebugLevel)
+		dev := newDevice(&config.Device{Name: "test-device"}, zap.New(core), sub, fc, nil)
 		dev.maxStagger = 0
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -1261,6 +1263,7 @@ func TestDevice_subscribe_noConfiguredPoints(t *testing.T) {
 
 		cancel()
 		requireSubscribeReturns(t, done)
+		require.Zero(t, logs.FilterLevelExact(zap.ErrorLevel).Len())
 	})
 }
 
