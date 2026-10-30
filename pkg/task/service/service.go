@@ -225,7 +225,7 @@ func (l *Service[C]) Configure(data []byte) (State, error) {
 
 // Stop transitions the service to the inactive state.
 // The context for any ApplyFunc calls will be cancelled.
-// Config and other state will not be adjusted.
+// Any load in progress, including one waiting to retry, ends; config and other state will not be adjusted.
 // If the service is inactive calling Stop will return ErrAlreadyStopped.
 func (l *Service[C]) Stop() (State, error) {
 	l.mu.Lock()
@@ -236,8 +236,14 @@ func (l *Service[C]) Stop() (State, error) {
 		return state, ErrAlreadyStopped
 	}
 
+	now := l.now()
 	state.Active = false
-	state.LastInactiveTime = l.now()
+	state.LastInactiveTime = now
+	if state.Loading {
+		state.Loading = false
+		state.LastLoadingEndTime = now
+	}
+	state.NextAttemptTime = time.Time{}
 	l.stopLocked()
 
 	if l.onStop != nil {
@@ -254,6 +260,9 @@ func (l *Service[C]) applyConfig(state State, config C) (State, error) {
 	retry := RetryContext{
 		T0: l.now(),
 	}
+	// Stop ends the load, and a later Start begins another with its own ctx, so once ctx is no longer
+	// l.stopCtx this goroutine must leave the state alone.
+	stoppedLocked := func() bool { return ctx != l.stopCtx }
 	go func() {
 		for {
 			attemptCtx, cleanup := context.WithCancel(ctx)
@@ -271,13 +280,16 @@ func (l *Service[C]) applyConfig(state State, config C) (State, error) {
 				}
 
 				l.mu.Lock()
+				defer l.mu.Unlock()
+				if stoppedLocked() {
+					return
+				}
 				state := l.state
 				state.FailedAttempts = retry.Attempt
 				state.Loading = false
 				state.LastLoadingEndTime = l.now()
 				state.NextAttemptTime = time.Time{}
 				_, _ = l.saveLocked(state)
-				l.mu.Unlock()
 				return
 			}
 
@@ -292,6 +304,9 @@ func (l *Service[C]) applyConfig(state State, config C) (State, error) {
 
 				l.mu.Lock()
 				defer l.mu.Unlock()
+				if stoppedLocked() {
+					return
+				}
 				now := l.now()
 				state := l.state
 				state.FailedAttempts = retry.Attempt
@@ -314,13 +329,10 @@ func (l *Service[C]) applyConfig(state State, config C) (State, error) {
 			}
 
 			// abort if the service has been stopped
-			if ctx != l.stopCtx {
-				l.mu.Lock()
-				state := l.state
-				state.LastLoadingEndTime = l.now()
-				state.Loading = false
-				_, _ = l.saveLocked(state)
-				l.mu.Unlock()
+			l.mu.Lock()
+			stopped := stoppedLocked()
+			l.mu.Unlock()
+			if stopped {
 				return
 			}
 
@@ -348,6 +360,10 @@ func (l *Service[C]) applyConfig(state State, config C) (State, error) {
 
 			// otherwise we should retry the applyConfig process
 			l.mu.Lock()
+			if stoppedLocked() {
+				l.mu.Unlock()
+				return
+			}
 			state := l.state
 			state.FailedAttempts = retry.Attempt
 			state.NextAttemptTime = l.now().Add(retry.Delay)

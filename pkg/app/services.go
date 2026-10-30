@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"path"
-	"sync"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -52,17 +51,19 @@ func (c *Controller) startDrivers(configs []driver.RawConfig) (*service.Map, err
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
-		driverServices := ctxServices
-		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
-		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
-		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
-		driverServices.SystemCheck = newDriverSystemCheck(c.Node, driverServices.Health, id, kind, driverServices.Logger)
-
 		f, ok := c.SystemConfig.DriverFactories[kind]
 		if !ok {
 			return nil, fmt.Errorf("unsupported driver type %v", kind)
 		}
-		return f.New(driverServices), nil
+
+		driverServices := ctxServices
+		driverServices.Config = &serviceConfigStore{store: c.ControllerConfig.Drivers(), id: id}
+		driverServices.Logger = loggerWithServiceInfo(driverServices.Logger, id, kind)
+		driverServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		systemCheck := newServiceSystemCheck(c.Node, driverServices.Health, id, metadatapb.Metadata_SERVICE,
+			fmt.Sprintf("Checks the %s driver is connected and operating correctly", kind), driverServices.Logger)
+		driverServices.SystemCheck = systemCheck
+		return systemCheck.Track(f.New(driverServices)), nil
 	}, service.IdIsRequired)
 
 	logger := c.Logger.Named("driver")
@@ -93,16 +94,19 @@ func (c *Controller) startAutomations(configs []auto.RawConfig) (*service.Map, e
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
-		autoServices := ctxServices
-		autoServices.Config = &serviceConfigStore{store: c.ControllerConfig.Automations(), id: id}
-		autoServices.Logger = loggerWithServiceInfo(autoServices.Logger, id, kind)
-		autoServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
-
 		f, ok := c.SystemConfig.AutoFactories[kind]
 		if !ok {
 			return nil, fmt.Errorf("unsupported automation type %v", kind)
 		}
-		return f.New(autoServices), nil
+
+		autoServices := ctxServices
+		autoServices.Config = &serviceConfigStore{store: c.ControllerConfig.Automations(), id: id}
+		autoServices.Logger = loggerWithServiceInfo(autoServices.Logger, id, kind)
+		autoServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		systemCheck := newServiceSystemCheck(c.Node, autoServices.Health, id, metadatapb.Metadata_AUTOMATION,
+			fmt.Sprintf("Checks the %s automation is operating correctly", kind), autoServices.Logger)
+		autoServices.SystemCheck = systemCheck
+		return systemCheck.Track(f.New(autoServices)), nil
 	}, service.IdIsRequired)
 
 	logger := c.Logger.Named("auto")
@@ -270,16 +274,20 @@ func (c *Controller) startZones(configs []zone.RawConfig) (*service.Map, error) 
 	}
 
 	m := service.NewMap(func(id, kind string) (service.Lifecycle, error) {
-		zoneServices := ctxServices
-		zoneServices.Config = &serviceConfigStore{store: c.ControllerConfig.Zones(), id: id}
-		zoneServices.Logger = loggerWithServiceInfo(zoneServices.Logger, id, kind)
-		zoneServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
-
 		f, ok := c.SystemConfig.ZoneFactories[kind]
 		if !ok {
 			return nil, fmt.Errorf("unsupported zone type %v", kind)
 		}
-		return f.New(zoneServices), nil
+
+		zoneServices := ctxServices
+		zoneServices.Config = &serviceConfigStore{store: c.ControllerConfig.Zones(), id: id}
+		zoneServices.Logger = loggerWithServiceInfo(zoneServices.Logger, id, kind)
+		zoneServices.Health = healthChecksForService(c.CheckRegistry, id, kind)
+		// a zone's id is also its device name, which zones announce as ZONE too
+		systemCheck := newServiceSystemCheck(c.Node, zoneServices.Health, id, metadatapb.Metadata_ZONE,
+			fmt.Sprintf("Checks the %s zone is operating correctly", kind), zoneServices.Logger)
+		zoneServices.SystemCheck = systemCheck
+		return systemCheck.Track(f.New(zoneServices)), nil
 	}, service.IdIsRequired)
 
 	logger := c.Logger.Named("zone")
@@ -356,42 +364,41 @@ func healthChecksForService(r *healthpb.Registry, id, kind string) *healthpb.Che
 	return r.ForOwner(owner)
 }
 
-// newDriverSystemCheck creates a driver-level system check registered under the driver's own name.
-// Drivers should call MarkFailed/MarkRunning to reflect connectivity state, and must call
-// Dispose in their stop handler. Returns nil if the check cannot be created.
+// newServiceSystemCheck returns a service's System Status Check, registered against the service's id.
+// Each time the service starts it announces id as deviceType and creates the check,
+// and each time it stops it disposes the check and undoes the announcement.
 //
-// The driver's name is announced as a SERVICE device until the check is disposed,
-// so consumers of the check, like Connect, know what kind of thing it is about.
-func newDriverSystemCheck(n node.Announcer, health *healthpb.Checks, id, kind string, logger *zap.Logger) service.SystemCheck {
-	// Announce before the check exists, so the type is usually known when the check is first seen.
-	// Not always: consumers see types and checks on separate streams, so they must cope with
-	// either arriving first, as connecttelemetry does by hashing the kind into each set.
-	undo := n.Announce(id, node.HasDeviceType(metadatapb.Metadata_SERVICE))
-	check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
-		Id:          "systemStatusCheck",
-		DisplayName: "System Status Check",
-		Description: fmt.Sprintf("Checks the %s driver is connected and operating correctly", kind),
+// The device type says which ServicesApi collection holds the service, so a consumer can get from the check back
+// to the service: SERVICE for a driver, AUTOMATION for an automation, ZONE for a zone.
+func newServiceSystemCheck(n node.Announcer, health *healthpb.Checks, id string, deviceType metadatapb.Metadata_DeviceType, description string, logger *zap.Logger) *service.ManagedSystemCheck {
+	return service.NewManagedSystemCheck(func() service.SystemCheck {
+		// Announce before the check exists, so the type is usually known when the check is first seen.
+		// Not always: consumers see types and checks on separate streams, so they must cope with
+		// either arriving first, as connecttelemetry does by hashing the kind into each set.
+		undo := n.Announce(id, node.HasDeviceType(deviceType))
+		check, err := health.NewFaultCheck(id, &healthpb.HealthCheck{
+			Id:          "systemStatusCheck",
+			DisplayName: "System Status Check",
+			Description: description,
+		})
+		if err != nil {
+			undo()
+			logger.Warn("failed to create system check", zap.Error(err))
+			return nil
+		}
+		return &announcedCheck{FaultCheck: check, undo: undo}
 	})
-	if err != nil {
-		undo()
-		logger.Warn("failed to create driver system check", zap.Error(err))
-		return nil
-	}
-	return &driverSystemCheck{FaultCheck: check, undo: undo}
 }
 
-// driverSystemCheck undoes the driver's SERVICE announcement when the check is disposed.
-type driverSystemCheck struct {
+// announcedCheck undoes the service's device type announcement when the check is disposed.
+type announcedCheck struct {
 	*healthpb.FaultCheck
-	disposeOnce sync.Once
-	undo        node.Undo
+	undo node.Undo
 }
 
-func (c *driverSystemCheck) Dispose() {
-	c.disposeOnce.Do(func() {
-		c.FaultCheck.Dispose()
-		c.undo()
-	})
+func (c *announcedCheck) Dispose() {
+	c.FaultCheck.Dispose()
+	c.undo()
 }
 
 func devicesToHealthCheckCollection(d *devicespb.Collection) system.HealthCheckCollection {

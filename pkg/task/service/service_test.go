@@ -5,11 +5,94 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
+
+func TestService_Stop(t *testing.T) {
+	errApply := errors.New("apply failed")
+
+	t.Run("while retrying", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			s := New(func(ctx context.Context, cfg string) error {
+				if cfg == "bad" {
+					return errApply
+				}
+				return nil
+			}, WithParser(parseString), WithRetry[string](RetryWithInitialDelay(time.Second)))
+			_, _ = s.Start()
+			_, _ = s.Configure([]byte("bad"))
+			synctest.Wait()
+			if got := s.State(); !got.Loading || got.NextAttemptTime.IsZero() {
+				t.Fatalf("before stop: Loading=%v NextAttemptTime=%v, want a pending retry", got.Loading, got.NextAttemptTime)
+			}
+
+			state, err := s.Stop()
+			if err != nil {
+				t.Fatalf("Stop() error = %v", err)
+			}
+			if state.Loading || !state.NextAttemptTime.IsZero() {
+				t.Errorf("after stop: Loading=%v NextAttemptTime=%v, want neither", state.Loading, state.NextAttemptTime)
+			}
+			// used to fail with ErrAlreadyLoading until the process restarted
+			if _, err := s.Configure([]byte("ok")); err != nil {
+				t.Fatalf("Configure() after stop error = %v", err)
+			}
+			_, _ = s.Start()
+			synctest.Wait()
+			if got := s.State(); !got.Active || got.Loading {
+				t.Errorf("after restart: Active=%v Loading=%v, want active and loaded", got.Active, got.Loading)
+			}
+			_, _ = s.Stop()
+		})
+	})
+
+	// An apply from a stopped run that returns late must not change the state of the run that replaced it.
+	for _, tc := range []struct {
+		name     string
+		staleErr error
+	}{
+		{name: "stale apply succeeds", staleErr: nil},
+		{name: "stale apply fails", staleErr: errApply},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				release := []chan error{make(chan error), make(chan error)}
+				var mu sync.Mutex
+				calls := 0
+				s := New(func(ctx context.Context, _ string) error {
+					mu.Lock()
+					c := release[calls]
+					calls++
+					mu.Unlock()
+					return <-c // ignores ctx, like an apply stuck in a blocking call
+				}, WithParser(parseString))
+				_, _ = s.Start()
+				_, _ = s.Configure([]byte("ok"))
+				synctest.Wait()
+				_, _ = s.Stop()
+				_, _ = s.Start() // the second run starts loading the same config
+				synctest.Wait()
+
+				release[0] <- tc.staleErr
+				synctest.Wait()
+				if got := s.State(); !got.Active || !got.Loading || got.Err != nil {
+					t.Errorf("after stale apply: Active=%v Loading=%v Err=%v, want the second run still loading", got.Active, got.Loading, got.Err)
+				}
+
+				release[1] <- nil
+				synctest.Wait()
+				if got := s.State(); !got.Active || got.Loading {
+					t.Errorf("after current apply: Active=%v Loading=%v, want loaded", got.Active, got.Loading)
+				}
+				_, _ = s.Stop()
+			})
+		})
+	}
+}
 
 func TestLifecycle(t *testing.T) {
 	t.Run("start", func(t *testing.T) {

@@ -94,9 +94,6 @@ func NewDriver(services driver.Services) *Driver {
 			d.simCancel = nil
 		}
 		d.Clean()
-		if d.systemCheck != nil {
-			d.systemCheck.Dispose()
-		}
 	}))
 	d.logger = services.Logger.Named(DriverName)
 	return d

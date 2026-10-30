@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap/zaptest"
@@ -16,10 +17,14 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	"github.com/smart-core-os/sc-bos/pkg/app/sysconf"
+	"github.com/smart-core-os/sc-bos/pkg/auto"
+	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
 )
 
 func Test_setupHealthRegistry(t *testing.T) {
@@ -255,29 +260,166 @@ func Test_setupHealthRegistry_localChecks(t *testing.T) {
 	})
 }
 
-func Test_newDriverSystemCheck(t *testing.T) {
+func Test_serviceSystemCheck(t *testing.T) {
+	type startFunc func(c *Controller, name, kind string) (*service.Map, error)
+	tests := []struct {
+		name     string
+		start    startFunc
+		wantType metadatapb.Metadata_DeviceType
+	}{
+		{
+			name: "driver",
+			start: func(c *Controller, name, kind string) (*service.Map, error) {
+				return c.startDrivers([]driver.RawConfig{{BaseConfig: driver.BaseConfig{Name: name, Type: kind}, Raw: []byte(`{}`)}})
+			},
+			wantType: metadatapb.Metadata_SERVICE,
+		},
+		{
+			name: "automation",
+			start: func(c *Controller, name, kind string) (*service.Map, error) {
+				return c.startAutomations([]auto.RawConfig{{Config: auto.Config{Name: name, Type: kind}, Raw: []byte(`{}`)}})
+			},
+			wantType: metadatapb.Metadata_AUTOMATION,
+		},
+		{
+			name: "zone",
+			start: func(c *Controller, name, kind string) (*service.Map, error) {
+				return c.startZones([]zone.RawConfig{{Config: zone.Config{Name: name, Type: kind}, Raw: []byte(`{}`)}})
+			},
+			wantType: metadatapb.Metadata_ZONE,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run("reliable without reporting", func(t *testing.T) {
+				// SCB-1515: a service that never reports stayed unspecified
+				h, c, _ := newSystemCheckHarness(t)
+				m, err := tt.start(c, "svc1", "test")
+				if err != nil {
+					t.Fatalf("start error = %v", err)
+				}
+				h.waitForSystemCheck(t, "svc1", healthpb.HealthCheck_NORMAL, healthpb.HealthCheck_Reliability_RELIABLE)
+				dev, err := h.devices.GetDevice("svc1")
+				if err != nil {
+					t.Fatalf("GetDevice() error = %v", err)
+				}
+				if got := dev.GetMetadata().GetDeviceType(); got != tt.wantType {
+					t.Errorf("device type = %v, want %v", got, tt.wantType)
+				}
+				if _, err := m.Delete("svc1"); err != nil {
+					t.Fatalf("Delete() error = %v", err)
+				}
+				h.waitForDeviceRemoved(t, "svc1")
+			})
+
+			t.Run("back after restart", func(t *testing.T) {
+				// SCB-1477: the check was disposed on stop and never came back
+				h, c, reports := newSystemCheckHarness(t)
+				m, err := tt.start(c, "svc1", "test")
+				if err != nil {
+					t.Fatalf("start error = %v", err)
+				}
+				h.waitForSystemCheck(t, "svc1", healthpb.HealthCheck_NORMAL, healthpb.HealthCheck_Reliability_RELIABLE)
+				svc := m.Get("svc1").Service
+				if _, err := svc.Stop(); err != nil {
+					t.Fatalf("Stop() error = %v", err)
+				}
+				h.waitForDeviceRemoved(t, "svc1")
+				if _, err := svc.Start(); err != nil {
+					t.Fatalf("Start() error = %v", err)
+				}
+				h.waitForSystemCheck(t, "svc1", healthpb.HealthCheck_NORMAL, healthpb.HealthCheck_Reliability_RELIABLE)
+
+				(<-reports).MarkFailed(errors.New("connection lost"))
+				h.waitForSystemCheck(t, "svc1", healthpb.HealthCheck_ABNORMAL, healthpb.HealthCheck_Reliability_BAD_RESPONSE)
+				_, _ = m.Delete("svc1")
+			})
+
+			t.Run("apply error", func(t *testing.T) {
+				h, c, _ := newSystemCheckHarness(t)
+				m, err := tt.start(c, "svc1", "failing")
+				if err != nil {
+					t.Fatalf("start error = %v", err)
+				}
+				h.waitForSystemCheck(t, "svc1", healthpb.HealthCheck_ABNORMAL, healthpb.HealthCheck_Reliability_BAD_RESPONSE)
+				_, _ = m.Delete("svc1")
+				h.waitForDeviceRemoved(t, "svc1")
+			})
+
+			t.Run("unsupported kind", func(t *testing.T) {
+				h, c, _ := newSystemCheckHarness(t)
+				m, _ := tt.start(c, "svc1", "unknown")
+				if m.Get("svc1") == nil {
+					t.Fatalf("expected the record to be kept in an errored state")
+				}
+				if _, err := h.devices.GetDevice("svc1"); status.Code(err) != codes.NotFound {
+					t.Errorf("expected no svc1 device for an unsupported kind, got err %v", err)
+				}
+			})
+		})
+	}
+}
+
+// newSystemCheckHarness returns a Controller with a "test" and a "failing" factory for each kind of service.
+// Each test service sends its SystemCheck on the returned chan when it is created.
+func newSystemCheckHarness(t *testing.T) (*healthTestHarness, *Controller, <-chan service.SystemCheck) {
 	h := newHealthTestHarness(t)
-	check := newDriverSystemCheck(h.node, h.registry.ForOwner("bacnet:drv1"), "drv1", "bacnet", zaptest.NewLogger(t))
-	if check == nil {
-		t.Fatalf("newDriverSystemCheck() = nil")
+	reports := make(chan service.SystemCheck, 1)
+	newService := func(check service.SystemCheck, applyErr error) service.Lifecycle {
+		if applyErr == nil {
+			reports <- check
+		}
+		return service.New(func(context.Context, struct{}) error { return applyErr })
 	}
+	errApply := errors.New("apply failed")
+	c := &Controller{
+		SystemConfig: sysconf.Config{
+			DriverFactories: map[string]driver.Factory{
+				"test":    driver.FactoryFunc(func(s driver.Services) service.Lifecycle { return newService(s.SystemCheck, nil) }),
+				"failing": driver.FactoryFunc(func(s driver.Services) service.Lifecycle { return newService(s.SystemCheck, errApply) }),
+			},
+			AutoFactories: map[string]auto.Factory{
+				"test":    auto.FactoryFunc(func(s auto.Services) service.Lifecycle { return newService(s.SystemCheck, nil) }),
+				"failing": auto.FactoryFunc(func(s auto.Services) service.Lifecycle { return newService(s.SystemCheck, errApply) }),
+			},
+			ZoneFactories: map[string]zone.Factory{
+				"test":    zone.FactoryFunc(func(s zone.Services) service.Lifecycle { return newService(s.SystemCheck, nil) }),
+				"failing": zone.FactoryFunc(func(s zone.Services) service.Lifecycle { return newService(s.SystemCheck, errApply) }),
+			},
+		},
+		ControllerConfig: &immutableConfigStore{},
+		Logger:           zaptest.NewLogger(t),
+		Node:             h.node,
+		CheckRegistry:    h.registry,
+	}
+	return h, c, reports
+}
 
-	dev, err := h.devices.GetDevice("drv1")
-	if err != nil {
-		t.Fatalf("GetDevice() error = %v", err)
+// waitForSystemCheck waits for name's system check to have the given normality and reliability.
+func (h *healthTestHarness) waitForSystemCheck(t *testing.T, name string, want healthpb.HealthCheck_Normality, wantReliability healthpb.HealthCheck_Reliability_State) {
+	t.Helper()
+	var got *healthpb.HealthCheck
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+		dev, err := h.devices.GetDevice(name)
+		if err != nil || len(dev.HealthChecks) != 1 {
+			continue
+		}
+		got = dev.HealthChecks[0]
+		if got.GetNormality() == want && got.GetReliability().GetState() == wantReliability {
+			return
+		}
 	}
-	if got := dev.GetMetadata().GetDeviceType(); got != metadatapb.Metadata_SERVICE {
-		t.Errorf("device type = %v, want SERVICE", got)
-	}
-	if len(dev.HealthChecks) != 1 {
-		t.Errorf("expected 1 health check, got %d", len(dev.HealthChecks))
-	}
+	t.Fatalf("%s system check = %v, want %v and %v", name, got, want, wantReliability)
+}
 
-	check.Dispose()
-	check.Dispose() // safe to call twice
-	if _, err := h.devices.GetDevice("drv1"); status.Code(err) != codes.NotFound {
-		t.Errorf("expected drv1 to be removed once disposed, got err %v", err)
+func (h *healthTestHarness) waitForDeviceRemoved(t *testing.T, name string) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+		if _, err := h.devices.GetDevice(name); status.Code(err) == codes.NotFound {
+			return
+		}
 	}
+	t.Fatalf("%s still present", name)
 }
 
 func Test_removeMeasuredValues(t *testing.T) {

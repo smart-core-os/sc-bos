@@ -48,12 +48,7 @@ func NewDriver(services driver.Services) *Driver {
 		clk:         clock.Real(),
 		logger:      services.Logger.Named(DriverName),
 	}
-	d.Service = service.New(d.applyConfig, service.WithOnStop[config.Root](func() {
-		d.stop()
-		if d.systemCheck != nil {
-			d.systemCheck.Dispose()
-		}
-	}))
+	d.Service = service.New(d.applyConfig, service.WithOnStop[config.Root](d.stop))
 	return d
 }
 
