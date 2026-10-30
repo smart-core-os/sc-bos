@@ -123,6 +123,12 @@ func TestSubjectKind(t *testing.T) {
 		metadatapb.Metadata_GATEWAY:                 subjectKindNode,
 		metadatapb.Metadata_HUB:                     subjectKindNode,
 		metadatapb.Metadata_SERVICE:                 subjectKindService,
+		metadatapb.Metadata_AUTOMATION:              subjectKindService,
+		metadatapb.Metadata_ZONE:                    subjectKindService,
+		metadatapb.Metadata_GROUP:                   subjectKindDevice,
+		metadatapb.Metadata_VIRTUAL:                 subjectKindDevice,
+		metadatapb.Metadata_SUB_DEVICE:              subjectKindDevice,
+		metadatapb.Metadata_DEVICE:                  subjectKindDevice,
 	}
 	for typ, want := range tests {
 		assert.Equal(t, want, subjectKind(typ), typ.String())
