@@ -3,6 +3,7 @@ package opcua
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -577,4 +578,161 @@ func TestSetPointRead(t *testing.T) {
 			require.Contains(t, rel.LastError.DetailsText, nodeId)
 		})
 	}
+}
+
+// Test_pointHealth checks how the subscribe state of a device's points reaches its fault check.
+//
+// The aggregation is what needs pinning down. Faults are keyed on system and code, so a fault
+// raised per point would have every point overwriting its neighbours; one fault per state,
+// naming the points it covers, is the only shape that survives. And each has to be removed
+// once its bucket empties, which is the first thing in this driver that ever clears a fault.
+func Test_pointHealth(t *testing.T) {
+	const nodeA, nodeB = "ns=2;s=TagA", "ns=2;s=TagB"
+	h := setupTestHarness(t)
+	p := newPointHealth(h.fc)
+
+	// the harness mirrors a check onto the device when it is updated rather than when it is
+	// created, so before the first write there is no check to read. That is a quirk of the
+	// harness, hence tolerating an empty list rather than requiring one check.
+	faults := func() map[string]*healthpb.HealthCheck_Error {
+		t.Helper()
+		out := make(map[string]*healthpb.HealthCheck_Error)
+		for _, c := range h.getHealthChecks(t) {
+			for _, f := range c.GetFaults().GetCurrentFaults() {
+				out[f.GetCode().GetCode()] = f
+			}
+		}
+		return out
+	}
+	normality := func() healthpb.HealthCheck_Normality {
+		t.Helper()
+		checks := h.getHealthChecks(t)
+		require.Len(t, checks, 1)
+		return checks[0].GetNormality()
+	}
+
+	require.Empty(t, faults(), "nothing has been said about any point yet")
+
+	// one point failing for a reason that may go away
+	p.setFailing(nodeA, ua.StatusBadTimeout)
+	got := faults()
+	require.Len(t, got, 1, "a point being retried is not a config fault as well")
+	require.Contains(t, got, PointSubscribeError)
+	require.Contains(t, got[PointSubscribeError].SummaryText, "1 of")
+	require.Contains(t, got[PointSubscribeError].DetailsText, nodeA)
+	require.Contains(t, got[PointSubscribeError].DetailsText, ua.StatusBadTimeout.Error())
+	require.Equal(t, SystemName, got[PointSubscribeError].GetCode().GetSystem())
+	require.Equal(t, healthpb.HealthCheck_ABNORMAL, normality())
+
+	// a second one joins it rather than replacing it
+	p.setFailing(nodeB, ua.StatusBadNoCommunication)
+	got = faults()
+	require.Len(t, got, 1)
+	details := got[PointSubscribeError].DetailsText
+	require.Contains(t, got[PointSubscribeError].SummaryText, "2 of")
+	require.Contains(t, details, nodeA)
+	require.Contains(t, details, nodeB)
+	// sorted, so an unchanged set of failures renders identically and costs nothing to rewrite
+	require.Less(t, strings.Index(details, nodeA), strings.Index(details, nodeB))
+
+	// giving up on one moves it from being retried to being a config fault, and leaves the
+	// other where it was
+	p.setPermanent(nodeB, ua.StatusBadNodeIDUnknown)
+	got = faults()
+	require.Len(t, got, 2)
+	require.Contains(t, got[PointSubscribeError].DetailsText, nodeA)
+	require.NotContains(t, got[PointSubscribeError].DetailsText, nodeB)
+	require.Contains(t, got[DeviceConfigError].DetailsText, nodeB)
+	require.Contains(t, got[DeviceConfigError].DetailsText, ua.StatusBadNodeIDUnknown.Error())
+
+	// the retried point comes good: its fault is removed, the config fault is untouched
+	p.setOk(nodeA)
+	got = faults()
+	require.Len(t, got, 1)
+	require.NotContains(t, got, PointSubscribeError)
+	require.Contains(t, got[DeviceConfigError].DetailsText, nodeB)
+	require.Equal(t, healthpb.HealthCheck_ABNORMAL, normality())
+
+	// and a point we had given up on can still recover, if a config reload brings it back
+	p.setOk(nodeB)
+	require.Empty(t, faults())
+	require.Equal(t, healthpb.HealthCheck_NORMAL, normality())
+}
+
+// Test_renderPoints checks identical state renders identically, which is what makes rewriting
+// the faults on every change cheap: checkBase.write drops an update that changes nothing.
+func Test_renderPoints(t *testing.T) {
+	first := renderPoints(map[string]string{"ns=2;s=B": "bad b", "ns=2;s=A": "bad a"})
+	second := renderPoints(map[string]string{"ns=2;s=A": "bad a", "ns=2;s=B": "bad b"})
+	require.Equal(t, first, second, "the same failures inserted in a different order should render the same")
+	require.Equal(t, "ns=2;s=A: bad a\nns=2;s=B: bad b", first)
+	require.Empty(t, renderPoints(nil))
+}
+
+// countingFaultCheck reports the faults on a check and how many updates the registry has
+// published for it, which is the cost applyBatch exists to avoid.
+func countingFaultCheck(t *testing.T) (*healthpb.FaultCheck, func() (map[string]string, int)) {
+	t.Helper()
+	var latest *healthpb.HealthCheck
+	updates := 0
+	reg := healthpb.NewRegistry(
+		healthpb.WithOnCheckUpdate(func(_ string, c *healthpb.HealthCheck) {
+			updates++
+			latest = c
+		}),
+	)
+	check := getDeviceHealthCheck(healthpb.HealthCheck_OCCUPANT_IMPACT_UNSPECIFIED, healthpb.HealthCheck_EQUIPMENT_IMPACT_UNSPECIFIED)
+	fc, err := reg.ForOwner("test").NewFaultCheck("test-device", check)
+	require.NoError(t, err)
+	t.Cleanup(fc.Dispose)
+
+	// read is called from the test goroutine only, as are the writes above, so there is
+	// nothing here to synchronise
+	read := func() (map[string]string, int) {
+		faults := make(map[string]string)
+		for _, f := range latest.GetFaults().GetCurrentFaults() {
+			faults[f.GetCode().GetCode()] = f.GetSummaryText() + "\n" + f.GetDetailsText()
+		}
+		return faults, updates
+	}
+	return fc, read
+}
+
+// Test_pointHealth_applyBatch checks a device's whole subscribe outcome commits as one update,
+// reading exactly as the setters it replaces.
+//
+// commit rewrites both faults and pushes the check to the registry every time it runs. With a
+// subscription per point those calls were spread over as many goroutines; with one per device
+// they arrive together, so a 200-point device would publish 200 growing versions of the same
+// fault per attempt, every one of them visible over the devices API. What must not change is
+// what an operator ends up reading, hence comparing the text rather than just the count.
+func Test_pointHealth_applyBatch(t *testing.T) {
+	const nodeA, nodeB, nodeC, nodeD, nodeE = "ns=2;s=A", "ns=2;s=B", "ns=2;s=C", "ns=2;s=D", "ns=2;s=E"
+	timeout, unknown := ua.StatusBadTimeout, ua.StatusBadNodeIDUnknown
+
+	sequential, readSequential := countingFaultCheck(t)
+	one := newPointHealth(sequential)
+	one.setOk(nodeA)
+	one.setFailing(nodeB, timeout)
+	one.setFailing(nodeC, timeout)
+	one.setPermanent(nodeD, unknown)
+	one.setPermanent(nodeE, unknown)
+
+	batched, readBatched := countingFaultCheck(t)
+	all := newPointHealth(batched)
+	all.applyBatch([]string{nodeA},
+		map[string]error{nodeB: timeout, nodeC: timeout},
+		map[string]error{nodeD: unknown, nodeE: unknown})
+
+	sequentialFaults, sequentialUpdates := readSequential()
+	batchedFaults, batchedUpdates := readBatched()
+
+	require.Equal(t, sequentialFaults, batchedFaults, "the batch must read exactly as the setters it replaces")
+	require.Len(t, batchedFaults, 2, "one fault per state, each naming the points it covers")
+	// two rather than one because commit writes each fault code separately, which is
+	// healthpb's API rather than anything we choose. The point is that it is per fault code
+	// and not per point: five points still cost the same two writes fifty would.
+	require.Equal(t, 2, batchedUpdates, "a device's whole outcome commits once per fault code")
+	require.Greater(t, sequentialUpdates, batchedUpdates,
+		"an update per point is the cost this exists to avoid")
 }
