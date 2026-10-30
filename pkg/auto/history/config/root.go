@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -49,6 +50,18 @@ type Source struct {
 	// Devices is a list of conditions to filter which devices to record history for. Takes precedence over Name.
 	// If empty, Name will be used as the history source.
 	Devices []*Condition `json:"devices,omitempty"`
+	// Timeout caps how long a single poll of the source may take before it is abandoned and retried.
+	// Pull subscriptions are not affected.
+	// Defaults to 30s.
+	Timeout *jsontypes.Duration `json:"timeout,omitempty"`
+}
+
+// DefaultTimeout is used for Source.Timeout and Storage.Timeout when they are absent.
+const DefaultTimeout = 30 * time.Second
+
+// TimeoutDuration returns Timeout or its default.
+func (s Source) TimeoutDuration() time.Duration {
+	return timeoutOrDefault(s.Timeout)
 }
 
 func (s *Source) DevicesPb() []*devicespb.Device_Query_Condition {
@@ -89,6 +102,26 @@ type Storage struct {
 	Name string `json:"name,omitempty"`
 	// TTL is the time-to-live for records. Zero-value (not-specified) means "forever".
 	TTL *TTL `json:"ttl,omitempty"`
+	// Timeout caps how long writing a single record may take.
+	// A record that can't be written in time is logged and dropped.
+	// It relies on the store honouring ctx cancellation, which the hub and api stores do.
+	// Defaults to 30s.
+	Timeout *jsontypes.Duration `json:"timeout,omitempty"`
+}
+
+// TimeoutDuration returns Timeout or its default.
+func (s *Storage) TimeoutDuration() time.Duration {
+	if s == nil {
+		return DefaultTimeout
+	}
+	return timeoutOrDefault(s.Timeout)
+}
+
+func timeoutOrDefault(d *jsontypes.Duration) time.Duration {
+	if d == nil || d.Duration <= 0 {
+		return DefaultTimeout
+	}
+	return d.Duration
 }
 
 type TTL struct {

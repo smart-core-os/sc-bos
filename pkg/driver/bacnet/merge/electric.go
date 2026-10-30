@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -47,7 +46,7 @@ func readElectricConfig(raw []byte) (cfg electricConfig, err error) {
 }
 
 type electricTrait struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -58,7 +57,7 @@ type electricTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newElectric(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
+func newElectric(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
 	cfg, err := readElectricConfig(config.Raw)
 	if err != nil {
 		return nil, err

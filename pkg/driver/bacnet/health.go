@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/merge"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -39,7 +40,7 @@ func updateRequestErrorStatus(ctx context.Context, deviceHealth *healthpb.FaultC
 		return
 	}
 	problemName := fmt.Sprintf("%s.%s", name, "requested")
-	if errors.Is(err, context.DeadlineExceeded) {
+	if errors.Is(err, context.DeadlineExceeded) || comm.IsRequestTimeout(err) {
 		deviceHealth.UpdateReliability(ctx, &healthpb.HealthCheck_Reliability{
 			State: healthpb.HealthCheck_Reliability_CONN_TRANSIENT_FAILURE,
 			LastError: &healthpb.HealthCheck_Error{

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/timshannon/bolthold"
 	"go.uber.org/zap"
@@ -91,30 +92,15 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 		return err
 	}
 
+	logger := a.sourceLogger(*cfg.Source)
 	payloads := make(chan []byte)
-
-	// each time the source emits, we append it to the store
-	go func() {
-		defer close(payloads)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case payload := <-payloads:
-				_, err := store.Append(ctx, payload)
-				if err != nil {
-					a.logger.Warn("storage failed", zap.Error(err))
-				}
-			}
-		}
-	}()
+	go storePayloads(ctx, store, payloads, cfg.Storage.TimeoutDuration(), logger)
 
 	announce := a.announcer.Replace(ctx)
 	// announce the trait too to ensure its services get added to the router before the collect routine starts
 	announce.Announce(cfg.Source.Name, serverClient, node.HasTrait(cfg.Source.Trait))
 
-	go collect(ctx, *cfg.Source, payloads)
+	go collect(ctx, *cfg.Source, payloads, logger)
 
 	return nil
 }
@@ -208,26 +194,38 @@ func (a *automation) startDeviceRecording(ctx context.Context, announce node.Ann
 		return node.NilUndo, err
 	}
 
+	logger := a.sourceLogger(src)
 	payloads := make(chan []byte)
-
-	go func() {
-		defer close(payloads)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case payload := <-payloads:
-				if _, err := store.Append(ctx, payload); err != nil {
-					a.logger.Warn("storage failed", zap.String("device", deviceName), zap.Error(err))
-				}
-			}
-		}
-	}()
+	go storePayloads(ctx, store, payloads, cfg.Storage.TimeoutDuration(), logger)
 
 	undo := announce.Announce(deviceName, serverClient, node.HasTrait(cfg.Source.Trait))
-	go collect(ctx, src, payloads)
+	go collect(ctx, src, payloads, logger)
 
 	return undo, nil
+}
+
+func (a *automation) sourceLogger(src config.Source) *zap.Logger {
+	return a.logger.With(zap.String("source", src.SourceName()))
+}
+
+// storePayloads appends each payload to store until ctx is done.
+// Each append is bounded by timeout, a payload that fails to store is logged and dropped.
+//
+// payloads is never closed: collectors may still be sending to it after ctx is done.
+func storePayloads(ctx context.Context, store history.Store, payloads <-chan []byte, timeout time.Duration, logger *zap.Logger) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case payload := <-payloads:
+			appendCtx, cancel := context.WithTimeout(ctx, timeout)
+			_, err := store.Append(appendCtx, payload)
+			cancel()
+			if err != nil && ctx.Err() == nil {
+				logger.Warn("storage failed", zap.Duration("timeout", timeout), zap.Error(err))
+			}
+		}
+	}
 }
 
 func (a *automation) createStore(ctx context.Context, src config.Source, storage *config.Storage) (history.Store, error) {

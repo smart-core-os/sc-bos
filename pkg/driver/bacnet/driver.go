@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/block"
 	"github.com/smart-core-os/sc-bos/pkg/driver"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/adapt"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/ctxerr"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -51,7 +52,7 @@ type Driver struct {
 	logger    *zap.Logger
 
 	*service.Service[config.Root]
-	client *gobacnet.Client // How we interact with bacnet systems
+	client *comm.Client // How we interact with bacnet systems
 
 	mu      sync.RWMutex
 	devices *known.Map
@@ -268,7 +269,7 @@ func (d *Driver) initClient(ctx context.Context, cfg config.Root, systemCheck se
 		service.UpdateSystemCheck(systemCheck, fmt.Errorf("failed to create BACnet client: %w", err))
 		return err
 	}
-	d.client = client
+	d.client = comm.NewClient(client, cfg.RequestTimeoutDuration())
 	if address, err := client.LocalUDPAddress(); err != nil {
 		service.UpdateSystemCheck(systemCheck, fmt.Errorf("failed to get local UDP address: %w", err))
 		return err

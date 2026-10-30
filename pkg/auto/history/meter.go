@@ -12,7 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectMeterReadingChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectMeterReadingChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
 	client := meterpb.NewMeterApiClient(a.clients.ClientConn())
 
 	last := newDeduper[*meterpb.MeterReading](cmp.Equal(cmp.FloatValueApprox(0, 0.0001), cmp.TimeValueWithin(time.Second)))
@@ -66,7 +66,7 @@ func (a *automation) collectMeterReadingChanges(ctx context.Context, source conf
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

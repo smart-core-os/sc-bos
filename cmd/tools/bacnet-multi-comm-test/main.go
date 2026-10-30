@@ -27,6 +27,7 @@ import (
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-bos/pkg/app/appconf"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet"
+	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 )
 
@@ -131,7 +132,7 @@ func run() error {
 			var dev bactypes.Device
 			{
 				ctx, cancel := context.WithTimeout(ctx, *timeout)
-				dev, err = bacnet.FindDevice(ctx, client, device)
+				dev, err = bacnet.FindDevice(ctx, comm.NewClient(client, 0), device) // requests are bounded by -timeout
 
 				if err != nil {
 					log.Printf("ERR: unable to find device %v : %v", device.ID, err)

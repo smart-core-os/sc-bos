@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -37,7 +36,7 @@ func readAccessConfig(raw []byte) (cfg accessConfig, err error) {
 }
 
 type access struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -48,7 +47,7 @@ type access struct {
 	pollTask *task.Intermittent
 }
 
-func newAccess(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*access, error) {
+func newAccess(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*access, error) {
 	cfg, err := readAccessConfig(config.Raw)
 	if err != nil {
 		return nil, err

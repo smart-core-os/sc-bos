@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -86,7 +85,7 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 }
 
 type securityEventImpl struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -98,7 +97,7 @@ type securityEventImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newSecurityEvent(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
+func newSecurityEvent(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
 	cfg, err := readSecurityEventConfig(config.Raw)
 	if err != nil {
 		return nil, err

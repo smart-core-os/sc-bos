@@ -10,7 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 )
 
-func (a *automation) collectBootRecordChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectBootRecordChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
 	client := bootpb.NewBootApiClient(a.clients.ClientConn())
 
 	// Deduplicate on full proto equality: any field change in BootState triggers
@@ -64,7 +64,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

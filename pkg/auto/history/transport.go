@@ -12,7 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectTransportChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectTransportChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
 	client := transportpb.NewTransportApiClient(a.clients.ClientConn())
 
 	// 30 seconds is the average lift call response duration, so we consider changes within that window as identical
@@ -68,7 +68,7 @@ func (a *automation) collectTransportChanges(ctx context.Context, source config.
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

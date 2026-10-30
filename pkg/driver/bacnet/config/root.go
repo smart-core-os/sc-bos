@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/sc-bos/pkg/block"
@@ -25,6 +26,10 @@ type Root struct {
 	LocalPort      uint16 `json:"localPort,omitempty"`
 
 	MaxConcurrentTransactions uint8 `json:"maxConcurrentTransactions,omitempty"`
+	// RequestTimeout caps how long a single BACnet request waits for the device to respond.
+	// The caller's deadline still applies if it is earlier.
+	// Defaults to 30s.
+	RequestTimeout *Duration `json:"requestTimeout,omitempty"`
 
 	Discovery                *Discovery `json:"discovery,omitempty"`
 	ForceDiscovery           bool       `json:"forceDiscovery,omitempty"`
@@ -73,6 +78,16 @@ func Read(r io.Reader) (Root, error) {
 // ReadBytes decodes bytes into a config Root.
 func ReadBytes(data []byte) (root Root, err error) {
 	return Read(bytes.NewReader(data))
+}
+
+// DefaultRequestTimeout is used for Root.RequestTimeout when it is absent.
+const DefaultRequestTimeout = 30 * time.Second
+
+func (r Root) RequestTimeoutDuration() time.Duration {
+	if r.RequestTimeout != nil && r.RequestTimeout.Duration > 0 {
+		return r.RequestTimeout.Duration
+	}
+	return DefaultRequestTimeout
 }
 
 func Defaults() Root {

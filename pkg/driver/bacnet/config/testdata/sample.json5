@@ -7,6 +7,12 @@
   // The port the BACnet client accepts UDP response messages on.
   // The driver will bind to all network interfaces on this port
   localPort: 47808,
+  // How long any single BACnet request waits for the device to respond before giving up.
+  // Bounds every request, including Get and other API calls whose caller sets no deadline.
+  // A device that never answers, or answers with an Abort or Reject, otherwise leaves the request waiting forever.
+  // The caller's deadline still applies if it is earlier, for example a trait's pollTimeout.
+  // Optional, defaults to 30s.
+  requestTimeout: "30s",
   // Discovery allows us to adjust how device discovery works, if we have to use it.
   discovery: {
     // Min device identifier we search for.

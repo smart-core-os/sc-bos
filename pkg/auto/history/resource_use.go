@@ -10,7 +10,7 @@ import (
 	gen "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
-func (a *automation) collectResourceUseChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectResourceUseChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
 	client := gen.NewResourceUseApiClient(a.clients.ClientConn())
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
@@ -60,7 +60,7 @@ func (a *automation) collectResourceUseChanges(ctx context.Context, source confi
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

@@ -10,7 +10,6 @@ import (
 
 	"go.uber.org/multierr"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/gobacnet/property"
 	bactypes "github.com/smart-core-os/gobacnet/types"
 	"github.com/smart-core-os/gobacnet/types/objecttype"
@@ -19,7 +18,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 )
 
-func ReadProperty(ctx context.Context, client *gobacnet.Client, known known.Context, value config.ValueSource) (any, error) {
+func ReadProperty(ctx context.Context, client *Client, known known.Context, value config.ValueSource) (any, error) {
 	device, object, property, err := value.Lookup(known)
 	if err != nil {
 		return nil, err
@@ -51,7 +50,7 @@ type key struct {
 }
 
 // ReadPropertiesChunked is like readProperties but splits values into chunks of at most chunkSize that are executed in parallel.
-func ReadPropertiesChunked(ctx context.Context, client *gobacnet.Client, known known.Context, chunkSize int, values ...config.ValueSource) []any {
+func ReadPropertiesChunked(ctx context.Context, client *Client, known known.Context, chunkSize int, values ...config.ValueSource) []any {
 	if chunkSize == 0 {
 		return ReadProperties(ctx, client, known, values...)
 	}
@@ -79,7 +78,7 @@ func ReadPropertiesChunked(ctx context.Context, client *gobacnet.Client, known k
 	return results
 }
 
-func ReadProperties(ctx context.Context, client *gobacnet.Client, known known.Context, values ...config.ValueSource) []any {
+func ReadProperties(ctx context.Context, client *Client, known known.Context, values ...config.ValueSource) []any {
 	res := make([]any, len(values))
 	for i := range res {
 		res[i] = ErrPropNotFound
@@ -128,13 +127,13 @@ func ReadProperties(ctx context.Context, client *gobacnet.Client, known known.Co
 	return res
 }
 
-func readMultiProperties(ctx context.Context, client *gobacnet.Client, device bactypes.Device, req bactypes.ReadMultipleProperty, resIndexes map[key][]int, res []any) {
+func readMultiProperties(ctx context.Context, client *Client, device bactypes.Device, req bactypes.ReadMultipleProperty, resIndexes map[key][]int, res []any) {
 	multiRes, err := client.ReadMultiProperty(ctx, device, req)
 	if err != nil {
 		// todo: be more conservative about which errors we try individual property reads for
 		err = ctxerr.Cause(ctx, err)
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			// stop early as ctx is done anyway
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || IsRequestTimeout(err) {
+			// stop early as ctx is done anyway, or the device isn't answering and reading each property would wait as long again
 			for _, object := range req.Objects {
 				for _, prop := range object.Properties {
 					k := key{device.ID.Instance, object.ID, prop.ID}
@@ -319,7 +318,7 @@ func BitStringValue(data any) (bactypes.BitString, error) {
 	return bactypes.BitString{}, fmt.Errorf("unsupported conversion %T -> bactypes.BitString for val %v", data, data)
 }
 
-func WriteProperty(ctx context.Context, client *gobacnet.Client, known known.Context, value config.ValueSource, data any, priority uint) error {
+func WriteProperty(ctx context.Context, client *Client, known known.Context, value config.ValueSource, data any, priority uint) error {
 	device, object, property, err := value.Lookup(known)
 	if err != nil {
 		return err

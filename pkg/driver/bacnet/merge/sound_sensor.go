@@ -7,7 +7,6 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -35,7 +34,7 @@ var _ soundsensorpb.SoundSensorApiServer = (*soundSensor)(nil)
 type soundSensor struct {
 	soundsensorpb.UnimplementedSoundSensorApiServer
 
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -46,7 +45,7 @@ type soundSensor struct {
 	pollTask *task.Intermittent
 }
 
-func newSoundSensor(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*soundSensor, error) {
+func newSoundSensor(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*soundSensor, error) {
 	cfg, err := readSoundSensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
