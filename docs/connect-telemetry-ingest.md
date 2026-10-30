@@ -286,11 +286,14 @@ From the resource's `Metadata.device_type`:
 | `device_type` | `subject.kind` |
 |---|---|
 | `NODE`, `GATEWAY`, `HUB` | `node` |
-| `SERVICE` | `service` |
+| `SERVICE`, `AUTOMATION`, `ZONE` | `service` |
 | anything else, or no metadata | `device` |
 
 Drivers' system checks (on the driver's id) and the history stores' checks (on the store's name)
-are announced as `SERVICE` for this.
+are announced as `SERVICE` for this. Automations and zones carry their own type, but every check on
+their name is the service's own, so they go as `service` too. Connect files a `service` as a
+component of the node's entity rather than as a device, and only knows these three kinds, so the
+resource name is all that tells a driver, an automation and a zone apart there.
 
 ### Hashes
 

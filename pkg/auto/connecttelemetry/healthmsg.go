@@ -145,7 +145,9 @@ func subjectKind(deviceType metadatapb.Metadata_DeviceType) string {
 	switch deviceType {
 	case metadatapb.Metadata_NODE, metadatapb.Metadata_GATEWAY, metadatapb.Metadata_HUB:
 		return subjectKindNode
-	case metadatapb.Metadata_SERVICE:
+	// Automations and zones are services of the node too. Connect only knows these three kinds,
+	// so they go as service, telling them apart from drivers by their resource name alone.
+	case metadatapb.Metadata_SERVICE, metadatapb.Metadata_AUTOMATION, metadatapb.Metadata_ZONE:
 		return subjectKindService
 	default:
 		return subjectKindDevice

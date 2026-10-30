@@ -441,7 +441,11 @@ func TestHealthPublisher_kinds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHealthHarness(t)
 		h.node.Announce("svc1", node.HasDeviceType(metadatapb.Metadata_SERVICE))
+		h.node.Announce("auto1", node.HasDeviceType(metadatapb.Metadata_AUTOMATION))
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
 		h.setChecks("svc1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.setChecks("auto1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.setChecks("test-node", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
@@ -453,6 +457,8 @@ func TestHealthPublisher_kinds(t *testing.T) {
 			return sets[len(sets)-1].set.Subject.Kind
 		}
 		assert.Equal(t, subjectKindService, kindOf("svc1"))
+		assert.Equal(t, subjectKindService, kindOf("auto1"))
+		assert.Equal(t, subjectKindService, kindOf("zone1"))
 		assert.Equal(t, subjectKindNode, kindOf("test-node"))
 		assert.Equal(t, subjectKindDevice, kindOf("dev1"))
 
