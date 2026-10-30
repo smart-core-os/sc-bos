@@ -17,6 +17,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 // nodeIDProperty is the MQTT v5 user property carrying the publisher node id.
@@ -39,7 +40,8 @@ type publisher struct {
 // newPublisher builds an MQTT v5 connection manager for the Connect telemetry
 // broker. The connection is established (and re-established) in the background for
 // the lifetime of ctx; publishing gates on connectivity per call.
-func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentialSource, logger *zap.Logger) (*publisher, error) {
+// Each failed attempt to connect marks systemCheck failed, and connecting marks it running. systemCheck may be nil.
+func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentialSource, systemCheck service.SystemCheck, logger *zap.Logger) (*publisher, error) {
 	tlsCfg, err := buildTLSConfig(cfg, cred)
 	if err != nil {
 		return nil, err
@@ -88,9 +90,17 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 		OnConnectionUp: func(*autopaho.ConnectionManager, *paho.Connack) {
 			logger.Info("connected to Connect telemetry broker", zap.String("host", cfg.Host))
 			p.signalConnectionUp()
+			// once ctx is done a newer publisher may own the check
+			if systemCheck != nil && ctx.Err() == nil {
+				systemCheck.MarkRunning()
+			}
 		},
 		OnConnectError: func(err error) {
 			logger.Warn("Connect telemetry broker connection error", zap.Error(err))
+			// Not service.UpdateSystemCheck: an unreachable broker often fails with a timeout, which that ignores.
+			if systemCheck != nil && ctx.Err() == nil {
+				systemCheck.MarkFailed(err)
+			}
 		},
 		ClientConfig: paho.ClientConfig{
 			ClientID: clientID,

@@ -68,7 +68,7 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pub, err := newPublisher(ctx, cfg, nil, zap.NewNop())
+	pub, err := newPublisher(ctx, cfg, nil, nil, zap.NewNop())
 	require.NoError(t, err)
 	defer pub.close(context.Background())
 
@@ -141,7 +141,7 @@ func TestPublisherPublishesHealthAcked(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pub, err := newPublisher(ctx, cfg, nil, zap.NewNop())
+	pub, err := newPublisher(ctx, cfg, nil, nil, zap.NewNop())
 	require.NoError(t, err)
 	defer pub.close(context.Background())
 
@@ -158,6 +158,82 @@ func TestPublisherPublishesHealthAcked(t *testing.T) {
 		assert.Equal(t, "van/uk/brum/ugs/meters/elec-main", got.Resource)
 	case <-time.After(10 * time.Second):
 		t.Fatal("timed out waiting for the health set")
+	}
+}
+
+// TestPublisherSystemCheck checks the automation's system check follows the broker connection:
+// failed, with the reason, while the broker can't be reached, and running once connected.
+func TestPublisherSystemCheck(t *testing.T) {
+	dir, brokerTLS := writeTestCerts(t)
+	newCfg := func(addr string) config.Mqtt {
+		qos := 1
+		return config.Mqtt{
+			Host:           "tls://" + addr,
+			TopicPrefix:    "tlm",
+			ClientId:       "test-exporter",
+			ClientCertPath: filepath.Join(dir, "client.crt"),
+			ClientKeyPath:  filepath.Join(dir, "client.key"),
+			CaCertPath:     filepath.Join(dir, "ca.crt"),
+			Qos:            &qos,
+			ConnectTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+			PublishTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+		}
+	}
+
+	t.Run("unreachable", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		addr := l.Addr().String()
+		require.NoError(t, l.Close())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		check := newRecordingCheck()
+		pub, err := newPublisher(ctx, newCfg(addr), nil, check, zap.NewNop())
+		require.NoError(t, err)
+		defer pub.close(context.Background())
+
+		err = check.next(t)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, addr)
+	})
+
+	t.Run("connected", func(t *testing.T) {
+		addr, _ := startTLSBroker(t, brokerTLS)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		check := newRecordingCheck()
+		pub, err := newPublisher(ctx, newCfg(addr), nil, check, zap.NewNop())
+		require.NoError(t, err)
+		defer pub.close(context.Background())
+
+		assert.NoError(t, check.next(t))
+	})
+}
+
+// recordingCheck is a service.SystemCheck that records each report.
+type recordingCheck struct {
+	reports chan error // nil for MarkRunning
+}
+
+func newRecordingCheck() *recordingCheck {
+	return &recordingCheck{reports: make(chan error, 16)}
+}
+
+func (c *recordingCheck) Dispose()             {}
+func (c *recordingCheck) MarkRunning()         { c.reports <- nil }
+func (c *recordingCheck) MarkFailed(err error) { c.reports <- err }
+
+// next returns the next report, the error passed to MarkFailed or nil for MarkRunning.
+func (c *recordingCheck) next(t *testing.T) error {
+	t.Helper()
+	select {
+	case err := <-c.reports:
+		return err
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for a system check report")
+		return nil
 	}
 }
 

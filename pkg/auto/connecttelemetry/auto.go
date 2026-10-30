@@ -90,7 +90,7 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	grp, autoCtx := errgroup.WithContext(ctx)
 
-	pub, err := newPublisher(autoCtx, cfg.Mqtt, a.CloudCredential, a.Logger)
+	pub, err := newPublisher(autoCtx, cfg.Mqtt, a.CloudCredential, a.SystemCheck, a.Logger)
 	if err != nil {
 		a.Logger.Error("failed to create mqtt client", zap.Error(err))
 		return err
