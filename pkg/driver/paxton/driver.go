@@ -73,11 +73,6 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser[config.Root](config.ParseConfig),
-		service.WithOnStop[config.Root](func() {
-			if d.systemCheck != nil {
-				d.systemCheck.Dispose()
-			}
-		}),
 		service.WithRetry[config.Root](service.RetryWithLogger(func(logCtx service.RetryContext) {
 			logCtx.LogTo("applyConfig", logger)
 		})),

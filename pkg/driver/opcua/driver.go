@@ -52,7 +52,7 @@ func (f factory) New(services driver.Services) service.Lifecycle {
 	d.Service = service.New(
 		service.MonoApply(d.applyConfig),
 		service.WithParser(config.ParseConfig),
-		service.WithOnStop[config.Root](d.onStop),
+		service.WithOnStop[config.Root](d.dispose),
 		service.WithRetry[config.Root](
 			service.RetryWithLogger(func(logContext service.RetryContext) {
 				logContext.LogTo("applyConfig", logger)
@@ -287,13 +287,6 @@ func (d *Driver) opcClientOptions(ctx context.Context, conn config.Conn) (string
 		opts = append(opts, opcua.AuthAnonymous())
 	}
 	return ep.EndpointURL, opts, nil
-}
-
-func (d *Driver) onStop() {
-	if d.systemCheck != nil {
-		d.systemCheck.Dispose()
-	}
-	d.dispose()
 }
 
 func (d *Driver) dispose() {

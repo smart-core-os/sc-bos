@@ -30,13 +30,20 @@ type Services struct {
 	Config          service.ConfigUpdater
 	Database        *bolthold.Store
 	Health          *healthpb.Checks
-	// SystemCheck is a driver-level health check for top-level connectivity state
-	// (server reachable, licence valid, etc.). Call MarkFailed when connectivity is lost and
-	// MarkRunning when it is restored. Call Dispose in the driver's stop handler.
-	// May be nil if the check could not be registered; always nil-check before use.
+	// SystemCheck is the service's top-level health check. The framework marks it failed when the service fails
+	// to start or apply its config, and running once its config has loaded. Call MarkFailed when the service
+	// can't do its job for some other reason (the server is unreachable, the licence is invalid) and MarkRunning when it can again.
+	// The handle stays valid across stops and starts; there is no need to Dispose it.
+	// May be nil, for example when the service is hosted by a zone; nil-check before use.
 	SystemCheck service.SystemCheck
 }
 
 type Factory interface {
 	New(services Services) service.Lifecycle
+}
+
+type FactoryFunc func(services Services) service.Lifecycle
+
+func (f FactoryFunc) New(services Services) service.Lifecycle {
+	return f(services)
 }

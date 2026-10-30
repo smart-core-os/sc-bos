@@ -75,12 +75,7 @@ func NewDriver(services driver.Services) *Driver {
 	}
 	d.Service = service.New(service.MonoApply(d.applyConfig),
 		service.WithParser(config.ReadBytes),
-		service.WithOnStop[config.Root](func() {
-			d.Clear()
-			if d.systemCheck != nil {
-				d.systemCheck.Dispose()
-			}
-		}))
+		service.WithOnStop[config.Root](d.Clear))
 	return d
 }
 

@@ -38,6 +38,12 @@ type Services struct {
 	Now             func() time.Time
 	Config          service.ConfigUpdater
 	Health          *healthpb.Checks
+	// SystemCheck is the service's top-level health check. The framework marks it failed when the service fails
+	// to start or apply its config, and running once its config has loaded. Call MarkFailed when the service
+	// can't do its job for some other reason (a lost connection, an invalid licence) and MarkRunning when it can again.
+	// The handle stays valid across stops and starts; there is no need to Dispose it.
+	// May be nil; nil-check before use.
+	SystemCheck service.SystemCheck
 	// LocalHealthChecks streams the health checks this node evaluates itself, one device per name.
 	// It never includes checks the node only re-announces, such as a gateway's cohort checks,
 	// which Devices does include. Nil if unavailable.

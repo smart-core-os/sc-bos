@@ -5,11 +5,14 @@ import (
 	"errors"
 )
 
-// SystemCheck is the driver's persistent top-level health indicator, created by the framework
-// and passed via driver.Services.SystemCheck. Drivers call MarkFailed when connectivity is
-// lost and MarkRunning when it is restored. Drivers must call Dispose in their stop handler.
+// SystemCheck is a service's top-level health indicator, created by the framework
+// and passed via the SystemCheck field of driver, auto and zone Services, see ManagedSystemCheck.
+// Services call MarkFailed when they can't do their job, for example when connectivity is
+// lost, and MarkRunning when they can again.
 // May be nil if the check could not be registered; always nil-check before use.
 type SystemCheck interface {
+	// Dispose removes the check.
+	// The checks the framework passes to services are disposed for them when the service stops.
 	Dispose()
 	MarkRunning()
 	MarkFailed(err error)
