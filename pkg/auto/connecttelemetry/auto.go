@@ -23,6 +23,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -85,37 +86,131 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 		health = false
 	}
 
-	a.initialiseClients(a.Node)
-	a.pointNaming = dbo.Naming(cfg.PointNaming)
-
-	grp, autoCtx := errgroup.WithContext(ctx)
-
-	pub, err := newPublisher(autoCtx, cfg.Mqtt, a.CloudCredential, a.SystemCheck, a.Logger)
-	if err != nil {
-		a.Logger.Error("failed to create mqtt client", zap.Error(err))
+	if _, _, err := brokerTarget(cfg.Mqtt, a.CloudCredential); err != nil {
+		a.Logger.Error("invalid mqtt config", zap.Error(err))
 		return err
 	}
 
-	if len(cfg.Traits) > 0 {
-		a.runTelemetry(autoCtx, grp, cfg, pub)
-	}
-	if health {
-		a.runHealth(autoCtx, grp, cfg, pub)
-	}
+	a.initialiseClients(a.Node)
+	a.pointNaming = dbo.Naming(cfg.PointNaming)
 
-	// applyConfig returns immediately; background tasks run until ctx is cancelled
-	// (on reconfigure or stop), after which we disconnect cleanly.
+	publish := func(ctx context.Context, nodeID string) error {
+		return a.publishAs(ctx, cfg, health, nodeID)
+	}
+	// applyConfig returns immediately; publishing runs until ctx is cancelled
+	// (on reconfigure or stop).
 	go func() {
-		err := grp.Wait()
-		disconnectCtx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		pub.close(disconnectCtx)
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err := a.run(ctx, cfg.Mqtt, publish); err != nil && !errors.Is(err, context.Canceled) {
 			a.Logger.Error("connecttelemetry automation stopped with error", zap.Error(err))
 		}
 	}()
 
 	return nil
+}
+
+// run calls publish with the node id to publish as, until ctx is done.
+// Using the cloud credential, it calls publish afresh for each enrolment of the node, see followEnrolment.
+func (a *AutoImpl) run(ctx context.Context, cfg config.Mqtt, publish func(ctx context.Context, nodeID string) error) error {
+	if !cfg.UseCloudCredential {
+		// The file-path certificate, not the enrolment, is what the broker authenticates,
+		// so there is no connection to rebuild when the enrolment changes.
+		var nodeID string
+		if a.CloudCredential != nil {
+			nodeID = a.CloudCredential.State().NodeID
+		}
+		return publish(ctx, nodeID)
+	}
+	return followEnrolment(ctx, a.CloudCredential, a.SystemCheck, a.Logger, func(ctx context.Context, st connect.State) error {
+		return publish(ctx, st.NodeID)
+	})
+}
+
+// publishAs connects to the broker as nodeID and publishes until ctx is done, then disconnects cleanly.
+// Everything it tracks, like which health sets the broker has acknowledged, starts afresh with each call.
+func (a *AutoImpl) publishAs(ctx context.Context, cfg config.Root, health bool, nodeID string) error {
+	pub, err := newPublisher(ctx, cfg.Mqtt, a.CloudCredential, nodeID, a.SystemCheck, a.Logger)
+	if err != nil {
+		a.Logger.Error("failed to create mqtt client", zap.Error(err))
+		return err
+	}
+
+	grp, grpCtx := errgroup.WithContext(ctx)
+	if len(cfg.Traits) > 0 {
+		a.runTelemetry(grpCtx, grp, cfg, pub)
+	}
+	if health {
+		a.runHealth(grpCtx, grp, cfg, pub)
+	}
+	err = grp.Wait()
+
+	disconnectCtx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	pub.close(disconnectCtx)
+	return err
+}
+
+var errNotEnrolled = errors.New("not enrolled in Smart Core Connect")
+
+// followEnrolment calls run for each enrolment of cred, from when the node is enrolled until it is
+// unlinked or re-enrolled under another node id or endpoint, which cancels run's ctx.
+// Each run has finished before the next starts, so no two of its runs connect at once with the same client id.
+// While the node is not enrolled nothing runs and check, which may be nil, is marked failed.
+//
+// followEnrolment returns when ctx is done, or with run's error if a run ends by itself.
+func followEnrolment(ctx context.Context, cred connect.Credential, check service.SystemCheck, logger *zap.Logger, run func(ctx context.Context, st connect.State) error) error {
+	state, changes := cred.PullState(ctx)
+
+	var (
+		running connect.State      // what the current run started with
+		stop    context.CancelFunc // cancels the current run, nil if none
+		done    chan error         // receives the current run's result
+	)
+	stopRun := func() {
+		if stop == nil {
+			return
+		}
+		stop()
+		<-done
+		stop, done = nil, nil
+	}
+	defer stopRun()
+
+	follow := func(st connect.State) {
+		// Connectivity alone changes as the node checks in with Connect, which the broker connection doesn't need.
+		if stop != nil && st.NodeID == running.NodeID && st.APIEndpoint == running.APIEndpoint {
+			return
+		}
+		stopRun()
+		if st.Connectivity == connect.NotEnrolled {
+			logger.Info("not enrolled in Smart Core Connect; not publishing")
+			if check != nil {
+				check.MarkFailed(errNotEnrolled)
+			}
+			return
+		}
+		logger.Info("publishing to Smart Core Connect", zap.String("nodeId", st.NodeID), zap.String("apiEndpoint", st.APIEndpoint))
+		runCtx, cancel := context.WithCancel(ctx)
+		running, stop, done = st, cancel, make(chan error, 1)
+		go func() { done <- run(runCtx, st) }()
+	}
+
+	follow(state)
+	for {
+		select {
+		case st, ok := <-changes:
+			if !ok {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+				return errors.New("cloud credential state closed")
+			}
+			follow(st)
+		case err := <-done: // nil, so never ready, while nothing runs
+			stop()
+			stop, done = nil, nil
+			return err
+		}
+	}
 }
 
 // telemetrySink is where telemetry and discovery go, a *publisher outside tests.

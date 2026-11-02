@@ -38,34 +38,13 @@ type publisher struct {
 }
 
 // newPublisher builds an MQTT v5 connection manager for the Connect telemetry
-// broker. The connection is established (and re-established) in the background for
-// the lifetime of ctx; publishing gates on connectivity per call.
+// broker, as nodeID. The connection is established (and re-established) in the
+// background for the lifetime of ctx; publishing gates on connectivity per call.
 // Each failed attempt to connect marks systemCheck failed, and connecting marks it running. systemCheck may be nil.
-func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentialSource, systemCheck service.SystemCheck, logger *zap.Logger) (*publisher, error) {
-	tlsCfg, err := buildTLSConfig(cfg, cred)
+func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentialSource, nodeID string, systemCheck service.SystemCheck, logger *zap.Logger) (*publisher, error) {
+	u, tlsCfg, err := brokerTarget(cfg, cred)
 	if err != nil {
 		return nil, err
-	}
-
-	u, err := url.Parse(cfg.Host)
-	if err != nil {
-		return nil, fmt.Errorf("invalid mqtt host %q: %w", cfg.Host, err)
-	}
-
-	// autopaho selects the transport purely from the URL scheme: a non-TLS scheme
-	// (mqtt/tcp/ws) silently discards TlsCfg, so the client certificate is ignored
-	// and telemetry goes out in the clear. The exporter always presents a
-	// credential, so require a TLS-bearing scheme and fail closed otherwise.
-	switch strings.ToLower(u.Scheme) {
-	case "tls", "ssl", "mqtts", "wss":
-		// TLS-bearing scheme; TlsCfg is applied.
-	default:
-		return nil, fmt.Errorf("mqtt.host %q uses non-TLS scheme %q; use tls:// (or ssl://, mqtts://, wss://) so client certificates and encryption are applied", cfg.Host, u.Scheme)
-	}
-
-	var nodeID string
-	if cred != nil {
-		nodeID = cred.State().NodeID
 	}
 
 	clientID := cfg.ClientId
@@ -113,6 +92,31 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 	}
 	p.cm = cm
 	return p, nil
+}
+
+// brokerTarget validates the broker config, returning the broker URL and the TLS config to connect with.
+func brokerTarget(cfg config.Mqtt, cred auto.CloudCredentialSource) (*url.URL, *tls.Config, error) {
+	tlsCfg, err := buildTLSConfig(cfg, cred)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	u, err := url.Parse(cfg.Host)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid mqtt host %q: %w", cfg.Host, err)
+	}
+
+	// autopaho selects the transport purely from the URL scheme: a non-TLS scheme
+	// (mqtt/tcp/ws) silently discards TlsCfg, so the client certificate is ignored
+	// and telemetry goes out in the clear. The exporter always presents a
+	// credential, so require a TLS-bearing scheme and fail closed otherwise.
+	switch strings.ToLower(u.Scheme) {
+	case "tls", "ssl", "mqtts", "wss":
+		// TLS-bearing scheme; TlsCfg is applied.
+	default:
+		return nil, nil, fmt.Errorf("mqtt.host %q uses non-TLS scheme %q; use tls:// (or ssl://, mqtts://, wss://) so client certificates and encryption are applied", cfg.Host, u.Scheme)
+	}
+	return u, tlsCfg, nil
 }
 
 // publish sends payload to topic at the configured QoS, waiting up to
