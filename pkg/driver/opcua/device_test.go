@@ -39,7 +39,7 @@ func TestDevice_newDevice(t *testing.T) {
 		},
 	}
 
-	dev := newDevice(cfg, logger, nil, fc, nil)
+	dev := newDevice(cfg, logger, nil, fc, nil, nil)
 	require.NotNil(t, dev)
 	require.Equal(t, cfg, dev.conf)
 	require.NotNil(t, dev.logger)
@@ -853,7 +853,7 @@ func newTestDevice(t *testing.T, sub subscriber, nodeIds ...string) (*device, *M
 	}, logger)
 	require.NoError(t, err)
 
-	dev := newDevice(cfg, logger, sub, fc, nil)
+	dev := newDevice(cfg, logger, sub, fc, nil, nil)
 	dev.eventHandlers = append(dev.eventHandlers, meter)
 	dev.maxStagger = 0
 	return dev, meter, rec
@@ -1247,7 +1247,7 @@ func TestDevice_subscribe_noConfiguredPoints(t *testing.T) {
 		sub := newFakeSubscriber(nil)
 		fc, rec := newRecordedFaultCheck(t)
 		core, logs := observer.New(zap.DebugLevel)
-		dev := newDevice(&config.Device{Name: "test-device"}, zap.New(core), sub, fc, nil)
+		dev := newDevice(&config.Device{Name: "test-device"}, zap.New(core), sub, fc, nil, nil)
 		dev.maxStagger = 0
 
 		ctx, cancel := context.WithCancel(context.Background())

@@ -426,6 +426,23 @@ type HealthConfig struct {
 	Checks []HealthCheck `json:"checks"`
 }
 
+// valueSources returns the point each check reads, so validateDeviceTraits can hold them to
+// the same rule as every other trait: a check may only name a node the device declares.
+//
+// That rule matters more here than elsewhere. Health.handleEvent fires only on a value
+// notification, so a check pointed at a node the device never monitors sits at NORMAL forever -
+// a check that looks healthy because it is reading nothing at all.
+func (c *HealthConfig) valueSources() []valueSourceField {
+	fields := make([]valueSourceField, 0, len(c.Checks))
+	for i := range c.Checks {
+		fields = append(fields, valueSourceField{
+			desc:  fmt.Sprintf("health trait check '%s'", c.Checks[i].Id),
+			value: &c.Checks[i].ValueSource,
+		})
+	}
+	return fields
+}
+
 // Validate ensures all required fields are set and applies default bounds.
 // If OkLowerBound is nil, it is set to -Inf.
 // If OkUpperBound is nil, it is set to +Inf.

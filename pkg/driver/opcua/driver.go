@@ -121,7 +121,19 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		d.checks = append(d.checks, faultCheck)
 
-		opcDev := newDevice(&dev, d.logger, client, faultCheck, d.systemCheck)
+		// only for a device that actually marks a point informational, so devices that do not
+		// use the flag gain no permanently-normal second check cluttering the Health page.
+		var informationalCheck *healthpb.FaultCheck
+		if hasInformationalVariable(&dev) {
+			informationalCheck, err = d.health.NewFaultCheck(dev.Name, getInformationalPointCheck())
+			if err != nil {
+				d.logger.Error("failed to create device informational point check", zap.String("device", dev.Name), zap.Error(err))
+				return err
+			}
+			d.checks = append(d.checks, informationalCheck)
+		}
+
+		opcDev := newDevice(&dev, d.logger, client, faultCheck, informationalCheck, d.systemCheck)
 
 		for _, t := range dev.Traits {
 			switch t.Kind {

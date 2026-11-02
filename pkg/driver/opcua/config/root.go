@@ -403,6 +403,15 @@ func securityPolicyNames() []string {
 type Variable struct {
 	// NodeId identifies the VariableNode in the OPC UA server.
 	NodeId string `json:"nodeId,omitempty"`
+	// Informational marks a point whose failure says nothing about whether the device is
+	// doing its job: typically one no trait reads, declared only so a bulk export like UDMI
+	// can publish it, or a secondary reading such as a meter's power factor. Failures on
+	// these points are reported on the device's informational point check instead of
+	// deviceStatusCheck, so a dashboard scoped to the device's function does not light up
+	// because a spare per-phase register went away.
+	//
+	// A point the Meter or Health trait reads cannot be informational; ParseConfig refuses it.
+	Informational bool `json:"informational,omitempty"`
 	// ParsedNodeId is the parsed ua.NodeID.
 	ParsedNodeId *ua.NodeID
 }
@@ -492,11 +501,16 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 }
 
 // validateDeviceTraits validates trait configurations and checks that all nodeIds referenced in traits
-// exist in the device's variable list.
+// exist in the device's variable list, and that none the Meter or Health trait reads is marked
+// informational.
 func validateDeviceTraits(device *Device) error {
 	validNodeIds := make(map[string]bool)
+	informational := make(map[string]bool)
 	for _, v := range device.Variables {
 		validNodeIds[v.NodeId] = true
+		if v.Informational {
+			informational[v.NodeId] = true
+		}
 	}
 
 	for _, t := range device.Traits {
@@ -512,6 +526,8 @@ func validateDeviceTraits(device *Device) error {
 			valueSources, err = getValueSourcesForTrait[*TransportConfig](device.Name, t.Raw)
 		case udmipb.TraitName:
 			valueSources, err = getValueSourcesForTrait[*UdmiConfig](device.Name, t.Raw)
+		case healthpb.TraitName:
+			valueSources, err = getValueSourcesForTrait[*HealthConfig](device.Name, t.Raw)
 		default:
 			return fmt.Errorf("device '%s': unknown trait kind '%s'", device.Name, t.Kind)
 		}
@@ -524,10 +540,26 @@ func validateDeviceTraits(device *Device) error {
 				return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
 					device.Name, field.desc, field.value.NodeId)
 			}
+			// A Meter usage point is the device's primary function, and a Health check only
+			// fires on a value notification, so a point that never reports leaves it NORMAL.
+			// Either reading an informational point would hide its failures from
+			// deviceStatusCheck. Other traits, such as Electric, may: a dead power-factor
+			// register is a real fault but not the meter having stopped measuring energy.
+			if mustNotReadInformational[t.Kind] && field.value != nil && informational[field.value.NodeId] {
+				return fmt.Errorf("device '%s': %s reads nodeId '%s', which is marked informational",
+					device.Name, field.desc, field.value.NodeId)
+			}
 		}
 	}
 
 	return nil
+}
+
+// mustNotReadInformational are the trait kinds whose failures must reach deviceStatusCheck,
+// so they may not read an informational point. See validateDeviceTraits.
+var mustNotReadInformational = map[trait.Name]bool{
+	meterpb.TraitName:  true,
+	healthpb.TraitName: true,
 }
 
 type traitWithValueSources interface {

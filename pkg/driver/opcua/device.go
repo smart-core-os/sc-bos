@@ -69,6 +69,24 @@ type device struct {
 	systemCheck service.SystemCheck
 	points      *pointHealth
 
+	// informationalCheck reports the points in informational, keeping their failures off
+	// faultCheck. nil, along with informationalPoints and informational, on a device that
+	// marks no variable informational.
+	informationalCheck *healthpb.FaultCheck
+	// informationalPoints is a second pointHealth rather than a mode of the first: each
+	// instance owns PointSubscribeError and DeviceConfigError outright on its own check, and
+	// rewrites both from its own state, which is the only shape those faults have (see
+	// pointHealth's doc comment).
+	informationalPoints *pointHealth
+	// informational is the node id set built from config.Variable.Informational, keyed the
+	// way notifications and monitor results name a node.
+	informational map[string]bool
+	// serverErrOnPrimary is whether faultCheck's reliability still holds the last subscription
+	// error. Any point answering Good says the server is back, but only a trait-backed read
+	// rewrites faultCheck, so an informational read clears it while this is set. Only ever
+	// touched from the goroutine pumping this device.
+	serverErrOnPrimary bool
+
 	// maxStagger bounds the random delay before the device's first subscribe attempt.
 	// A field so tests can zero it, which makes the retry timings the only thing on the clock.
 	maxStagger time.Duration
@@ -80,8 +98,10 @@ type device struct {
 
 // newDevice creates a new device instance for the given configuration.
 // Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
-func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check *healthpb.FaultCheck, systemCheck service.SystemCheck) *device {
-	return &device{
+// informationalCheck may be nil, for a device with no informational variable; then every
+// point reports on check.
+func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check, informationalCheck *healthpb.FaultCheck, systemCheck service.SystemCheck) *device {
+	d := &device{
 		client:      client,
 		conf:        conf,
 		faultCheck:  check,
@@ -90,6 +110,27 @@ func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check
 		points:      newPointHealth(check),
 		maxStagger:  subscribeStagger,
 	}
+	if informationalCheck == nil {
+		return d
+	}
+	d.informationalCheck = informationalCheck
+	d.informationalPoints = newPointHealth(informationalCheck)
+	d.informational = make(map[string]bool)
+	for _, v := range conf.Variables {
+		if !v.Informational {
+			continue
+		}
+		// keyed on the parsed node's own String, because that is what applyResults and
+		// handleStatusValue look it up by, and it need not be byte-identical to the
+		// configured text. The raw text is the fallback for a Device assembled in code,
+		// whose points wantedNodes skips anyway.
+		if v.ParsedNodeId != nil {
+			d.informational[v.ParsedNodeId.String()] = true
+		} else {
+			d.informational[v.NodeId] = true
+		}
+	}
+	return d
 }
 
 // subscribe monitors every configured variable on one subscription and pumps its notifications
@@ -181,7 +222,7 @@ func (d *device) deviceTask() task.Task {
 			// no per-node status to classify - the subscription is what failed, not any item -
 			// so this is always retried, and every point is reported as waiting on it
 			d.logSubscribeFailure(attempt, "failed to create the device subscription, will keep trying", err)
-			d.failAllPoints(permanent, err)
+			d.failAllPoints(ctx, permanent, err)
 			return task.Normal, err
 		}
 
@@ -224,7 +265,7 @@ func (d *device) deviceTask() task.Task {
 		if ctx.Err() != nil {
 			return task.StopNow, err
 		}
-		d.failAllPoints(permanent, err)
+		d.failAllPoints(ctx, permanent, err)
 		if lived := time.Since(start); lived >= resubscribeGrace {
 			// it demonstrably works, so start the backoff over rather than carry a ramp that
 			// describes some older problem
@@ -282,45 +323,90 @@ type attemptOutcome struct {
 // The whole batch is committed to the fault check in one go. Called per point it would publish
 // a growing version of the same fault for every point in the batch, each one visible over the
 // devices API.
+//
+// The outcome is split by which check reports each point, but the counts in attemptOutcome
+// stay aggregate: they drive whether the subscription is an orphan and whether to retry, which
+// are properties of the subscription, not of any one check.
 func (d *device) applyResults(results []monitorResult, permanent map[string]bool) attemptOutcome {
 	var out attemptOutcome
-	var ok []string
-	failing, refused := make(map[string]error), make(map[string]error)
+	primary, informational := newPointBatch(), newPointBatch()
 	var errs []error
 	for _, res := range results {
 		nodeId := res.NodeId.String()
+		b := d.batchFor(nodeId, primary, informational)
 		switch {
 		case res.Err == nil:
 			out.ok++
-			ok = append(ok, nodeId)
+			b.ok = append(b.ok, nodeId)
 		case subscribeErrIsPermanent(res.Err):
 			permanent[nodeId] = true
-			refused[nodeId] = res.Err
+			b.refused[nodeId] = res.Err
 			errs = append(errs, res.Err)
 			// once per point, and it is never asked about again, so there is nothing here to
 			// thin out the way logSubscribeFailure has to
 			d.logger.Error("stopped retrying point, the server says this subscription can never work",
 				zap.Stringer("point", res.NodeId), zap.Error(res.Err))
 		default:
-			failing[nodeId] = res.Err
+			b.failing[nodeId] = res.Err
 			out.retry = append(out.retry, res.NodeId)
 			errs = append(errs, res.Err)
 		}
 	}
-	d.points.applyBatch(ok, failing, refused)
+	d.commitBatches(primary, informational)
 	out.err = errors.Join(errs...)
 	return out
 }
 
+// pointBatch collects one subscribe attempt's point outcomes for a single pointHealth, so that
+// each instance is still handed the whole device in one applyBatch call.
+type pointBatch struct {
+	ok      []string
+	failing map[string]error
+	refused map[string]error
+}
+
+func newPointBatch() *pointBatch {
+	return &pointBatch{failing: make(map[string]error), refused: make(map[string]error)}
+}
+
+// batchFor picks the batch for a point, by which of the device's checks reports it.
+func (d *device) batchFor(nodeId string, primary, informational *pointBatch) *pointBatch {
+	if d.informational[nodeId] {
+		return informational
+	}
+	return primary
+}
+
+// commitBatches hands each pointHealth its share of one attempt, one applyBatch call apiece.
+//
+// The primary is committed even when its batch is empty: applyBatch's maps are cumulative
+// state and commit only rewrites the faults from them, so an empty batch says nothing about
+// the points this attempt did not mention.
+func (d *device) commitBatches(primary, informational *pointBatch) {
+	d.points.applyBatch(primary.ok, primary.failing, primary.refused)
+	if d.informationalPoints != nil {
+		d.informationalPoints.applyBatch(informational.ok, informational.failing, informational.refused)
+	}
+}
+
 // failAllPoints reports every point still worth monitoring as failing, for a subscription that
 // has died or never opened and so has taken all of them with it.
-func (d *device) failAllPoints(permanent map[string]bool, err error) {
-	nodeIds := d.wantedNodes(permanent)
-	failing := make(map[string]error, len(nodeIds))
-	for _, nodeId := range nodeIds {
-		failing[nodeId.String()] = err
+// Split across both checks the same way applyResults is: a dead subscription takes the
+// informational points with it too, and they are still reported as waiting on it - just not on
+// the check that says whether the device is doing its job.
+//
+// That check is also marked unreliable with err, as handleEvent does for a subscription error.
+// The server is what failed, not any point, and on a device whose every point is informational
+// the point faults alone would leave the check NORMAL while the server is unreachable.
+func (d *device) failAllPoints(ctx context.Context, permanent map[string]bool, err error) {
+	primary, informational := newPointBatch(), newPointBatch()
+	for _, nodeId := range d.wantedNodes(permanent) {
+		key := nodeId.String()
+		d.batchFor(key, primary, informational).failing[key] = err
 	}
-	d.points.applyBatch(nil, failing, nil)
+	d.commitBatches(primary, informational)
+	d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
+	d.serverErrOnPrimary = true
 }
 
 // runSubscription pumps the subscription until it ends, retrying its stragglers alongside.
@@ -488,6 +574,7 @@ func (d *device) logUnknownHandle(handle uint32) {
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, lookup nodeLookup) {
 	if event.Error != nil {
 		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(event.Error))
+		d.serverErrOnPrimary = true
 		service.UpdateSystemCheck(d.systemCheck, event.Error)
 		d.logger.Warn("OPC UA server connection error", zap.String("device", d.conf.Name), zap.Error(event.Error))
 		return
@@ -534,17 +621,38 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 // updating the device health to match the status severity.
 // Only the severity bits of the status are significant: a Good code carrying info bits,
 // notably the Overflow bit a busy subscription queue sets, still delivers a usable value.
+//
+// A read on an informational point reports on informationalCheck, so that a spare register
+// returning Bad neither faults nor vouches for the check a function-scoped dashboard reads.
+// The exception is a subscription error, which is about the server rather than any point: any
+// Good read clears it from faultCheck.
+//
+// Reliability is last-writer-wins per check, so two bad reads on the same check overwrite each
+// other. Holding it per point would mean aggregating bad-read node ids per check the way
+// pointHealth aggregates subscribe state.
 func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status ua.StatusCode, value any) {
+	fc := d.faultCheck
+	if d.informational[node.String()] {
+		fc = d.informationalCheck
+	} else {
+		// whatever this read says, it replaces the subscription error on faultCheck
+		d.serverErrOnPrimary = false
+	}
 	switch {
 	case statusIsBad(status):
-		setPointReadNotOk(ctx, node.String(), status, d.faultCheck)
+		setPointReadNotOk(ctx, node.String(), status, fc)
 		d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", status.Error()))
 		return
 	case statusIsUncertain(status):
-		setPointReadUncertain(ctx, node.String(), status, d.faultCheck)
+		setPointReadUncertain(ctx, node.String(), status, fc)
 		d.logger.Debug("uncertain value for node", zap.Stringer("node", node), zap.String("code", status.Error()))
 	default: // Good, whatever info bits it carries
-		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+		fc.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+		if d.serverErrOnPrimary {
+			d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+			d.serverErrOnPrimary = false
+		}
+		// server-scoped, so any of the device's points answering says the server answered
 		service.UpdateSystemCheck(d.systemCheck, nil)
 	}
 	d.handleTraitEvent(ctx, node, value)
