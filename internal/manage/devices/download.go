@@ -273,7 +273,7 @@ func (s *Server) writeHistoryDataBySource(ctx context.Context, out writer, sourc
 			head.use()
 			vals := head.vals
 			maps.Copy(vals, mdVals)
-			vals["timestamp"] = head.at.Format(time.DateTime)
+			vals["timestamp"] = head.at.Format(time.RFC3339)
 			out.Write(vals)
 		}
 	}
@@ -337,7 +337,7 @@ func (s *Server) writeHistoryDataByTime(ctx context.Context, out writer, sources
 		oldestRecord.use()
 		vals := mds[oldestSource.device.Name]
 		maps.Copy(vals, oldestRecord.vals)
-		vals["timestamp"] = oldestRecord.at.Format(time.DateTime)
+		vals["timestamp"] = oldestRecord.at.Format(time.RFC3339)
 		out.Write(vals)
 
 		if anySkipped {
