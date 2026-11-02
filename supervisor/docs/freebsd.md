@@ -261,8 +261,8 @@ resumes the update on its next start.
   `update v2026.11.0 not confirmed within 5m0s`.
 
 Along the way, a successful install logs `switched current release` with the new `current` and the old one as
-`previous`. An update that BOS doesn't commit in time logs `update not confirmed, rolling back` before it fails, and
-`current` points back at the previous release.
+`previous`. An update whose restart fails, or that BOS doesn't commit in time, logs `update not confirmed, rolling
+back` before it fails, and `current` points back at the previous release.
 
 Until its first update finishes, the Supervisor logs `committed version changed` when BOS commits a different
 `version` from the one it last recorded, with the old one as `previous`. After an update finishes, it keeps that
@@ -288,8 +288,9 @@ Common problems:
   A permission error means BOS's group can't use the socket: check `socketGroup` and
   `ls -l /var/run/sc-bos-supervisor`. If BOS is enrolled, it also waits for a successful cloud check-in before it
   commits. A release built without a version can't commit either; build releases with `scripts/build-release.sh`.
-- **The Supervisor logs `update failed` with a `reason` starting `apply: restart sc_bos:`.** `service sc_bos
-  restart` failed or took longer than 5 minutes. Run `service sc_bos restart` by hand to see the error.
+- **The Supervisor logs `update failed` with a `reason` starting `restart <version>: restart sc_bos:`.** `service
+  sc_bos restart` failed or took longer than 5 minutes, so the Supervisor rolled back to the previous release. Run
+  `service sc_bos restart` by hand to see the error.
 - **BOS doesn't start, and its log shows `permission denied` on a listen address.** See
   [listening ports](#listening-ports).
 - **`install-release` fails with `the Supervisor has an unfinished update`, or `an update is in progress`.** Wait

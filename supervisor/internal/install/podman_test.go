@@ -2,6 +2,7 @@ package install
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -31,7 +32,7 @@ func newTestInstaller(t *testing.T, steps ...step) *PodmanInstaller {
 }
 
 // A first install has no :current image: Apply loads the artefact, records :current as :previous (a no-op
-// here, tolerated), repoints :current at the new version, and restarts the unit.
+// here, tolerated), and repoints :current at the new version, without restarting the unit.
 func TestApply_FirstInstall(t *testing.T) {
 	p := newTestInstaller(t,
 		expect("", "podman", "load", "-i", "/art.tar"),
@@ -40,7 +41,6 @@ func TestApply_FirstInstall(t *testing.T) {
 		expectExit(1, exists("current")...),                               // absent on first install
 		expectErr("podman", "tag", tagRef("current"), tagRef("previous")), // no :current to record, tolerated
 		expect("", "podman", "tag", tagRef("v2"), tagRef("current")),
-		expect("", "systemctl", "restart", testUnit),
 	)
 
 	if err := p.Apply(context.Background(), "/art.tar", "v2"); err != nil {
@@ -59,7 +59,6 @@ func TestApply_Upgrade(t *testing.T) {
 		expect("sha-v1", inspect("current")...), // a different image
 		expect("", "podman", "tag", tagRef("current"), tagRef("previous")),
 		expect("", "podman", "tag", tagRef("v2"), tagRef("current")),
-		expect("", "systemctl", "restart", testUnit),
 	)
 
 	if err := p.Apply(context.Background(), "/art.tar", "v2"); err != nil {
@@ -68,7 +67,7 @@ func TestApply_Upgrade(t *testing.T) {
 }
 
 // When :current already resolves to the new version (a resume after the tag-swap), Apply skips the swap
-// so the rollback pointer is preserved, and only restarts.
+// so the rollback pointer is preserved.
 func TestApply_AlreadyCurrentSkipsSwap(t *testing.T) {
 	p := newTestInstaller(t,
 		expect("", "podman", "load", "-i", "/art.tar"),
@@ -76,7 +75,6 @@ func TestApply_AlreadyCurrentSkipsSwap(t *testing.T) {
 		expect("sha-v2", inspect("v2")...),
 		expect("", exists("current")...),
 		expect("sha-v2", inspect("current")...), // same image
-		expect("", "systemctl", "restart", testUnit),
 	)
 
 	if err := p.Apply(context.Background(), "/art.tar", "v2"); err != nil {
@@ -140,6 +138,28 @@ func TestApply_ExistsStorageError(t *testing.T) {
 	err := p.Apply(context.Background(), "/art.tar", "v2")
 	if err == nil || !strings.Contains(err.Error(), "compare version against current tag") {
 		t.Fatalf("Apply() error = %v, want compare error", err)
+	}
+}
+
+// Restart restarts the unit without touching any tag.
+func TestRestart(t *testing.T) {
+	p := newTestInstaller(t,
+		expect("", "systemctl", "restart", testUnit),
+	)
+
+	if err := p.Restart(context.Background()); err != nil {
+		t.Fatalf("Restart() error = %v", err)
+	}
+}
+
+// A failed restart is surfaced.
+func TestRestart_Fails(t *testing.T) {
+	p := newTestInstaller(t,
+		expectErr("systemctl", "restart", testUnit),
+	)
+
+	if err := p.Restart(context.Background()); !errors.Is(err, errCommand) {
+		t.Fatalf("Restart() error = %v, want %v", err, errCommand)
 	}
 }
 

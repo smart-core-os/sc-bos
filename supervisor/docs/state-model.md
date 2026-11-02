@@ -49,7 +49,7 @@ Podman tags: `current` (what the service runs) and `previous` (the rollback poin
 
 ```
 <root>/
-├── .lock                   held with flock(2) for the whole of each Apply and Rollback
+├── .lock                   held with flock(2) for the whole of each Apply, Restart and Rollback
 ├── <version>/              one folder per installed release: manifest.json, bin/sc-bos, ui/ops/
 ├── current  -> <version>
 └── previous -> <version>
@@ -96,7 +96,8 @@ Applying a Podman container update
 
 N.B.: the tag swap (steps 3–4) is skipped when the target version is the same as `:current`. Rollback
 after a failed confirmation is the symmetric tail: point `:current` back at `:previous`, restart, and
-await confirmation of the restored version.
+await confirmation of the restored version. If the restart in step 5 fails, the Supervisor rolls back
+straight away instead of awaiting confirmation, because `:current` already points at the new image.
 
 
 Crashes and recovery
@@ -125,6 +126,10 @@ Precondition: running v1, goal is to install v2.
 **New version unhealthy:** v2 is applied but never calls `Commit` within the deadline. The Supervisor
 points `:current` back at v1 and restarts; v1 boots and calls `Commit(v1)`; the update is `FAILED` with
 "update v2 not confirmed within ...". The node runs v1, healthy.
+
+**Restart fails:** v2 is selected but `Restart BOS` returns an error. The Supervisor rolls back without
+waiting for the deadline: it points `:current` back at v1 and restarts; v1 boots and calls `Commit(v1)`;
+the update is `FAILED` with "restart v2: ...". The node runs v1.
 
 **Reboot during load:** The host reboots while v2 is being loaded. The image never finished loading
 and `:current` still points at v1, so v1 comes back up. Supervisor remembers its goal is to switch to v1, so it
