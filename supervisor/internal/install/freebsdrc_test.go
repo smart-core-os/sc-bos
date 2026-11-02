@@ -6,6 +6,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -110,7 +111,7 @@ func restarts(n int) []step {
 // stageRelease creates a complete release folder for version directly, without the installer.
 func stageRelease(t *testing.T, root, version string) {
 	t.Helper()
-	i, tmpRoot := newTestRCInstaller(t, restarts(1)...)
+	i, tmpRoot := newTestRCInstaller(t)
 	mustApply(t, i, version)
 	if err := os.MkdirAll(root, 0o755); err != nil {
 		t.Fatal(err)
@@ -174,8 +175,9 @@ func assertRunsVersion(t *testing.T, root, version string) {
 	}
 }
 
+// Apply installs without restarting the service.
 func TestFreeBSDRC_FirstInstall(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(1)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 
 	assertEntries(t, root, ".lock", "current", "v1")
@@ -192,7 +194,7 @@ func TestFreeBSDRC_FirstInstall(t *testing.T) {
 }
 
 func TestFreeBSDRC_Upgrade(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1", "v2")
 
 	assertEntries(t, root, ".lock", "current", "previous", "v1", "v2")
@@ -202,7 +204,7 @@ func TestFreeBSDRC_Upgrade(t *testing.T) {
 }
 
 func TestFreeBSDRC_ReapplyCurrent(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(3)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1", "v2", "v2")
 
 	assertLink(t, root, currentLink, "v2")
@@ -211,7 +213,7 @@ func TestFreeBSDRC_ReapplyCurrent(t *testing.T) {
 
 // A crash during extraction leaves a temporary folder: the next Apply removes it and extracts again.
 func TestFreeBSDRC_RecoverDuringExtraction(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 	partial := filepath.Join(root, ".tmp-v2-ABC")
 	if err := os.MkdirAll(filepath.Join(partial, "bin"), 0o755); err != nil {
@@ -227,9 +229,9 @@ func TestFreeBSDRC_RecoverDuringExtraction(t *testing.T) {
 }
 
 // A crash after the staging rename leaves a complete release folder: the next Apply reuses it without
-// reading the artefact, then swaps and restarts.
+// reading the artefact, then swaps.
 func TestFreeBSDRC_RecoverAfterStaging(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 	stageRelease(t, root, "v2")
 
@@ -246,7 +248,7 @@ func TestFreeBSDRC_RecoverAfterStaging(t *testing.T) {
 // A crash after previous changed, before current: the next Apply sets previous again (to the same
 // value) and swaps current.
 func TestFreeBSDRC_RecoverAfterPreviousChanged(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 	stageRelease(t, root, "v2")
 	symlink(t, root, previousLink, "v1")
@@ -259,14 +261,14 @@ func TestFreeBSDRC_RecoverAfterPreviousChanged(t *testing.T) {
 }
 
 // A crash after current changed, before the restart: the next Apply skips the swap, so previous is
-// kept, and restarts.
+// kept.
 func TestFreeBSDRC_RecoverAfterCurrentChanged(t *testing.T) {
 	_, root := newTestRCInstaller(t)
 	stageRelease(t, root, "v1")
 	stageRelease(t, root, "v2")
 	symlink(t, root, currentLink, "v2")
 	symlink(t, root, previousLink, "v1")
-	i := &FreeBSDRCInstaller{root: root, service: testService, logger: zap.NewNop(), run: newFakeRunner(t, restarts(1)...), maxExtractedBytes: MaxArtefactBytes}
+	i := &FreeBSDRCInstaller{root: root, service: testService, logger: zap.NewNop(), run: newFakeRunner(t), maxExtractedBytes: MaxArtefactBytes}
 
 	mustApply(t, i, "v2")
 
@@ -277,7 +279,7 @@ func TestFreeBSDRC_RecoverAfterCurrentChanged(t *testing.T) {
 
 // An invalid release folder for the target version is replaced by a fresh extraction.
 func TestFreeBSDRC_ReplacesInvalidReleaseFolder(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(1)...)
+	i, root := newTestRCInstaller(t)
 	if err := os.MkdirAll(filepath.Join(root, "v1", "bin"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +292,7 @@ func TestFreeBSDRC_ReplacesInvalidReleaseFolder(t *testing.T) {
 
 // Every restart has a deadline, even when the caller's context has none.
 func TestFreeBSDRC_RestartHasDeadline(t *testing.T) {
-	i, _ := newTestRCInstaller(t, restarts(4)...)
+	i, _ := newTestRCInstaller(t, restarts(3)...)
 	replay := i.run
 	i.run = func(ctx context.Context, name string, args ...string) (string, error) {
 		if _, ok := ctx.Deadline(); !ok {
@@ -300,6 +302,9 @@ func TestFreeBSDRC_RestartHasDeadline(t *testing.T) {
 	}
 
 	mustApply(t, i, "v1", "v2")
+	if err := i.Restart(context.Background()); err != nil {
+		t.Fatalf("Restart() error = %v", err)
+	}
 	if err := i.Rollback(context.Background()); err != nil {
 		t.Fatalf("Rollback() error = %v", err)
 	}
@@ -307,7 +312,7 @@ func TestFreeBSDRC_RestartHasDeadline(t *testing.T) {
 }
 
 func TestFreeBSDRC_Rollback(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(3)...)
+	i, root := newTestRCInstaller(t, restarts(1)...)
 	mustApply(t, i, "v1", "v2")
 
 	if err := i.Rollback(context.Background()); err != nil {
@@ -320,7 +325,7 @@ func TestFreeBSDRC_Rollback(t *testing.T) {
 }
 
 func TestFreeBSDRC_RollbackNoPrevious(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(1)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 
 	err := i.Rollback(context.Background())
@@ -332,7 +337,7 @@ func TestFreeBSDRC_RollbackNoPrevious(t *testing.T) {
 
 // Rollback refuses to point current at an invalid previous release.
 func TestFreeBSDRC_RollbackInvalidPrevious(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1", "v2")
 	if err := os.Remove(filepath.Join(root, "v1", "bin", "sc-bos")); err != nil {
 		t.Fatal(err)
@@ -347,7 +352,7 @@ func TestFreeBSDRC_RollbackInvalidPrevious(t *testing.T) {
 
 // A failed restart during Rollback is returned, and current stays pointed at previous.
 func TestFreeBSDRC_RollbackRestartFails(t *testing.T) {
-	i, root := newTestRCInstaller(t, append(restarts(2), expectErr(restartCmd...))...)
+	i, root := newTestRCInstaller(t, expectErr(restartCmd...))
 	mustApply(t, i, "v1", "v2")
 
 	err := i.Rollback(context.Background())
@@ -399,7 +404,7 @@ func TestFreeBSDRC_BadArtefact(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			i, root := newTestRCInstaller(t, restarts(1)...)
+			i, root := newTestRCInstaller(t)
 			mustApply(t, i, "v1")
 			if tt.maxSize > 0 {
 				i.maxExtractedBytes = tt.maxSize
@@ -450,7 +455,7 @@ func TestFreeBSDRC_BadLinkTarget(t *testing.T) {
 			"trailing slash": func(string) string { return "v1/" },
 		} {
 			t.Run(link+" "+name, func(t *testing.T) {
-				i, root := newTestRCInstaller(t, restarts(2)...)
+				i, root := newTestRCInstaller(t)
 				mustApply(t, i, "v1", "v2")
 				bad := target(root)
 				if err := os.Remove(filepath.Join(root, link)); err != nil {
@@ -499,7 +504,7 @@ func TestFreeBSDRC_LinkNotSymlink(t *testing.T) {
 // When current's folder is invalid and the new artefact is bad too, current still resolves to the old
 // folder.
 func TestFreeBSDRC_BadArtefactKeepsInvalidCurrent(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(1)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1")
 	if err := os.Remove(filepath.Join(root, "v1", "bin", "sc-bos")); err != nil {
 		t.Fatal(err)
@@ -533,7 +538,7 @@ func TestFreeBSDRC_Prune(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "stray"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	i := &FreeBSDRCInstaller{root: root, service: testService, logger: zap.NewNop(), run: newFakeRunner(t, restarts(1)...), maxExtractedBytes: MaxArtefactBytes}
+	i := &FreeBSDRCInstaller{root: root, service: testService, logger: zap.NewNop(), run: newFakeRunner(t), maxExtractedBytes: MaxArtefactBytes}
 
 	mustApply(t, i, "v2")
 
@@ -543,14 +548,25 @@ func TestFreeBSDRC_Prune(t *testing.T) {
 	assertLink(t, root, previousLink, "v1")
 }
 
+// Restart restarts the service without changing the links.
+func TestFreeBSDRC_Restart(t *testing.T) {
+	i, root := newTestRCInstaller(t, restarts(1)...)
+	mustApply(t, i, "v1", "v2")
+
+	if err := i.Restart(context.Background()); err != nil {
+		t.Fatalf("Restart() error = %v", err)
+	}
+	assertLink(t, root, currentLink, "v2")
+	assertLink(t, root, previousLink, "v1")
+}
+
 // A failed restart is returned, and the links stay swapped.
 func TestFreeBSDRC_RestartFails(t *testing.T) {
-	i, root := newTestRCInstaller(t, expect("", restartCmd...), expectErr(restartCmd...))
-	mustApply(t, i, "v1")
+	i, root := newTestRCInstaller(t, expectErr(restartCmd...))
+	mustApply(t, i, "v1", "v2")
 
-	err := i.Apply(context.Background(), writeArtefact(t, releaseEntries("v2")), "v2")
-	if err == nil || !strings.Contains(err.Error(), "restart "+testService) {
-		t.Fatalf("Apply() error = %v, want restart error", err)
+	if err := i.Restart(context.Background()); !errors.Is(err, errCommand) {
+		t.Fatalf("Restart() error = %v, want %v", err, errCommand)
 	}
 	assertLink(t, root, currentLink, "v2")
 	assertLink(t, root, previousLink, "v1")
@@ -580,7 +596,7 @@ func TestFreeBSDRC_ApplyLocal_FirstInstall(t *testing.T) {
 }
 
 func TestFreeBSDRC_ApplyLocal_Restart(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t, restarts(1)...)
 	mustApply(t, i, "v1")
 	got := applyLocal(t, i, "v2", true)
 
@@ -593,7 +609,7 @@ func TestFreeBSDRC_ApplyLocal_Restart(t *testing.T) {
 
 // Installing the current release again changes nothing and reports it was already current.
 func TestFreeBSDRC_ApplyLocal_AlreadyCurrent(t *testing.T) {
-	i, root := newTestRCInstaller(t, restarts(2)...)
+	i, root := newTestRCInstaller(t)
 	mustApply(t, i, "v1", "v2")
 	got := applyLocal(t, i, "v2", false)
 
@@ -642,7 +658,7 @@ func TestFreeBSDRC_ApplyLocal_BadArtefact(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i, root := newTestRCInstaller(t, restarts(1)...)
+			i, root := newTestRCInstaller(t)
 			mustApply(t, i, "v1")
 			_, err := i.ApplyLocal(context.Background(), writeArtefact(t, tt.entries), true)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {

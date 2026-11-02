@@ -221,6 +221,11 @@ func (s *Service) reconcile(ctx context.Context, t target) (rec record, settled 
 	if err := s.installer.Apply(context.Background(), artefact, t.Version); err != nil {
 		return s.settleFailed(fmt.Sprintf("apply: %v", err)), true
 	}
+	// Apply has pointed current at the new version, so roll back if the restart fails. Otherwise whatever
+	// starts BOS next runs a version reported as failed.
+	if err := s.installer.Restart(context.Background()); err != nil {
+		return s.rollback(ctx, fmt.Sprintf("restart %s: %v", t.Version, err))
+	}
 
 	if s.awaitCommit(ctx, t.Version, sinceGen) {
 		return s.settleCompleted(t.Version), true

@@ -9,12 +9,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// PodmanInstaller implements Installer by shelling out to podman and systemctl.
+// PodmanInstaller implements Installer for Rocky Linux hosts that run BOS as a Podman container under a
+// systemd unit, by shelling out to podman and systemctl.
+//
+// Each release is an image in repo, loaded from the artefact. The tags repo:current and repo:previous
+// select the release the unit runs and the rollback target. A restart recreates the container from
+// repo:current.
 //
 // It deliberately does not use podman auto-update: that has no per-container filter and would act on
 // every auto-update-labelled container on the host. Instead it drives a recreate scoped to the BOS
-// unit and owns rollback itself via the :previous tag. Confirmation that the new version is good is not
-// its concern: BOS asserts that over the socket via Commit, so the installer only applies and rolls back.
+// unit and owns rollback itself via the :previous tag.
 type PodmanInstaller struct {
 	repo   string // image repository whose tags are swapped, e.g. "localhost/smartcore/bos"
 	unit   string // systemd unit and container name, e.g. "bos"
@@ -42,24 +46,27 @@ func (p *PodmanInstaller) Apply(ctx context.Context, artefactPath, version strin
 	if _, err := p.podman(ctx, "load", "-i", artefactPath); err != nil {
 		return fmt.Errorf("load artefact: %w", err)
 	}
-	// Move :current onto version, recording the prior :current as the rollback pointer. Skip the swap when
-	// version is already :current - can happen when resuming an interrupted operation - so the rollback
-	// pointer keeps pointing at the previous good image instead of being overwritten with version. This is
-	// required for idempotence: without it, a resume after the tag-swap would lose the rollback target and a later
-	// rollback would return to the bad version.
+	// Point :previous at the old current image and :current at version. Skip both when :current already
+	// points at version, which can happen when resuming an interrupted operation, so :previous keeps
+	// pointing at the previous good image. This is required for idempotence: otherwise a resume would point
+	// :previous at version too, and a later rollback would return to the bad version.
 	equal, err := p.compareTags(ctx, version, "current")
 	if err != nil {
 		return fmt.Errorf("compare version against current tag: %w", err)
 	}
 	if !equal {
-		// Record the rollback pointer. Tolerate a missing :current on the very first install.
+		// Point :previous at the old current image. Tolerate a missing :current on the very first install.
 		if _, err := p.podman(ctx, "tag", p.tag("current"), p.tag("previous")); err != nil {
-			p.logger.Debug("no current tag to record as previous (first install?)", zap.Error(err))
+			p.logger.Debug("no current tag to point previous at (first install?)", zap.Error(err))
 		}
 		if _, err := p.podman(ctx, "tag", p.tag(version), p.tag("current")); err != nil {
 			return fmt.Errorf("repoint current tag: %w", err)
 		}
 	}
+	return nil
+}
+
+func (p *PodmanInstaller) Restart(ctx context.Context) error {
 	return p.restart(ctx)
 }
 

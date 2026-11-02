@@ -32,11 +32,12 @@ import (
 const testDeadline = 2 * time.Minute
 
 // fakeInstaller records the methods called on it and returns scripted results. Confirmation is no longer
-// the installer's job (BOS asserts it via Commit), so the fake only implements Apply and Rollback.
+// the installer's job (BOS asserts it via Commit), so the fake only implements Apply, Restart and Rollback.
 type fakeInstaller struct {
 	mu sync.Mutex
 
 	applyErr    error
+	restartErr  error
 	rollbackErr error
 
 	// applyHook, if set, is called at the end of a successful Apply. Tests use it to inject a commit
@@ -74,6 +75,13 @@ func (f *fakeInstaller) Apply(_ context.Context, artefactPath, version string) e
 		f.applyHook()
 	}
 	return nil
+}
+
+func (f *fakeInstaller) Restart(context.Context) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, "Restart")
+	return f.restartErr
 }
 
 func (f *fakeInstaller) Rollback(context.Context) error {
@@ -249,7 +257,7 @@ func TestInstallUpdate_HappyPath(t *testing.T) {
 			t.Error("finish time should be set")
 		}
 
-		assertCalls(t, fake, "Apply")
+		assertCalls(t, fake, "Apply", "Restart")
 		if got := fake.appliedVer; got != "v2" {
 			t.Errorf("applied version = %q, want %q", got, "v2")
 		}
@@ -308,7 +316,7 @@ func TestCommit_RacingApplyConfirms(t *testing.T) {
 			t.Errorf("state = %v, want COMPLETED (a commit racing Apply must confirm, not roll back)", got)
 		}
 	})
-	assertCalls(t, fake, "Apply") // confirmed via the racing commit; never rolled back
+	assertCalls(t, fake, "Apply", "Restart") // confirmed via the racing commit; never rolled back
 }
 
 // Once an update has settled, a stray heartbeat for a different version (no reconcile in flight) must
@@ -492,7 +500,7 @@ func TestStop_AbandonsAwaitForRecovery(t *testing.T) {
 		if st.GetFinishTime() != nil {
 			t.Error("finish time set: the goal was settled instead of abandoned")
 		}
-		assertCalls(t, fake, "Apply") // never rolled back
+		assertCalls(t, fake, "Apply", "Restart") // never rolled back
 	})
 
 	// Recovery runs on a fresh Service (a cancelled lifecycle context cannot be reused): it re-drives the
@@ -589,7 +597,7 @@ func TestInstallUpdate_RollbackOnNoCommit(t *testing.T) {
 			if st.GetError() == "" {
 				t.Error("error should be set")
 			}
-			assertCalls(t, fake, "Apply", "Rollback")
+			assertCalls(t, fake, "Apply", "Restart", "Rollback")
 			if got := fake.current; got != "v1" { // the host is left running the previous good version
 				t.Errorf("current = %q, want %q", got, "v1")
 			}
@@ -614,8 +622,62 @@ func TestInstallUpdate_RollbackOnNoCommit(t *testing.T) {
 			if !strings.Contains(st.GetError(), "rollback failed") {
 				t.Errorf("want rollback failed error, got %q", st.GetError())
 			}
-			assertCalls(t, fake, "Apply", "Rollback")
+			assertCalls(t, fake, "Apply", "Restart", "Rollback")
 		})
+	})
+}
+
+// A failed Apply leaves the host unchanged, so the update is FAILED without a restart or rollback.
+func TestInstallUpdate_ApplyFails(t *testing.T) {
+	_, url, sum, client := artefactServer(t)
+	fake := &fakeInstaller{current: "v1", previous: "v0", applyErr: errors.New("disk full")}
+	c := testClient(t, newService(t, fake, t.TempDir(), client))
+
+	synctest.Test(t, func(t *testing.T) {
+		commit(t, c, "v1")
+		mustInstall(t, c, "v2", url, sum)
+		synctest.Wait()
+
+		st := getStatus(t, c)
+		if got := st.GetState(); got != supervisorpb.UpdateStatus_FAILED {
+			t.Errorf("state = %v, want %v", got, supervisorpb.UpdateStatus_FAILED)
+		}
+		if !strings.Contains(st.GetError(), "apply") {
+			t.Errorf("want apply error, got %q", st.GetError())
+		}
+		assertCalls(t, fake, "Apply")
+		if got := fake.current; got != "v1" {
+			t.Errorf("current = %q, want %q", got, "v1")
+		}
+	})
+}
+
+// A failed restart happens after current has moved to the new version, so the Supervisor rolls back
+// straight away rather than settling FAILED with the new version still installed.
+func TestInstallUpdate_RestartFails(t *testing.T) {
+	_, url, sum, client := artefactServer(t)
+	fake := &fakeInstaller{current: "v1", restartErr: errors.New("timed out")}
+	c := testClient(t, newService(t, fake, t.TempDir(), client))
+
+	synctest.Test(t, func(t *testing.T) {
+		commit(t, c, "v1")
+		mustInstall(t, c, "v2", url, sum)
+		synctest.Wait() // apply, restart fails, rollback, parks awaiting a fresh Commit(v1)
+
+		commit(t, c, "v1")
+		synctest.Wait()
+
+		st := getStatus(t, c)
+		if got := st.GetState(); got != supervisorpb.UpdateStatus_FAILED {
+			t.Errorf("state = %v, want %v", got, supervisorpb.UpdateStatus_FAILED)
+		}
+		if !strings.Contains(st.GetError(), "restart") {
+			t.Errorf("want restart error, got %q", st.GetError())
+		}
+		assertCalls(t, fake, "Apply", "Restart", "Rollback")
+		if got := fake.current; got != "v1" {
+			t.Errorf("current = %q, want %q", got, "v1")
+		}
 	})
 }
 
@@ -638,7 +700,7 @@ func TestInstallUpdate_FirstInstallNoPrevious(t *testing.T) {
 		if !strings.Contains(st.GetError(), "previous") {
 			t.Errorf("want previous error, got %q", st.GetError())
 		}
-		assertCalls(t, fake, "Apply", "Rollback")
+		assertCalls(t, fake, "Apply", "Restart", "Rollback")
 	})
 }
 
@@ -666,7 +728,7 @@ func TestReconcile_ResumesInterruptedInstall_Healthy(t *testing.T) {
 		if got := st.GetVersion(); got != "v2" {
 			t.Errorf("version = %q, want %q", got, "v2")
 		}
-		assertCalls(t, fake, "Apply")
+		assertCalls(t, fake, "Apply", "Restart")
 	})
 }
 
@@ -692,7 +754,7 @@ func TestReconcile_ResumesInterruptedInstall_Unhealthy(t *testing.T) {
 		if got := st.GetState(); got != supervisorpb.UpdateStatus_FAILED {
 			t.Errorf("state = %v, want %v", got, supervisorpb.UpdateStatus_FAILED)
 		}
-		assertCalls(t, fake, "Apply", "Rollback")
+		assertCalls(t, fake, "Apply", "Restart", "Rollback")
 	})
 }
 
@@ -722,7 +784,7 @@ func TestReconcile_ResumesAfterTagSwap_Unhealthy(t *testing.T) {
 		if got := st.GetState(); got != supervisorpb.UpdateStatus_FAILED {
 			t.Errorf("state = %v, want %v", got, supervisorpb.UpdateStatus_FAILED)
 		}
-		assertCalls(t, fake, "Apply", "Rollback")
+		assertCalls(t, fake, "Apply", "Restart", "Rollback")
 		// rollback returned to the previous good version, not the bad v2, and did not overwrite the pointer.
 		if got := fake.current; got != "v1" {
 			t.Errorf("current = %q, want %q", got, "v1")

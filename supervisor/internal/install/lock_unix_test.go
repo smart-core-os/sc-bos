@@ -101,3 +101,24 @@ func TestFreeBSDRC_ApplyLocal_LockReleased(t *testing.T) {
 		assertLink(t, root, currentLink, "v1")
 	})
 }
+
+// Restart waits for a held lock before restarting, so current can't change during the restart.
+func TestFreeBSDRC_Restart_WaitsForLock(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		i, root := newTestRCInstaller(t, restarts(1)...)
+		held := holdLock(t, root)
+
+		const holdFor = 5 * time.Second
+		go func() {
+			time.Sleep(holdFor)
+			_ = held.Close()
+		}()
+		start := time.Now()
+		if err := i.Restart(context.Background()); err != nil {
+			t.Fatalf("Restart() error = %v", err)
+		}
+		if waited := time.Since(start); waited < holdFor {
+			t.Errorf("Restart() ran after %v, want it to wait for the lock", waited)
+		}
+	})
+}

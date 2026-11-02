@@ -39,8 +39,9 @@ const (
 // FreeBSDRCInstaller implements Installer for hosts that run BOS as a native rc(8) service.
 //
 // Each release is extracted into its own folder under root. The relative symlinks root/current and
-// root/previous select the release the service runs and the rollback target. Apply and Rollback hold an
-// exclusive lock on root/.lock, so other processes using the same lock can't change root at the same time.
+// root/previous select the release the service runs and the rollback target. Apply, Restart and Rollback
+// hold an exclusive lock on root/.lock, so other processes using the same lock can't change root at the
+// same time.
 type FreeBSDRCInstaller struct {
 	root    string // folder holding the release folders and links, e.g. "/usr/local/sc-bos/releases"
 	service string // rc(8) service name, e.g. "sc_bos"
@@ -67,9 +68,9 @@ func NewFreeBSDRCInstaller(root, service string, logger *zap.Logger) *FreeBSDRCI
 	}
 }
 
-// Apply installs the release artefact at artefactPath as version, points current at it, and restarts
-// the service. A release folder for version that already passes validation is reused without reading
-// artefactPath. When current already points at version, previous is left unchanged.
+// Apply installs the release artefact at artefactPath as version and points current at it, without
+// restarting the service. A release folder for version that already passes validation is reused without
+// reading artefactPath. When current already points at version, previous is left unchanged.
 func (i *FreeBSDRCInstaller) Apply(ctx context.Context, artefactPath, version string) error {
 	if err := checkVersion(version); err != nil {
 		return err
@@ -80,9 +81,17 @@ func (i *FreeBSDRCInstaller) Apply(ctx context.Context, artefactPath, version st
 	}
 	defer unlock()
 
-	if _, err := i.install(root, artefactPath, version); err != nil {
+	_, err = i.install(root, artefactPath, version)
+	return err
+}
+
+// Restart restarts the service, holding the lock so current can't change while it does.
+func (i *FreeBSDRCInstaller) Restart(ctx context.Context) error {
+	_, unlock, err := i.openLocked(ctx)
+	if err != nil {
 		return err
 	}
+	defer unlock()
 	return i.restart(ctx)
 }
 
@@ -96,7 +105,7 @@ type LocalInstall struct {
 }
 
 // ApplyLocal installs the release artefact at artefactPath as Apply does, taking the version from the
-// artefact's manifest, and restarts the service only if restart is true.
+// artefact's manifest, then restarts the service if restart is true.
 //
 // ctx bounds only the wait for the lock. If another process holds the lock until ctx is done,
 // ApplyLocal returns an error wrapping ctx.Err() without changing any release or link. Once it holds
@@ -212,8 +221,8 @@ func (i *FreeBSDRCInstaller) openLocked(ctx context.Context) (root *os.Root, unl
 }
 
 // install prunes root, stages the release for version from artefactPath unless a valid one is already
-// present, and points current at it, recording the old current as previous. It returns the version current
-// pointed at before, or "" if there was none. The caller holds the lock and has checked version with
+// present, then points previous at the old current release and current at version. It returns the version
+// current pointed at before, or "" if there was none. The caller holds the lock and has checked version with
 // checkVersion.
 func (i *FreeBSDRCInstaller) install(root *os.Root, artefactPath, version string) (oldCurrent string, err error) {
 	current, hasCurrent, err := readLink(root, currentLink)
