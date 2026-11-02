@@ -203,6 +203,34 @@ func TestDevice_subscribe_deadSubscriptionSplitsAcrossChecks(t *testing.T) {
 	})
 }
 
+// TestDevice_subscribe_allInformationalDeadSubscriptionFaultsPrimaryCheck covers a device
+// whose every point is informational, a UDMI-only export say. Its point faults all land on
+// the informational check, so the server being unreachable has to reach deviceStatusCheck
+// some other way or the device reads NORMAL throughout.
+func TestDevice_subscribe_allInformationalDeadSubscriptionFaultsPrimaryCheck(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber(nil, ua.StatusBadTimeout)
+		dev, rc := newSplitTestDevice(t, sub, map[string]bool{spareNode: true}, spareNode)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		require.NotNil(t, faultOn(rc.informationalCheck(t), PointSubscribeError))
+		require.Nil(t, faultOn(rc.primaryCheck(t), PointSubscribeError), "there is no trait-backed point to name")
+
+		rel := rc.primaryCheck(t).GetReliability()
+		require.NotEqual(t, healthpb.HealthCheck_Reliability_RELIABLE, rel.GetState(),
+			"the server failing is a device problem whichever points it took with it")
+		require.NotEqual(t, healthpb.HealthCheck_Reliability_STATE_UNSPECIFIED, rel.GetState())
+		require.NotNil(t, rel.GetLastError())
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
 // TestDevice_subscribe_informationalPointRecovers checks the informational check clears the
 // way the primary one does, rather than latching on the first failure.
 func TestDevice_subscribe_informationalPointRecovers(t *testing.T) {

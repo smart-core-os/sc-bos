@@ -222,7 +222,7 @@ func (d *device) deviceTask() task.Task {
 			// no per-node status to classify - the subscription is what failed, not any item -
 			// so this is always retried, and every point is reported as waiting on it
 			d.logSubscribeFailure(attempt, "failed to create the device subscription, will keep trying", err)
-			d.failAllPoints(permanent, err)
+			d.failAllPoints(ctx, permanent, err)
 			return task.Normal, err
 		}
 
@@ -265,7 +265,7 @@ func (d *device) deviceTask() task.Task {
 		if ctx.Err() != nil {
 			return task.StopNow, err
 		}
-		d.failAllPoints(permanent, err)
+		d.failAllPoints(ctx, permanent, err)
 		if lived := time.Since(start); lived >= resubscribeGrace {
 			// it demonstrably works, so start the backoff over rather than carry a ramp that
 			// describes some older problem
@@ -394,13 +394,19 @@ func (d *device) commitBatches(primary, informational *pointBatch) {
 // Split across both checks the same way applyResults is: a dead subscription takes the
 // informational points with it too, and they are still reported as waiting on it - just not on
 // the check that says whether the device is doing its job.
-func (d *device) failAllPoints(permanent map[string]bool, err error) {
+//
+// That check is also marked unreliable with err, as handleEvent does for a subscription error.
+// The server is what failed, not any point, and on a device whose every point is informational
+// the point faults alone would leave the check NORMAL while the server is unreachable.
+func (d *device) failAllPoints(ctx context.Context, permanent map[string]bool, err error) {
 	primary, informational := newPointBatch(), newPointBatch()
 	for _, nodeId := range d.wantedNodes(permanent) {
 		key := nodeId.String()
 		d.batchFor(key, primary, informational).failing[key] = err
 	}
 	d.commitBatches(primary, informational)
+	d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
+	d.serverErrOnPrimary = true
 }
 
 // runSubscription pumps the subscription until it ends, retrying its stragglers alongside.

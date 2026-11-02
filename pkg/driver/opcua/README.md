@@ -53,7 +53,8 @@ Mark such a variable `informational`:
 A device with any informational variable gets a second check, `informationalPointCheck`, with
 no occupant or equipment impact. Subscribe faults and bad or uncertain reads on its
 informational points go there instead of `deviceStatusCheck`. Server-level problems, such as a
-subscription error, stay on `deviceStatusCheck`, and any point answering clears them.
+subscription that will not open or dies, mark `deviceStatusCheck` unreliable even on a device
+whose every variable is informational, and any point answering clears them.
 
 A config in which the Meter trait or a Health check reads an informational variable is
 refused. Meter usage is the device's primary function, and a Health check only fires on a value
