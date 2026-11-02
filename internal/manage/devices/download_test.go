@@ -117,6 +117,127 @@ func TestServer_DownloadDevicesHTTPHandler(t *testing.T) {
 	ct.assertNoRow("d2")
 }
 
+// TestServer_DownloadDevicesHTTPHandler_meterProduced covers the produced columns: they carry a value
+// only for meters that actually produce, and fall back to the usage unit when the device declares no
+// produced unit of its own.
+func TestServer_DownloadDevicesHTTPHandler_meterProduced(t *testing.T) {
+	n := node.New("test")
+
+	announceMeter := func(name string, reading *meterpb.MeterReading, support *meterpb.MeterReadingSupport) {
+		model := meterpb.NewModel()
+		_, _ = model.UpdateMeterReading(reading)
+		n.Announce(name,
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(model))),
+			node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: support})),
+			node.HasTrait(meterpb.TraitName),
+			node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
+		)
+	}
+
+	// produces, and says what produced is measured in
+	announceMeter("d1",
+		&meterpb.MeterReading{Usage: 200, Produced: 50},
+		&meterpb.MeterReadingSupport{UsageUnit: "kWh", ProducedUnit: "MWh"})
+	// consumption only
+	announceMeter("d2",
+		&meterpb.MeterReading{Usage: 10},
+		&meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+	// produces, but only declares the one unit
+	announceMeter("d3",
+		&meterpb.MeterReading{Usage: 5, Produced: 7},
+		&meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+
+	s, rt := newDownloadedServer(t, n)
+
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
+	rec := httptest.NewRecorder()
+	rt.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	if res.StatusCode != 200 {
+		t.Fatalf("HTTP status code: expected 200, got %d", res.StatusCode)
+	}
+	ct := newCsvTester(t, res.Body)
+
+	ct.assertCellValue("d1", "meter.usage", "200.000")
+	ct.assertCellValue("d1", "meter.produced", "50.000")
+	ct.assertCellValue("d1", "meter.producedunit", "MWh")
+
+	ct.assertCellValue("d2", "meter.usage", "10.000")
+	ct.assertCellValue("d2", "meter.produced", "")
+	ct.assertCellValue("d2", "meter.producedunit", "")
+
+	ct.assertCellValue("d3", "meter.produced", "7.000")
+	ct.assertCellValue("d3", "meter.producedunit", "kWh")
+}
+
+// TestServer_DownloadDevicesHTTPHandler_meterProducedHistory checks the produced columns over history,
+// where each record's row is written from a map reused between records: a record that doesn't produce
+// must leave an empty cell rather than repeat the previous record's value.
+func TestServer_DownloadDevicesHTTPHandler_meterProducedHistory(t *testing.T) {
+	n := node.New("test")
+
+	meterDevice := meterpb.NewModel()
+	_, _ = meterDevice.UpdateMeterReading(&meterpb.MeterReading{Usage: 0})
+	historyStart := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	records := []*meterpb.MeterReadingRecord{
+		{RecordTime: timestamppb.New(historyStart), MeterReading: &meterpb.MeterReading{Usage: 100, Produced: 5}},
+		// the meter was reset, so it reports no production for this record
+		{RecordTime: timestamppb.New(historyStart.Add(time.Hour)), MeterReading: &meterpb.MeterReading{Usage: 150}},
+	}
+	n.Announce("d1",
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterDevice))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{
+			UsageUnit:    "kWh",
+			ProducedUnit: "kWh",
+		}})),
+		node.HasServer(meterpb.RegisterMeterHistoryServer, meterpb.MeterHistoryServer(&stubMeterHistory{records: records})),
+		node.HasTrait(meterpb.TraitName),
+		node.HasMetadata(&metadatapb.Metadata{Location: &metadatapb.Metadata_Location{Floor: "01"}}),
+	)
+
+	s, rt := newDownloadedServer(t, n)
+
+	devicesUrl, err := s.GetDownloadDevicesUrl(context.Background(), &devicespb.GetDownloadDevicesUrlRequest{
+		History: &timepb.Period{
+			StartTime: timestamppb.New(historyStart),
+			EndTime:   timestamppb.New(historyStart.Add(3 * time.Hour)),
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("GET", devicesUrl.Url, nil)
+	rec := httptest.NewRecorder()
+	rt.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	if res.StatusCode != 200 {
+		t.Fatalf("HTTP status code: expected 200, got %d", res.StatusCode)
+	}
+	ct := newCsvTester(t, res.Body)
+
+	producedIdx, ok := ct.headerIndex["meter.produced"]
+	if !ok {
+		t.Fatalf("expected meter.produced column, headers=%v", ct.headerRow)
+	}
+	if len(ct.rows) != len(records) {
+		t.Fatalf("expected %d rows, got %d", len(records), len(ct.rows))
+	}
+	want := []string{"5.000", ""}
+	for i, row := range ct.rows {
+		if row[producedIdx] != want[i] {
+			t.Errorf("row %d meter.produced: want %q, got %q", i, want[i], row[producedIdx])
+		}
+	}
+}
+
 func TestServer_DownloadDevicesHTTPHandler_validation(t *testing.T) {
 	t.Run("expired", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
