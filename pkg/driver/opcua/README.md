@@ -38,7 +38,8 @@ A device's health is reported on its `deviceStatusCheck`: the `PointSubscribe` a
 `DeviceConfig` faults described under [Retrying subscriptions](#retrying-subscriptions), and the
 reliability of its reads. A metering device may declare dozens of variables that no trait
 reads, only so the UDMI export can publish them, and a failure on one of those says nothing
-about whether the device is doing its job.
+about whether the device is doing its job. The same can be true of a point a trait does read,
+such as an Electric power factor on a meter.
 
 Mark such a variable `informational`:
 
@@ -54,9 +55,10 @@ no occupant or equipment impact. Subscribe faults and bad or uncertain reads on 
 informational points go there instead of `deviceStatusCheck`. Server-level problems, such as a
 subscription error, stay on `deviceStatusCheck`, and any point answering clears them.
 
-Only UDMI may reference an informational variable. A config in which any other trait, including
-a Health check, reads one is refused, since that trait's failures would then be hidden from
-`deviceStatusCheck`.
+A config in which the Meter trait or a Health check reads an informational variable is
+refused. Meter usage is the device's primary function, and a Health check only fires on a value
+notification, so a point that never reports would leave it NORMAL; either way its failures would
+be hidden from `deviceStatusCheck`. Other traits, such as Electric and UDMI, may read one.
 
 ## Connecting to the server
 

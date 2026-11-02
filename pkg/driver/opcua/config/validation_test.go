@@ -482,6 +482,24 @@ func TestValidateDeviceTraits(t *testing.T) {
 			errMsg:  "which is marked informational",
 		},
 		{
+			// a dead power-factor register is a fault, but not the meter having stopped
+			// measuring energy
+			name: "electric reads an informational point",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=PowerFactor", Informational: true},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.traits.Electric"},
+						Raw:   []byte(`{"kind":"smartcore.traits.Electric","demand":{"powerFactor":{"nodeId":"ns=2;s=PowerFactor"}}}`),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			// publishing is what informational points are declared for
 			name: "udmi publishes an informational point",
 			device: Device{
