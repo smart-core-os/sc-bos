@@ -409,8 +409,7 @@ type Variable struct {
 	// point check instead of deviceStatusCheck, so a dashboard scoped to the device's
 	// function does not light up because a spare per-phase register went away.
 	//
-	// Defaults to false, so a config that says nothing keeps every point on
-	// deviceStatusCheck exactly as before.
+	// A point a trait other than UDMI reads cannot be informational; ParseConfig refuses it.
 	Informational bool `json:"informational,omitempty"`
 	// ParsedNodeId is the parsed ua.NodeID.
 	ParsedNodeId *ua.NodeID
@@ -501,11 +500,15 @@ func ParseConfig(data []byte) (cfg Root, err error) {
 }
 
 // validateDeviceTraits validates trait configurations and checks that all nodeIds referenced in traits
-// exist in the device's variable list.
+// exist in the device's variable list, and that none a trait reads is marked informational.
 func validateDeviceTraits(device *Device) error {
 	validNodeIds := make(map[string]bool)
+	informational := make(map[string]bool)
 	for _, v := range device.Variables {
 		validNodeIds[v.NodeId] = true
+		if v.Informational {
+			informational[v.NodeId] = true
+		}
 	}
 
 	for _, t := range device.Traits {
@@ -533,6 +536,13 @@ func validateDeviceTraits(device *Device) error {
 		for _, field := range valueSources {
 			if field.value != nil && field.value.NodeId != "" && !validNodeIds[field.value.NodeId] {
 				return fmt.Errorf("device '%s': %s references nodeId '%s' which is not in device variables list",
+					device.Name, field.desc, field.value.NodeId)
+			}
+			// UDMI publishes points rather than reading them, which is what informational points
+			// are declared for. Any other trait reading one would hide its failures from
+			// deviceStatusCheck.
+			if t.Kind != udmipb.TraitName && field.value != nil && informational[field.value.NodeId] {
+				return fmt.Errorf("device '%s': %s reads nodeId '%s', which is marked informational",
 					device.Name, field.desc, field.value.NodeId)
 			}
 		}

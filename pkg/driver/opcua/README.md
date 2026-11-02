@@ -32,6 +32,32 @@ device's own points are unaffected.
 In the config, each device configures which traits it supports. (see config/sample.json for an example)
 Each trait has its own configuration, which is used to map the OPC UA Variable Node to the trait.
 
+## Informational points
+
+A device's health is reported on its `deviceStatusCheck`: the `PointSubscribe` and
+`DeviceConfig` faults described under [Retrying subscriptions](#retrying-subscriptions), and the
+reliability of its reads. A metering device may declare dozens of variables that no trait
+reads, only so the UDMI export can publish them, and a failure on one of those says nothing
+about whether the device is doing its job.
+
+Mark such a variable `informational`:
+
+```json
+"variables": [
+  {"nodeId": "ns=2;s=LDB_X_00_01_L\\MMTR1\\TotWh"},
+  {"nodeId": "ns=2;s=LDB_X_00_01_L\\MMXU1\\A\\phsB", "informational": true}
+]
+```
+
+A device with any informational variable gets a second check, `informationalPointCheck`, with
+no occupant or equipment impact. Subscribe faults and bad or uncertain reads on its
+informational points go there instead of `deviceStatusCheck`. Server-level problems, such as a
+subscription error, stay on `deviceStatusCheck`, and any point answering clears them.
+
+Only UDMI may reference an informational variable. A config in which any other trait, including
+a Health check, reads one is refused, since that trait's failures would then be hidden from
+`deviceStatusCheck`.
+
 ## Connecting to the server
 
 The `conn` block says where the server is and how to authenticate against it.

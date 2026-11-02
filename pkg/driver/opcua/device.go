@@ -71,7 +71,7 @@ type device struct {
 
 	// informationalCheck reports the points in informational, keeping their failures off
 	// faultCheck. nil, along with informationalPoints and informational, on a device that
-	// marks no variable informational - such a device gains no empty second check.
+	// marks no variable informational.
 	informationalCheck *healthpb.FaultCheck
 	// informationalPoints is a second pointHealth rather than a mode of the first: each
 	// instance owns PointSubscribeError and DeviceConfigError outright on its own check, and
@@ -81,6 +81,11 @@ type device struct {
 	// informational is the node id set built from config.Variable.Informational, keyed the
 	// way notifications and monitor results name a node.
 	informational map[string]bool
+	// serverErrOnPrimary is whether faultCheck's reliability still holds the last subscription
+	// error. Any point answering Good says the server is back, but only a trait-backed read
+	// rewrites faultCheck, so an informational read clears it while this is set. Only ever
+	// touched from the goroutine pumping this device.
+	serverErrOnPrimary bool
 
 	// maxStagger bounds the random delay before the device's first subscribe attempt.
 	// A field so tests can zero it, which makes the retry timings the only thing on the clock.
@@ -94,7 +99,7 @@ type device struct {
 // newDevice creates a new device instance for the given configuration.
 // Trait implementations (Electric, Meter, Transport, udmi) must be assigned separately before calling run.
 // informationalCheck may be nil, for a device with no informational variable; then every
-// point reports on check, which is exactly the behaviour of a config that predates the flag.
+// point reports on check.
 func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check, informationalCheck *healthpb.FaultCheck, systemCheck service.SystemCheck) *device {
 	d := &device{
 		client:      client,
@@ -563,6 +568,7 @@ func (d *device) logUnknownHandle(handle uint32) {
 func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificationData, lookup nodeLookup) {
 	if event.Error != nil {
 		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(event.Error))
+		d.serverErrOnPrimary = true
 		service.UpdateSystemCheck(d.systemCheck, event.Error)
 		d.logger.Warn("OPC UA server connection error", zap.String("device", d.conf.Name), zap.Error(event.Error))
 		return
@@ -612,17 +618,19 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 //
 // A read on an informational point reports on informationalCheck, so that a spare register
 // returning Bad neither faults nor vouches for the check a function-scoped dashboard reads.
+// The exception is a subscription error, which is about the server rather than any point: any
+// Good read clears it from faultCheck.
 //
-// Known limitation, improved here but not closed: reliability is last-writer-wins per check,
-// because checkBase.write is an unsynchronised read-modify-write already raced from these
-// goroutines. Splitting the checks stops a bad informational read from clearing or setting the
-// primary check's reliability, but two bad reads on the same check still overwrite each other.
-// Closing it means aggregating bad-read node ids per check the way pointHealth aggregates
-// subscribe state; that is a separate change.
+// Reliability is last-writer-wins per check, so two bad reads on the same check overwrite each
+// other. Holding it per point would mean aggregating bad-read node ids per check the way
+// pointHealth aggregates subscribe state.
 func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status ua.StatusCode, value any) {
 	fc := d.faultCheck
 	if d.informational[node.String()] {
 		fc = d.informationalCheck
+	} else {
+		// whatever this read says, it replaces the subscription error on faultCheck
+		d.serverErrOnPrimary = false
 	}
 	switch {
 	case statusIsBad(status):
@@ -634,6 +642,10 @@ func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status 
 		d.logger.Debug("uncertain value for node", zap.Stringer("node", node), zap.String("code", status.Error()))
 	default: // Good, whatever info bits it carries
 		fc.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+		if d.serverErrOnPrimary {
+			d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(nil))
+			d.serverErrOnPrimary = false
+		}
 		// server-scoped, so any of the device's points answering says the server answered
 		service.UpdateSystemCheck(d.systemCheck, nil)
 	}

@@ -410,9 +410,7 @@ func TestValidateDeviceTraits(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			// regression: the kind was handled in driver.go but missing from this switch, so
-			// every config using it was rejected as an unknown trait kind. Nothing in the
-			// repo used the trait, so nothing caught it.
+			// driver.go applies the kind, so validation has to accept it too
 			name: "valid device with health trait",
 			device: Device{
 				Name: "test-device",
@@ -446,6 +444,64 @@ func TestValidateDeviceTraits(t *testing.T) {
 			},
 			wantErr: true,
 			errMsg:  "ns=2;s=Tag99",
+		},
+		{
+			// its failures would report on the informational check, hiding a broken usage
+			// reading from deviceStatusCheck
+			name: "meter reads an informational point",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=Tag1", Informational: true},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.bos.Meter"},
+						Raw:   []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "meter trait usage reads nodeId 'ns=2;s=Tag1', which is marked informational",
+		},
+		{
+			name: "health check reads an informational point",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=Tag1", Informational: true},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.bos.Health"},
+						Raw:   []byte(`{"kind":"smartcore.bos.Health","checks":[{"id":"boardHealth","displayName":"Board Reported Health","description":"The board's own health point","errorCode":"BoardHealth","summary":"The board is reporting a fault","normalValue":1,"name":"LPHD1.EEHealth","nodeId":"ns=2;s=Tag1"}]}`),
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "which is marked informational",
+		},
+		{
+			// publishing is what informational points are declared for
+			name: "udmi publishes an informational point",
+			device: Device{
+				Name: "test-device",
+				Variables: []*Variable{
+					{NodeId: "ns=2;s=Tag1"},
+					{NodeId: "ns=2;s=Tag2", Informational: true},
+				},
+				Traits: []RawTrait{
+					{
+						Trait: Trait{Kind: "smartcore.bos.Meter"},
+						Raw:   []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
+					},
+					{
+						Trait: Trait{Kind: "smartcore.bos.UDMI"},
+						Raw:   []byte(`{"kind":"smartcore.bos.UDMI","topicPrefix":"test/","points":{"usage":{"nodeId":"ns=2;s=Tag1"},"spare":{"nodeId":"ns=2;s=Tag2"}}}`),
+					},
+				},
+			},
+			wantErr: false,
 		},
 	}
 

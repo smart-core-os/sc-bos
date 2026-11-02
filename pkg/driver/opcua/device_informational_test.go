@@ -6,6 +6,7 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/ua"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -254,8 +255,41 @@ func TestDevice_handleStatusValue_routesReadsByCheck(t *testing.T) {
 		"the informational check keeps its own last word")
 }
 
-// TestDevice_newDevice_withoutInformationalCheck pins the compatibility promise: a config that
-// marks nothing informational behaves exactly as it did before the flag existed.
+// TestDevice_handleStatusValue_informationalReadClearsServerError covers a subscription error,
+// which is about the server rather than any point: on a meter whose usage rarely changes, the
+// spare registers answering are the first sign the server is back.
+func TestDevice_handleStatusValue_informationalReadClearsServerError(t *testing.T) {
+	dev, rc := newSplitTestDevice(t, nil, map[string]bool{spareNode: true}, usageNode, spareNode)
+	ctx := context.Background()
+	noLookup := func(uint32) (*ua.NodeID, bool) { return nil, false }
+
+	dev.handleEvent(ctx, &opcua.PublishNotificationData{Error: ua.StatusBadCommunicationError}, noLookup)
+	require.NotEqual(t, healthpb.HealthCheck_Reliability_RELIABLE, rc.primaryCheck(t).GetReliability().GetState())
+
+	dev.handleStatusValue(ctx, mustParseNodeID(spareNode), ua.StatusOK, float64(1))
+	require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, rc.primaryCheck(t).GetReliability().GetState(),
+		"the server answering clears the server error, whichever point it answered for")
+}
+
+// TestDevice_handleStatusValue_informationalReadLeavesPointError checks the server error is the
+// only thing an informational read clears: once a trait-backed read has replaced it, that
+// read's verdict stands.
+func TestDevice_handleStatusValue_informationalReadLeavesPointError(t *testing.T) {
+	dev, rc := newSplitTestDevice(t, nil, map[string]bool{spareNode: true}, usageNode, spareNode)
+	ctx := context.Background()
+	noLookup := func(uint32) (*ua.NodeID, bool) { return nil, false }
+
+	dev.handleEvent(ctx, &opcua.PublishNotificationData{Error: ua.StatusBadCommunicationError}, noLookup)
+	dev.handleStatusValue(ctx, mustParseNodeID(usageNode), ua.StatusBadNodeIDUnknown, nil)
+	dev.handleStatusValue(ctx, mustParseNodeID(spareNode), ua.StatusOK, float64(1))
+
+	rel := rc.primaryCheck(t).GetReliability()
+	require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.GetState())
+	require.Contains(t, rel.GetLastError().GetDetailsText(), usageNode)
+}
+
+// TestDevice_newDevice_withoutInformationalCheck checks a config that marks nothing
+// informational gets no second check and routes every point to the primary one.
 func TestDevice_newDevice_withoutInformationalCheck(t *testing.T) {
 	cfg := &config.Device{
 		Name: "test-device",
