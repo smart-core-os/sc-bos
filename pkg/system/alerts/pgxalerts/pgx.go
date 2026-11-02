@@ -478,7 +478,6 @@ func (s *Server) ListAlerts(ctx context.Context, request *alertpb.ListAlertsRequ
 		if q.ResolvedNotAfter != nil {
 			where = append(where, fmt.Sprintf(`resolve_time<=$%d`, argIdx+1))
 			args = append(args, q.ResolvedNotAfter.AsTime())
-			argIdx += 1
 		}
 	}
 

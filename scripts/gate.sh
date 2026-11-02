@@ -132,7 +132,7 @@ if [ -n "$GO_PKGS" ]; then
   if command -v staticcheck >/dev/null 2>&1; then
     run staticcheck staticcheck "$@"
   else
-    skip staticcheck "not installed (go install honnef.co/go/tools/cmd/staticcheck@2026.1); CI will run it"
+    skip staticcheck "not installed (go install honnef.co/go/tools/cmd/staticcheck@2026.2.2); CI will run it"
   fi
   run go-test go test -skip '_e2e$' "$@"
   [ $FULL -eq 1 ] && run go-test-e2e go test -count=1 -run '_e2e$' "$@"

@@ -732,17 +732,16 @@ func (v value) toString() (string, bool) {
 		return string(enumDesc.Name()), true
 	case protoreflect.BytesKind:
 		return string(v.v.Bytes()), true
-	default:
+	case protoreflect.MessageKind, protoreflect.GroupKind:
 		// for value messages, we rely on the json representation to turn them into strings.
-		if msg := v.v.Message(); msg != nil {
-			bs, err := protojson.Marshal(msg.Interface())
-			if err != nil {
-				// if we can't marshal the message, we can't convert it to a string
-				return "", false
-			}
-			bs = bytes.Trim(bs, `"`) // remove quotes around the string
-			return string(bs), true
+		bs, err := protojson.Marshal(v.v.Message().Interface())
+		if err != nil {
+			// if we can't marshal the message, we can't convert it to a string
+			return "", false
 		}
+		bs = bytes.Trim(bs, `"`) // remove quotes around the string
+		return string(bs), true
+	default:
 		// unsupported kinds
 		return "", false
 	}
