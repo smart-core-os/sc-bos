@@ -40,6 +40,14 @@ type subscriber interface {
 	NewSubscription(ctx context.Context) (pointSubscription, error)
 }
 
+// pointReader reads node values outside any subscription, and says whether the connection to
+// the server is up. They are the methods of *Client a trait needs to vouch for its values and
+// read the rest live, kept narrow for the same reason as subscriber.
+type pointReader interface {
+	ReadValues(ctx context.Context, nodeIds ...*ua.NodeID) ([]*ua.DataValue, error)
+	Connected() bool
+}
+
 // pointSubscription is one device's subscription: the notifications the server publishes for
 // it, the monitored items on it, and the map from a notification's client handle back to the
 // node it came from. *pointSub is the implementation.
@@ -407,6 +415,7 @@ func (d *device) failAllPoints(ctx context.Context, permanent map[string]bool, e
 	d.commitBatches(primary, informational)
 	d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(err))
 	d.serverErrOnPrimary = true
+	d.eachLivenessHandler(livenessHandler.subscriptionLost)
 }
 
 // runSubscription pumps the subscription until it ends, retrying its stragglers alongside.
@@ -576,6 +585,7 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 		d.faultCheck.UpdateReliability(ctx, healthpb.ReliabilityFromErr(event.Error))
 		d.serverErrOnPrimary = true
 		service.UpdateSystemCheck(d.systemCheck, event.Error)
+		d.eachLivenessHandler(livenessHandler.connectionSuspect)
 		d.logger.Warn("OPC UA server connection error", zap.String("device", d.conf.Name), zap.Error(event.Error))
 		return
 	}
@@ -593,8 +603,15 @@ func (d *device) handleEvent(ctx context.Context, event *opcua.PublishNotificati
 				d.logUnknownHandle(item.ClientHandle)
 				continue
 			}
-			if item.Value == nil ||
-				item.Value.Value == nil {
+			if item.Value == nil {
+				continue
+			}
+			if item.Value.Value == nil {
+				// a server reporting a point Bad usually sends no value with it, and that is
+				// still the point going Bad. Without a value there is nothing else to dispatch.
+				if statusIsBad(item.Value.Status) {
+					d.handleStatusValue(ctx, node, item.Value.Status, nil)
+				}
 				continue
 			}
 
@@ -641,6 +658,7 @@ func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status 
 	switch {
 	case statusIsBad(status):
 		setPointReadNotOk(ctx, node.String(), status, fc)
+		d.eachLivenessHandler(func(h livenessHandler) { h.pointBad(node) })
 		d.logger.Warn("error monitoring node", zap.Stringer("node", node), zap.String("code", status.Error()))
 		return
 	case statusIsUncertain(status):
@@ -663,6 +681,23 @@ func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status 
 func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
 	for _, handler := range d.eventHandlers {
 		handler.handleEvent(ctx, node, value)
+	}
+}
+
+// connectionLost tells the trait handlers the connection to the server has dropped.
+// Called from gopcua's connection goroutine, not the pump, so it touches nothing but the
+// handlers, which guard their own state.
+func (d *device) connectionLost() {
+	d.eachLivenessHandler(livenessHandler.connectionSuspect)
+}
+
+// eachLivenessHandler calls f for every trait handler that wants to know when its values stop
+// being vouched for.
+func (d *device) eachLivenessHandler(f func(livenessHandler)) {
+	for _, handler := range d.eventHandlers {
+		if h, ok := handler.(livenessHandler); ok {
+			f(h)
+		}
 	}
 }
 

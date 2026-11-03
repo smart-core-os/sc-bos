@@ -14,8 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/internal/manage/devices"
@@ -93,6 +96,74 @@ func TestDeviceBuildTelemetry(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, now, ev.Timestamp)
 	})
+}
+
+// unreadableMeter is a meter that cannot currently read its value, as a driver reports it.
+type unreadableMeter struct {
+	meterpb.UnimplementedMeterApiServer
+}
+
+func (unreadableMeter) GetMeterReading(context.Context, *meterpb.GetMeterReadingRequest) (*meterpb.MeterReading, error) {
+	return nil, status.Error(codes.Unavailable, "meter usage cannot be read")
+}
+
+// TestDeviceBuildTelemetry_unreadableMeter checks a meter that cannot be read publishes no
+// pointset, rather than a reading that looks current (SCB-1520).
+func TestDeviceBuildTelemetry_unreadableMeter(t *testing.T) {
+	client := meterpb.NewMeterApiClient(wrap.ServerToClient(meterpb.MeterApi_ServiceDesc, unreadableMeter{}))
+	dev := &device{name: "m1", collectors: []traitCollector{&meterCollector{name: "m1", client: client}}}
+
+	_, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+	assert.False(t, ok)
+}
+
+// TestDeviceBuildTelemetry_thinsFailureLogging checks a collector that keeps failing warns once,
+// then stays quiet until it recovers, which it says once. At a 5 minute send interval a
+// handful of dark meters would otherwise log a dozen warnings an hour each.
+func TestDeviceBuildTelemetry_thinsFailureLogging(t *testing.T) {
+	core, logs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	failing := fakeCollector{err: errors.New("unavailable")}
+	working := fakeCollector{pts: udmi.PointsEvent{"a": {PresentValue: 1.0}}}
+	dev := &device{name: "m1", collectors: []traitCollector{failing}}
+
+	for range 3 {
+		dev.buildTelemetry(context.Background(), time.Now(), logger)
+	}
+	require.Equal(t, 1, logs.FilterLevelExact(zap.WarnLevel).Len(), "one warning however many cycles fail")
+	require.Equal(t, 2, logs.FilterLevelExact(zap.DebugLevel).Len())
+
+	dev.collectors[0] = working
+	dev.buildTelemetry(context.Background(), time.Now(), logger)
+	dev.buildTelemetry(context.Background(), time.Now(), logger)
+	require.Equal(t, 1, logs.FilterLevelExact(zap.InfoLevel).Len(), "one line on recovery")
+
+	dev.collectors[0] = failing
+	dev.buildTelemetry(context.Background(), time.Now(), logger)
+	require.Equal(t, 2, logs.FilterLevelExact(zap.WarnLevel).Len(), "failing again is worth saying again")
+}
+
+// TestCarryFetchState checks a device refresh keeps what each device knew about its failing
+// collectors, so the refresh every metadata interval does not repeat every warning.
+func TestCarryFetchState(t *testing.T) {
+	core, logs := observer.New(zap.WarnLevel)
+	logger := zap.New(core)
+	newDevices := func() map[string]*device {
+		return map[string]*device{"m1": {name: "m1", collectors: []traitCollector{fakeCollector{err: errors.New("unavailable")}}}}
+	}
+
+	before := newDevices()
+	before["m1"].buildTelemetry(context.Background(), time.Now(), logger)
+	after := newDevices()
+	carryFetchState(before, after)
+	after["m1"].buildTelemetry(context.Background(), time.Now(), logger)
+	require.Equal(t, 1, logs.Len())
+
+	// a device whose collectors changed starts over, since the indexes no longer line up
+	changed := newDevices()
+	changed["m1"].collectors = append(changed["m1"].collectors, fakeCollector{})
+	carryFetchState(after, changed)
+	require.Nil(t, changed["m1"].failing)
 }
 
 // TestGetAllTraitImplementorsMeter exercises discovery + collector wiring against

@@ -3,7 +3,9 @@ package opcua
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -43,6 +45,10 @@ type Client struct {
 	// newSub creates the underlying subscription. A field so that NewSubscription can be
 	// tested at all: c.client.Subscribe needs a live *opcua.Client and a real server.
 	newSub subFactory
+	// read issues one Read request, a field for the same reason as newSub.
+	read readFunc
+	// watch reports the connection state, nil for a Client assembled without one.
+	watch *connWatch
 }
 
 // orphanCancelTimeout bounds the tear-down of a subscription we are not going to use.
@@ -94,7 +100,105 @@ func NewClient(client *opcua.Client, logger *zap.Logger, conn config.Conn) *Clie
 		}
 		return sub, nil
 	}
+	c.read = func(ctx context.Context, req *ua.ReadRequest) (*ua.ReadResponse, error) {
+		return client.Read(ctx, req)
+	}
 	return c
+}
+
+// connWatch fans gopcua's connection state changes out to the devices sharing a client.
+//
+// Needed because a dropped connection never reaches a subscription: gopcua's publish loop
+// pauses on EOF or a lost session without notifying anyone, and only a service fault arrives as
+// a notification error. A meter that is not told would keep vouching for its value all the
+// while the server is gone. Its own type rather than part of Client because the hook is an
+// option on the gopcua client, which has to exist before Client can wrap it.
+type connWatch struct {
+	mu   sync.Mutex
+	lost []func()
+	// up is whether the connection is established right now. Vouching for a value also needs
+	// this, because nothing orders the drop against values already in flight: a notification
+	// queued before the drop can land after it, and gopcua reports a long outage once.
+	up atomic.Bool
+}
+
+// connected reports whether the connection is established right now.
+func (w *connWatch) connected() bool {
+	return w.up.Load()
+}
+
+// onLost registers f to be called whenever the connection drops.
+func (w *connWatch) onLost(f func()) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.lost = append(w.lost, f)
+}
+
+// observe is the opcua.StateChangedFunc. gopcua calls it synchronously from the goroutine that
+// manages the connection, so the callbacks must not block.
+func (w *connWatch) observe(s opcua.ConnState) {
+	w.up.Store(s == opcua.Connected)
+	switch s {
+	case opcua.Connecting, opcua.Connected:
+		return
+	}
+	w.mu.Lock()
+	lost := slices.Clone(w.lost)
+	w.mu.Unlock()
+	for _, f := range lost {
+		f()
+	}
+}
+
+// Connected reports whether the connection to the server is established right now.
+// A Client with no connWatch, which only a test assembles, reports true.
+func (c *Client) Connected() bool {
+	return c.watch == nil || c.watch.connected()
+}
+
+// readFunc issues one Read request. The seam that lets ReadValues be tested without a server.
+type readFunc func(ctx context.Context, req *ua.ReadRequest) (*ua.ReadResponse, error)
+
+// ReadValues reads the Value attribute of each node once, outside any subscription, in one
+// request. The results are in the order the nodes were given.
+//
+// Through the same gate as subscribing, so a burst of reads for traits that cannot vouch for
+// their values queues behind the subscribe requests rather than piling onto a server that is
+// already slow. Each DataValue comes back whatever its status: whether a Bad value is unusable
+// or merely worth reporting is the caller's call.
+func (c *Client) ReadValues(ctx context.Context, nodeIds ...*ua.NodeID) ([]*ua.DataValue, error) {
+	if len(nodeIds) == 0 {
+		return nil, nil
+	}
+	// acquire before starting the clock, queuing for a turn is not the server being slow
+	if err := c.subGate.Acquire(ctx, 1); err != nil {
+		return nil, err
+	}
+	defer c.subGate.Release(1)
+
+	ctx, cancel := context.WithTimeout(ctx, c.reqTimeout)
+	defer cancel()
+
+	req := &ua.ReadRequest{TimestampsToReturn: ua.TimestampsToReturnNeither}
+	for _, nodeId := range nodeIds {
+		req.NodesToRead = append(req.NodesToRead, &ua.ReadValueID{
+			NodeID:       nodeId,
+			AttributeID:  ua.AttributeIDValue,
+			DataEncoding: &ua.QualifiedName{},
+		})
+	}
+	res, err := c.read(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("read %v: %w", nodeIds, err)
+	}
+	var got int
+	if res != nil {
+		got = len(res.Results)
+	}
+	if got != len(nodeIds) {
+		return nil, fmt.Errorf("read %v: %w, asked about %d and got %d", nodeIds, errUnexpectedReadResults, len(nodeIds), got)
+	}
+	return res.Results, nil
 }
 
 // subFactory creates the subscription a device monitors its points on.

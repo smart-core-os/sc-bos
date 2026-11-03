@@ -5,7 +5,9 @@ import (
 	"errors"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -593,4 +595,160 @@ func messages(logs *observer.ObservedLogs) []string {
 		msgs = append(msgs, e.Message)
 	}
 	return msgs
+}
+
+// TestClient_ReadValues checks one request asks for exactly each node's Value attribute, in
+// order, under the per-request deadline, and hands back the server's DataValues whatever their
+// status.
+func TestClient_ReadValues(t *testing.T) {
+	c := newTestClient(t, nil, 0)
+	nodes := testNodeIds("ns=2;s=Tag1", "ns=2;s=Tag2")
+	want := []*ua.DataValue{{Status: ua.StatusBadNoCommunication}, {Status: ua.StatusOK}}
+	var requests []*ua.ReadRequest
+	var deadline time.Duration
+	c.read = func(ctx context.Context, req *ua.ReadRequest) (*ua.ReadResponse, error) {
+		requests = append(requests, req)
+		if d, ok := ctx.Deadline(); ok {
+			deadline = time.Until(d)
+		}
+		return &ua.ReadResponse{Results: want}, nil
+	}
+
+	dvs, err := c.ReadValues(t.Context(), nodes...)
+	if err != nil {
+		t.Fatalf("ReadValues() error = %v", err)
+	}
+	if !slices.Equal(dvs, want) {
+		t.Errorf("ReadValues() = %v, want the server's %v", dvs, want)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("sent %d requests, want 1", len(requests))
+	}
+	got := requests[0].NodesToRead
+	if len(got) != len(nodes) {
+		t.Fatalf("read %d nodes, want %d", len(got), len(nodes))
+	}
+	for i, node := range nodes {
+		if got[i].NodeID != node || got[i].AttributeID != ua.AttributeIDValue {
+			t.Errorf("read[%d] = %+v, want the Value attribute of %s", i, got[i], node)
+		}
+	}
+	if deadline <= 0 || deadline > c.reqTimeout {
+		t.Errorf("read had %s left on its deadline, want at most %s", deadline, c.reqTimeout)
+	}
+}
+
+// TestClient_ReadValues_none checks asking for nothing sends nothing, rather than a request the
+// server would refuse with BadNothingToDo.
+func TestClient_ReadValues_none(t *testing.T) {
+	c := newTestClient(t, nil, 0)
+	c.read = func(context.Context, *ua.ReadRequest) (*ua.ReadResponse, error) {
+		t.Error("sent a read for no nodes")
+		return nil, nil
+	}
+	if dvs, err := c.ReadValues(t.Context()); dvs != nil || err != nil {
+		t.Errorf("ReadValues() = %v, %v, want nothing", dvs, err)
+	}
+}
+
+// TestClient_ReadValues_gate checks a read waits its turn behind the subscribe requests that
+// share the gate, rather than adding to the load on a server that is already busy.
+func TestClient_ReadValues_gate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		c := newTestClient(t, nil, 0)
+		var reads sync.WaitGroup
+		reads.Add(1)
+		var calls atomic.Int32
+		c.read = func(context.Context, *ua.ReadRequest) (*ua.ReadResponse, error) {
+			calls.Add(1)
+			return &ua.ReadResponse{Results: []*ua.DataValue{{}}}, nil
+		}
+		if err := c.subGate.Acquire(t.Context(), config.DefaultMaxConcurrentSubscribes); err != nil {
+			t.Fatal(err)
+		}
+
+		go func() {
+			defer reads.Done()
+			if _, err := c.ReadValues(context.Background(), mustParseNodeID("ns=2;s=Tag1")); err != nil {
+				t.Errorf("ReadValues() error = %v", err)
+			}
+		}()
+		// long past any deadline the read would have had: queuing is not the server being slow
+		time.Sleep(10 * c.reqTimeout)
+		synctest.Wait()
+		if calls.Load() != 0 {
+			t.Fatal("read while the gate was full")
+		}
+
+		c.subGate.Release(config.DefaultMaxConcurrentSubscribes)
+		reads.Wait()
+		if got := calls.Load(); got != 1 {
+			t.Errorf("read %d times once the gate opened, want 1", got)
+		}
+	})
+}
+
+func TestClient_ReadValues_timeout(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		c := newTestClient(t, nil, 0)
+		c.read = func(ctx context.Context, _ *ua.ReadRequest) (*ua.ReadResponse, error) {
+			<-ctx.Done()
+			return nil, ctx.Err()
+		}
+		start := time.Now()
+		_, err := c.ReadValues(context.Background(), mustParseNodeID("ns=2;s=Tag1"))
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("ReadValues() error = %v, want it to match %v", err, context.DeadlineExceeded)
+		}
+		if took := time.Since(start); took != c.reqTimeout {
+			t.Errorf("read gave up after %s, want %s", took, c.reqTimeout)
+		}
+		// the slot has to come back, or every failed read leaks a share of the gate
+		if !c.subGate.TryAcquire(config.DefaultMaxConcurrentSubscribes) {
+			t.Error("a timed-out read kept its slot in the gate")
+		}
+	})
+}
+
+func TestClient_ReadValues_resultCount(t *testing.T) {
+	for _, res := range []*ua.ReadResponse{nil, {}, {Results: []*ua.DataValue{{}, {}}}} {
+		c := newTestClient(t, nil, 0)
+		c.read = func(context.Context, *ua.ReadRequest) (*ua.ReadResponse, error) { return res, nil }
+		if _, err := c.ReadValues(t.Context(), mustParseNodeID("ns=2;s=Tag1")); !errors.Is(err, errUnexpectedReadResults) {
+			t.Errorf("ReadValues() error = %v, want it to match %v", err, errUnexpectedReadResults)
+		}
+	}
+}
+
+// TestConnWatch checks every way out of Connected reaches the devices, and that getting there
+// does not. gopcua pauses publishing on a dropped connection without notifying any
+// subscription, so this is the only word a device gets that its values may be stale.
+func TestConnWatch(t *testing.T) {
+	var w connWatch
+	var lost int
+	w.onLost(func() { lost++ })
+
+	for _, s := range []opcua.ConnState{opcua.Connecting, opcua.Connected} {
+		w.observe(s)
+	}
+	if lost != 0 {
+		t.Errorf("connecting reported the connection lost %d times", lost)
+	}
+	if !w.connected() {
+		t.Error("not connected after Connected")
+	}
+	for _, s := range []opcua.ConnState{opcua.Disconnected, opcua.Reconnecting, opcua.Closed} {
+		before := lost
+		w.observe(s)
+		if lost != before+1 {
+			t.Errorf("%s did not report the connection lost", s)
+		}
+		if w.connected() {
+			t.Errorf("connected after %s", s)
+		}
+	}
+	w.observe(opcua.Connected)
+	if !w.connected() {
+		t.Error("not connected again after reconnecting")
+	}
 }

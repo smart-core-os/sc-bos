@@ -17,6 +17,8 @@ import (
 	"go.uber.org/zap/zaptest"
 	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
@@ -100,14 +102,14 @@ func TestDevice_handleTraitEvent(t *testing.T) {
 	meterCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
 	}
-	meter, err := newMeter("test/device", meterCfg, logger)
+	meter, err := newMeter("test/device", meterCfg, nil, logger)
 	require.NoError(t, err)
 	dev.eventHandlers = append(dev.eventHandlers, meter)
 
 	electricCfg := config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.traits.Electric","demand":{"realPower":{"nodeId":"ns=2;s=Power"}}}`),
 	}
-	electric, err := newElectric("test/device", electricCfg, logger)
+	electric, err := newElectric("test/device", electricCfg, nil, logger)
 	require.NoError(t, err)
 	dev.eventHandlers = append(dev.eventHandlers, electric)
 
@@ -162,6 +164,7 @@ func TestDevice_handleEvent(t *testing.T) {
 		setupMeter     bool
 		eventValue     any
 		expectUsage    float32
+		expectNoUsage  bool // the meter has no reading to serve
 		shouldNotPanic bool
 	}{
 		{
@@ -221,7 +224,7 @@ func TestDevice_handleEvent(t *testing.T) {
 					{Value: &ua.DataValue{Value: ua.MustVariant(float32(150.5)), Status: ua.StatusBadNotFound}},
 				},
 			},
-			expectUsage: 0,
+			expectNoUsage: true,
 		},
 		{
 			name:           "unknown event type does not panic",
@@ -247,7 +250,7 @@ func TestDevice_handleEvent(t *testing.T) {
 					Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
 				}
 				var err error
-				meter, err = newMeter("test/device", meterCfg, logger)
+				meter, err = newMeter("test/device", meterCfg, nil, logger)
 				require.NoError(t, err)
 				dev.eventHandlers = append(dev.eventHandlers, meter)
 			}
@@ -259,7 +262,12 @@ func TestDevice_handleEvent(t *testing.T) {
 			dev.handleEvent(ctx, event, fixedLookup(nodeId))
 
 			if tt.setupMeter {
-				reading, _ := meter.GetMeterReading(ctx, nil)
+				reading, err := meter.GetMeterReading(ctx, nil)
+				if tt.expectNoUsage {
+					require.Equal(t, codes.Unavailable, status.Code(err))
+					return
+				}
+				require.NoError(t, err)
 				require.Equal(t, tt.expectUsage, reading.Usage)
 			}
 		})
@@ -580,7 +588,7 @@ func TestOpcuaHandleEvent_Severity(t *testing.T) {
 			meterCfg := config.RawTrait{
 				Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"ns=2;s=Tag1"}}`),
 			}
-			meter, err := newMeter("opcua-device-1", meterCfg, logger)
+			meter, err := newMeter("opcua-device-1", meterCfg, nil, logger)
 			require.NoError(t, err)
 
 			dev := &device{
@@ -597,13 +605,13 @@ func TestOpcuaHandleEvent_Severity(t *testing.T) {
 			require.Equal(t, tt.want, rel.State)
 
 			// only a Bad status withholds the value from the traits
-			wantUsage := float32(100)
-			if statusIsBad(tt.status) {
-				wantUsage = 0
-			}
 			reading, err := meter.GetMeterReading(h.ctx, nil)
-			require.NoError(t, err)
-			require.Equal(t, wantUsage, reading.Usage)
+			if statusIsBad(tt.status) {
+				require.Equal(t, codes.Unavailable, status.Code(err))
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, float32(100), reading.Usage)
+			}
 
 			if !tt.wantErr {
 				return
@@ -850,7 +858,7 @@ func newTestDevice(t *testing.T, sub subscriber, nodeIds ...string) (*device, *M
 
 	meter, err := newMeter("test-device", config.RawTrait{
 		Raw: []byte(`{"kind":"smartcore.bos.Meter","unit":"kWh","usage":{"nodeId":"` + nodeIds[0] + `"}}`),
-	}, logger)
+	}, nil, logger)
 	require.NoError(t, err)
 
 	dev := newDevice(cfg, logger, sub, fc, nil, nil)
@@ -1410,4 +1418,133 @@ func TestDevice_subscribe_dedupesNodeIds(t *testing.T) {
 		cancel()
 		requireSubscribeReturns(t, done)
 	})
+}
+
+// newLivenessDevice is a device with one meter on testMeterNode, for the tests of what tells
+// the meter its value is no longer vouched for.
+func newLivenessDevice(t *testing.T, fc *healthpb.FaultCheck) (*device, *Meter) {
+	t.Helper()
+	meter := newTestMeter(t, &fakeReader{err: ua.StatusBadTimeout})
+	dev := newDevice(&config.Device{Name: "test-device"}, zaptest.NewLogger(t), nil, fc, nil, nil)
+	dev.eventHandlers = []EventHandler{meter}
+	return dev, meter
+}
+
+// TestDevice_handleEvent_badTellsMeter checks a Bad notification stops the meter serving its
+// last value, including the usual shape of one, which carries no value at all. That shape used
+// to be dropped before anything saw its status, so the point kept its old value and its health.
+func TestDevice_handleEvent_badTellsMeter(t *testing.T) {
+	tests := []struct {
+		name  string
+		value *ua.Variant
+	}{
+		{name: "with a value", value: ua.MustVariant(float32(100))},
+		{name: "without a value"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := setupTestHarness(t)
+			dev, meter := newLivenessDevice(t, h.fc)
+			node := mustParseNodeID(testMeterNode)
+
+			dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(node))
+			require.True(t, meter.vouched())
+
+			dev.handleEvent(t.Context(), &opcua.PublishNotificationData{
+				Value: &ua.DataChangeNotification{MonitoredItems: []*ua.MonitoredItemNotification{
+					{ClientHandle: 1, Value: &ua.DataValue{Value: tt.value, Status: ua.StatusBadNoCommunication}},
+				}},
+			}, fixedLookup(node))
+			require.False(t, meter.vouched())
+			_, err := meter.GetMeterReading(t.Context(), nil)
+			require.Equal(t, codes.Unavailable, status.Code(err))
+
+			rel := h.getHealthChecks(t)[0].GetReliability()
+			require.Equal(t, healthpb.HealthCheck_Reliability_BAD_RESPONSE, rel.GetState())
+			require.Contains(t, rel.GetLastError().GetDetailsText(), node.String())
+		})
+	}
+}
+
+// TestDevice_handleEvent_goodWithoutValueIgnored pins the other side of that: a Good status with
+// no value says nothing, so it neither feeds the meter nor touches health.
+func TestDevice_handleEvent_goodWithoutValueIgnored(t *testing.T) {
+	dev, meter := newLivenessDevice(t, newSimpleFaultCheck(t))
+	node := mustParseNodeID(testMeterNode)
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(node))
+
+	dev.handleEvent(t.Context(), &opcua.PublishNotificationData{
+		Value: &ua.DataChangeNotification{MonitoredItems: []*ua.MonitoredItemNotification{
+			{ClientHandle: 1, Value: &ua.DataValue{Status: ua.StatusOK}},
+		}},
+	}, fixedLookup(node))
+	require.True(t, meter.vouched())
+}
+
+func TestDevice_handleEvent_transportErrorTellsMeter(t *testing.T) {
+	dev, meter := newLivenessDevice(t, newSimpleFaultCheck(t))
+	node := mustParseNodeID(testMeterNode)
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(node))
+	require.True(t, meter.vouched())
+
+	dev.handleEvent(t.Context(), &opcua.PublishNotificationData{Error: ua.StatusBadConnectionClosed}, fixedLookup(node))
+	require.False(t, meter.vouched())
+
+	// the next notification for the point is the server vouching for it again
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(node))
+	require.True(t, meter.vouched())
+}
+
+func TestDevice_failAllPoints_tellsMeter(t *testing.T) {
+	dev, meter := newLivenessDevice(t, newSimpleFaultCheck(t))
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(mustParseNodeID(testMeterNode)))
+	require.True(t, meter.vouched())
+
+	dev.failAllPoints(t.Context(), map[string]bool{}, ua.StatusBadTimeout)
+	require.False(t, meter.vouched())
+}
+
+// TestDevice_subscribe_endTellsMeter drives the subscription ending through the pump, so the
+// meter hears about it on the path a real server takes, and vouches again once the new
+// subscription delivers.
+func TestDevice_subscribe_endTellsMeter(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber(nil)
+		dev, meter, _ := newTestDevice(t, sub, testMeterNode)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		sub.subAt(0).send(makeStatusEvent(sub.subAt(0).handleFor(testMeterNode), ua.StatusOK))
+		synctest.Wait()
+		require.True(t, meter.vouched())
+
+		sub.subAt(0).send(&opcua.PublishNotificationData{
+			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
+		})
+		synctest.Wait()
+		require.False(t, meter.vouched())
+
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2)
+		require.False(t, meter.vouched(), "a new subscription has to deliver before it is vouched for")
+		sub.subAt(1).send(makeStatusEvent(sub.subAt(1).handleFor(testMeterNode), ua.StatusOK))
+		synctest.Wait()
+		require.True(t, meter.vouched())
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+func TestDevice_connectionLost_tellsMeter(t *testing.T) {
+	dev, meter := newLivenessDevice(t, newSimpleFaultCheck(t))
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(mustParseNodeID(testMeterNode)))
+	require.True(t, meter.vouched())
+
+	dev.connectionLost()
+	require.False(t, meter.vouched())
 }
