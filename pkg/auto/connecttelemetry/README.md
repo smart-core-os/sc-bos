@@ -107,6 +107,9 @@ Two mutually-exclusive credential modes:
 - **`useCloudCredential: true`** — presents the node's Connect leaf certificate (mTLS) via
   `GetClientCertificate`, so renewals are picked up live. The broker (server) is verified
   against system/public roots (Event Grid presents a public Azure TLS cert).
+  The automation follows the node's enrolment: it connects once the node is enrolled, and
+  disconnects and resends everything when the node is re-enrolled under another node id or
+  endpoint. While the node is not enrolled it publishes nothing, and its system check reports why.
 - **File-path certs** (`clientCertPath` + `clientKeyPath`, optional `caCertPath`) — a
   dev/test fallback. `caCertPath` verifies the broker; empty falls back to system roots.
 

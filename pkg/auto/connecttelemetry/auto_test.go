@@ -2,6 +2,7 @@ package connecttelemetry
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"sync"
@@ -21,6 +22,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
+	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
@@ -569,5 +571,219 @@ func TestRunTelemetry_retriesFailedRefresh(t *testing.T) {
 		h.sleepUntil(2*time.Minute + time.Second)
 		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute)}, h.telemetry(), "found on the retried refresh")
 		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute)}, h.discovery(), "found on the retried refresh")
+	})
+}
+
+// fakeCredential is a connect.Credential whose state the test sets.
+type fakeCredential struct {
+	initial connect.State
+	changes chan connect.State
+}
+
+func newFakeCredential(initial connect.State) *fakeCredential {
+	return &fakeCredential{initial: initial, changes: make(chan connect.State)}
+}
+
+func (c *fakeCredential) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (c *fakeCredential) State() connect.State { return c.initial }
+
+func (c *fakeCredential) PullState(ctx context.Context) (connect.State, <-chan connect.State) {
+	out := make(chan connect.State)
+	go func() {
+		defer close(out)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case st := <-c.changes:
+				select {
+				case out <- st:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+	return c.initial, out
+}
+
+// set delivers st to the watcher and waits for it to act on it, including for any run it stops to disconnect.
+// Call it inside a synctest bubble.
+func (c *fakeCredential) set(st connect.State) {
+	c.changes <- st
+	time.Sleep(time.Second)
+	synctest.Wait()
+}
+
+// failureCheck is a service.SystemCheck that records the errors it is marked failed with.
+type failureCheck struct {
+	mu       sync.Mutex
+	failures []error
+}
+
+func (c *failureCheck) Dispose()     {}
+func (c *failureCheck) MarkRunning() {}
+func (c *failureCheck) MarkFailed(err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.failures = append(c.failures, err)
+}
+
+func (c *failureCheck) count() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.failures)
+}
+
+// enrolmentRuns records the runs followEnrolment starts.
+type enrolmentRuns struct {
+	mu       sync.Mutex
+	started  []connect.State
+	active   int
+	overlaps int // runs started while another was still running
+}
+
+func (r *enrolmentRuns) run(ctx context.Context, st connect.State) error {
+	r.mu.Lock()
+	r.started = append(r.started, st)
+	if r.active > 0 {
+		r.overlaps++
+	}
+	r.active++
+	r.mu.Unlock()
+
+	<-ctx.Done()
+	// a run takes a moment to disconnect, which the next must wait for
+	time.Sleep(500 * time.Millisecond)
+
+	r.mu.Lock()
+	r.active--
+	r.mu.Unlock()
+	return nil
+}
+
+func (r *enrolmentRuns) state() (started []connect.State, active, overlaps int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]connect.State(nil), r.started...), r.active, r.overlaps
+}
+
+func TestFollowEnrolment(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		enrolled := func(c connect.Connectivity, nodeID, endpoint string) connect.State {
+			return connect.State{Connectivity: c, NodeID: nodeID, APIEndpoint: endpoint}
+		}
+		const api = "https://connect.example.com"
+		n1 := enrolled(connect.Connecting, "n1", api)
+		n2 := enrolled(connect.Connected, "n2", api)
+		n3 := enrolled(connect.Connecting, "n3", api)
+		n3Moved := enrolled(connect.Connected, "n3", "https://other.example.com")
+
+		cred := newFakeCredential(connect.State{Connectivity: connect.NotEnrolled})
+		check := &failureCheck{}
+		runs := &enrolmentRuns{}
+		ctx, cancel := context.WithCancel(t.Context())
+		returned := make(chan error, 1)
+		go func() { returned <- followEnrolment(ctx, cred, check, zap.NewNop(), runs.run) }()
+
+		expect := func(wantStarted []connect.State, wantActive int) {
+			t.Helper()
+			started, active, overlaps := runs.state()
+			assert.Equal(t, wantStarted, started)
+			assert.Equal(t, wantActive, active, "active runs")
+			assert.Zero(t, overlaps, "runs started while another was running")
+		}
+
+		synctest.Wait()
+		expect(nil, 0)
+		require.Equal(t, 1, check.count(), "check not marked failed before enrolment")
+		assert.ErrorIs(t, check.failures[0], errNotEnrolled)
+
+		cred.set(n1)
+		expect([]connect.State{n1}, 1)
+
+		// check-ins change only the connectivity, which needs no new connection
+		cred.set(enrolled(connect.Connected, "n1", api))
+		cred.set(enrolled(connect.Failed, "n1", api))
+		expect([]connect.State{n1}, 1)
+
+		// re-enrolled under another node id
+		cred.set(n2)
+		expect([]connect.State{n1, n2}, 1)
+
+		cred.set(connect.State{Connectivity: connect.NotEnrolled})
+		expect([]connect.State{n1, n2}, 0)
+		require.Equal(t, 2, check.count(), "check not marked failed after unlinking")
+		assert.ErrorIs(t, check.failures[1], errNotEnrolled)
+
+		cred.set(n3)
+		expect([]connect.State{n1, n2, n3}, 1)
+
+		// re-enrolled with another endpoint
+		cred.set(n3Moved)
+		expect([]connect.State{n1, n2, n3, n3Moved}, 1)
+
+		cancel()
+		time.Sleep(time.Second)
+		synctest.Wait()
+		assert.ErrorIs(t, <-returned, context.Canceled)
+		expect([]connect.State{n1, n2, n3, n3Moved}, 0)
+		assert.Equal(t, 2, check.count(), "check marked failed on stop")
+	})
+}
+
+// TestFollowEnrolment_runFails checks a run that ends by itself, as it does on an error, ends followEnrolment too.
+func TestFollowEnrolment_runFails(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cred := newFakeCredential(connect.State{Connectivity: connect.Connected, NodeID: "n1", APIEndpoint: "https://connect.example.com"})
+		runErr := errors.New("boom")
+		err := followEnrolment(t.Context(), cred, nil, zap.NewNop(), func(context.Context, connect.State) error {
+			return runErr
+		})
+		assert.ErrorIs(t, err, runErr)
+	})
+}
+
+// TestRun checks each publish is as the node the credential is enrolled as.
+func TestRun(t *testing.T) {
+	const api = "https://connect.example.com"
+	n1 := connect.State{Connectivity: connect.Connected, NodeID: "n1", APIEndpoint: api}
+	n2 := connect.State{Connectivity: connect.Connected, NodeID: "n2", APIEndpoint: api}
+
+	t.Run("cloud credential", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			cred := newFakeCredential(n1)
+			a := &AutoImpl{Services: auto.Services{Logger: zap.NewNop(), CloudCredential: cred}}
+			var mu sync.Mutex
+			var published []string
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			go a.run(ctx, config.Mqtt{UseCloudCredential: true}, func(ctx context.Context, nodeID string) error {
+				mu.Lock()
+				published = append(published, nodeID)
+				mu.Unlock()
+				<-ctx.Done()
+				return nil
+			})
+			synctest.Wait()
+			cred.set(n2)
+			mu.Lock()
+			defer mu.Unlock()
+			assert.Equal(t, []string{"n1", "n2"}, published)
+		})
+	})
+
+	t.Run("file path", func(t *testing.T) {
+		a := &AutoImpl{Services: auto.Services{Logger: zap.NewNop(), CloudCredential: newFakeCredential(n1)}}
+		var published []string
+		err := a.run(t.Context(), config.Mqtt{}, func(_ context.Context, nodeID string) error {
+			published = append(published, nodeID)
+			return nil
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"n1"}, published)
 	})
 }

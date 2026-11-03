@@ -68,7 +68,7 @@ func TestPublisherPublishesOverTLSv5(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pub, err := newPublisher(ctx, cfg, nil, nil, zap.NewNop())
+	pub, err := newPublisher(ctx, cfg, nil, "", nil, zap.NewNop())
 	require.NoError(t, err)
 	defer pub.close(context.Background())
 
@@ -141,7 +141,7 @@ func TestPublisherPublishesHealthAcked(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pub, err := newPublisher(ctx, cfg, nil, nil, zap.NewNop())
+	pub, err := newPublisher(ctx, cfg, nil, "", nil, zap.NewNop())
 	require.NoError(t, err)
 	defer pub.close(context.Background())
 
@@ -158,6 +158,42 @@ func TestPublisherPublishesHealthAcked(t *testing.T) {
 		assert.Equal(t, "van/uk/brum/ugs/meters/elec-main", got.Resource)
 	case <-time.After(10 * time.Second):
 		t.Fatal("timed out waiting for the health set")
+	}
+}
+
+// TestPublisherNodeID checks the publisher connects as the node it is given, and stamps its publishes with it,
+// when no client id is configured.
+func TestPublisherNodeID(t *testing.T) {
+	dir, brokerTLS := writeTestCerts(t)
+	addr, msgs := startTLSBroker(t, brokerTLS)
+
+	qos := 1
+	cfg := config.Mqtt{
+		Host:           "tls://" + addr,
+		TopicPrefix:    "tlm",
+		ClientCertPath: filepath.Join(dir, "client.crt"),
+		ClientKeyPath:  filepath.Join(dir, "client.key"),
+		CaCertPath:     filepath.Join(dir, "ca.crt"),
+		Qos:            &qos,
+		ConnectTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+		PublishTimeout: &jsontypes.Duration{Duration: 5 * time.Second},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pub, err := newPublisher(ctx, cfg, nil, "node-2", nil, zap.NewNop())
+	require.NoError(t, err)
+	defer pub.close(context.Background())
+
+	require.NoError(t, pub.publish(ctx, pointsetTopic(cfg.TopicPrefix, "foo"), []byte(`{}`)))
+
+	select {
+	case m := <-msgs:
+		assert.Equal(t, "node-2", m.clientID)
+		assert.Equal(t, "node-2", m.user[nodeIDProperty])
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for the publish")
 	}
 }
 
@@ -189,7 +225,7 @@ func TestPublisherSystemCheck(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
 		check := newRecordingCheck()
-		pub, err := newPublisher(ctx, newCfg(addr), nil, check, zap.NewNop())
+		pub, err := newPublisher(ctx, newCfg(addr), nil, "", check, zap.NewNop())
 		require.NoError(t, err)
 		defer pub.close(context.Background())
 
@@ -204,7 +240,7 @@ func TestPublisherSystemCheck(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
 		check := newRecordingCheck()
-		pub, err := newPublisher(ctx, newCfg(addr), nil, check, zap.NewNop())
+		pub, err := newPublisher(ctx, newCfg(addr), nil, "", check, zap.NewNop())
 		require.NoError(t, err)
 		defer pub.close(context.Background())
 
@@ -255,10 +291,11 @@ func TestPublisherConnectionUp(t *testing.T) {
 }
 
 type capturedMsg struct {
-	topic   string
-	qos     byte
-	payload []byte
-	user    map[string]string
+	clientID string // of the publishing client
+	topic    string
+	qos      byte
+	payload  []byte
+	user     map[string]string
 }
 
 // startTLSBroker starts an embedded MQTT v5 broker with the given (mutual) TLS
@@ -279,7 +316,7 @@ func startTLSBroker(t *testing.T, brokerTLS *tls.Config) (addr string, msgs <-ch
 		for _, u := range pk.Properties.User {
 			user[u.Key] = u.Val
 		}
-		ch <- capturedMsg{topic: pk.TopicName, qos: pk.FixedHeader.Qos, payload: append([]byte(nil), pk.Payload...), user: user}
+		ch <- capturedMsg{clientID: pk.Origin, topic: pk.TopicName, qos: pk.FixedHeader.Qos, payload: append([]byte(nil), pk.Payload...), user: user}
 	}))
 
 	return l.Address(), ch

@@ -72,9 +72,10 @@ The response carries the `nodeId` SCC assigned. `GetCloudConnection` should then
 `system.conf.json` has no `cloud.registerUrl`, so `register_url` is required here. Setting `cloud.registerUrl` makes it
 the default.
 
-**Restart after enrolling, unlinking or re-enrolling.** `connecttelemetry` reads the node ID once, when its config is
-applied, so it keeps connecting with the old node ID (or an empty MQTT client ID and no `nodeId` property) until BOS
-restarts. The registration survives the restart because it is stored under `--data`.
+There is no need to restart after enrolling, unlinking or re-enrolling. `connecttelemetry` connects to the broker
+once the node is enrolled, using the node ID as its MQTT client ID and `nodeId` property, reconnects as the new node
+when it is re-enrolled, and disconnects when it is unlinked. The registration is stored under `--data`, so it
+survives a restart.
 
 Unlink when you're done:
 
