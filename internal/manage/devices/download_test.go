@@ -26,6 +26,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -348,10 +349,20 @@ func TestServer_DownloadDevicesHTTPHandler_history(t *testing.T) {
 		if row[usageIdx] != wantUsage[i] {
 			t.Errorf("row %d meter.usage: want %q, got %q", i, wantUsage[i], row[usageIdx])
 		}
-		// Timestamp should parse and lie within the requested period.
-		if _, err := time.Parse(time.DateTime, row[tsIdx]); err != nil {
-			t.Errorf("row %d timestamp %q does not parse as %q: %v", i, row[tsIdx], time.DateTime, err)
+		// Consumers such as Smart Core Connect read a timestamp without an offset as site-local,
+		// so the record time must carry its zone.
+		wantTS := historyStart.Add(time.Duration(i) * time.Hour).Format(time.RFC3339)
+		if row[tsIdx] != wantTS {
+			t.Errorf("row %d timestamp: want %q, got %q", i, wantTS, row[tsIdx])
 		}
+	}
+}
+
+func TestOccupancyToRow_changeTime(t *testing.T) {
+	changeTime := time.Date(2026, 3, 29, 2, 30, 0, 0, time.FixedZone("BST", 60*60))
+	vals := occupancyToRow(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(changeTime)})
+	if want, got := "2026-03-29T01:30:00Z", vals["occupancy.changetime"]; got != want {
+		t.Errorf("occupancy.changetime: want %q, got %q", want, got)
 	}
 }
 

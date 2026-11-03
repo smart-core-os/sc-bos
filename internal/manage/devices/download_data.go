@@ -552,7 +552,7 @@ func occupancyToRow(d *occupancysensorpb.Occupancy) map[string]string {
 	vals["occupancy.state"] = d.State.String()
 	vals["occupancy.peoplecount"] = fmt.Sprintf("%d", d.PeopleCount)
 	if d.StateChangeTime != nil {
-		vals["occupancy.changetime"] = d.StateChangeTime.AsTime().String()
+		vals["occupancy.changetime"] = d.StateChangeTime.AsTime().Format(time.RFC3339)
 	}
 	return vals
 }
