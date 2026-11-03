@@ -22,6 +22,13 @@ import (
 //
 // Written by the device's pump goroutine and gopcua's connection goroutine, read by every Get.
 type pointLiveness struct {
+	// applyMu orders the trait's cache updates, and is held across apply so a live read cannot
+	// overwrite a newer notification. Separate from mu because apply calls resource.Value.Set,
+	// which waits on every Pull listener: holding mu across it would let one slow Pull client
+	// stall gopcua's connection goroutine in connectionSuspect, and every Get in vouched.
+	// Taken before mu, never while holding it.
+	applyMu sync.Mutex
+	// mu guards points, and is only ever held briefly.
 	mu     sync.Mutex
 	points map[string]*pointState
 	// connected reports whether the connection is up right now; nil means always. Needed on
@@ -71,17 +78,20 @@ func readerConnected(reader pointReader) func() bool {
 }
 
 // good records a usable notification for node and calls apply, which updates the trait's cache,
-// under the same lock, so a live read cannot interleave with it.
+// in order with any live read's update.
 func (l *pointLiveness) good(node string, apply func()) {
+	l.applyMu.Lock()
+	defer l.applyMu.Unlock()
 	l.mu.Lock()
-	defer l.mu.Unlock()
 	p, ok := l.points[node]
-	if !ok {
-		return
+	if ok {
+		p.delivered, p.bad, p.suspect = true, false, false
+		p.gen++
 	}
-	p.delivered, p.bad, p.suspect = true, false, false
-	p.gen++
-	apply()
+	l.mu.Unlock()
+	if ok {
+		apply()
+	}
 }
 
 // unusable records that node's last notification was Bad, or carried a value the trait could
@@ -112,16 +122,20 @@ func (l *pointLiveness) beginRead(node string) uint64 {
 // has never delivered, or is Bad, stays unvouched, so a monitored item that is broken is never
 // vouched for on the strength of one read.
 func (l *pointLiveness) readGood(node string, gen uint64, apply func()) {
+	// gen only moves in good, under applyMu, so it cannot change between the check and apply
+	l.applyMu.Lock()
+	defer l.applyMu.Unlock()
 	l.mu.Lock()
-	defer l.mu.Unlock()
 	p, ok := l.points[node]
-	if !ok {
-		return
+	fresh := false
+	if ok {
+		if p.delivered {
+			p.suspect = false
+		}
+		fresh = p.gen == gen
 	}
-	if p.delivered {
-		p.suspect = false
-	}
-	if p.gen == gen {
+	l.mu.Unlock()
+	if fresh {
 		apply()
 	}
 }

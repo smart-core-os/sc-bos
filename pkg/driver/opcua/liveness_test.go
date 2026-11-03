@@ -2,6 +2,7 @@ package opcua
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gopcua/opcua/ua"
 	"github.com/stretchr/testify/require"
@@ -60,6 +61,33 @@ func TestPointLiveness_connected(t *testing.T) {
 	require.False(t, l.vouched(testLiveNode), "nothing is vouched for while the connection is down")
 	up = true
 	require.True(t, l.vouched(testLiveNode))
+}
+
+// TestPointLiveness_slowApply checks a cache update that is held up, as resource.Value.Set is
+// by a slow Pull listener, blocks neither gopcua's connection goroutine nor a Get.
+func TestPointLiveness_slowApply(t *testing.T) {
+	l := newPointLiveness(nil, testLiveNode)
+	applying, release := make(chan struct{}), make(chan struct{})
+	go l.good(testLiveNode, func() {
+		close(applying)
+		<-release
+	})
+	<-applying
+	defer close(release)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		l.connectionSuspect()
+		l.subscriptionLost()
+		l.unusable(testLiveNode)
+		l.vouched(testLiveNode)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("blocked behind a cache update")
+	}
 }
 
 func TestPointLiveness_unknownNode(t *testing.T) {
