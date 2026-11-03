@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectOccupancyChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
+func (a *automation) collectOccupancyChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := occupancysensorpb.NewOccupancySensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*occupancysensorpb.Occupancy](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*occupancysensorpb.Occupancy](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -27,7 +27,7 @@ func (a *automation) collectOccupancyChanges(ctx context.Context, source config.
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetOccupancy()) {
+				if !last.Changed(ctx, change.GetOccupancy()) {
 					continue
 				}
 
@@ -50,7 +50,7 @@ func (a *automation) collectOccupancyChanges(ctx context.Context, source config.
 			return err
 		}
 
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -67,7 +67,7 @@ func (a *automation) collectOccupancyChanges(ctx context.Context, source config.
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
 		logger.Warn("collection aborted", zap.Error(err))
 	}
 }
