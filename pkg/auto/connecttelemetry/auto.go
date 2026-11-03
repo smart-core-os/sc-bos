@@ -176,6 +176,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				if err := a.refreshDevices(autoCtx, cfg, refreshed); err != nil {
 					a.Logger.Error("error refreshing device list; retaining previous set", zap.Error(err))
 				} else {
+					carryFetchState(allDevices, refreshed)
 					allDevices = refreshed
 					refreshDue = false
 				}

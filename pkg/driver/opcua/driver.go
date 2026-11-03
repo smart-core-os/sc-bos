@@ -44,6 +44,28 @@ type EventHandler interface {
 	handleEvent(ctx context.Context, node *ua.NodeID, value any)
 }
 
+// livenessHandler is an EventHandler that needs to know when the values it holds stop being
+// vouched for by the subscription. A Good value reaches it through handleEvent as usual.
+// Separate from EventHandler so the traits that serve their last value regardless need not
+// implement it.
+type livenessHandler interface {
+	// pointBad reports that the server sent a Bad status for node.
+	pointBad(node *ua.NodeID)
+	// connectionSuspect reports a dropped connection or a transport error, after which a value
+	// that does not change may never be resent.
+	connectionSuspect()
+	// subscriptionLost reports that the subscription carrying the device's points has ended
+	// or could not be created.
+	subscriptionLost()
+}
+
+// the device finds these by type assertion, so a slip in a method signature would quietly
+// leave the trait serving stale values
+var (
+	_ livenessHandler = (*Meter)(nil)
+	_ livenessHandler = (*Electric)(nil)
+)
+
 func (f factory) New(services driver.Services) service.Lifecycle {
 	logger := services.Logger.Named(DriverName)
 
@@ -91,13 +113,15 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		d.logger.Warn("monitoring parameters may cause trouble", zap.Strings("warnings", warnings))
 	}
 
-	opcClient, err := d.connectOpcClient(ctx, cfg)
+	watch := &connWatch{}
+	opcClient, err := d.connectOpcClient(ctx, cfg, watch)
 	if err != nil {
 		d.logger.Warn("Connect error", zap.Error(err))
 		return err
 	}
 
 	client := NewClient(opcClient, d.logger, cfg.Conn)
+	client.watch = watch
 
 	a.Announce(cfg.Name, node.HasMetadata(cfg.Meta))
 
@@ -138,7 +162,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		for _, t := range dev.Traits {
 			switch t.Kind {
 			case meterpb.TraitName:
-				m, err := newMeter(dev.Name, t, d.logger)
+				m, err := newMeter(dev.Name, t, client, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", meterpb.TraitName), zap.Error(err))
 					return err
@@ -176,7 +200,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 				)
 
 			case trait.Electric:
-				e, err := newElectric(dev.Name, t, d.logger)
+				e, err := newElectric(dev.Name, t, client, d.logger)
 				if err != nil {
 					d.logger.Error("failed to add trait, invalid config", zap.String("device", dev.Name), zap.Stringer("trait", trait.Electric), zap.Error(err))
 					return err
@@ -210,6 +234,8 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 
 		a.Announce(dev.Name, allFeatures...)
+		// after the traits are added: the callback reads eventHandlers from gopcua's goroutine
+		watch.onLost(opcDev.connectionLost)
 		dev := opcDev
 		grp.Go(func() error {
 			return dev.subscribe(ctx)
@@ -231,12 +257,13 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root) (*opcua.Client, error) {
+func (d *Driver) connectOpcClient(ctx context.Context, cfg config.Root, watch *connWatch) (*opcua.Client, error) {
 	endpoint, opts, err := d.opcClientOptions(ctx, cfg.Conn)
 	if err != nil {
 		service.UpdateSystemCheck(d.systemCheck, err)
 		return nil, err
 	}
+	opts = append(opts, opcua.StateChangedFunc(watch.observe))
 
 	opcClient, err := opcua.NewClient(endpoint, opts...)
 	if err != nil {

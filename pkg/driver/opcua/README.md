@@ -32,6 +32,33 @@ device's own points are unaffected.
 In the config, each device configures which traits it supports. (see config/sample.json for an example)
 Each trait has its own configuration, which is used to map the OPC UA Variable Node to the trait.
 
+### Meter and Electric readings
+
+OPC UA notifies only on change, so a steady point's last notification can be hours old and
+still be the server's current value, and a point whose value was lost keeps its last
+notification for ever. The Meter and Electric traits therefore only serve a value as current
+while the subscription vouches for it. The subscription vouches for a node once it has
+delivered a usable value (Good or Uncertain, as both reach the traits), and stops when the point
+reports Bad, the connection drops or reports a transport error, or the subscription ends. It
+also vouches for nothing while the connection is down. A dropped connection is heard from
+gopcua's connection state, because its publish loop pauses on one without notifying any
+subscription.
+
+A Get reads anything the subscription does not vouch for live, in one request. After the
+connection drops, one Good read restores the subscription's word: gopcua does not resend an
+unchanged value when it transfers a subscription to a repaired connection. A point that has
+never delivered, or reported Bad, is read live on every request until its monitored item
+delivers again.
+
+- `GetMeterReading` returns the usage with `end_time` set to the time of the request. A Bad
+  status, a missing value or a failed read returns `Unavailable`, so a meter the driver has
+  never read, or has lost, does not look current to anything polling it.
+- `GetDemand` returns the fields it can vouch for or read, and leaves the rest out. It returns
+  `Unavailable` only when that leaves no field at all.
+
+`PullMeterReadings` and `PullDemand` are unaffected. They emit once per change, and a live
+read that finds a new value feeds them too.
+
 ## Informational points
 
 A device's health is reported on its `deviceStatusCheck`: the `PointSubscribe` and

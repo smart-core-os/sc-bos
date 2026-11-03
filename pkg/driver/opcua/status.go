@@ -59,6 +59,9 @@ var (
 	// errUnexpectedResults reports a CreateMonitoredItems response that did not carry one
 	// result per item we asked about, so we cannot tell which of them worked.
 	errUnexpectedResults = errors.New("expected one monitored item result per item requested")
+	// errUnexpectedReadResults reports a ReadResponse that did not carry one value per node
+	// we asked to read.
+	errUnexpectedReadResults = errors.New("expected one read result per node requested")
 	// errSubscriptionClosed reports the notification channel closing under us.
 	errSubscriptionClosed = errors.New("subscription notification channel closed")
 	// errNoWorkablePoints reports a device left with nothing to subscribe to, because the

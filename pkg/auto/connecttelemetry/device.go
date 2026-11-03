@@ -36,6 +36,11 @@ type device struct {
 	// Only one goroutine touches a device at a time: the loop between cycles, or its
 	// publishDevice during one.
 	discoveryOwed bool
+	// failing is whether each collector, by index, failed its last fetch, so a device that
+	// can't be read logs once when it starts failing and once when it recovers rather than on
+	// every cycle. A dark meter is a state worth one line, not twelve an hour. Carried across
+	// a device refresh by carryFetchState.
+	failing []bool
 }
 
 // buildTelemetry fetches every collector's current points and merges them into a
@@ -44,11 +49,23 @@ type device struct {
 func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.Logger) (udmi.PointsetEvent, bool) {
 	merged := udmi.PointsEvent{}
 	var ts time.Time
-	for _, c := range d.collectors {
+	if len(d.failing) != len(d.collectors) {
+		d.failing = make([]bool, len(d.collectors))
+	}
+	for i, c := range d.collectors {
 		points, readingTime, err := c.points(ctx, now)
 		if err != nil {
-			logger.Warn("failed to fetch trait telemetry", zap.String("device", d.name), zap.Error(err))
+			if d.failing[i] {
+				logger.Debug("still failing to fetch trait telemetry", zap.String("device", d.name), zap.Error(err))
+			} else {
+				logger.Warn("failed to fetch trait telemetry, will keep trying", zap.String("device", d.name), zap.Error(err))
+			}
+			d.failing[i] = true
 			continue
+		}
+		if d.failing[i] {
+			logger.Info("fetching trait telemetry again", zap.String("device", d.name))
+			d.failing[i] = false
 		}
 		for name, v := range points {
 			merged[name] = v
@@ -64,6 +81,17 @@ func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.
 		ts = now
 	}
 	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: merged}, true
+}
+
+// carryFetchState copies each device's fetch failures from before a refresh, for a device that
+// still has the same collectors, so a refresh does not repeat the warning for every device
+// that was already failing.
+func carryFetchState(from, to map[string]*device) {
+	for name, dev := range to {
+		if old, ok := from[name]; ok && len(old.collectors) == len(dev.collectors) {
+			dev.failing = old.failing
+		}
+	}
 }
 
 // buildDiscovery builds the UDMI device-metadata (discovery) event, merging the
