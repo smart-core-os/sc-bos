@@ -31,6 +31,7 @@ One of:
  - off: Insecure! Permit all requests regardless of any policy or authentication
  - check: Insecure! If requests have a token or client certificate, check them 
    against the policy, otherwise permit them`)
+	fs.StringVar(&dst.SetupCodeFile, "setup-code-file", dst.SetupCodeFile, "path to a file holding the setup code to use instead of generating one")
 
 	// todo: add support for staticHosting config via flag
 

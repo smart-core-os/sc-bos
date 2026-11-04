@@ -322,3 +322,106 @@ test_boot_trait_write_GetBootState if {
   data.smartcore.bos.boot.v1.BootApi.allow
     with input as permission_request(boot_service, "GetBootState", {}, ["trait:write"])
 }
+
+# --- Setup code: the setup role may only enrol the node, read the node's own metadata and use SetupApi ---
+
+enrollment_service := "smartcore.bos.enrollment.v1.EnrollmentApi"
+metadata_service := "smartcore.bos.metadata.v1.MetadataApi"
+setup_service := "smartcore.bos.setup.v1.SetupApi"
+
+anonymous_request(service, method, request) := result if {
+  result := {
+    "service": service,
+    "method": method,
+    "stream": {"is_server_stream": false, "is_client_stream": false, "open": false},
+    "request": request,
+    "certificate_present": false,
+    "certificate_valid": false,
+    "certificate": null,
+    "token_present": false,
+    "token_valid": false,
+    "token_claims": null
+  }
+}
+
+test_setup_CreateEnrollment if {
+  data.smartcore.bos.enrollment.v1.EnrollmentApi.allow
+    with input as user_request(enrollment_service, "CreateEnrollment", {}, ["setup"])
+}
+test_anonymous_CreateEnrollment_denied if {
+  not data.smartcore.bos.enrollment.v1.EnrollmentApi.allow
+    with input as anonymous_request(enrollment_service, "CreateEnrollment", {})
+}
+test_viewer_CreateEnrollment_denied if {
+  not data.smartcore.bos.enrollment.v1.EnrollmentApi.allow
+    with input as user_request(enrollment_service, "CreateEnrollment", {}, ["viewer"])
+}
+# The role only counts when it comes from a valid token.
+test_setup_invalid_token_CreateEnrollment_denied if {
+  req := object.union(user_request(enrollment_service, "CreateEnrollment", {}, ["setup"]), {"token_valid": false})
+  not data.smartcore.bos.enrollment.v1.EnrollmentApi.allow with input as req
+}
+test_setup_UpdateEnrollment_denied if {
+  req := user_request(enrollment_service, "UpdateEnrollment", {}, ["setup"])
+  not data.smartcore.bos.enrollment.v1.EnrollmentApi.allow with input as req
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+test_setup_DeleteEnrollment_denied if {
+  req := user_request(enrollment_service, "DeleteEnrollment", {}, ["setup"])
+  not data.smartcore.bos.enrollment.v1.EnrollmentApi.allow with input as req
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+
+test_setup_GetMetadata_node if {
+  data.smartcore.bos.metadata.v1.MetadataApi.allow
+    with input as user_request(metadata_service, "GetMetadata", {"name": ""}, ["setup"])
+}
+test_setup_GetMetadata_device_denied if {
+  req := user_request(metadata_service, "GetMetadata", {"name": "floor1/light1"}, ["setup"])
+  not data.smartcore.bos.metadata.v1.MetadataApi.allow with input as req
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+test_setup_PullMetadata_denied if {
+  req := user_request(metadata_service, "PullMetadata", {"name": ""}, ["setup"])
+  not data.smartcore.bos.metadata.v1.MetadataApi.allow with input as req
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+test_anonymous_GetMetadata_node_denied if {
+  req := anonymous_request(metadata_service, "GetMetadata", {"name": ""})
+  not data.smartcore.bos.metadata.v1.MetadataApi.allow with input as req
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+# Other roles keep their general access to metadata.
+test_viewer_GetMetadata_device if {
+  data.smartcore.allow
+    with input as user_request(metadata_service, "GetMetadata", {"name": "floor1/light1"}, ["viewer"])
+}
+
+test_setup_trait_denied if {
+  req := user_request("smartcore.bos.onoff.v1.OnOffApi", "GetOnOff", {"name": ""}, ["setup"])
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+test_setup_CreateAccount_denied if {
+  req := user_request("smartcore.bos.account.v1.AccountApi", "CreateAccount", {}, ["setup"])
+  not data.smartcore.bos.allow with input as req
+  not data.smartcore.allow with input as req
+}
+
+test_anonymous_GetSetupState if {
+  data.smartcore.bos.setup.v1.SetupApi.allow
+    with input as anonymous_request(setup_service, "GetSetupState", {})
+}
+test_anonymous_CompleteSetup if {
+  data.smartcore.bos.setup.v1.SetupApi.allow
+    with input as anonymous_request(setup_service, "CompleteSetup", {})
+}
+test_anonymous_SetupApi_other_denied if {
+  not data.smartcore.bos.setup.v1.SetupApi.allow
+    with input as anonymous_request(setup_service, "PullSetupState", {})
+}

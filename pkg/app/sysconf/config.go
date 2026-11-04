@@ -92,6 +92,10 @@ type Config struct {
 
 	AuditLog *AuditLogConfig `json:"auditLog,omitempty"`
 
+	// SetupCodeFile, if set, supplies the node's setup code instead of it generating one, for scripted installs.
+	// It is only used while the node is waiting to be set up.
+	SetupCodeFile string `json:"setupCodeFile,omitempty"`
+
 	Experimental *Experimental `json:"experimental,omitempty"`
 
 	Cloud      *Cloud      `json:"cloud,omitempty"`
