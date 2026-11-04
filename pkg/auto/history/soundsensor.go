@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectSoundSensorChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
+func (a *automation) collectSoundSensorChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := soundsensorpb.NewSoundSensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*soundsensorpb.SoundLevel](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*soundsensorpb.SoundLevel](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullSoundLevel(ctx, &soundsensorpb.PullSoundLevelRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -27,7 +27,7 @@ func (a *automation) collectSoundSensorChanges(ctx context.Context, source confi
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetSoundLevel()) {
+				if !last.Changed(ctx, change.GetSoundLevel()) {
 					continue
 				}
 
@@ -50,7 +50,7 @@ func (a *automation) collectSoundSensorChanges(ctx context.Context, source confi
 			return err
 		}
 
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -67,7 +67,7 @@ func (a *automation) collectSoundSensorChanges(ctx context.Context, source confi
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
 		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

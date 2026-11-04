@@ -1,33 +1,45 @@
 package history
 
 import (
+	"context"
+	"time"
+
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
 type deduper[T proto.Message] struct {
+	rec   *recency // also guards last, which the heartbeat and the pull or poll loop both reach
 	last  T
 	equal cmp.Message
 }
 
-func newDeduper[T proto.Message](message cmp.Message) *deduper[T] {
+func newDeduper[T proto.Message](message cmp.Message, rec *recency) *deduper[T] {
 	if message == nil {
 		message = cmp.Equal()
 	}
-	return &deduper[T]{equal: message}
+	return &deduper[T]{equal: message, rec: rec}
 }
 
-// Changed checks if the message has changed compared to the last one.
-// If the messages are equal, it returns false.
-// If the messages are not equal, it returns true and updates the last message.
-// It uses the provided equal comparator to determine equality, or a default one if not provided.
-func (d *deduper[T]) Changed(m T) bool {
-	if d.equal(d.last, m) {
+// Changed reports whether m should be recorded, and if so remembers it as the last message.
+// It is true when m is not equal to the last message, using the provided equal comparator or a default one,
+// and also when rec says a reading is due regardless of value:
+// maxInterval has passed since the last accepted one, or the last write failed.
+// It is false for a polled m whose read began before the last message was accepted, see recency.staleLocked.
+func (d *deduper[T]) Changed(ctx context.Context, m T) bool {
+	d.rec.mu.Lock()
+	defer d.rec.mu.Unlock()
+	if d.rec.staleLocked(ctx) {
+		return false
+	}
+	now := time.Now()
+	if d.equal(d.last, m) && !d.rec.dueLocked(now) {
 		return false
 	}
 
 	d.last = m
+	d.rec.acceptLocked(now)
 
 	return true
 }

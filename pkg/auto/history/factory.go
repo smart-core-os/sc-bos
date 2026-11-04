@@ -94,19 +94,23 @@ func (a *automation) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	logger := a.sourceLogger(*cfg.Source)
 	payloads := make(chan []byte)
-	go storePayloads(ctx, store, payloads, cfg.Storage.TimeoutDuration(), logger)
+	rec := newRecency(cfg.Source.MaxIntervalDuration())
+	go storePayloads(ctx, store, payloads, rec, cfg.Storage.TimeoutDuration(), logger)
 
 	announce := a.announcer.Replace(ctx)
 	// announce the trait too to ensure its services get added to the router before the collect routine starts
 	announce.Announce(cfg.Source.Name, serverClient, node.HasTrait(cfg.Source.Trait))
 
-	go collect(ctx, *cfg.Source, payloads, logger)
+	go collect(ctx, *cfg.Source, payloads, rec, logger)
 
 	return nil
 }
 
 // routeConfig dispatches to applyConfigDevices when cfg.Source.Devices is set, otherwise falls back to applyConfig.
 func (a *automation) routeConfig(ctx context.Context, cfg config.Root) error {
+	if cfg.Source != nil && cfg.Source.MaxInterval != nil && cfg.Source.MaxInterval.Duration < 0 {
+		return fmt.Errorf("invalid source.maxInterval %v: must not be negative", cfg.Source.MaxInterval.Duration)
+	}
 	if cfg.Source != nil && len(cfg.Source.Devices) > 0 {
 		if a.devices == nil {
 			return errors.New("source.devices requires a DevicesApi service to be configured")
@@ -196,10 +200,11 @@ func (a *automation) startDeviceRecording(ctx context.Context, announce node.Ann
 
 	logger := a.sourceLogger(src)
 	payloads := make(chan []byte)
-	go storePayloads(ctx, store, payloads, cfg.Storage.TimeoutDuration(), logger)
+	rec := newRecency(src.MaxIntervalDuration())
+	go storePayloads(ctx, store, payloads, rec, cfg.Storage.TimeoutDuration(), logger)
 
 	undo := announce.Announce(deviceName, serverClient, node.HasTrait(cfg.Source.Trait))
-	go collect(ctx, src, payloads, logger)
+	go collect(ctx, src, payloads, rec, logger)
 
 	return undo, nil
 }
@@ -209,10 +214,11 @@ func (a *automation) sourceLogger(src config.Source) *zap.Logger {
 }
 
 // storePayloads appends each payload to store until ctx is done.
-// Each append is bounded by timeout, a payload that fails to store is logged and dropped.
+// Each append is bounded by timeout, a payload that fails to store is logged and dropped,
+// and rec is told so that the source's next reading is recorded even if it hasn't changed.
 //
 // payloads is never closed: collectors may still be sending to it after ctx is done.
-func storePayloads(ctx context.Context, store history.Store, payloads <-chan []byte, timeout time.Duration, logger *zap.Logger) {
+func storePayloads(ctx context.Context, store history.Store, payloads <-chan []byte, rec *recency, timeout time.Duration, logger *zap.Logger) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -223,6 +229,7 @@ func storePayloads(ctx context.Context, store history.Store, payloads <-chan []b
 			cancel()
 			if err != nil && ctx.Err() == nil {
 				logger.Warn("storage failed", zap.Duration("timeout", timeout), zap.Error(err))
+				rec.failed()
 			}
 		}
 	}

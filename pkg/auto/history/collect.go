@@ -13,14 +13,39 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/pull"
 )
 
-type collector func(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger)
+type collector func(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger)
 type getter func(context.Context, chan<- []byte) error
+
+// heartbeatRetryDelay is how long to wait before asking again when a heartbeat could not read the source,
+// or its reading could not be stored.
+// Short relative to any sensible maxInterval, so a missed beat costs minutes of history rather than an interval of it.
+const heartbeatRetryDelay = time.Minute
+
+// maxHeartbeatRetries bounds the attempts spent on one missed beat,
+// so a source that stays unreadable is asked a few times per maxInterval rather than every minute.
+const maxHeartbeatRetries = 3
 
 // collectChanges blocks until ctx is done, sending changes from source to changes.
 // A nil error means ctx is done, any other error means collection stopped early.
-func collectChanges(ctx context.Context, cfg config.Source, pullFn, pollFn getter, changes chan<- []byte, logger *zap.Logger) error {
+//
+// When rec has a maxInterval, a heartbeat also polls the source whenever nothing has been accepted for that long.
+func collectChanges(ctx context.Context, cfg config.Source, pullFn, pollFn getter, changes chan<- []byte, rec *recency, logger *zap.Logger) error {
 	pullFn = keepCtxErrs(pullFn)
-	pollFn = withTimeout(pollFn, cfg.TimeoutDuration())
+	pollFn = withTimeout(withReadStart(pollFn), cfg.TimeoutDuration())
+
+	if rec.maxInterval > 0 {
+		ctx, cancel := context.WithCancel(ctx)
+		beating := make(chan struct{})
+		go func() {
+			defer close(beating)
+			runHeartbeat(ctx, rec, pollFn, changes, logger)
+		}()
+		// callers may stop reading changes once we return
+		defer func() {
+			cancel()
+			<-beating
+		}()
+	}
 
 	if cfg.PollingSchedule != nil {
 		for {
@@ -41,6 +66,77 @@ func collectChanges(ctx context.Context, cfg config.Source, pullFn, pollFn gette
 		return nil
 	}
 	return err
+}
+
+// runHeartbeat polls the source each time rec has gone maxInterval without accepting a reading, until ctx is done.
+// The poll's deduper accepts the reading because of its age, so an unchanged value is still recorded.
+//
+// It must be a live read of the source, never a replay of a value we already hold:
+// a failed read records nothing, which is what lets a gap in history mean the source couldn't be read.
+func runHeartbeat(ctx context.Context, rec *recency, poll getter, changes chan<- []byte, logger *zap.Logger) {
+	var (
+		// retryAt, when set, is when to retry a beat that couldn't read the source or whose reading couldn't be stored.
+		retryAt time.Time
+		retries int
+		// notBefore stops a source whose reads keep failing, leaving rec.next() in the past, from spinning the loop.
+		notBefore time.Time
+	)
+	retry := func() bool {
+		if retries >= maxHeartbeatRetries {
+			retries = 0
+			retryAt = time.Time{}
+			notBefore = time.Now().Add(rec.maxInterval)
+			return false
+		}
+		retries++
+		retryAt = time.Now().Add(min(heartbeatRetryDelay, rec.maxInterval))
+		return true
+	}
+
+	for {
+		at := retryAt
+		if at.IsZero() {
+			at = rec.next()
+			if at.Before(notBefore) {
+				at = notBefore
+			}
+		}
+		timer := time.NewTimer(time.Until(at))
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-rec.wake:
+			timer.Stop()
+			logger.Debug("heartbeat retrying after a failed write", zap.Bool("retrying", retry()))
+			continue
+		case <-timer.C:
+		}
+
+		if retryAt.IsZero() {
+			now := time.Now()
+			if now.Before(rec.next()) {
+				continue // a reading was accepted while we waited
+			}
+			retries = 0
+			notBefore = now.Add(rec.maxInterval)
+		}
+		retryAt = time.Time{}
+
+		err := poll(ctx, changes)
+		switch {
+		case err == nil:
+		case ctx.Err() != nil:
+			return
+		case status.Code(err) == codes.Unimplemented:
+			logger.Warn("source can't be read on demand, maxInterval ignored", zap.Error(err))
+			return
+		case status.Code(err) == codes.Unavailable:
+			logger.Debug("heartbeat could not read source", zap.Error(err), zap.Bool("retrying", retry()))
+		default:
+			logger.Warn("heartbeat could not read source", zap.Error(err), zap.Bool("retrying", retry()))
+		}
+	}
 }
 
 // withTimeout bounds each call to poll by timeout.

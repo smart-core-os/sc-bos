@@ -143,13 +143,13 @@
     {
       "name": "sim/demo/automation/meter-history/building",
       "type": "history",
-      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.bos.Meter"},
+      "source": {"name": "sim/demo/zones/building", "trait": "smartcore.bos.Meter", "maxInterval": "1h"},
       "storage": {"type": "postgres"}
     },
     {
       "name": "sim/demo/automation/meter-history/main-incomer",
       "type": "history",
-      "source": {"name": "sim/demo/building/meter-01", "trait": "smartcore.bos.Meter"},
+      "source": {"name": "sim/demo/building/meter-01", "trait": "smartcore.bos.Meter", "maxInterval": "1h"},
       "storage": {"type": "postgres"}
     },
     {

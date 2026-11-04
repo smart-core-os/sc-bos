@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte, logger *zap.Logger) {
+func (a *automation) collectAllocationChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := allocationpb.NewAllocationApiClient(a.clients.ClientConn())
 
-	dedupe := newDeduper[*allocationpb.Allocation](cmp.Equal())
+	dedupe := newDeduper[*allocationpb.Allocation](cmp.Equal(), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullAllocation(ctx, &allocationpb.PullAllocationRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -29,7 +29,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !dedupe.Changed(change.GetAllocation()) {
+				if !dedupe.Changed(ctx, change.GetAllocation()) {
 					continue
 				}
 
@@ -52,7 +52,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 			return err
 		}
 
-		if !dedupe.Changed(resp) {
+		if !dedupe.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -69,7 +69,7 @@ func (a *automation) collectAllocationChanges(ctx context.Context, source config
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, logger); err != nil {
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
 		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

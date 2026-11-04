@@ -115,7 +115,7 @@ func Test_collectChanges_pollTimeoutSlowStorage(t *testing.T) {
 			Timeout:         &jsontypes.Duration{Duration: time.Second},
 		}
 		payloads := make(chan []byte) // nobody reads until storage "recovers"
-		go collectChanges(t.Context(), src, nil, pollFn, payloads, zap.NewNop())
+		go collectChanges(t.Context(), src, nil, pollFn, payloads, newRecency(0), zap.NewNop())
 
 		time.Sleep(5 * time.Second) // first tick at t=1s, well past its 1s timeout
 		select {
@@ -164,7 +164,7 @@ func Test_storePayloads_timeout(t *testing.T) {
 		store := &stuckStore{Store: memstore.New(), stuckCalls: 1}
 		payloads := make(chan []byte)
 
-		go storePayloads(t.Context(), store, payloads, time.Second, zap.New(core))
+		go storePayloads(t.Context(), store, payloads, newRecency(0), time.Second, zap.New(core))
 
 		payloads <- []byte("first")  // stuck, dropped after 1s
 		payloads <- []byte("second") // can only be received once the first has timed out
@@ -199,7 +199,7 @@ func runCollectChanges(t *testing.T, src config.Source, pullFn, pollFn getter) [
 	payloads := make(chan []byte, 100)
 	done := make(chan error, 1)
 	go func() {
-		done <- collectChanges(ctx, src, pullFn, pollFn, payloads, zap.NewNop())
+		done <- collectChanges(ctx, src, pullFn, pollFn, payloads, newRecency(src.MaxIntervalDuration()), zap.NewNop())
 	}()
 
 	time.Sleep(time.Minute)
