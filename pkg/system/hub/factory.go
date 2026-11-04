@@ -183,6 +183,8 @@ func (s *System) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	if err == nil {
 		hubClient := hubpb.NewHubApiClient(hubConn)
+		// Nodes are enrolled without a setup code, so only nodes with policy check or off enrol this way.
+		// A node with policy on needs its setup code, passed to EnrollHubNode by whoever enrols it.
 		for _, n := range cfg.Nodes {
 			go func() {
 				for {

@@ -13,7 +13,9 @@ import (
 )
 
 // Inspect connects to a remote node returning its public certs and metadata.
-func Inspect(ctx context.Context, address string) (*hubpb.HubNodeInspection, error) {
+// A non-empty setupCode is presented to the target with GetMetadata, which a target with policy on requires until
+// somebody claims it. If the target rejects the request as unauthenticated, Inspect returns PermissionDenied.
+func Inspect(ctx context.Context, address, setupCode string) (*hubpb.HubNodeInspection, error) {
 	tlsConfig := &tls.Config{
 		// We're actively trying to connect to the remote and fetch their cert
 		InsecureSkipVerify: true,
@@ -28,13 +30,14 @@ func Inspect(ctx context.Context, address string) (*hubpb.HubNodeInspection, err
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
 
 	out := &hubpb.HubNodeInspection{}
 	// do the API call first, to force the connection to be established (or fail)
 	client := metadatapb.NewMetadataApiClient(conn)
-	md, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{})
+	md, err := client.GetMetadata(ctx, &metadatapb.GetMetadataRequest{}, withSetupCode(setupCode)...)
 	if err != nil {
-		return nil, err
+		return nil, authError(err, setupCode)
 	}
 	out.Metadata = md
 

@@ -23,6 +23,7 @@ var (
 	flagName        string
 	flagManagerName string
 	flagManagerAddr string
+	flagSetupCode   string
 )
 
 func init() {
@@ -33,6 +34,7 @@ func init() {
 	flag.StringVar(&flagName, "name", "", "name to assign to the enrolled node")
 	flag.StringVar(&flagManagerName, "manager-name", "", "Smart Core name of the node's new manager")
 	flag.StringVar(&flagManagerAddr, "manager-addr", "", "Address (host:port) of the node's new manager")
+	flag.StringVar(&flagSetupCode, "setup-code", "", "setup code of the node, needed if it has policy on and nobody has claimed it")
 }
 
 func main() {
@@ -57,7 +59,7 @@ func run() error {
 		ManagerName:    flagManagerName,
 		ManagerAddress: flagManagerAddr,
 	}
-	en, err := remote.Enroll(context.Background(), en, authority)
+	en, err := remote.Enroll(context.Background(), en, authority, flagSetupCode)
 	fmt.Println(protojson.Format(en))
 	return err
 }

@@ -265,6 +265,17 @@ edge gateway and proxies along with Ops UI features like SC health and central m
 
 Enrolment is a manual one-off process performed on the hub to add new nodes to it. You can do this via the Ops UI.
 
+A node running with `--policy-mode=on` only lets a hub inspect and enrol it if the hub presents the node's setup code.
+A new node issues a setup code only if it has local accounts on, no accounts yet, and no other way to log in (such as
+Keycloak or an identities file). It logs where to read the code, usually `<data>/setup/setup-code.txt`. A node with
+policy on that issues no code can't be enrolled by a hub.
+
+Pass the code as `setup_code` in `InspectHubNode` and `EnrollHubNode`, or to `cmd/tools/enrollment-tool` with
+`--setup-code`; the Ops UI enrol dialog does not ask for it yet. Inspecting a node with a code needs the same access on
+the hub as enrolling one, because every wrong code uses up one of the node's limited guesses. The hub sends the code to
+the node and never stores it. Once the node is enrolled or has an account, it stops accepting the code. Nodes listed in
+the hub's `nodes` config are enrolled without a code, so those need policy `check` or `off`.
+
 ## Traits supported by SC BOS
 
 ### Access

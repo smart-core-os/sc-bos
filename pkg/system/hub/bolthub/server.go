@@ -102,13 +102,16 @@ func (s *Server) EnrollHubNode(ctx context.Context, req *hubpb.EnrollHubNodeRequ
 		TargetAddress:  nodeReg.Address,
 		ManagerName:    s.ManagerName,
 		ManagerAddress: s.ManagerAddr,
-	}, s.Authority, req.PublicCerts...)
+	}, s.Authority, req.SetupCode, req.PublicCerts...)
 	if err != nil {
 		s.logger.Error("failed to enroll area controller", zap.Error(err),
 			zap.String("target_address", nodeReg.Address))
 
-		if status.Code(err) == codes.AlreadyExists {
+		switch status.Code(err) {
+		case codes.AlreadyExists:
 			return nil, status.Error(codes.AlreadyExists, "already enrolled")
+		case codes.PermissionDenied:
+			return nil, err // remote.Enroll's message says what to do about the setup code
 		}
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
@@ -225,7 +228,7 @@ func (s *Server) InspectHubNode(ctx context.Context, request *hubpb.InspectHubNo
 	if request.GetNode().GetAddress() == "" {
 		return nil, status.Error(codes.InvalidArgument, "node.address must be supplied")
 	}
-	return remote.Inspect(ctx, request.Node.Address)
+	return remote.Inspect(ctx, request.Node.Address, request.SetupCode)
 }
 
 func (s *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRequest) (*hubpb.HubNode, error) {
