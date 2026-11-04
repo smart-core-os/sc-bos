@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -62,14 +63,28 @@ func (f *fixture) mustOpen(t *testing.T) *Codes {
 	return c
 }
 
-// shownCode returns the code logged by the last open, or "" if none was.
+// shownCode returns the code as the installer reads it from the code file, or "" if there is no code file.
 func (f *fixture) shownCode() string {
+	raw, err := os.ReadFile(filepath.Join(f.dir, codeFileName))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(raw))
+}
+
+// logged reports whether any field or message logged by the last open contains s.
+func (f *fixture) logged(s string) bool {
 	for _, e := range f.logs.All() {
-		if code, ok := e.ContextMap()["setupCode"].(string); ok {
-			return code
+		if strings.Contains(e.Message, s) {
+			return true
+		}
+		for _, v := range e.ContextMap() {
+			if strings.Contains(fmt.Sprint(v), s) {
+				return true
+			}
 		}
 	}
-	return ""
+	return false
 }
 
 func (f *fixture) addAccount(t *testing.T, legacyRole string) {
@@ -104,20 +119,23 @@ func TestOpen_pending(t *testing.T) {
 
 	shown := f.shownCode()
 	if shown == "" {
-		t.Fatal("setup code was not logged")
+		t.Fatal("no setup code file")
 	}
-	raw, err := os.ReadFile(filepath.Join(f.dir, codeFileName))
+	code, err := normaliseCode(shown)
 	if err != nil {
-		t.Fatalf("code file: %v", err)
+		t.Fatalf("code file holds %q: %v", shown, err)
 	}
-	if got := strings.TrimSpace(string(raw)); got != shown {
-		t.Errorf("code file holds %q, logged %q", got, shown)
+	// The log is served to read-only callers, so it must say where the code is without giving it away.
+	if f.logged(shown) || f.logged(code) {
+		t.Error("setup code was logged")
+	}
+	if !f.logged(filepath.Join(f.dir, codeFileName)) {
+		t.Error("log doesn't say where the setup code is")
 	}
 	state, err := os.ReadFile(filepath.Join(f.dir, stateFileName))
 	if err != nil {
 		t.Fatalf("state file: %v", err)
 	}
-	code, _ := normaliseCode(shown)
 	if strings.Contains(string(state), code) {
 		t.Errorf("state file holds the code itself: %s", state)
 	}
@@ -173,15 +191,17 @@ func TestOpen_alreadyClaimed(t *testing.T) {
 		setup func(f *fixture)
 	}{
 		{"admin", func(f *fixture) { f.addAccount(t, "admin") }},
-		{"super-admin", func(f *fixture) { f.addAccount(t, "super-admin") }},
+		// Anyone with an account could read the code if it were within reach, and enrol the node to take it over.
+		{"viewer", func(f *fixture) { f.addAccount(t, "viewer") }},
+		{"operator", func(f *fixture) { f.addAccount(t, "operator") }},
 		{"enrolled", func(f *fixture) { f.enrolled.Store(true) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
 			tc.setup(f)
 			c := f.mustOpen(t)
-			if f.shownCode() != "" {
-				t.Error("setup code logged for a claimed node")
+			if len(f.logs.All()) != 0 {
+				t.Errorf("logged setup for a claimed node: %v", f.logs.All())
 			}
 			if _, err := os.Stat(f.dir); !errors.Is(err, os.ErrNotExist) {
 				t.Errorf("setup dir created for a claimed node: %v", err)
@@ -208,35 +228,26 @@ func TestOpen_otherLogins(t *testing.T) {
 		t.Fatal(err)
 	}
 	if f.shownCode() != "" {
-		t.Error("setup code logged for a node with other logins")
+		t.Error("setup code issued for a node with other logins")
 	}
 	if claimed, _ := c.Claimed(context.Background()); !claimed {
 		t.Error("Claimed = false for a node with other logins")
 	}
 }
 
-func TestOpen_operatorDoesNotClaim(t *testing.T) {
-	f := newFixture(t)
-	f.addAccount(t, "operator")
-	f.mustOpen(t)
-	if f.shownCode() == "" {
-		t.Error("no setup code for a node with only an operator account")
-	}
-}
-
 func TestCodes_stopsWorkingOnceClaimed(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("admin created", func(t *testing.T) {
+	t.Run("account created", func(t *testing.T) {
 		f := newFixture(t)
 		c := f.mustOpen(t)
 		code := f.shownCode()
-		f.addAccount(t, "admin")
+		f.addAccount(t, "viewer")
 		if _, err := c.ValidateAccessToken(ctx, code); !errors.Is(err, ErrNotPending) {
 			t.Errorf("ValidateAccessToken = %v, want ErrNotPending", err)
 		}
 		if claimed, _ := c.Claimed(ctx); !claimed {
-			t.Error("Claimed = false after an admin was created")
+			t.Error("Claimed = false after an account was created")
 		}
 	})
 
@@ -324,7 +335,10 @@ func TestOpen_restartKeepsCode(t *testing.T) {
 	}
 	c = f.mustOpen(t)
 	if got := f.shownCode(); got != "" {
-		t.Errorf("logged %q without the code file", got)
+		t.Errorf("code file rewritten with %q", got)
+	}
+	if f.logged(codeFileName) || !f.logged(stateFileName) {
+		t.Errorf("without the code file, want the log to point at the state file: %v", f.logs.All())
 	}
 	if _, err := c.ValidateAccessToken(ctx, first); err != nil {
 		t.Errorf("after code file removed: %v", err)

@@ -6,11 +6,12 @@ option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/setuppb";
 
 import "google/protobuf/field_mask.proto";
 
-// SetupApi lets an installer claim a freshly installed node using its one-time setup code.
+// SetupApi lets an installer claim a freshly installed node using its setup code.
 //
-// A node with local accounts enabled, no admin account and no enrolment generates a setup code when it starts.
-// The code is shown only on the node itself (its log, and a file in its data directory), so presenting it proves
-// access to the node. Once the node has an admin account or is enrolled with a hub, the code stops working.
+// A node with local accounts enabled but no accounts, no other way to log in, and no enrolment generates a setup code
+// when it starts. The code is only written to a file in the node's data directory, so presenting it proves access to
+// the node. The code stops working while the node has any account or is enrolled with a hub. It is not consumed when
+// used, so it works again if the node later has no accounts and leaves its hub.
 service SetupApi {
   // GetSetupState returns whether the node is waiting to be set up.
   // Anyone may call it, so a client can decide whether to show a setup wizard before anyone can log in.
@@ -23,8 +24,8 @@ service SetupApi {
 
 message SetupState {
   // claimed is false while the node is waiting to be set up and accepts its setup code.
-  // It is true once the node has an admin account or is enrolled with a hub, and on nodes without local accounts,
-  // which never use a setup code.
+  // It is true while the node has any account or is enrolled with a hub, and on nodes without local accounts or
+  // with another way to log in, which never use a setup code.
   bool claimed = 1;
   // node_name is the node's current name. Empty if the node has not been given a name.
   string node_name = 2;

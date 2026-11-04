@@ -1,16 +1,17 @@
-// Package setup manages the one-time setup code that lets an installer claim a fresh node, or a hub enrol it,
-// while the node's access policy is on.
+// Package setup manages the setup code that lets an installer claim a fresh node, or a hub enrol it, while the node's
+// access policy is on.
 //
-// Presenting the code proves access to the node itself: it is only ever shown in the node's log and in a file in its
-// data directory. The code is accepted while the node is waiting to be set up, which means local accounts are
-// enabled, no account holds the built-in admin or super-admin role, and the node is not enrolled with a hub. This is
-// checked every time the code is used, so the code stops working as soon as the node is claimed or enrolled.
+// Presenting the code proves access to the node's own filesystem: the code is only ever written to a file in its data
+// directory, readable by the node's user alone, and never to its log, which the node serves to read-only callers.
+// The code is accepted while the node is waiting to be set up, which means local accounts are enabled but none exist,
+// there is no other way to log in, and the node is not enrolled with a hub. So nobody the node already lets in is
+// waiting alongside the code. This is checked every time the code is used, so the code stops working as soon as the
+// node is claimed or enrolled.
 package setup
 
 import (
 	"context"
 	"crypto/subtle"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -53,9 +54,9 @@ type Config struct {
 	// Accounts is the local account store, nil if local accounts are disabled.
 	// Without local accounts nothing can be claimed with a code, so no code is issued.
 	Accounts *account.Store
-	// OtherLogins is true if people can log in to the node without a local account, through Keycloak or a
-	// users.json that isn't imported into the account store. Admins could be there instead, out of sight of the
-	// account store, so the node counts as claimed and no code is issued.
+	// OtherLogins is true if people or services can log in to the node without a local account, for example through
+	// Keycloak or an identities file. Those logins are out of sight of the account store, so the node counts as
+	// claimed and no code is issued.
 	OtherLogins bool
 	// Enrolled reports whether the node is enrolled with a hub.
 	Enrolled func() bool
@@ -82,8 +83,8 @@ type Codes struct {
 }
 
 // Open returns Codes for the node described by cfg.
-// If the node is waiting to be set up, the setup code is loaded from cfg.Dir or cfg.CodeFile, or generated, and is
-// logged so the installer can find it.
+// If the node is waiting to be set up, the setup code is loaded from cfg.Dir or cfg.CodeFile, or generated, and the
+// log says where the installer can read it.
 func Open(ctx context.Context, cfg Config) (*Codes, error) {
 	if cfg.Logger == nil {
 		cfg.Logger = zap.NewNop()
@@ -107,7 +108,7 @@ func Open(ctx context.Context, cfg Config) (*Codes, error) {
 		return c, nil
 	}
 
-	hash, shown, err := loadOrCreate(cfg.Dir, cfg.CodeFile)
+	hash, readable, err := loadOrCreate(cfg.Dir, cfg.CodeFile)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +118,8 @@ func Open(ctx context.Context, cfg Config) (*Codes, error) {
 	case cfg.CodeFile != "":
 		c.logger.Info("This node is waiting to be set up. Use the setup code from the setup code file to claim it, or to enrol it with a hub.",
 			zap.String("setupCodeFile", cfg.CodeFile))
-	case shown != "":
-		c.logger.Info("This node is waiting to be set up. Use its setup code to claim it, or to enrol it with a hub.",
-			zap.String("setupCode", displayCode(shown)),
+	case readable:
+		c.logger.Info("This node is waiting to be set up. Read its setup code from the setup code file to claim it, or to enrol it with a hub.",
 			zap.String("setupCodeFile", filepath.Join(cfg.Dir, codeFileName)))
 	default:
 		// The installer was shown the code when it was made, and has since removed the code file.
@@ -198,38 +198,18 @@ func (c *Codes) pending(ctx context.Context) (bool, error) {
 	if c.accounts == nil || c.otherLogins || c.enrolled() {
 		return false, nil
 	}
-	hasAdmin, err := hasAdminAccount(ctx, c.accounts)
-	if err != nil {
-		return false, fmt.Errorf("check for admin account: %w", err)
-	}
-	return !hasAdmin, nil
-}
-
-// adminRoles are the built-in roles whose holder can manage the node, so having one means it has been claimed.
-var adminRoles = []string{"admin", "super-admin"}
-
-func hasAdminAccount(ctx context.Context, store *account.Store) (bool, error) {
-	var found bool
-	err := store.Read(ctx, func(tx *account.Tx) error {
-		for _, legacy := range adminRoles {
-			roles, err := tx.ListRolesWithLegacyRole(ctx, sql.NullString{String: legacy, Valid: true})
-			if err != nil {
-				return err
-			}
-			for _, role := range roles {
-				n, err := tx.CountRoleAssignmentsForRole(ctx, role.ID)
-				if err != nil {
-					return err
-				}
-				if n > 0 {
-					found = true
-					return nil
-				}
-			}
-		}
-		return nil
+	// Any account, whatever its roles, means someone has already been let in, and the code must not be waiting
+	// within their reach: even a viewer enrolling the node into a hub they control would gain full control of it.
+	var n int64
+	err := c.accounts.Read(ctx, func(tx *account.Tx) error {
+		var err error
+		n, err = tx.CountAccounts(ctx)
+		return err
 	})
-	return found, err
+	if err != nil {
+		return false, fmt.Errorf("count accounts: %w", err)
+	}
+	return n == 0, nil
 }
 
 type state struct {
@@ -237,54 +217,55 @@ type state struct {
 	CodeHash string `json:"codeHash"`
 }
 
-// loadOrCreate returns the hash of the setup code to accept, and the code itself if it can be shown.
+// loadOrCreate returns the hash of the setup code to accept, and whether the code can be read from the code file in
+// dir.
 //
 // The code is kept across restarts, so the code an installer was shown stays valid when the node restarts.
 // It is not consumed when used: it stops working while the node is claimed or enrolled, and works again if the node
-// becomes unclaimed (unenrolled with no admin), so a node can be re-enrolled after its hub is rebuilt.
-// Only its hash is kept in the state file; the code file exists so install scripts can show the code, and may be
+// becomes unclaimed (unenrolled with no accounts), so a node can be re-enrolled after its hub is rebuilt.
+// Only its hash is kept in the state file; the code file exists so the installer can read the code, and may be
 // deleted once they have.
-func loadOrCreate(dir, codeFile string) (hash []byte, shown string, err error) {
+func loadOrCreate(dir, codeFile string) (hash []byte, readable bool, err error) {
 	if codeFile != "" {
 		raw, err := os.ReadFile(codeFile)
 		if err != nil {
-			return nil, "", fmt.Errorf("read setup code file: %w", err)
+			return nil, false, fmt.Errorf("read setup code file: %w", err)
 		}
 		code, err := normaliseCode(strings.TrimSpace(string(raw)))
 		if err != nil {
-			return nil, "", fmt.Errorf("setup code file %s: want %d characters from %s", codeFile, codeLen, codeAlphabet)
+			return nil, false, fmt.Errorf("setup code file %s: want %d characters from %s", codeFile, codeLen, codeAlphabet)
 		}
 		hash = hashCode(code)
 		if err := writeState(dir, hash); err != nil {
-			return nil, "", err
+			return nil, false, err
 		}
-		return hash, "", nil
+		return hash, false, nil
 	}
 
 	hash, err = readState(dir)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 	case err != nil:
-		return nil, "", err
+		return nil, false, err
 	default:
-		return hash, readShownCode(dir, hash), nil
+		return hash, codeFileMatches(dir, hash), nil
 	}
 
 	code, err := newCode()
 	if err != nil {
-		return nil, "", fmt.Errorf("generate setup code: %w", err)
+		return nil, false, fmt.Errorf("generate setup code: %w", err)
 	}
 	hash = hashCode(code)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return nil, "", fmt.Errorf("create setup dir: %w", err)
+		return nil, false, fmt.Errorf("create setup dir: %w", err)
 	}
 	if err := maybe.WriteFile(filepath.Join(dir, codeFileName), []byte(displayCode(code)+"\n"), 0o600); err != nil {
-		return nil, "", fmt.Errorf("write setup code file: %w", err)
+		return nil, false, fmt.Errorf("write setup code file: %w", err)
 	}
 	if err := writeState(dir, hash); err != nil {
-		return nil, "", err
+		return nil, false, err
 	}
-	return hash, code, nil
+	return hash, true, nil
 }
 
 func readState(dir string) ([]byte, error) {
@@ -317,15 +298,12 @@ func writeState(dir string, hash []byte) error {
 	return nil
 }
 
-// readShownCode returns the code from the code file if it is still there and matches hash, otherwise "".
-func readShownCode(dir string, hash []byte) string {
+// codeFileMatches reports whether the code file in dir is still there and holds the code with hash.
+func codeFileMatches(dir string, hash []byte) bool {
 	raw, err := os.ReadFile(filepath.Join(dir, codeFileName))
 	if err != nil {
-		return ""
+		return false
 	}
 	code, err := normaliseCode(strings.TrimSpace(string(raw)))
-	if err != nil || subtle.ConstantTimeCompare(hashCode(code), hash) != 1 {
-		return ""
-	}
-	return code
+	return err == nil && subtle.ConstantTimeCompare(hashCode(code), hash) == 1
 }

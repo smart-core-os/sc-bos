@@ -27,11 +27,12 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// SetupApi lets an installer claim a freshly installed node using its one-time setup code.
+// SetupApi lets an installer claim a freshly installed node using its setup code.
 //
-// A node with local accounts enabled, no admin account and no enrolment generates a setup code when it starts.
-// The code is shown only on the node itself (its log, and a file in its data directory), so presenting it proves
-// access to the node. Once the node has an admin account or is enrolled with a hub, the code stops working.
+// A node with local accounts enabled but no accounts, no other way to log in, and no enrolment generates a setup code
+// when it starts. The code is only written to a file in the node's data directory, so presenting it proves access to
+// the node. The code stops working while the node has any account or is enrolled with a hub. It is not consumed when
+// used, so it works again if the node later has no accounts and leaves its hub.
 type SetupApiClient interface {
 	// GetSetupState returns whether the node is waiting to be set up.
 	// Anyone may call it, so a client can decide whether to show a setup wizard before anyone can log in.
@@ -74,11 +75,12 @@ func (c *setupApiClient) CompleteSetup(ctx context.Context, in *CompleteSetupReq
 // All implementations must embed UnimplementedSetupApiServer
 // for forward compatibility.
 //
-// SetupApi lets an installer claim a freshly installed node using its one-time setup code.
+// SetupApi lets an installer claim a freshly installed node using its setup code.
 //
-// A node with local accounts enabled, no admin account and no enrolment generates a setup code when it starts.
-// The code is shown only on the node itself (its log, and a file in its data directory), so presenting it proves
-// access to the node. Once the node has an admin account or is enrolled with a hub, the code stops working.
+// A node with local accounts enabled but no accounts, no other way to log in, and no enrolment generates a setup code
+// when it starts. The code is only written to a file in the node's data directory, so presenting it proves access to
+// the node. The code stops working while the node has any account or is enrolled with a hub. It is not consumed when
+// used, so it works again if the node later has no accounts and leaves its hub.
 type SetupApiServer interface {
 	// GetSetupState returns whether the node is waiting to be set up.
 	// Anyone may call it, so a client can decide whether to show a setup wizard before anyone can log in.

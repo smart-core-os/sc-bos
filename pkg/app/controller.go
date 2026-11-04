@@ -504,9 +504,10 @@ func initPKI(config sysconf.Config, nodeName string, logger *zap.Logger) (pkiInf
 	}, nil
 }
 
-// hasOtherLogins reports whether the authn system lets people log in without a local account: through Keycloak, or a
-// users.json that isn't imported into the account store. Admins there can't be seen in the account store, so the
-// setup code treats such a node as already claimed.
+// hasOtherLogins reports whether the authn system lets people or services log in without a local account: through
+// Keycloak, a users.json that isn't imported into the account store, a system identities file, or tenants.
+// Those logins can't be seen in the account store, so the setup code treats such a node as already claimed.
+// Cohort accounts are left out: they only work once the node is enrolled, which already claims it.
 func hasOtherLogins(config sysconf.Config, logger *zap.Logger) bool {
 	raw, ok := config.Systems["authn"]
 	if !ok || raw.Disabled {
@@ -516,6 +517,9 @@ func hasOtherLogins(config sysconf.Config, logger *zap.Logger) bool {
 	if err != nil {
 		// The authn system will report this itself. Fail closed: a node we can't read isn't offered for setup.
 		logger.Warn("setup code disabled: can't read authn config", zap.Error(err))
+		return true
+	}
+	if s := cfg.System; s != nil && (s.FileAccounts != nil || s.TenantAccounts) {
 		return true
 	}
 	u := cfg.User

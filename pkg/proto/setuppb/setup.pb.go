@@ -25,8 +25,8 @@ const (
 type SetupState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// claimed is false while the node is waiting to be set up and accepts its setup code.
-	// It is true once the node has an admin account or is enrolled with a hub, and on nodes without local accounts,
-	// which never use a setup code.
+	// It is true while the node has any account or is enrolled with a hub, and on nodes without local accounts or
+	// with another way to log in, which never use a setup code.
 	Claimed bool `protobuf:"varint,1,opt,name=claimed,proto3" json:"claimed,omitempty"`
 	// node_name is the node's current name. Empty if the node has not been given a name.
 	NodeName string `protobuf:"bytes,2,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`

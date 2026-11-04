@@ -24,7 +24,10 @@ func TestHasOtherLogins(t *testing.T) {
 		// without the account store nothing is imported, so users.json is still used directly
 		{name: "import without account store", authn: `{"user":{"localAccounts":true,"importFileAccounts":true,"fileAccounts":true}}`, want: true},
 		{name: "authn disabled", authn: `{"disabled":true,"user":{"fileAccounts":true}}`, accounts: true, want: false},
-		{name: "service accounts only", authn: `{"system":{"fileAccounts":true,"tenantAccounts":true}}`, accounts: true, want: false},
+		{name: "system identities file", authn: `{"system":{"fileAccounts":true}}`, accounts: true, want: true},
+		{name: "tenant accounts", authn: `{"system":{"tenantAccounts":true}}`, accounts: true, want: true},
+		// cohort accounts only log anyone in once the node is enrolled, which already claims it
+		{name: "local and cohort service accounts", authn: `{"system":{"localAccounts":true,"cohortAccounts":true}}`, accounts: true, want: false},
 		{name: "unreadable", authn: `{"user":"nope"}`, accounts: true, want: true},
 	}
 	for _, tt := range tests {
