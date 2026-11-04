@@ -76,6 +76,11 @@ type Root struct {
 	// If a device takes longer than this, the fetch is cancelled and the device is skipped
 	// Default is 5 seconds
 	FetchTimeout *jsontypes.Duration `json:"fetchTimeout,omitempty,omitzero"`
+	// IncludeZones publishes zones (device type ZONE) that implement Traits.
+	// Off by default: a zone's reading is the sum of meters this node already
+	// publishes, and Connect models zones itself, so publishing them double
+	// counts. Zone health is published either way.
+	IncludeZones bool `json:"includeZones,omitempty"`
 }
 
 func ParseConfig(data []byte) (Root, error) {

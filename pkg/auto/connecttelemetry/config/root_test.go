@@ -29,6 +29,17 @@ func TestParseConfig(t *testing.T) {
 		assert.Equal(t, 5.0, root.FetchTimeout.Seconds())
 		assert.Equal(t, "dbo", root.PointNaming, "pointNaming defaults to dbo")
 		assert.False(t, root.HealthEnabled(), "health defaults to off")
+		assert.False(t, root.IncludeZones, "zones are skipped by default")
+	})
+
+	t.Run("includeZones", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"includeZones": true
+		}`))
+		require.NoError(t, err)
+		assert.True(t, root.IncludeZones)
 	})
 
 	t.Run("health defaults", func(t *testing.T) {
