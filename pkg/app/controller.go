@@ -33,6 +33,7 @@ import (
 	"github.com/smart-core-os/sc-bos/internal/node/nodeopts"
 	opscloud "github.com/smart-core-os/sc-bos/internal/opsapi"
 	"github.com/smart-core-os/sc-bos/internal/router"
+	"github.com/smart-core-os/sc-bos/internal/setup"
 	"github.com/smart-core-os/sc-bos/internal/supervisor"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors"
 	"github.com/smart-core-os/sc-bos/internal/util/grpc/interceptors/protopkg"
@@ -57,8 +58,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/logpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/ops/cloudpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/setuppb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
+	authnconfig "github.com/smart-core-os/sc-bos/pkg/system/authn/config"
 	"github.com/smart-core-os/sc-bos/pkg/system/boot"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/util/netutil"
@@ -166,6 +169,29 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		grpc.WithTransportCredentials(credentials.NewTLS(pi.GRPCClient)))
 
 	ai := initAuth(config, logger)
+
+	setupCodes, err := setup.Open(ctx, setup.Config{
+		Dir:         files.Path(config.DataDir, "setup"),
+		CodeFile:    config.SetupCodeFile,
+		Accounts:    accountStore,
+		OtherLogins: hasOtherLogins(config, logger),
+		Enrolled: func() bool {
+			_, ok := pi.EnrollServer.Enrollment()
+			return ok
+		},
+		Logger: logger.Named("setup"),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("setup code: %w", err)
+	}
+	// The setup code is a token of its own, granting only the setup role, so a hub can enrol this node
+	// with policy on before anyone has an account here.
+	ai.TokenValidator.Append(setupCodes)
+	// SetupApi is announced directly, like CloudConnectionApi, so the Ops UI can find out whether to show
+	// its setup wizard before any system has started or anyone can log in.
+	rootNode.Announce(cName,
+		node.HasServer[setuppb.SetupApiServer](setuppb.RegisterSetupApiServer, setup.NewServer(setupCodes, cName, EffectiveVersion())),
+	)
 
 	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
 
@@ -476,6 +502,33 @@ func initPKI(config sysconf.Config, nodeName string, logger *zap.Logger) (pkiInf
 		GRPCClient:   tlsGRPCClientConfig,
 		HTTPServer:   tlsHTTPServerConfig,
 	}, nil
+}
+
+// hasOtherLogins reports whether the authn system lets people or services log in without a local account: through
+// Keycloak, a users.json that isn't imported into the account store, a system identities file, or tenants.
+// Those logins can't be seen in the account store, so the setup code treats such a node as already claimed.
+// Cohort accounts are left out: they only work once the node is enrolled, which already claims it.
+func hasOtherLogins(config sysconf.Config, logger *zap.Logger) bool {
+	raw, ok := config.Systems["authn"]
+	if !ok || raw.Disabled {
+		return false
+	}
+	cfg, err := authnconfig.ReadConfig(raw.Raw)
+	if err != nil {
+		// The authn system will report this itself. Fail closed: a node we can't read isn't offered for setup.
+		logger.Warn("setup code disabled: can't read authn config", zap.Error(err))
+		return true
+	}
+	if s := cfg.System; s != nil && (s.FileAccounts != nil || s.TenantAccounts) {
+		return true
+	}
+	u := cfg.User
+	if u == nil {
+		return false
+	}
+	// accounts are only imported when the local account store is in use
+	imported := u.ImportFileAccounts && u.LocalAccounts && config.Experimental != nil && config.Experimental.Accounts
+	return u.Keycloak != nil || (u.FileAccounts != nil && !imported)
 }
 
 func initAuth(config sysconf.Config, logger *zap.Logger) authInfo {

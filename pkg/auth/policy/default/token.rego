@@ -5,6 +5,7 @@ roles := {
   "commissioner",
   "operator",
   "signage",
+  "setup", # presented the node's setup code, may only enrol or set up a node that nobody has claimed yet
   "super-admin",
   "viewer"
 }

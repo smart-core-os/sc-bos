@@ -648,6 +648,7 @@ func testReflection(t *testing.T, ctx context.Context, conn *grpc.ClientConn) {
 		{Name: "smartcore.bos.onoff.v1.OnOffInfo"},
 		{Name: "smartcore.bos.parent.v1.ParentApi"},
 		{Name: "smartcore.bos.services.v1.ServicesApi"},
+		{Name: "smartcore.bos.setup.v1.SetupApi"},
 	}
 	services = slices.DeleteFunc(services, func(response *reflectionpb.ServiceResponse) bool {
 		// ignore private BOS APIs, as these are expected to change fairly often

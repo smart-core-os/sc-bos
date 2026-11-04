@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package smartcore.bos.setup.v1;
+
+option go_package = "github.com/smart-core-os/sc-bos/pkg/proto/setuppb";
+
+import "google/protobuf/field_mask.proto";
+
+// SetupApi lets an installer claim a freshly installed node using its setup code.
+//
+// A node with local accounts enabled but no accounts, no other way to log in, and no enrolment generates a setup code
+// when it starts. The code is only written to a file in the node's data directory, so presenting it proves access to
+// the node. The code stops working while the node has any account or is enrolled with a hub. It is not consumed when
+// used, so it works again if the node later has no accounts and leaves its hub.
+service SetupApi {
+  // GetSetupState returns whether the node is waiting to be set up.
+  // Anyone may call it, so a client can decide whether to show a setup wizard before anyone can log in.
+  rpc GetSetupState(GetSetupStateRequest) returns (SetupState);
+  // CompleteSetup claims the node using its setup code.
+  // Fails with PermissionDenied if the code is wrong, ResourceExhausted if too many wrong codes have been tried
+  // recently, and FailedPrecondition if the node is not waiting to be set up.
+  rpc CompleteSetup(CompleteSetupRequest) returns (CompleteSetupResponse);
+}
+
+message SetupState {
+  // claimed is false while the node is waiting to be set up and accepts its setup code.
+  // It is true while the node has any account or is enrolled with a hub, and on nodes without local accounts or
+  // with another way to log in, which never use a setup code.
+  bool claimed = 1;
+  // node_name is the node's current name. Empty if the node has not been given a name.
+  string node_name = 2;
+  // version is the version of Smart Core BOS the node is running. Empty for builds with no version stamped.
+  string version = 3;
+}
+
+message GetSetupStateRequest {
+  // name of the node to query.
+  string name = 1;
+  google.protobuf.FieldMask read_mask = 2;
+}
+
+message CompleteSetupRequest {
+  // name of the node to set up.
+  string name = 1;
+  // setup_code is the code the node printed when it started. Case, spaces and hyphens are ignored.
+  string setup_code = 2;
+}
+
+message CompleteSetupResponse {
+}

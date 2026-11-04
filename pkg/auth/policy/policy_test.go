@@ -256,6 +256,69 @@ func TestDefaultPolicy_Traits(t *testing.T) {
 	}
 }
 
+// TestDefaultPolicy_SetupRole walks the whole policy hierarchy, so it catches a general rule granting the setup role
+// more than the specific rules intend.
+func TestDefaultPolicy_SetupRole(t *testing.T) {
+	policy := Default(false)
+	setupClaims := token.Claims{SystemRoles: []string{"setup"}}
+
+	tests := []struct {
+		name     string
+		service  string
+		method   string
+		request  string
+		claims   *token.Claims // nil for an anonymous request
+		wantDeny bool
+	}{
+		{name: "CreateEnrollment", service: "smartcore.bos.enrollment.v1.EnrollmentApi", method: "CreateEnrollment", claims: &setupClaims},
+		{name: "GetEnrollment", service: "smartcore.bos.enrollment.v1.EnrollmentApi", method: "GetEnrollment", claims: &setupClaims},
+		{name: "UpdateEnrollment", service: "smartcore.bos.enrollment.v1.EnrollmentApi", method: "UpdateEnrollment", claims: &setupClaims, wantDeny: true},
+		{name: "DeleteEnrollment", service: "smartcore.bos.enrollment.v1.EnrollmentApi", method: "DeleteEnrollment", claims: &setupClaims, wantDeny: true},
+		{name: "anonymous CreateEnrollment", service: "smartcore.bos.enrollment.v1.EnrollmentApi", method: "CreateEnrollment", wantDeny: true},
+		{name: "node GetMetadata", service: "smartcore.bos.metadata.v1.MetadataApi", method: "GetMetadata", request: `{"name":""}`, claims: &setupClaims},
+		{name: "device GetMetadata", service: "smartcore.bos.metadata.v1.MetadataApi", method: "GetMetadata", request: `{"name":"floor1/light1"}`, claims: &setupClaims, wantDeny: true},
+		{name: "PullMetadata", service: "smartcore.bos.metadata.v1.MetadataApi", method: "PullMetadata", request: `{"name":""}`, claims: &setupClaims, wantDeny: true},
+		{name: "anonymous GetMetadata", service: "smartcore.bos.metadata.v1.MetadataApi", method: "GetMetadata", request: `{"name":""}`, wantDeny: true},
+		{name: "trait read", service: "smartcore.bos.onoff.v1.OnOffApi", method: "GetOnOff", request: `{"name":""}`, claims: &setupClaims, wantDeny: true},
+		{name: "CreateAccount", service: "smartcore.bos.account.v1.AccountApi", method: "CreateAccount", claims: &setupClaims, wantDeny: true},
+		{name: "EnrollHubNode", service: "smartcore.bos.hub.v1.HubApi", method: "EnrollHubNode", claims: &setupClaims, wantDeny: true},
+		{name: "Reboot", service: "smartcore.bos.boot.v1.BootApi", method: "Reboot", claims: &setupClaims, wantDeny: true},
+		{name: "anonymous GetSetupState", service: "smartcore.bos.setup.v1.SetupApi", method: "GetSetupState"},
+		{name: "anonymous CompleteSetup", service: "smartcore.bos.setup.v1.SetupApi", method: "CompleteSetup"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.request
+			if req == "" {
+				req = `{"name":""}`
+			}
+			attrs := Attributes{
+				Protocol: ProtocolGRPC,
+				Service:  tt.service,
+				Method:   tt.method,
+				Request:  json.RawMessage(req),
+			}
+			if tt.claims != nil {
+				attrs.TokenPresent = true
+				attrs.TokenValid = true
+				attrs.TokenClaims = *tt.claims
+			}
+			_, err := Validate(context.Background(), policy, attrs)
+			// anonymous requests are refused as unauthenticated rather than denied
+			wantErr := ErrPermissionDenied
+			if tt.claims == nil {
+				wantErr = ErrUnauthenticated
+			}
+			switch {
+			case tt.wantDeny && !errors.Is(err, wantErr):
+				t.Errorf("want %v, got %v", wantErr, err)
+			case !tt.wantDeny && err != nil:
+				t.Errorf("want allowed, got %v", err)
+			}
+		})
+	}
+}
+
 // benchmarkScenarios is a mix of realistic server requests that exercise different
 // hierarchy depths and auth contexts, representative of a loaded BOS server:
 //
