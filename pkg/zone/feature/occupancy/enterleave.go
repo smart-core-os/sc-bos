@@ -54,9 +54,16 @@ func (e *enterLeave) GetOccupancy(ctx context.Context, request *occupancysensorp
 	}
 	all, errs := run.Collect(ctx, run.DefaultConcurrency, fns...)
 
-	if len(errs) > 0 {
+	// run.Collect returns one error slot per sensor, nil where that sensor succeeded.
+	err := multierr.Combine(errs...)
+	if failed := len(multierr.Errors(err)); failed > 0 {
+		// With every sensor failed there is nothing to count, and merging would report an
+		// empty zone, which a consumer trusting this zone's count would send as a real 0.
+		if failed == len(e.names) {
+			return nil, err
+		}
 		if e.logger != nil {
-			e.logger.Warn("some enter leave occupancy sensors failed to get", zap.Errors("errors", errs))
+			e.logger.Warn("some enter leave occupancy sensors failed to get", zap.Errors("errors", multierr.Errors(err)))
 		}
 	}
 	if e.groupErrored() {

@@ -46,8 +46,9 @@ func (g *Group) GetOccupancy(ctx context.Context, request *occupancysensorpb.Get
 	}
 	allRes, allErrs := run.Collect(ctx, run.DefaultConcurrency, fns...)
 
+	// run.Collect returns one error slot per source, nil where that source succeeded.
 	err := multierr.Combine(allErrs...)
-	if len(multierr.Errors(err)) == len(g.names) {
+	if len(multierr.Errors(err)) == len(fns) {
 		return nil, err
 	}
 
