@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"time"
 
 	"go.uber.org/zap"
@@ -27,6 +28,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
@@ -339,7 +341,7 @@ func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, topic st
 // (re)builds the export set.
 func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevices map[string]*device) error {
 	for _, traitName := range cfg.Traits {
-		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, allDevices); err != nil {
+		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, allDevices); err != nil {
 			a.Logger.Error("failed to get devices for trait", zap.String("trait", traitName), zap.Error(err))
 			return err
 		}
@@ -348,8 +350,8 @@ func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevic
 }
 
 // getAllTraitImplementors populates devices with those implementing traitName,
-// attaching a collector for the trait.
-func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, devices map[string]*device) error {
+// attaching a collector for the trait. Zones are skipped unless includeZones is set.
+func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
 			Field: "metadata.traits.name",
@@ -383,6 +385,13 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 		if req.PageToken == "" {
 			break
 		}
+	}
+	if !includeZones {
+		// Filtered here rather than in the query: devices with no device type
+		// have no value for the field, so a "not ZONE" condition would drop them too.
+		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
+			return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
+		})
 	}
 
 	// Building a collector fetches from the device, so bound each build as

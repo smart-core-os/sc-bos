@@ -28,6 +28,10 @@ the topic grammar and the payload contract agreed with the Connect ingest side.
 Two traits are exported: **Meter** (`smartcore.bos.Meter`) for every device that implements
 it, and **ResourceUse** (`smartcore.bos.ResourceUse`) for the local node only.
 
+Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's meter reading is the sum
+of meters the node already publishes, and Connect models zones itself, so publishing them would count
+those meters twice. Zone health is still published when health is enabled.
+
 ### Meter
 
 Point names are **Google Digital
@@ -158,6 +162,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 |-------|----------|---------|-------------|
 | `traits` | unless health is enabled | — | Traits to export: `smartcore.bos.Meter` and/or `smartcore.bos.ResourceUse` |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
+| `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because zone readings sum meters already published |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
 | `mqtt.clientId` | no | node id | MQTT client id |

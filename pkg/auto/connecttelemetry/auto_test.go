@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -29,6 +31,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -197,7 +200,7 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, allDevices))
 
 	require.Len(t, allDevices, 1)
 	dev := allDevices["foo"]
@@ -218,6 +221,45 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	require.NotNil(t, disc.Pointset)
 	assert.Equal(t, "kWh", disc.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
 	assert.Equal(t, "kWh", disc.Pointset.Points[dbo.FieldExportedEnergyAccumulator].Units)
+}
+
+// TestGetAllTraitImplementorsSkipsZones confirms zones are left out unless
+// includeZones is set, while meters with no device type are always kept.
+func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
+	root := node.New("zones")
+
+	devicesApi := devices.NewServer(root)
+	meterModel := meterpb.NewModel()
+	support := &meterpb.MeterReadingSupport{UsageUnit: "kWh"}
+	announce := func(name string, opts ...node.Feature) {
+		root.Announce(name, append([]node.Feature{
+			node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
+			node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: support})),
+			node.HasTrait(meterpb.TraitName),
+		}, opts...)...)
+	}
+	announce("meter", node.HasDeviceType(metadatapb.Metadata_DEVICE))
+	announce("untyped")
+	announce("zone", node.HasDeviceType(metadatapb.Metadata_ZONE))
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+
+	for _, tc := range []struct {
+		includeZones bool
+		want         []string
+	}{
+		{includeZones: false, want: []string{"meter", "untyped"}},
+		{includeZones: true, want: []string{"meter", "untyped", "zone"}},
+	} {
+		allDevices := make(map[string]*device)
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, allDevices))
+		assert.ElementsMatch(t, tc.want, slices.Collect(maps.Keys(allDevices)), "includeZones=%v", tc.includeZones)
+	}
 }
 
 // TestGetAllTraitImplementorsPaginates confirms every implementor is collected
@@ -246,7 +288,7 @@ func TestGetAllTraitImplementorsPaginates(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, allDevices))
 
 	assert.Equal(t, n, len(allDevices))
 	assert.NotNil(t, allDevices[fmt.Sprintf("meter-%04d", n-1)], "last device by name")
@@ -281,7 +323,7 @@ func TestGetAllTraitImplementorsSlowDevices(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	start := time.Now()
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, allDevices))
 	assert.Less(t, time.Since(start), n*fetchTimeout/2, "seed fetches should time out together")
 
 	assert.Equal(t, n, len(allDevices))
@@ -324,7 +366,7 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }
 
@@ -359,7 +401,7 @@ func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, allDevices))
 
 	require.Len(t, allDevices, 1, "a gateway must not republish its cohort's resources")
 	dev := allDevices["node1"]
