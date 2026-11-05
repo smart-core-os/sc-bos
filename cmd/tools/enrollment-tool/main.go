@@ -24,6 +24,7 @@ var (
 	flagManagerName string
 	flagManagerAddr string
 	flagSetupCode   string
+	flagNodeCert    string
 )
 
 func init() {
@@ -34,7 +35,8 @@ func init() {
 	flag.StringVar(&flagName, "name", "", "name to assign to the enrolled node")
 	flag.StringVar(&flagManagerName, "manager-name", "", "Smart Core name of the node's new manager")
 	flag.StringVar(&flagManagerAddr, "manager-addr", "", "Address (host:port) of the node's new manager")
-	flag.StringVar(&flagSetupCode, "setup-code", "", "setup code of the node, needed if it has policy on and nobody has claimed it")
+	flag.StringVar(&flagSetupCode, "setup-code", "", "setup code of the node, needed if it has policy on and nobody has claimed it; requires -node-cert")
+	flag.StringVar(&flagNodeCert, "node-cert", "", "path to the node's PEM certificate, such as its grpc-self-signed.cert.pem; enrolment only proceeds if the node presents it")
 }
 
 func main() {
@@ -51,7 +53,18 @@ func run() error {
 	if flagCert == "" || flagKey == "" {
 		return errors.New("cert and key options must be specified")
 	}
+	if flagSetupCode != "" && flagNodeCert == "" {
+		return errors.New("setup-code needs node-cert, so the code only goes to that node")
+	}
 	authority := pki.FSSource(flagCert, flagKey, flagCA)
+	var nodeCerts []string
+	if flagNodeCert != "" {
+		pemBytes, err := os.ReadFile(flagNodeCert)
+		if err != nil {
+			return err
+		}
+		nodeCerts = append(nodeCerts, string(pemBytes))
+	}
 
 	en := &enrollmentpb.Enrollment{
 		TargetName:     flagName,
@@ -59,7 +72,7 @@ func run() error {
 		ManagerName:    flagManagerName,
 		ManagerAddress: flagManagerAddr,
 	}
-	en, err := remote.Enroll(context.Background(), en, authority, flagSetupCode)
+	en, err := remote.Enroll(context.Background(), en, authority, flagSetupCode, nodeCerts...)
 	fmt.Println(protojson.Format(en))
 	return err
 }

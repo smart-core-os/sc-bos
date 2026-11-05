@@ -191,7 +191,7 @@ type EnrollHubNodeRequest struct {
 	// This should contain PEM encoded x509 certificates as returned by InspectHubNode.
 	PublicCerts []string `protobuf:"bytes,2,rep,name=public_certs,json=publicCerts,proto3" json:"public_certs,omitempty"`
 	// The target node's setup code, needed when the target has policy on and nobody has claimed it yet.
-	// It is sent to the target only and is never stored by the hub.
+	// Requires public_certs: the hub sends the code only over a connection verified against them, and never stores it.
 	SetupCode     string `protobuf:"bytes,3,opt,name=setup_code,json=setupCode,proto3" json:"setup_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -505,11 +505,8 @@ func (x *PullHubNodesResponse) GetChanges() []*PullHubNodesResponse_Change {
 }
 
 type InspectHubNodeRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Node  *HubNode               `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
-	// The target node's setup code, needed when the target has policy on and nobody has claimed it yet.
-	// It is sent to the target only and is never stored by the hub.
-	SetupCode     string `protobuf:"bytes,2,opt,name=setup_code,json=setupCode,proto3" json:"setup_code,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Node          *HubNode               `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -549,13 +546,6 @@ func (x *InspectHubNodeRequest) GetNode() *HubNode {
 		return x.Node
 	}
 	return nil
-}
-
-func (x *InspectHubNodeRequest) GetSetupCode() string {
-	if x != nil {
-		return x.SetupCode
-	}
-	return ""
 }
 
 type TestHubNodeRequest struct {
@@ -838,11 +828,9 @@ const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\tnew_value\x18\x03 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\bnewValue\x12:\n" +
 	"\told_value\x18\x04 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\boldValue\x12;\n" +
 	"\vchange_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"changeTime\"i\n" +
+	"changeTime\"J\n" +
 	"\x15InspectHubNodeRequest\x121\n" +
-	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\x12\x1d\n" +
-	"\n" +
-	"setup_code\x18\x02 \x01(\tR\tsetupCode\".\n" +
+	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\".\n" +
 	"\x12TestHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x15\n" +
 	"\x13TestHubNodeResponse\"U\n" +

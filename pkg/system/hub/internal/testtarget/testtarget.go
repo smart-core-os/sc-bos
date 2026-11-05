@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"net"
 	"os"
 	"path/filepath"
@@ -46,6 +47,8 @@ type Call struct {
 // Target is a node waiting to be enrolled.
 type Target struct {
 	Addr string
+	// Certs holds the target's TLS certificate chain, PEM encoded, as InspectHubNode returns it.
+	Certs []string
 
 	enrollment atomic.Pointer[enrollmentpb.Enrollment]
 
@@ -63,9 +66,13 @@ func New(t testing.TB, policyOn bool) *Target {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cert, roots, err := pki.SelfSignedSource(key).Certs()
+	// A controller's self-signed cert names its own addresses, so a hub can verify it against the inspected cert.
+	cert, roots, err := pki.SelfSignedSource(key, pki.WithSAN("127.0.0.1")).Certs()
 	if err != nil {
 		t.Fatal(err)
+	}
+	for _, der := range cert.Certificate {
+		tgt.Certs = append(tgt.Certs, string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})))
 	}
 	tlsConfig := pki.TLSServerConfig(pki.DirectSource(cert, roots))
 

@@ -41,8 +41,9 @@ func TestServer_EnrollHubNode_setupCode(t *testing.T) {
 	tgt := testtarget.New(t, true)
 	enrol := func(code string) error {
 		_, err := s.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
-			Node:      &hubpb.HubNode{Address: tgt.Addr, Name: "target"},
-			SetupCode: code,
+			Node:        &hubpb.HubNode{Address: tgt.Addr, Name: "target"},
+			PublicCerts: tgt.Certs,
+			SetupCode:   code,
 		})
 		return err
 	}
@@ -60,6 +61,15 @@ func TestServer_EnrollHubNode_setupCode(t *testing.T) {
 		}
 		checkNotStored()
 	}
+
+	_, err = s.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
+		Node:      &hubpb.HubNode{Address: tgt.Addr, Name: "target"},
+		SetupCode: testtarget.Code,
+	})
+	if status.Code(err) != codes.InvalidArgument || !strings.Contains(status.Convert(err).Message(), "public certs") {
+		t.Errorf("EnrollHubNode with a code and no certs = %v, want InvalidArgument about the public certs", err)
+	}
+	checkNotStored()
 
 	if err := enrol(testtarget.Code); err != nil {
 		t.Fatalf("EnrollHubNode with the right code: %v", err)
@@ -106,14 +116,15 @@ func TestServer_EnrollHubNode_enrolledElsewhere(t *testing.T) {
 
 	tgt := testtarget.New(t, true)
 	_, err = remote.Enroll(ctx, &enrollmentpb.Enrollment{TargetAddress: tgt.Addr, ManagerName: "other-hub"},
-		testtarget.Authority(t), testtarget.Code)
+		testtarget.Authority(t), testtarget.Code, tgt.Certs...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	_, err = s.EnrollHubNode(ctx, &hubpb.EnrollHubNodeRequest{
-		Node:      &hubpb.HubNode{Address: tgt.Addr},
-		SetupCode: testtarget.Code,
+		Node:        &hubpb.HubNode{Address: tgt.Addr},
+		PublicCerts: tgt.Certs,
+		SetupCode:   testtarget.Code,
 	})
 	if status.Code(err) != codes.AlreadyExists {
 		t.Errorf("EnrollHubNode = %v, want AlreadyExists", err)

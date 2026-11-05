@@ -254,9 +254,6 @@ export class InspectHubNodeRequest extends jspb.Message {
   hasNode(): boolean;
   clearNode(): InspectHubNodeRequest;
 
-  getSetupCode(): string;
-  setSetupCode(value: string): InspectHubNodeRequest;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): InspectHubNodeRequest.AsObject;
   static toObject(includeInstance: boolean, msg: InspectHubNodeRequest): InspectHubNodeRequest.AsObject;
@@ -268,7 +265,6 @@ export class InspectHubNodeRequest extends jspb.Message {
 export namespace InspectHubNodeRequest {
   export type AsObject = {
     node?: HubNode.AsObject;
-    setupCode: string;
   };
 }
 

@@ -39,7 +39,7 @@ func authError(err error, setupCode string) error {
 		return err
 	}
 	if setupCode == "" {
-		return status.Error(codes.PermissionDenied, "the node refused the hub: if nobody has set the node up yet, give its setup code")
+		return status.Error(codes.PermissionDenied, "the node refused the hub: if nobody has set the node up yet, give its setup code with the public certs from inspecting it")
 	}
 	return status.Error(codes.PermissionDenied,
 		"the node rejected the setup code: it is wrong, the node is already set up, or there were too many attempts")

@@ -27,9 +27,14 @@ import (
 // If any remoteRoots are provided, the remote server will be checked using these as trust roots, otherwise any remote certificate will be allowed.
 //
 // A non-empty setupCode is presented to the target with CreateEnrollment, which a target with policy on requires
-// until somebody claims it. If the target rejects the request as unauthenticated, Enroll returns PermissionDenied.
+// until somebody claims it. Whoever holds the code can enrol the node with their own hub, so it is only sent over a
+// connection verified against remoteRoots, and Enroll returns InvalidArgument for a code without them.
+// If the target rejects the request as unauthenticated, Enroll returns PermissionDenied.
 // If the target is already enrolled, Enroll returns AlreadyExists without asking it to enrol again.
 func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority pki.Source, setupCode string, remoteRoots ...string) (*enrollmentpb.Enrollment, error) {
+	if setupCode != "" && len(remoteRoots) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "a setup code needs the node's public certs from InspectHubNode")
+	}
 	enrollment = proto.Clone(enrollment).(*enrollmentpb.Enrollment)
 
 	// when in enrollment mode, the target node will be using a self-signed cert we won't be able to
@@ -40,7 +45,9 @@ func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority 
 		tlsConfig.InsecureSkipVerify = false
 		tlsConfig.RootCAs = x509.NewCertPool()
 		for _, root := range remoteRoots {
-			tlsConfig.RootCAs.AppendCertsFromPEM([]byte(root))
+			if !tlsConfig.RootCAs.AppendCertsFromPEM([]byte(root)) {
+				return nil, status.Error(codes.InvalidArgument, "public certs must be PEM encoded certificates")
+			}
 		}
 
 		// Make sure there's a timeout to avoid infinite (or 120s) connection loops in the case when tls fails.

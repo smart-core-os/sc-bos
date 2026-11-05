@@ -2230,8 +2230,7 @@ proto.smartcore.bos.hub.v1.InspectHubNodeRequest.prototype.toObject = function(o
  */
 proto.smartcore.bos.hub.v1.InspectHubNodeRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-node: (f = msg.getNode()) && proto.smartcore.bos.hub.v1.HubNode.toObject(includeInstance, f),
-setupCode: jspb.Message.getFieldWithDefault(msg, 2, "")
+node: (f = msg.getNode()) && proto.smartcore.bos.hub.v1.HubNode.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2273,10 +2272,6 @@ proto.smartcore.bos.hub.v1.InspectHubNodeRequest.deserializeBinaryFromReader = f
       reader.readMessage(value,proto.smartcore.bos.hub.v1.HubNode.deserializeBinaryFromReader);
       msg.setNode(value);
       break;
-    case 2:
-      var value = /** @type {string} */ (reader.readStringRequireUtf8());
-      msg.setSetupCode(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -2312,13 +2307,6 @@ proto.smartcore.bos.hub.v1.InspectHubNodeRequest.serializeBinaryToWriter = funct
       1,
       f,
       proto.smartcore.bos.hub.v1.HubNode.serializeBinaryToWriter
-    );
-  }
-  f = message.getSetupCode();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
     );
   }
 };
@@ -2358,24 +2346,6 @@ proto.smartcore.bos.hub.v1.InspectHubNodeRequest.prototype.clearNode = function(
  */
 proto.smartcore.bos.hub.v1.InspectHubNodeRequest.prototype.hasNode = function() {
   return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional string setup_code = 2;
- * @return {string}
- */
-proto.smartcore.bos.hub.v1.InspectHubNodeRequest.prototype.getSetupCode = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.smartcore.bos.hub.v1.InspectHubNodeRequest} returns this
- */
-proto.smartcore.bos.hub.v1.InspectHubNodeRequest.prototype.setSetupCode = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

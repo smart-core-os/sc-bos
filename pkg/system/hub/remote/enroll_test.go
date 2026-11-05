@@ -2,6 +2,7 @@ package remote_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -26,19 +27,25 @@ func TestEnroll(t *testing.T) {
 		name     string
 		policyOn bool
 		code     string
+		pin      bool // pass the target's certs as remoteRoots
 		wantCode codes.Code
 		wantMsg  string
 	}{
-		{name: "policy on, right code", policyOn: true, code: testtarget.Code, wantCode: codes.OK},
-		{name: "policy on, code as typed", policyOn: true, code: " abcd efgh ", wantCode: codes.OK},
-		{name: "policy on, no code", policyOn: true, wantCode: codes.PermissionDenied, wantMsg: requiresCodeMsg},
-		{name: "policy on, wrong code", policyOn: true, code: wrongCode, wantCode: codes.PermissionDenied, wantMsg: rejectedCodeMsg},
+		{name: "policy on, right code", policyOn: true, code: testtarget.Code, pin: true, wantCode: codes.OK},
+		{name: "policy on, code as typed", policyOn: true, code: " abcd efgh ", pin: true, wantCode: codes.OK},
+		{name: "policy on, no code", policyOn: true, pin: true, wantCode: codes.PermissionDenied, wantMsg: requiresCodeMsg},
+		{name: "policy on, wrong code", policyOn: true, code: wrongCode, pin: true, wantCode: codes.PermissionDenied, wantMsg: rejectedCodeMsg},
 		{name: "policy off, no code", policyOn: false, wantCode: codes.OK},
+		{name: "policy off, no code, pinned", policyOn: false, pin: true, wantCode: codes.OK},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tgt := testtarget.New(t, tt.policyOn)
-			en, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), tt.code)
+			var roots []string
+			if tt.pin {
+				roots = tgt.Certs
+			}
+			en, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), tt.code, roots...)
 			checkStatus(t, err, tt.wantCode, tt.wantMsg)
 
 			got := tgt.Enrollment()
@@ -58,11 +65,51 @@ func TestEnroll(t *testing.T) {
 	}
 }
 
+// TestEnroll_codeNeedsCerts checks a code without certs to verify the target against never leaves the hub, so it
+// can't be captured on the way to whoever answers at the target's address.
+func TestEnroll_codeNeedsCerts(t *testing.T) {
+	tests := []struct {
+		name  string
+		certs []string
+	}{
+		{name: "no certs"},
+		{name: "not PEM", certs: []string{"not a certificate"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tgt := testtarget.New(t, true)
+			_, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), testtarget.Code, tt.certs...)
+			checkStatus(t, err, codes.InvalidArgument, "public certs")
+			if calls := tgt.Calls(); len(calls) != 0 {
+				t.Errorf("target received %v, want no calls", calls)
+			}
+		})
+	}
+}
+
+// TestEnroll_otherCerts checks the code goes nowhere when the node at the address isn't the one that was inspected.
+func TestEnroll_otherCerts(t *testing.T) {
+	tgt := testtarget.New(t, true)
+	other := testtarget.New(t, true)
+	_, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), testtarget.Code, other.Certs...)
+	if code := status.Code(err); code != codes.Unavailable {
+		t.Errorf("Enroll against a target presenting other certs = %v, want Unavailable", err)
+	}
+	for _, c := range tgt.Calls() {
+		if c.Bearer || strings.HasSuffix(c.Method, "/CreateEnrollment") {
+			t.Errorf("target received %v", c)
+		}
+	}
+	if tgt.Enrollment() != nil {
+		t.Error("target enrolled")
+	}
+}
+
 // TestEnroll_codeOnlyOnCreate checks only CreateEnrollment carries the code: every wrong code a target sees uses up
 // one of its limited guesses, so the code must not ride along on GetEnrollment as well.
 func TestEnroll_codeOnlyOnCreate(t *testing.T) {
 	tgt := testtarget.New(t, true)
-	if _, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), testtarget.Code); err != nil {
+	if _, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), testtarget.Code, tgt.Certs...); err != nil {
 		t.Fatal(err)
 	}
 	for _, c := range tgt.Calls() {
@@ -84,12 +131,12 @@ func TestEnroll_alreadyEnrolled(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			tgt := testtarget.New(t, policyOn)
 			authority := testtarget.Authority(t)
-			if _, err := remote.Enroll(testContext(t), newEnrollment(tgt), authority, testtarget.Code); err != nil {
+			if _, err := remote.Enroll(testContext(t), newEnrollment(tgt), authority, testtarget.Code, tgt.Certs...); err != nil {
 				t.Fatal(err)
 			}
 			first := tgt.Enrollment()
 
-			_, err := remote.Enroll(testContext(t), newEnrollment(tgt), authority, testtarget.Code)
+			_, err := remote.Enroll(testContext(t), newEnrollment(tgt), authority, testtarget.Code, tgt.Certs...)
 			checkStatus(t, err, codes.AlreadyExists, "")
 			if tgt.Enrollment() != first {
 				t.Error("target's enrollment changed")
@@ -102,42 +149,47 @@ func TestInspect(t *testing.T) {
 	tests := []struct {
 		name     string
 		policyOn bool
-		code     string
-		wantCode codes.Code
-		wantMsg  string
+		wantName string // empty for no metadata
 	}{
-		{name: "policy on, right code", policyOn: true, code: testtarget.Code, wantCode: codes.OK},
-		{name: "policy on, no code", policyOn: true, wantCode: codes.PermissionDenied, wantMsg: requiresCodeMsg},
-		{name: "policy on, wrong code", policyOn: true, code: wrongCode, wantCode: codes.PermissionDenied, wantMsg: rejectedCodeMsg},
-		{name: "policy off, no code", policyOn: false, wantCode: codes.OK},
+		{name: "policy on", policyOn: true},
+		{name: "policy off", policyOn: false, wantName: testtarget.Name},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tgt := testtarget.New(t, tt.policyOn)
-			got, err := remote.Inspect(testContext(t), tgt.Addr, tt.code)
-			checkStatus(t, err, tt.wantCode, tt.wantMsg)
-			if tt.wantCode != codes.OK {
-				return
+			got, err := remote.Inspect(testContext(t), tgt.Addr)
+			if err != nil {
+				t.Fatal(err)
 			}
-			if got.GetMetadata().GetName() != testtarget.Name {
-				t.Errorf("metadata name = %q, want %q", got.GetMetadata().GetName(), testtarget.Name)
+			if tt.wantName == "" && got.GetMetadata() != nil {
+				t.Errorf("metadata = %v, want none", got.GetMetadata())
 			}
-			if len(got.GetPublicCerts()) == 0 {
-				t.Error("no public certs")
+			if got.GetMetadata().GetName() != tt.wantName {
+				t.Errorf("metadata name = %q, want %q", got.GetMetadata().GetName(), tt.wantName)
+			}
+			if !slices.Equal(got.GetPublicCerts(), tgt.Certs) {
+				t.Errorf("public certs = %q, want %q", got.GetPublicCerts(), tgt.Certs)
+			}
+			calls := tgt.Calls()
+			if len(calls) != 1 || calls[0].Method != metadatapb.MetadataApi_GetMetadata_FullMethodName || calls[0].Bearer {
+				t.Errorf("calls = %v, want one GetMetadata without a bearer token", calls)
 			}
 		})
 	}
 }
 
-// TestInspect_nameless checks Inspect asks for the node's own metadata, the only metadata the setup code may read.
-func TestInspect_nameless(t *testing.T) {
+// TestInspect_pinsEnroll checks the certs Inspect returns are the ones Enroll needs to send the setup code.
+func TestInspect_pinsEnroll(t *testing.T) {
 	tgt := testtarget.New(t, true)
-	if _, err := remote.Inspect(testContext(t), tgt.Addr, testtarget.Code); err != nil {
+	got, err := remote.Inspect(testContext(t), tgt.Addr)
+	if err != nil {
 		t.Fatal(err)
 	}
-	calls := tgt.Calls()
-	if len(calls) != 1 || calls[0].Method != metadatapb.MetadataApi_GetMetadata_FullMethodName {
-		t.Errorf("calls = %v, want one GetMetadata", calls)
+	if _, err := remote.Enroll(testContext(t), newEnrollment(tgt), testtarget.Authority(t), testtarget.Code, got.GetPublicCerts()...); err != nil {
+		t.Fatal(err)
+	}
+	if tgt.Enrollment() == nil {
+		t.Error("target not enrolled")
 	}
 }
 

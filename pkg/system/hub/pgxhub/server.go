@@ -138,8 +138,8 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 		switch status.Code(err) {
 		case codes.AlreadyExists:
 			return nil, status.Error(codes.AlreadyExists, "already enrolled")
-		case codes.PermissionDenied:
-			return nil, err // remote.Enroll's message says what to do about the setup code
+		case codes.InvalidArgument, codes.PermissionDenied:
+			return nil, err // the message says what the caller has to change, such as the setup code or certs
 		}
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
@@ -261,7 +261,7 @@ func (n *Server) InspectHubNode(ctx context.Context, request *hubpb.InspectHubNo
 	if request.GetNode().GetAddress() == "" {
 		return nil, status.Error(codes.InvalidArgument, "node.address must be supplied")
 	}
-	return remote.Inspect(ctx, request.Node.Address, request.SetupCode)
+	return remote.Inspect(ctx, request.Node.Address)
 }
 
 func (n *Server) RenewHubNode(ctx context.Context, request *hubpb.RenewHubNodeRequest) (*hubpb.HubNode, error) {
