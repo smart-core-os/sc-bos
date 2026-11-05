@@ -8,7 +8,12 @@
         {"name": "meter-01", "traits": [{"name": "smartcore.bos.Meter"}]},
         {"name": "meter-02", "traits": [{"name": "smartcore.bos.Meter"}]},
         {"name": "meter-03", "traits": [{"name": "smartcore.bos.Meter", "more": {"unit": "MWh"}}]},
-        {"name": "health-01", "traits": [{"name": "smartcore.bos.Health"}]}
+        {"name": "health-01", "traits": [{"name": "smartcore.bos.Health"}]},
+        {"name": "env-01", "traits": [
+          {"name": "smartcore.traits.AirTemperature"},
+          {"name": "smartcore.traits.AirQualitySensor"},
+          {"name": "smartcore.traits.OccupancySensor"}
+        ]}
       ]
     }
   ],
@@ -35,7 +40,10 @@
     },
     {
       "type": "connecttelemetry", "name": "connect-node/auto/connect-telemetry",
-      "traits": ["smartcore.bos.Meter", "smartcore.bos.ResourceUse"],
+      "traits": [
+        "smartcore.bos.Meter", "smartcore.bos.ResourceUse",
+        "smartcore.traits.AirTemperature", "smartcore.traits.AirQualitySensor", "smartcore.traits.OccupancySensor"
+      ],
       "mqtt": {
         "host": "tls://REPLACE-WITH-BROKER-HOST:8883",
         "useCloudCredential": true,

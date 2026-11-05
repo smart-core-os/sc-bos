@@ -61,15 +61,18 @@ type Root struct {
 	auto.Config
 
 	// Traits is the set of traits to export. Devices implementing one of these
-	// traits are discovered and polled. smartcore.bos.Meter and
-	// smartcore.bos.ResourceUse are supported; ResourceUse only for the local node.
-	// May be empty only when health is enabled.
+	// traits are discovered and polled. smartcore.bos.Meter,
+	// smartcore.bos.ResourceUse, and the environmental sensor traits
+	// smartcore.traits.AirTemperature, smartcore.traits.AirQualitySensor and
+	// smartcore.traits.OccupancySensor are supported; ResourceUse only for the
+	// local node. May be empty only when health is enabled.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
 	Health *Health  `json:"health,omitempty"`
 	// PointNaming selects the point key emitted on the wire: "dbo" (default) emits DBO
 	// standard field names (so a building-config translation is an identity mapping);
-	// "raw" emits the raw Smart Core point names (usage/produced) and leaves the
+	// "raw" emits the raw Smart Core point names (usage/produced for a meter, the
+	// trait's own field names for an environmental sensor) and leaves the
 	// name→field mapping to the consumer (Connect's per-source pipeline).
 	PointNaming string `json:"pointNaming,omitempty"`
 	// FetchTimeout is the maximum time to wait for a single device's trait data fetch

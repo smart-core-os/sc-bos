@@ -25,12 +25,18 @@ the topic grammar and the payload contract agreed with the Connect ingest side.
 
 ## Supported traits
 
-Two traits are exported: **Meter** (`smartcore.bos.Meter`) for every device that implements
-it, and **ResourceUse** (`smartcore.bos.ResourceUse`) for the local node only.
+These traits are exported for every device that implements them:
 
-Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's meter reading is the sum
-of meters the node already publishes, and Connect models zones itself, so publishing them would count
-those meters twice. Zone health is still published when health is enabled.
+- **Meter** (`smartcore.bos.Meter`)
+- the environmental sensor traits **AirTemperature** (`smartcore.traits.AirTemperature`),
+  **AirQualitySensor** (`smartcore.traits.AirQualitySensor`) and **OccupancySensor**
+  (`smartcore.traits.OccupancySensor`)
+
+**ResourceUse** (`smartcore.bos.ResourceUse`) is exported for the local node only.
+
+Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's reading is built from
+devices the node already publishes, such as the sum of its meters, and Connect models zones itself, so
+publishing them would count those devices twice. Zone health is still published when health is enabled.
 
 ### Meter
 
@@ -85,6 +91,47 @@ bytes) beside DBO's own `percentage`. They are the same in both `pointNaming` mo
 - Each disk point's discovery entry carries the raw mount point as `ref`.
 - ResourceUse has no timestamp, so the telemetry is stamped with the time the node last sampled
   it (the model's change time). A stalled sampler shows up as stale telemetry rather than fresh.
+
+### Environmental sensors
+
+Each reading lands on the DBO generic room-sensor field that Connect's BOS CSV import lands the
+same column on, so a sensor's imported history and its live telemetry share a series. Units are
+fixed by the trait protos and declared in discovery as DBO unit names, which Connect converts by:
+it holds a numeric reading whose quantity has several units until discovery names one.
+
+| DBO point (field)                    | Source                                  | Units (discovery)            |
+|--------------------------------------|-----------------------------------------|------------------------------|
+| `zone_air_temperature_sensor`        | `AirTemperature.ambient_temperature`    | `degrees_celsius`            |
+| `zone_air_relative_humidity_sensor`  | `AirTemperature.ambient_humidity`       | `percent_relative_humidity`  |
+| `zone_air_co2_concentration_sensor`  | `AirQuality.carbon_dioxide_level`       | `parts_per_million`          |
+| `zone_air_voc_concentration_sensor`  | `AirQuality.volatile_organic_compounds` | `parts_per_million`          |
+| `air_pressure_sensor`                | `AirQuality.air_pressure`               | `hectopascals`               |
+| `zone_air_pm1pt0_density_sensor`     | `AirQuality.particulate_matter_1`       | `micrograms_per_cubic_meter` |
+| `zone_air_pm2pt5_density_sensor`     | `AirQuality.particulate_matter_25`      | `micrograms_per_cubic_meter` |
+| `zone_air_pm10pt0_density_sensor`    | `AirQuality.particulate_matter_10`      | `micrograms_per_cubic_meter` |
+| `zone_occupancy_status`              | `Occupancy.state`                       | none (multistate)            |
+| `zone_occupancy_count`               | `Occupancy.people_count`                | none (headcount)             |
+
+- Under `pointNaming: raw` each point takes its source field's name (`carbon_dioxide_level`, `state`).
+- Unset optional fields produce no point, and discovery declares only the points the sensor's
+  last reading populated.
+- Set points, `mode`, dew point, and AirQuality's `comfort`, `score`, `infection_risk` and
+  `air_change_per_hour` are not exported: set points and modes are writable or enum-valued, and the
+  rest are vendor indices or have no DBO field.
+- `zone_occupancy_status` is sent as its canonical DBO state, a string, since Connect holds a number
+  on a multistate field: `OCCUPIED`→`occupied`, `UNOCCUPIED`→`unoccupied`, `IDLE`→`inactive`
+  ("likely occupied but no activity") and `STATE_UNSPECIFIED`→`unknown`. Raw naming sends the
+  trait's state name.
+- The trait reports a people count of 0 from a sensor that can't count, so a 0 beside an occupied
+  or idle state sends no count. A 0 beside unoccupied is a true count and is sent.
+- The reading comes from Get, which every driver serves (some poll the device on it). Its timestamp is
+  the change time on Pull's first message, which a model sends at once, so a stalled driver shows as
+  stale. A driver whose Pull sends only when the value changes is given a second, then its Get reading
+  goes stamped now. For occupancy the time is not `state_change_time`, which dates the state: a room
+  occupied all morning would otherwise send every reading stamped when it filled.
+- A device implementing several of these traits publishes one pointset with all their points, stamped
+  with the newest of their times, as any multi-trait device is. So one stalled trait beside a fresh
+  one doesn't show as stale.
 
 ### Other traits
 
@@ -160,9 +207,10 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `traits` | unless health is enabled | — | Traits to export: `smartcore.bos.Meter` and/or `smartcore.bos.ResourceUse` |
+| `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
+| `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
-| `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because zone readings sum meters already published |
+| `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
 | `mqtt.clientId` | no | node id | MQTT client id |
