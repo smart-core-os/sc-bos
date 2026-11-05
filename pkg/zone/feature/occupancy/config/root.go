@@ -23,6 +23,7 @@ type EnterLeaveOccupancySensorSLA struct {
 	// Unless at least one of those failures is in the CantFail list.
 	// If omitted or set to 0, any failure will cause overall zone failure.
 	// If set to 100, all sensors can fail without causing overall zone failure unless one of the sensors is in the CantFail list.
+	// Whatever the percentage, GetOccupancy fails when every sensor fails, since there is nothing left to count.
 	// The default is 0 if it is set to an invalid value.
 	PercentageOfAcceptableFailures float64 `json:"percentageOfAcceptableFailures,omitempty"`
 }

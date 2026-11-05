@@ -3,6 +3,7 @@ package occupancy
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -156,22 +157,28 @@ func TestGroup_GetOccupancy_errors(t *testing.T) {
 		}
 	})
 
-	// An unreachable counter must not read as an empty zone, with or without an SLA.
-	t.Run("only enter leave sensor unreachable", func(t *testing.T) {
-		n := node.New("test")
-		server := &enterLeave{
-			model:  occupancysensorpb.NewModel(),
-			client: enterleavesensorpb.NewEnterLeaveSensorApiClient(n.ClientConn()),
-			names:  []string{"counter-missing"},
-		}
-		group := &Group{clients: []occupancysensorpb.OccupancySensorApiClient{
-			occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, server)),
-		}}
-		got, err := group.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: "zone"})
-		if err == nil {
-			t.Fatalf("GetOccupancy = %v, want an error", got)
-		}
-	})
+	// An unreachable counter must not read as an empty zone, whatever the SLA accepts.
+	for name, slaCfg := range map[string]*sla{
+		"no SLA":          nil,
+		"SLA accepts all": {percentageOfAcceptableFailures: 100, errs: &sync.Map{}},
+	} {
+		t.Run("only enter leave sensor unreachable, "+name, func(t *testing.T) {
+			n := node.New("test")
+			server := &enterLeave{
+				model:  occupancysensorpb.NewModel(),
+				client: enterleavesensorpb.NewEnterLeaveSensorApiClient(n.ClientConn()),
+				names:  []string{"counter-missing"},
+				sla:    slaCfg,
+			}
+			group := &Group{clients: []occupancysensorpb.OccupancySensorApiClient{
+				occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, server)),
+			}}
+			got, err := group.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: "zone"})
+			if err == nil {
+				t.Fatalf("GetOccupancy = %v, want an error", got)
+			}
+		})
+	}
 
 	t.Run("one of two enter leave sensors unreachable", func(t *testing.T) {
 		n := node.New("test")
