@@ -9,8 +9,11 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
@@ -170,4 +173,69 @@ func (c *resourceUseCollector) points(ctx context.Context, now time.Time) (udmi.
 
 func (c *resourceUseCollector) inventory() map[string]udmi.MetadataPoint {
 	return resourceUseInventory(c.last)
+}
+
+// sensorCollector exports one environmental sensor trait (AirTemperature,
+// AirQualitySensor or OccupancySensor) of a device, whose reading is a T, and
+// builds discovery from the last reading, so it declares only the points the
+// sensor populates. newSensorCollector seeds last.
+//
+// The reading comes from Get, which every driver serves (some poll the device
+// on it), and is stamped with the time it was fetched, as a meter's is: a value
+// the driver can still read is current. Using the model's change time instead
+// would make a sensor whose value doesn't change, such as an empty room's PIR,
+// look dead, and land one row per change.
+type sensorCollector[T any] struct {
+	name    string
+	naming  dbo.Naming
+	get     func(ctx context.Context, name string) (T, error)
+	forEach func(T, dbo.Naming, envPointFunc)
+	last    T
+}
+
+// newSensorCollector builds a sensorCollector and seeds it with a Get, so
+// discovery has an inventory even if the first telemetry fetch fails.
+func newSensorCollector[T any](ctx context.Context, name string, naming dbo.Naming,
+	get func(context.Context, string) (T, error),
+	forEach func(T, dbo.Naming, envPointFunc),
+	logger *zap.Logger,
+) *sensorCollector[T] {
+	c := &sensorCollector[T]{name: name, naming: naming, get: get, forEach: forEach}
+	if r, err := get(ctx, name); err != nil {
+		logger.Warn("failed to get sensor reading", zap.String("device", name), zap.Error(err))
+	} else {
+		c.last = r
+	}
+	return c
+}
+
+func (c *sensorCollector[T]) points(ctx context.Context, now time.Time) (udmi.PointsEvent, time.Time, error) {
+	r, err := c.get(ctx, c.name)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	c.last = r
+	return envTelemetry(r, c.naming, c.forEach), now, nil
+}
+
+func (c *sensorCollector[T]) inventory() map[string]udmi.MetadataPoint {
+	return envInventory(c.last, c.naming, c.forEach)
+}
+
+func getAirTemperature(client airtemperaturepb.AirTemperatureApiClient) func(context.Context, string) (*airtemperaturepb.AirTemperature, error) {
+	return func(ctx context.Context, name string) (*airtemperaturepb.AirTemperature, error) {
+		return client.GetAirTemperature(ctx, &airtemperaturepb.GetAirTemperatureRequest{Name: name})
+	}
+}
+
+func getAirQuality(client airqualitysensorpb.AirQualitySensorApiClient) func(context.Context, string) (*airqualitysensorpb.AirQuality, error) {
+	return func(ctx context.Context, name string) (*airqualitysensorpb.AirQuality, error) {
+		return client.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name})
+	}
+}
+
+func getOccupancy(client occupancysensorpb.OccupancySensorApiClient) func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
+	return func(ctx context.Context, name string) (*occupancysensorpb.Occupancy, error) {
+		return client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: name})
+	}
 }

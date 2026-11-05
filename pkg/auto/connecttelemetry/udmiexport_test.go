@@ -12,9 +12,13 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
 func TestEventTopics(t *testing.T) {
@@ -272,4 +276,192 @@ func TestDiskInstance(t *testing.T) {
 	reverse := resourceUseTelemetry(&resourceusepb.ResourceUse{Disks: []*resourceusepb.DiskUse{b, a}})
 	assert.Equal(t, forward, reverse, "names must not depend on disk order")
 	assert.Len(t, forward, 2)
+}
+
+func TestAirTemperatureTelemetry(t *testing.T) {
+	t.Run("ambient readings map to zone air fields", func(t *testing.T) {
+		r := &airtemperaturepb.AirTemperature{
+			Mode:               airtemperaturepb.AirTemperature_HEAT,
+			TemperatureGoal:    &airtemperaturepb.AirTemperature_TemperatureSetPoint{TemperatureSetPoint: &typespb.Temperature{ValueCelsius: 21}},
+			AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
+			AmbientHumidity:    new(float32(41)),
+			DewPoint:           &typespb.Temperature{ValueCelsius: 9},
+		}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirTemperatureSensor:      {PresentValue: 22.5},
+			dbo.FieldZoneAirRelativeHumiditySensor: {PresentValue: float32(41)},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirTemperaturePoint), "set point, mode and dew point are not exported")
+	})
+
+	t.Run("unset optionals are omitted", func(t *testing.T) {
+		r := &airtemperaturepb.AirTemperature{AmbientTemperature: &typespb.Temperature{ValueCelsius: 0}}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirTemperatureSensor: {PresentValue: 0.0},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirTemperaturePoint), "a set zero is kept, an unset field is not")
+		assert.Empty(t, envTelemetry(&airtemperaturepb.AirTemperature{Mode: airtemperaturepb.AirTemperature_COOL}, dbo.NamingDBO, forEachAirTemperaturePoint))
+		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachAirTemperaturePoint))
+	})
+
+	t.Run("raw naming emits the trait's field names", func(t *testing.T) {
+		r := &airtemperaturepb.AirTemperature{AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5}, AmbientHumidity: new(float32(41))}
+		assert.Equal(t, udmi.PointsEvent{
+			"ambient_temperature": {PresentValue: 22.5},
+			"ambient_humidity":    {PresentValue: float32(41)},
+		}, envTelemetry(r, dbo.NamingRaw, forEachAirTemperaturePoint))
+	})
+}
+
+func TestAirQualityTelemetry(t *testing.T) {
+	t.Run("readings with a DBO field are exported", func(t *testing.T) {
+		r := &airqualitysensorpb.AirQuality{
+			CarbonDioxideLevel:       new(float32(612)),
+			VolatileOrganicCompounds: new(float32(0.3)),
+			AirPressure:              new(float32(1013)),
+			Comfort:                  airqualitysensorpb.AirQuality_COMFORTABLE,
+			InfectionRisk:            new(float32(5)),
+			Score:                    new(float32(90)),
+			ParticulateMatter_1:      new(float32(1)),
+			ParticulateMatter_25:     new(float32(2.5)),
+			ParticulateMatter_10:     new(float32(10)),
+			AirChangePerHour:         new(float32(4)),
+		}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirCO2ConcentrationSensor: {PresentValue: float32(612)},
+			dbo.FieldZoneAirVOCConcentrationSensor: {PresentValue: float32(0.3)},
+			dbo.FieldAirPressureSensor:             {PresentValue: float32(1013)},
+			dbo.FieldZoneAirPM1pt0DensitySensor:    {PresentValue: float32(1)},
+			dbo.FieldZoneAirPM2pt5DensitySensor:    {PresentValue: float32(2.5)},
+			dbo.FieldZoneAirPM10pt0DensitySensor:   {PresentValue: float32(10)},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirQualityPoint), "comfort, infection risk, score and air changes are not exported")
+	})
+
+	t.Run("a CO2-only sensor sends only CO2", func(t *testing.T) {
+		r := &airqualitysensorpb.AirQuality{CarbonDioxideLevel: new(float32(0))}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirCO2ConcentrationSensor: {PresentValue: float32(0)},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirQualityPoint))
+		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachAirQualityPoint))
+	})
+
+	t.Run("raw naming emits the trait's field names", func(t *testing.T) {
+		r := &airqualitysensorpb.AirQuality{CarbonDioxideLevel: new(float32(612)), ParticulateMatter_25: new(float32(2.5))}
+		assert.Equal(t, udmi.PointsEvent{
+			"carbon_dioxide_level":  {PresentValue: float32(612)},
+			"particulate_matter_25": {PresentValue: float32(2.5)},
+		}, envTelemetry(r, dbo.NamingRaw, forEachAirQualityPoint))
+	})
+}
+
+func TestOccupancyTelemetry(t *testing.T) {
+	const (
+		status = dbo.FieldZoneOccupancyStatus
+		count  = dbo.FieldZoneOccupancyCount
+	)
+	var (
+		occupied   = udmi.PointValue{PresentValue: dbo.OccupancyOccupied}
+		unoccupied = udmi.PointValue{PresentValue: dbo.OccupancyUnoccupied}
+		inactive   = udmi.PointValue{PresentValue: dbo.OccupancyInactive}
+		unknown    = udmi.PointValue{PresentValue: dbo.OccupancyUnknown}
+		people     = func(n int32) udmi.PointValue { return udmi.PointValue{PresentValue: n} }
+	)
+	for _, tc := range []struct {
+		name     string
+		counting peopleCounting
+		state    occupancysensorpb.Occupancy_State
+		count    int32
+		want     udmi.PointsEvent
+	}{
+		// A sensor that says it counts sends its count, as Connect's import reads one.
+		{"counter: occupied with a count", countingCounts, occupancysensorpb.Occupancy_OCCUPIED, 4,
+			udmi.PointsEvent{status: occupied, count: people(4)}},
+		{"counter: a 0 beside occupied is no reading", countingCounts, occupancysensorpb.Occupancy_OCCUPIED, 0,
+			udmi.PointsEvent{status: occupied}},
+		{"counter: idle is DBO's inactive, and its 0 no reading", countingCounts, occupancysensorpb.Occupancy_IDLE, 0,
+			udmi.PointsEvent{status: inactive}},
+		{"counter: unoccupied keeps its true zero", countingCounts, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied, count: people(0)}},
+		{"counter: unspecified is DBO's unknown", countingCounts, occupancysensorpb.Occupancy_STATE_UNSPECIFIED, 0,
+			udmi.PointsEvent{status: unknown, count: people(0)}},
+		{"counter: a state the table doesn't know sends no state", countingCounts, occupancysensorpb.Occupancy_State(99), 2,
+			udmi.PointsEvent{count: people(2)}},
+
+		// A sensor that says it doesn't count sends no count, whatever it reports.
+		{"non-counter: unoccupied", countingNone, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied}},
+		{"non-counter: a count it reports anyway", countingNone, occupancysensorpb.Occupancy_OCCUPIED, 3,
+			udmi.PointsEvent{status: occupied}},
+
+		// An undescribed sensor sends only a count above 0, so a PIR claims no empty room.
+		{"undescribed: an empty room's 0 isn't claimed", countingUndescribed, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied}},
+		{"undescribed: occupied with no count", countingUndescribed, occupancysensorpb.Occupancy_OCCUPIED, 0,
+			udmi.PointsEvent{status: occupied}},
+		{"undescribed: a count above 0 is sent", countingUndescribed, occupancysensorpb.Occupancy_OCCUPIED, 5,
+			udmi.PointsEvent{status: occupied, count: people(5)}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &occupancysensorpb.Occupancy{State: tc.state, PeopleCount: tc.count, StateChangeTime: timestamppb.Now(), Confidence: 0.9}
+			assert.Equal(t, tc.want, envTelemetry(r, dbo.NamingDBO, forEachOccupancyPointFor(tc.counting)))
+		})
+	}
+
+	t.Run("raw naming sends the trait's state name", func(t *testing.T) {
+		r := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_IDLE, PeopleCount: 3}
+		assert.Equal(t, udmi.PointsEvent{
+			"state":        {PresentValue: "IDLE"},
+			"people_count": {PresentValue: int32(3)},
+		}, envTelemetry(r, dbo.NamingRaw, forEachOccupancyPointFor(countingCounts)))
+	})
+
+	t.Run("nil reading has no points", func(t *testing.T) {
+		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachOccupancyPointFor(countingCounts)))
+	})
+}
+
+func TestPeopleCountingOf(t *testing.T) {
+	assert.Equal(t, countingUndescribed, peopleCountingOf(nil))
+	assert.Equal(t, countingNone, peopleCountingOf(&occupancysensorpb.OccupancySupport{}))
+	assert.Equal(t, countingCounts, peopleCountingOf(&occupancysensorpb.OccupancySupport{MaxPeople: 40}))
+}
+
+// TestEnvInventory checks discovery declares every environmental point with the
+// unit the trait defines it in, which Connect converts by: it holds a numeric
+// reading whose quantity has several units until discovery names one.
+func TestEnvInventory(t *testing.T) {
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldZoneAirTemperatureSensor:      {Units: "degrees_celsius"},
+		dbo.FieldZoneAirRelativeHumiditySensor: {Units: "percent_relative_humidity"},
+	}, envInventory(&airtemperaturepb.AirTemperature{
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
+		AmbientHumidity:    new(float32(41)),
+	}, dbo.NamingDBO, forEachAirTemperaturePoint))
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldZoneAirCO2ConcentrationSensor: {Units: "parts_per_million"},
+		dbo.FieldZoneAirVOCConcentrationSensor: {Units: "parts_per_million"},
+		dbo.FieldAirPressureSensor:             {Units: "hectopascals"},
+		dbo.FieldZoneAirPM1pt0DensitySensor:    {Units: "micrograms_per_cubic_meter"},
+		dbo.FieldZoneAirPM2pt5DensitySensor:    {Units: "micrograms_per_cubic_meter"},
+		dbo.FieldZoneAirPM10pt0DensitySensor:   {Units: "micrograms_per_cubic_meter"},
+	}, envInventory(&airqualitysensorpb.AirQuality{
+		CarbonDioxideLevel:       new(float32(1)),
+		VolatileOrganicCompounds: new(float32(1)),
+		AirPressure:              new(float32(1)),
+		ParticulateMatter_1:      new(float32(1)),
+		ParticulateMatter_25:     new(float32(1)),
+		ParticulateMatter_10:     new(float32(1)),
+	}, dbo.NamingDBO, forEachAirQualityPoint))
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldZoneOccupancyStatus: {},
+		dbo.FieldZoneOccupancyCount:  {},
+	}, envInventory(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}, dbo.NamingDBO, forEachOccupancyPointFor(countingCounts)),
+		"a multistate and a headcount have no unit")
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		"ambient_temperature": {Units: "degrees_celsius"},
+	}, envInventory(&airtemperaturepb.AirTemperature{AmbientTemperature: &typespb.Temperature{}}, dbo.NamingRaw, forEachAirTemperaturePoint),
+		"raw naming keeps the units")
+
+	assert.Empty(t, envInventory[*airqualitysensorpb.AirQuality](nil, dbo.NamingDBO, forEachAirQualityPoint), "no reading yet ⇒ no inventory")
 }

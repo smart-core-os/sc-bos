@@ -32,9 +32,38 @@ const (
 	FieldWaterVolumeAccumulator = "water_volume_accumulator"
 )
 
+// DBO standard fields for the environmental sensor traits (AirTemperature,
+// AirQualitySensor, OccupancySensor). They are DBO's generic room-sensor fields,
+// and the same ones Smart Core Connect's BOS CSV import lands those traits on, so a
+// sensor's imported history and its live telemetry share a series.
+const (
+	FieldZoneAirTemperatureSensor      = "zone_air_temperature_sensor"
+	FieldZoneAirRelativeHumiditySensor = "zone_air_relative_humidity_sensor"
+	FieldZoneAirCO2ConcentrationSensor = "zone_air_co2_concentration_sensor"
+	FieldZoneAirVOCConcentrationSensor = "zone_air_voc_concentration_sensor"
+	FieldAirPressureSensor             = "air_pressure_sensor"
+	FieldZoneAirPM1pt0DensitySensor    = "zone_air_pm1pt0_density_sensor"
+	FieldZoneAirPM2pt5DensitySensor    = "zone_air_pm2pt5_density_sensor"
+	FieldZoneAirPM10pt0DensitySensor   = "zone_air_pm10pt0_density_sensor"
+	// FieldZoneOccupancyStatus is multistate: its value is one of the Occupancy* states.
+	FieldZoneOccupancyStatus = "zone_occupancy_status"
+	// FieldZoneOccupancyCount is a bare headcount, with no unit.
+	FieldZoneOccupancyCount = "zone_occupancy_count"
+)
+
+// States of FieldZoneOccupancyStatus, spelt in lower case as Smart Core Connect's
+// catalogue lands them.
+const (
+	OccupancyOccupied   = "occupied"
+	OccupancyUnoccupied = "unoccupied"
+	OccupancyInactive   = "inactive"
+	OccupancyUnknown    = "unknown"
+)
+
 // DBO unit names (ontology/yaml/resources/units/units.yaml). Energy's SI standard
 // is joules and power's is watts; the kWh/kW forms below are accepted alternatives.
-// cubic_meters is the standard unit of the volume measurement.
+// cubic_meters is the standard unit of the volume measurement. The environmental
+// units are the ones the sensor traits define their fields in.
 const (
 	UnitKilowattHours = "kilowatt_hours"
 	UnitWattHours     = "watt_hours"
@@ -42,6 +71,12 @@ const (
 	UnitWatts         = "watts"
 	UnitKilowatts     = "kilowatts"
 	UnitCubicMeters   = "cubic_meters"
+
+	UnitDegreesCelsius          = "degrees_celsius"
+	UnitPercentRelativeHumidity = "percent_relative_humidity"
+	UnitPartsPerMillion         = "parts_per_million"
+	UnitHectopascals            = "hectopascals"
+	UnitMicrogramsPerCubicMeter = "micrograms_per_cubic_meter"
 )
 
 // ElectricityMeterType is the DBO entity type for an energy-only electricity meter.

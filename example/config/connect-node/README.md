@@ -11,12 +11,13 @@ are chosen so it can run beside the other example nodes.
 
 The app config contains:
 
-- A `mock` driver with three `smartcore.bos.Meter` devices, one `smartcore.bos.Health` device, and a driver-level
-  health check that flaps to a fault 15% of the time (`healthCheck.faultProbability`).
+- A `mock` driver with three `smartcore.bos.Meter` devices, one `smartcore.bos.Health` device, an environmental
+  multi-sensor (`env-01`: AirTemperature, AirQualitySensor and OccupancySensor), and a driver-level health check that
+  flaps to a fault 15% of the time (`healthCheck.faultProbability`).
 - A `healthbounds` automation that raises a health check on each meter whose usage leaves `0..10000`.
 - A `history` automation recording meter readings in memory.
-- A [`connecttelemetry`](../../../pkg/auto/connecttelemetry) automation that publishes the meters and the node's own
-  host resources (`smartcore.bos.ResourceUse`) to the Connect telemetry broker every minute, and the node's health
+- A [`connecttelemetry`](../../../pkg/auto/connecttelemetry) automation that publishes the meters, the multi-sensor and the node's
+  own host resources (`smartcore.bos.ResourceUse`) to the Connect telemetry broker every minute, and the node's health
   checks as they change, using the node's enrolled certificate (`useCloudCredential`).
 
 The system config turns on the `resourceUse` system, which announces the node's CPU, memory and disk use as

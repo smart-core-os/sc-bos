@@ -19,7 +19,8 @@ with the Connect ingest side.
 > until Connect builds it. What follows is aligned to the spec's shapes + the concrete infra.
 
 The exporter discovers devices **by trait**, polls the typed trait API on a schedule, and
-publishes each device's data as UDMI. Meter is published for every device that implements it;
+publishes each device's data as UDMI. Meter and the environmental sensor traits (AirTemperature,
+AirQualitySensor, OccupancySensor) are published for every device that implements them;
 ResourceUse only for the local node, which publishes its own host resources.
 
 It can also publish the node's **health checks**, over the same connection, in sc-bos's own
@@ -86,7 +87,8 @@ vs body) is Connect's to configure — align the discriminator with `classifyKin
 }
 ```
 
-- ISO-8601 `timestamp` is the reading instant (`MeterReading.end_time`, falling back to now).
+- ISO-8601 `timestamp` is the reading instant: a meter's `MeterReading.end_time`, the time a node
+  last sampled its ResourceUse, or for an environmental sensor the time it was read.
 - Point names are **DBO standard field names** (`pkg/dbo`) — see the meter mapping below and
   `.claude/plans/dbo-conformance-plan.md`.
 - One `present_value` per present point; an absent point means "no update" (partial messages
@@ -147,7 +149,58 @@ entity type** (all `METERS/EM_PWM*` require `power_sensor`) — see the DBO conf
 
 On the trait-poll path there are no raw vendor point names, so the trait's semantic field
 names become the UDMI point names. This is the trade-off for supporting devices that don't
-implement the UDMI export trait, and for per-trait rollout granularity (meter-first).
+implement the UDMI export trait, and it keeps rollout granular per trait: a site enables each
+trait in `traits`.
+
+### Environmental sensor point mapping
+
+AirTemperature, AirQualitySensor and OccupancySensor readings land on DBO's generic room-sensor
+fields, the same ones Connect's BOS CSV import lands those traits' export columns on
+(`BOS_EXPORT_COLUMNS` in Connect's `@smartcoreconnect/types`), so a sensor's imported history and
+its live telemetry share a series. The traits fix each field's unit, so discovery declares it as
+a DBO unit name; Connect holds a numeric reading whose quantity has several units (temperature,
+concentration, pressure, density) until discovery names one.
+
+```json
+{
+  "timestamp": "2026-11-05T08:55:00Z",
+  "version": "1.5.2",
+  "points": {
+    "zone_air_temperature_sensor":       { "present_value": 22.5 },
+    "zone_air_relative_humidity_sensor": { "present_value": 41 },
+    "zone_air_co2_concentration_sensor": { "present_value": 612 },
+    "zone_occupancy_status":             { "present_value": "occupied" },
+    "zone_occupancy_count":              { "present_value": 4 }
+  }
+}
+```
+
+```json
+"pointset": {
+  "points": {
+    "zone_air_temperature_sensor":       { "units": "degrees_celsius" },
+    "zone_air_relative_humidity_sensor": { "units": "percent_relative_humidity" },
+    "zone_air_co2_concentration_sensor": { "units": "parts_per_million" },
+    "zone_occupancy_status":             {},
+    "zone_occupancy_count":              {}
+  }
+}
+```
+
+- AirQuality's VOC (`parts_per_million`), air pressure (`air_pressure_sensor`, `hectopascals`) and
+  PM1/PM2.5/PM10 (`zone_air_pm{1pt0,2pt5,10pt0}_density_sensor`, `micrograms_per_cubic_meter`)
+  follow the same pattern. The automation README lists every point.
+- `zone_occupancy_status` is multistate, so it goes as its canonical state string
+  (`occupied`, `unoccupied`, `inactive` for `IDLE`, `unknown` for `STATE_UNSPECIFIED`): Connect
+  holds a number on a multistate field. The trait reports a people count of 0 from a sensor that
+  can't count, so a count goes by what the sensor says about itself (`OccupancySupport.max_people`):
+  a counter sends every count but a 0 beside occupied or idle, as Connect's import reads them; a
+  non-counter sends none; and a sensor that doesn't say, as no driver does yet, sends only counts
+  above 0, so a lighting PIR never claims an empty room holds 0 people.
+- Unset optional fields are omitted. Set points, modes and vendor indices (comfort, score,
+  infection risk) are not exported.
+- The reading comes from Get and is stamped with the time it was fetched, as a meter's is (SCB-1520):
+  a value the driver can still read is current, so an unchanging sensor doesn't look dead.
 
 ### Node resources (ResourceUse)
 

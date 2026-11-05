@@ -30,10 +30,14 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -350,11 +354,11 @@ const testFetchTimeout = 5 * time.Second
 // (no collector, no device) rather than erroring.
 func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	logger := zap.NewNop()
-	root := node.New("occupancy")
+	root := node.New("brightness")
 
 	devicesApi := devices.NewServer(root)
 	root.Announce("foo",
-		node.HasTrait(trait.OccupancySensor),
+		node.HasTrait(trait.BrightnessSensor),
 		node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc),
 	)
 
@@ -366,7 +370,7 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }
 
@@ -899,4 +903,185 @@ func TestRun(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []string{"n1"}, published)
 	})
+}
+
+// TestGetAllTraitImplementorsEnvironment exercises discovery and collector wiring
+// for the environmental sensor traits against live model servers: one sensor
+// implementing all three, as a multi-sensor does, publishes one merged pointset.
+func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
+	logger := zap.NewNop()
+	root := node.New("env")
+
+	sampled := time.Date(2026, 11, 5, 8, 55, 0, 0, time.UTC)
+	clock := resource.WithClock(fixedClock(sampled))
+	airTemperature := airtemperaturepb.NewModel(clock, resource.WithInitialValue(&airtemperaturepb.AirTemperature{
+		Mode:               airtemperaturepb.AirTemperature_HEAT,
+		AmbientTemperature: &typespb.Temperature{ValueCelsius: 22.5},
+		AmbientHumidity:    new(float32(41)),
+	}))
+	airQuality := airqualitysensorpb.NewModel(clock, resource.WithInitialValue(&airqualitysensorpb.AirQuality{
+		CarbonDioxideLevel: new(float32(612)),
+		Score:              new(float32(90)),
+	}))
+	occupancy := occupancysensorpb.NewModel(clock, resource.WithInitialValue(&occupancysensorpb.Occupancy{
+		State:           occupancysensorpb.Occupancy_OCCUPIED,
+		PeopleCount:     4,
+		StateChangeTime: timestamppb.New(sampled.Add(-3 * time.Hour)),
+	}))
+
+	devicesApi := devices.NewServer(root)
+	root.Announce("sensor",
+		node.HasServer(airtemperaturepb.RegisterAirTemperatureApiServer, airtemperaturepb.AirTemperatureApiServer(airtemperaturepb.NewModelServer(airTemperature))),
+		node.HasServer(airqualitysensorpb.RegisterAirQualitySensorApiServer, airqualitysensorpb.AirQualitySensorApiServer(airqualitysensorpb.NewModelServer(airQuality))),
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancy))),
+		node.HasTrait(trait.AirTemperature),
+		node.HasTrait(trait.AirQualitySensor),
+		node.HasTrait(trait.OccupancySensor),
+	)
+	root.Announce("env", node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc))
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  logger,
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+
+	allDevices := make(map[string]*device)
+	for _, tn := range []trait.Name{trait.AirTemperature, trait.AirQualitySensor, trait.OccupancySensor} {
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, allDevices))
+	}
+	require.Len(t, allDevices, 1)
+	dev := allDevices["sensor"]
+	require.NotNil(t, dev)
+	require.Len(t, dev.collectors, 3)
+
+	// Discovery before any telemetry fetch is served from the seeded readings,
+	// with every numeric point's unit.
+	disc := dev.buildDiscovery(time.Now())
+	require.NotNil(t, disc.Pointset)
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldZoneAirTemperatureSensor:      {Units: dbo.UnitDegreesCelsius},
+		dbo.FieldZoneAirRelativeHumiditySensor: {Units: dbo.UnitPercentRelativeHumidity},
+		dbo.FieldZoneAirCO2ConcentrationSensor: {Units: dbo.UnitPartsPerMillion},
+		dbo.FieldZoneOccupancyStatus:           {},
+		dbo.FieldZoneOccupancyCount:            {},
+	}, disc.Pointset.Points)
+
+	// Telemetry is stamped with when it was fetched, not when the readings
+	// last changed, nor when the room filled: a value still read is current.
+	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
+	ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+	require.True(t, ok)
+	assert.Equal(t, now, ev.Timestamp)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneAirTemperatureSensor:      {PresentValue: 22.5},
+		dbo.FieldZoneAirRelativeHumiditySensor: {PresentValue: float32(41)},
+		dbo.FieldZoneAirCO2ConcentrationSensor: {PresentValue: float32(612)},
+		dbo.FieldZoneOccupancyStatus:           {PresentValue: dbo.OccupancyOccupied},
+		dbo.FieldZoneOccupancyCount:            {PresentValue: int32(4)},
+	}, ev.Points)
+
+	// A reading that gains a field declares it at the next discovery.
+	_, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{ParticulateMatter_25: new(float32(2.5))},
+		resource.WithUpdatePaths("particulate_matter_25"))
+	require.NoError(t, err)
+	_, ok = dev.buildTelemetry(context.Background(), now, logger)
+	require.True(t, ok)
+	assert.Equal(t, udmi.MetadataPoint{Units: dbo.UnitMicrogramsPerCubicMeter},
+		dev.buildDiscovery(now).Pointset.Points[dbo.FieldZoneAirPM2pt5DensitySensor])
+}
+
+// TestSensorCollectorPoints checks a sensor reading comes from Get and is
+// stamped with the fetch time, as a meter's is.
+func TestSensorCollectorPoints(t *testing.T) {
+	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
+
+	t.Run("the reading goes stamped now", func(t *testing.T) {
+		c := &sensorCollector[*occupancysensorpb.Occupancy]{
+			name: "s",
+			get: func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
+				return &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(now.Add(-8 * time.Hour))}, nil
+			},
+			forEach: forEachOccupancyPointFor(countingCounts),
+		}
+		pts, ts, err := c.points(context.Background(), now)
+		require.NoError(t, err)
+		assert.Equal(t, now, ts, "an empty room still reads now, not when it emptied")
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+			dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
+		}, pts)
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			dbo.FieldZoneOccupancyStatus: {},
+			dbo.FieldZoneOccupancyCount:  {},
+		}, c.inventory(), "discovery follows the reading sent")
+	})
+
+	t.Run("a failed get is a failed fetch", func(t *testing.T) {
+		c := &sensorCollector[*occupancysensorpb.Occupancy]{
+			name: "s",
+			get: func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
+				return nil, status.Error(codes.Unavailable, "sensor offline")
+			},
+			forEach: forEachOccupancyPointFor(countingCounts),
+		}
+		_, _, err := c.points(context.Background(), now)
+		assert.Error(t, err)
+	})
+}
+
+// occupancyInfo describes an occupancy sensor's people counting.
+type occupancyInfo struct {
+	occupancysensorpb.UnimplementedOccupancySensorInfoServer
+	maxPeople int32
+}
+
+func (i occupancyInfo) DescribeOccupancy(context.Context, *occupancysensorpb.DescribeOccupancyRequest) (*occupancysensorpb.OccupancySupport, error) {
+	return &occupancysensorpb.OccupancySupport{MaxPeople: i.maxPeople}, nil
+}
+
+// TestGetAllTraitImplementorsOccupancyCounting checks the occupancy collector
+// sends counts by what each sensor says about its counting, read when the
+// device is found.
+func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
+	root := node.New("occupancy")
+	devicesApi := devices.NewServer(root)
+	announce := func(name string, reading *occupancysensorpb.Occupancy, info ...node.Feature) {
+		model := occupancysensorpb.NewModel(resource.WithInitialValue(reading))
+		root.Announce(name, append([]node.Feature{
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
+			node.HasTrait(trait.OccupancySensor),
+		}, info...)...)
+	}
+	empty := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}
+	announce("counter", empty, node.HasServer(occupancysensorpb.RegisterOccupancySensorInfoServer, occupancysensorpb.OccupancySensorInfoServer(occupancyInfo{maxPeople: 40})))
+	announce("presence", &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}, node.HasServer(occupancysensorpb.RegisterOccupancySensorInfoServer, occupancysensorpb.OccupancySensorInfoServer(occupancyInfo{})))
+	announce("pir", empty)
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+	allDevices := make(map[string]*device)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, allDevices))
+	require.Len(t, allDevices, 3)
+
+	sent := func(name string) udmi.PointsEvent {
+		ev, ok := allDevices[name].buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+		require.True(t, ok, name)
+		return ev.Points
+	}
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
+	}, sent("counter"), "a counter's empty room is a true 0")
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyOccupied},
+	}, sent("presence"), "a sensor that says it doesn't count sends none")
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+	}, sent("pir"), "an undescribed sensor claims no empty room")
 }

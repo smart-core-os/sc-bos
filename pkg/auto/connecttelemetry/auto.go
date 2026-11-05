@@ -2,9 +2,10 @@
 // instance to Smart Core Connect (SCC). It discovers devices by trait, polls the
 // typed trait API on a schedule, and publishes each device's data to the Connect
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
-// periodic device-metadata (discovery). The Meter trait is exported for every
-// device that implements it; the ResourceUse trait only for the local node, which
-// publishes its own host resources.
+// periodic device-metadata (discovery). The Meter trait, and the AirTemperature,
+// AirQualitySensor and OccupancySensor environmental sensor traits, are exported for
+// every device that implements them; the ResourceUse trait only for the local node,
+// which publishes its own host resources.
 //
 // When health is enabled it also publishes the health checks this node evaluates,
 // over the same connection.
@@ -27,9 +28,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/connect"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -50,6 +54,11 @@ type AutoImpl struct {
 
 	resourceUseClient resourceusepb.ResourceUseApiClient
 
+	airTemperatureClient airtemperaturepb.AirTemperatureApiClient
+	airQualityClient     airqualitysensorpb.AirQualitySensorApiClient
+	occupancyClient      occupancysensorpb.OccupancySensorApiClient
+	occupancyInfoClient  occupancysensorpb.OccupancySensorInfoClient
+
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
 	pointNaming dbo.Naming
@@ -68,6 +77,10 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.meterClient = meterpb.NewMeterApiClient(n.ClientConn())
 	a.meterInfoClient = meterpb.NewMeterInfoClient(n.ClientConn())
 	a.resourceUseClient = resourceusepb.NewResourceUseApiClient(n.ClientConn())
+	a.airTemperatureClient = airtemperaturepb.NewAirTemperatureApiClient(n.ClientConn())
+	a.airQualityClient = airqualitysensorpb.NewAirQualitySensorApiClient(n.ClientConn())
+	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
+	a.occupancyInfoClient = occupancysensorpb.NewOccupancySensorInfoClient(n.ClientConn())
 }
 
 func (a *AutoImpl) now() time.Time {
@@ -461,6 +474,22 @@ func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, devic
 			c.support = support
 		}
 		return c, true
+	case trait.AirTemperature:
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getAirTemperature(a.airTemperatureClient), forEachAirTemperaturePoint, a.Logger), true
+	case trait.AirQualitySensor:
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getAirQuality(a.airQualityClient), forEachAirQualityPoint, a.Logger), true
+	case trait.OccupancySensor:
+		// Whether the sensor counts people decides which counts it sends (see
+		// forEachOccupancyPoint). No driver describes itself yet, so a failure is
+		// the usual case and goes unlogged.
+		var support *occupancysensorpb.OccupancySupport
+		if s, err := a.occupancyInfoClient.DescribeOccupancy(ctx, &occupancysensorpb.DescribeOccupancyRequest{Name: deviceName}); err == nil {
+			support = s
+		}
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getOccupancy(a.occupancyClient), forEachOccupancyPointFor(peopleCountingOf(support)), a.Logger), true
 	default:
 		return nil, false
 	}
