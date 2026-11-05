@@ -42,6 +42,34 @@ func TestParseConfig(t *testing.T) {
 		assert.True(t, root.IncludeZones)
 	})
 
+	t.Run("devices", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"devices": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, map[string][]string{"smartcore.traits.OccupancySensor": {"zones/treehouse"}}, root.Devices)
+	})
+
+	t.Run("devices for a trait not exported", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"devices": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}
+		}`))
+		assert.ErrorContains(t, err, "not in traits")
+	})
+
+	t.Run("devices with an empty list", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.traits.OccupancySensor"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"devices": {"smartcore.traits.OccupancySensor": []}
+		}`))
+		assert.ErrorContains(t, err, "is empty")
+	})
+
 	t.Run("health defaults", func(t *testing.T) {
 		root, err := ParseConfig([]byte(`{
 			"traits": ["smartcore.bos.Meter"],

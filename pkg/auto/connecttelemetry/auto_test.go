@@ -33,6 +33,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
@@ -40,7 +41,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
+	"github.com/smart-core-os/sc-bos/pkg/zone"
+	zoneoccupancy "github.com/smart-core-os/sc-bos/pkg/zone/feature/occupancy"
 )
 
 // fakeCollector is a stub traitCollector for exercising device aggregation
@@ -204,7 +208,7 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, allDevices))
 
 	require.Len(t, allDevices, 1)
 	dev := allDevices["foo"]
@@ -261,9 +265,146 @@ func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 		{includeZones: true, want: []string{"meter", "untyped", "zone"}},
 	} {
 		allDevices := make(map[string]*device)
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, nil, allDevices))
 		assert.ElementsMatch(t, tc.want, slices.Collect(maps.Keys(allDevices)), "includeZones=%v", tc.includeZones)
 	}
+}
+
+// TestRefreshDevicesAllowlist checks a trait with a devices entry exports only
+// the devices named, admitting a named zone, while other traits are unchanged.
+func TestRefreshDevicesAllowlist(t *testing.T) {
+	root := node.New("site")
+	devicesApi := devices.NewServer(root)
+	announceOccupancy := func(name string, deviceType metadatapb.Metadata_DeviceType) {
+		model := occupancysensorpb.NewModel(resource.WithInitialValue(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 1}))
+		root.Announce(name,
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
+			node.HasTrait(trait.OccupancySensor),
+			node.HasDeviceType(deviceType),
+		)
+	}
+	announceOccupancy("pir", metadatapb.Metadata_DEVICE)
+	announceOccupancy("other-zone", metadatapb.Metadata_ZONE)
+	announceOccupancy("treehouse", metadatapb.Metadata_ZONE)
+	meterModel := meterpb.NewModel()
+	root.Announce("meter",
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{UsageUnit: "kWh"}})),
+		node.HasTrait(meterpb.TraitName),
+	)
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+
+	for _, tc := range []struct {
+		name        string
+		devices     map[string][]string
+		want        []string
+		wantMissing []string
+	}{
+		{
+			name: "no allowlist",
+			want: []string{"pir", "meter"},
+		},
+		{
+			name:    "occupancy allowlist",
+			devices: map[string][]string{string(trait.OccupancySensor): {"treehouse"}},
+			want:    []string{"treehouse", "meter"},
+		},
+		{
+			name:        "allowlist naming a missing device",
+			devices:     map[string][]string{string(trait.OccupancySensor): {"treehouse", "tree-house"}},
+			want:        []string{"treehouse", "meter"},
+			wantMissing: []string{"tree-house"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			core, logs := observer.New(zap.WarnLevel)
+			a.Logger = zap.New(core)
+			cfg := config.Root{
+				Traits:       []string{string(trait.OccupancySensor), string(meterpb.TraitName)},
+				FetchTimeout: &jsontypes.Duration{Duration: testFetchTimeout},
+				Devices:      tc.devices,
+			}
+			allDevices := make(map[string]*device)
+			require.NoError(t, a.refreshDevices(context.Background(), cfg, allDevices))
+			assert.ElementsMatch(t, tc.want, slices.Collect(maps.Keys(allDevices)))
+
+			var missing []string
+			for _, e := range logs.FilterMessage("configured device not found for trait").All() {
+				missing = append(missing, e.ContextMap()["device"].(string))
+			}
+			assert.ElementsMatch(t, tc.wantMissing, missing)
+		})
+	}
+}
+
+// TestRefreshDevicesEnterLeaveZone runs a zone counting people with an
+// enter/leave sensor through the allowlist, checking it sends its count,
+// including a count of 0 once everyone has left.
+func TestRefreshDevicesEnterLeaveZone(t *testing.T) {
+	root := node.New("site")
+	devicesApi := devices.NewServer(root)
+	counter := enterleavesensorpb.NewModel()
+	root.Announce("counter",
+		node.HasServer(enterleavesensorpb.RegisterEnterLeaveSensorApiServer, enterleavesensorpb.EnterLeaveSensorApiServer(enterleavesensorpb.NewModelServer(counter))),
+		node.HasTrait(trait.EnterLeaveSensor),
+	)
+	root.Announce("treehouse", node.HasDeviceType(metadatapb.Metadata_ZONE))
+	zoneSvc := zoneoccupancy.Feature.New(zone.Services{Logger: zap.NewNop(), Node: root, Devices: &zone.Devices{}})
+	_, err := zoneSvc.Configure([]byte(`{"name":"treehouse","enterLeaveOccupancySensors":["counter"]}`))
+	require.NoError(t, err)
+	_, err = zoneSvc.Start()
+	require.NoError(t, err)
+	t.Cleanup(func() { _, _ = zoneSvc.Stop() })
+
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+
+	cfg := config.Root{
+		Traits:       []string{string(trait.OccupancySensor)},
+		FetchTimeout: &jsontypes.Duration{Duration: testFetchTimeout},
+		Devices:      map[string][]string{string(trait.OccupancySensor): {"treehouse"}},
+	}
+	var allDevices map[string]*device
+	// The zone announces once its config is applied, which may land after Start returns.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		allDevices = make(map[string]*device)
+		require.NoError(c, a.refreshDevices(context.Background(), cfg, allDevices))
+		require.Contains(c, allDevices, "treehouse")
+	}, 5*time.Second, 10*time.Millisecond)
+
+	sent := func() udmi.PointsEvent {
+		ev, ok := allDevices["treehouse"].buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+		require.True(t, ok)
+		return ev.Points
+	}
+	move := func(dir enterleavesensorpb.EnterLeaveEvent_Direction, n int) {
+		for range n {
+			require.NoError(t, counter.CreateEnterLeaveEvent(&enterleavesensorpb.EnterLeaveEvent{Direction: dir}))
+		}
+	}
+
+	move(enterleavesensorpb.EnterLeaveEvent_ENTER, 3)
+	move(enterleavesensorpb.EnterLeaveEvent_LEAVE, 1)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyOccupied},
+		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(2)},
+	}, sent())
+
+	move(enterleavesensorpb.EnterLeaveEvent_LEAVE, 2)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
+	}, sent(), "a zone counting people sends a true 0")
 }
 
 // TestGetAllTraitImplementorsPaginates confirms every implementor is collected
@@ -292,7 +433,7 @@ func TestGetAllTraitImplementorsPaginates(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, allDevices))
 
 	assert.Equal(t, n, len(allDevices))
 	assert.NotNil(t, allDevices[fmt.Sprintf("meter-%04d", n-1)], "last device by name")
@@ -327,7 +468,7 @@ func TestGetAllTraitImplementorsSlowDevices(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	start := time.Now()
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, nil, allDevices))
 	assert.Less(t, time.Since(start), n*fetchTimeout/2, "seed fetches should time out together")
 
 	assert.Equal(t, n, len(allDevices))
@@ -370,7 +511,7 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, nil, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }
 
@@ -405,7 +546,7 @@ func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, nil, allDevices))
 
 	require.Len(t, allDevices, 1, "a gateway must not republish its cohort's resources")
 	dev := allDevices["node1"]
@@ -949,7 +1090,7 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	for _, tn := range []trait.Name{trait.AirTemperature, trait.AirQualitySensor, trait.OccupancySensor} {
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, nil, allDevices))
 	}
 	require.Len(t, allDevices, 1)
 	dev := allDevices["sensor"]
@@ -1066,7 +1207,7 @@ func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
 	}}
 	a.initialiseClients(root)
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, nil, allDevices))
 	require.Len(t, allDevices, 3)
 
 	sent := func(name string) udmi.PointsEvent {

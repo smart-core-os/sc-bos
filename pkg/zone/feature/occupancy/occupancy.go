@@ -2,6 +2,7 @@ package occupancy
 
 import (
 	"context"
+	"math"
 	"sync"
 
 	"go.uber.org/zap"
@@ -9,6 +10,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 	"github.com/smart-core-os/sc-bos/pkg/wrap"
@@ -75,11 +77,32 @@ func (f *feature) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		f.devices.Add(cfg.OccupancySensors...)
 		f.devices.Add(cfg.EnterLeaveOccupancySensors...)
-		announce.Announce(cfg.Name,
+		features := []node.Feature{
 			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(group)),
 			node.HasTrait(trait.OccupancySensor),
-		)
+		}
+		if len(cfg.EnterLeaveOccupancySensors) > 0 && len(cfg.OccupancySensors) == 0 {
+			// Describing the zone as a people counter lets consumers such as connecttelemetry
+			// trust a people count of 0 as an empty zone. A zone with any occupancy sensors
+			// stays undescribed, since those may be presence detectors that report 0, and the
+			// zone would report only their 0 while its enter/leave sensors are failing.
+			features = append(features, node.HasServer(occupancysensorpb.RegisterOccupancySensorInfoServer, occupancysensorpb.OccupancySensorInfoServer(countingInfo{})))
+		}
+		announce.Announce(cfg.Name, features...)
 	}
 
 	return nil
+}
+
+// countingInfo describes a zone whose people count comes from enter/leave sensors.
+type countingInfo struct {
+	occupancysensorpb.UnimplementedOccupancySensorInfoServer
+}
+
+func (countingInfo) DescribeOccupancy(context.Context, *occupancysensorpb.DescribeOccupancyRequest) (*occupancysensorpb.OccupancySupport, error) {
+	return &occupancysensorpb.OccupancySupport{
+		ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
+		// An enter/leave counter has no sensor limit on the people it can count.
+		MaxPeople: math.MaxInt32,
+	}, nil
 }

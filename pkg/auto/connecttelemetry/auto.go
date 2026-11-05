@@ -354,7 +354,7 @@ func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, topic st
 // (re)builds the export set.
 func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevices map[string]*device) error {
 	for _, traitName := range cfg.Traits {
-		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, allDevices); err != nil {
+		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, cfg.Devices[traitName], allDevices); err != nil {
 			a.Logger.Error("failed to get devices for trait", zap.String("trait", traitName), zap.Error(err))
 			return err
 		}
@@ -363,8 +363,9 @@ func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevic
 }
 
 // getAllTraitImplementors populates devices with those implementing traitName,
-// attaching a collector for the trait. Zones are skipped unless includeZones is set.
-func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, devices map[string]*device) error {
+// attaching a collector for the trait. A non-empty only limits the trait to the
+// devices it names, zones included. Otherwise zones are skipped unless includeZones is set.
+func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, only []string, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
 			Field: "metadata.traits.name",
@@ -380,6 +381,14 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			Field: "name",
 			Value: &devicespb.Device_Query_Condition_StringEqual{
 				StringEqual: a.Node.Name(),
+			},
+		})
+	}
+	if len(only) > 0 {
+		conditions = append(conditions, &devicespb.Device_Query_Condition{
+			Field: "name",
+			Value: &devicespb.Device_Query_Condition_StringIn{
+				StringIn: &devicespb.Device_Query_StringList{Strings: only},
 			},
 		})
 	}
@@ -399,7 +408,7 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			break
 		}
 	}
-	if !includeZones {
+	if !includeZones && len(only) == 0 {
 		// Filtered here rather than in the query: devices with no device type
 		// have no value for the field, so a "not ZONE" condition would drop them too.
 		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
@@ -438,6 +447,13 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			devices[deviceInfo.Name] = dev
 		}
 		dev.collectors = append(dev.collectors, builds[i].collector)
+	}
+	for _, name := range only {
+		// A mistyped or unannounced name would otherwise look like a device with no data.
+		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name }) {
+			a.Logger.Warn("configured device not found for trait",
+				zap.String("trait", string(traitName)), zap.String("device", name))
+		}
 	}
 	return nil
 }

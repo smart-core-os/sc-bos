@@ -38,6 +38,19 @@ Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's re
 devices the node already publishes, such as the sum of its meters, and Connect models zones itself, so
 publishing them would count those devices twice. Zone health is still published when health is enabled.
 
+`devices` limits a trait to the devices it names, and admits a named zone whatever `includeZones`
+says. Use it for a zone whose reading is its own measurement rather than a sum of devices already
+sent. For example, a zone that counts people with an enter/leave counter at its door has a count
+that no member device carries. Listing it alone under `smartcore.traits.OccupancySensor` sends that
+zone without the floor's PIRs or any other zone:
+
+```json
+"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+"devices": {"smartcore.traits.OccupancySensor": ["site/zones/meeting-suite"]}
+```
+
+Meters stay unrestricted here, since `smartcore.bos.Meter` has no entry.
+
 ### Meter
 
 Point names are **Google Digital
@@ -130,6 +143,8 @@ it holds a numeric reading whose quantity has several units until discovery name
   - `max_people` 0: no count.
   - no answer, which is every driver today: only a count above 0, so a presence detector never
     claims an empty room holds 0 people. A counter's true zeros wait for its driver to describe it.
+    A zone counted only by `enterLeaveOccupancySensors` describes itself as a counter, so its zeros
+    are sent; one that also lists `occupancySensors` stays undescribed.
 - The reading comes from Get, which every driver serves (some poll the device on it), and is stamped
   with the time it was fetched, as a meter's is: a value the driver can still read is current. A
   model's change time would make a sensor whose value doesn't change, such as an empty room's PIR,
@@ -214,6 +229,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
 | `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |
+| `devices` | no | — | Map of trait name to the device names to export for it. A trait with an entry exports only those devices, zones included whatever `includeZones` says; traits without one are unchanged. Each key must be in `traits` and each list non-empty |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
 | `mqtt.clientId` | no | node id | MQTT client id |

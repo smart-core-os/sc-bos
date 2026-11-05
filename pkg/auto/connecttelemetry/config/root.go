@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
@@ -84,6 +85,12 @@ type Root struct {
 	// publishes, and Connect models zones itself, so publishing them double
 	// counts. Zone health is published either way.
 	IncludeZones bool `json:"includeZones,omitempty"`
+	// Devices limits a trait to the devices it names, keyed by trait name.
+	// A trait with an entry exports only the named devices, and a named zone is
+	// exported whatever IncludeZones says. Traits without an entry are unchanged.
+	// Use it to send one zone whose reading is its own measurement, such as an
+	// enter/leave people count, without the trait's other devices.
+	Devices map[string][]string `json:"devices,omitempty"`
 }
 
 func ParseConfig(data []byte) (Root, error) {
@@ -163,6 +170,14 @@ func ParseConfig(data []byte) (Root, error) {
 			return Root{}, fmt.Errorf("config parse failed, health.maxPublishRate must be positive")
 		} else if root.Health.MaxPublishRate > MaxPublishRate {
 			return Root{}, fmt.Errorf("config parse failed, health.maxPublishRate must be at most 16: Connect accepts 10,000 health messages per 10 minutes from a node")
+		}
+	}
+	for traitName, names := range root.Devices {
+		if !slices.Contains(root.Traits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, devices has an entry for %q, which is not in traits", traitName)
+		}
+		if len(names) == 0 {
+			return Root{}, fmt.Errorf("config parse failed, devices[%q] is empty: list the devices to export, or remove the entry", traitName)
 		}
 	}
 	if len(root.Traits) == 0 && !root.HealthEnabled() {
