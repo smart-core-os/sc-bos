@@ -155,10 +155,14 @@ func (c *resourceUseCollector) points(ctx context.Context, now time.Time) (udmi.
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	change, err := firstChange(stream, (*resourceusepb.PullResourceUseResponse).GetChanges)
+	resp, err := stream.Recv()
 	if err != nil {
 		return nil, time.Time{}, err
 	}
+	if len(resp.GetChanges()) == 0 {
+		return nil, time.Time{}, errors.New("pull resource use returned no changes")
+	}
+	change := resp.GetChanges()[0]
 	c.last = change.GetResourceUse()
 	ts := now
 	if change.GetChangeTime() != nil {
@@ -216,24 +220,6 @@ func (c *sensorCollector[T]) points(ctx context.Context, now time.Time) (udmi.Po
 
 func (c *sensorCollector[T]) inventory() map[string]udmi.MetadataPoint {
 	return envInventory(c.last, c.naming, c.forEach)
-}
-
-// errNoChanges is a Pull whose first message carries no change.
-var errNoChanges = errors.New("pull returned no changes")
-
-// firstChange reads a Pull stream's first message, which seeds with the current
-// value and its change time, and returns its first change.
-func firstChange[R any, C any](stream interface{ Recv() (R, error) }, changes func(R) []C) (C, error) {
-	var zero C
-	resp, err := stream.Recv()
-	if err != nil {
-		return zero, err
-	}
-	cs := changes(resp)
-	if len(cs) == 0 {
-		return zero, errNoChanges
-	}
-	return cs[0], nil
 }
 
 func getAirTemperature(client airtemperaturepb.AirTemperatureApiClient) func(context.Context, string) (*airtemperaturepb.AirTemperature, error) {
