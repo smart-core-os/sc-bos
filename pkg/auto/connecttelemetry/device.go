@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto/udmi"
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
@@ -177,38 +176,27 @@ func (c *resourceUseCollector) inventory() map[string]udmi.MetadataPoint {
 // builds discovery from the last reading, so it declares only the points the
 // sensor populates. newSensorCollector seeds last.
 //
-// The reading comes from Get, which every driver serves; some drivers poll the
-// device on it. Its time comes from Pull's first change, which a model sends at
-// once with the time the value last changed, so a sensor whose driver has
-// stalled arrives stale. A driver whose Pull sends only when the value changes
-// sends nothing first, so Pull is given pullFirstWait, after which the Get
-// reading goes stamped now.
-//
-// For occupancy that is the reading's change time, not its state_change_time:
-// the state change dates the state, so stamping with it would date every reading
-// of a room occupied all morning to when it filled, and land them as one.
+// The reading comes from Get, which every driver serves (some poll the device
+// on it), and is stamped with the time it was fetched, as a meter's is: a value
+// the driver can still read is current. Using the model's change time instead
+// would make a sensor whose value doesn't change, such as an empty room's PIR,
+// look dead, and land one row per change.
 type sensorCollector[T any] struct {
-	name   string
-	naming dbo.Naming
-	get    func(ctx context.Context, name string) (T, error)
-	// pull returns the device's current reading and when it last changed, which may be nil.
-	pull    func(ctx context.Context, name string) (T, *timestamppb.Timestamp, error)
+	name    string
+	naming  dbo.Naming
+	get     func(ctx context.Context, name string) (T, error)
 	forEach func(T, dbo.Naming, envPointFunc)
 	last    T
 }
-
-// pullFirstWait bounds how long a sensor's Pull may take to send its first change.
-const pullFirstWait = time.Second
 
 // newSensorCollector builds a sensorCollector and seeds it with a Get, so
 // discovery has an inventory even if the first telemetry fetch fails.
 func newSensorCollector[T any](ctx context.Context, name string, naming dbo.Naming,
 	get func(context.Context, string) (T, error),
-	pull func(context.Context, string) (T, *timestamppb.Timestamp, error),
 	forEach func(T, dbo.Naming, envPointFunc),
 	logger *zap.Logger,
 ) *sensorCollector[T] {
-	c := &sensorCollector[T]{name: name, naming: naming, get: get, pull: pull, forEach: forEach}
+	c := &sensorCollector[T]{name: name, naming: naming, get: get, forEach: forEach}
 	if r, err := get(ctx, name); err != nil {
 		logger.Warn("failed to get sensor reading", zap.String("device", name), zap.Error(err))
 	} else {
@@ -222,16 +210,8 @@ func (c *sensorCollector[T]) points(ctx context.Context, now time.Time) (udmi.Po
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	ts := now
-	pullCtx, cancel := context.WithTimeout(ctx, pullFirstWait)
-	// The pulled reading and its time go together: after a polling driver's Get
-	// it is the same reading, and a model's may be newer.
-	if pulled, changeTime, err := c.pull(pullCtx, c.name); err == nil && changeTime != nil {
-		r, ts = pulled, changeTime.AsTime()
-	}
-	cancel()
 	c.last = r
-	return envTelemetry(r, c.naming, c.forEach), ts, nil
+	return envTelemetry(r, c.naming, c.forEach), now, nil
 }
 
 func (c *sensorCollector[T]) inventory() map[string]udmi.MetadataPoint {
@@ -271,53 +251,5 @@ func getAirQuality(client airqualitysensorpb.AirQualitySensorApiClient) func(con
 func getOccupancy(client occupancysensorpb.OccupancySensorApiClient) func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
 	return func(ctx context.Context, name string) (*occupancysensorpb.Occupancy, error) {
 		return client.GetOccupancy(ctx, &occupancysensorpb.GetOccupancyRequest{Name: name})
-	}
-}
-
-func pullAirTemperature(client airtemperaturepb.AirTemperatureApiClient) func(context.Context, string) (*airtemperaturepb.AirTemperature, *timestamppb.Timestamp, error) {
-	return func(ctx context.Context, name string) (*airtemperaturepb.AirTemperature, *timestamppb.Timestamp, error) {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		stream, err := client.PullAirTemperature(ctx, &airtemperaturepb.PullAirTemperatureRequest{Name: name})
-		if err != nil {
-			return nil, nil, err
-		}
-		change, err := firstChange(stream, (*airtemperaturepb.PullAirTemperatureResponse).GetChanges)
-		if err != nil {
-			return nil, nil, err
-		}
-		return change.GetAirTemperature(), change.GetChangeTime(), nil
-	}
-}
-
-func pullAirQuality(client airqualitysensorpb.AirQualitySensorApiClient) func(context.Context, string) (*airqualitysensorpb.AirQuality, *timestamppb.Timestamp, error) {
-	return func(ctx context.Context, name string) (*airqualitysensorpb.AirQuality, *timestamppb.Timestamp, error) {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		stream, err := client.PullAirQuality(ctx, &airqualitysensorpb.PullAirQualityRequest{Name: name})
-		if err != nil {
-			return nil, nil, err
-		}
-		change, err := firstChange(stream, (*airqualitysensorpb.PullAirQualityResponse).GetChanges)
-		if err != nil {
-			return nil, nil, err
-		}
-		return change.GetAirQuality(), change.GetChangeTime(), nil
-	}
-}
-
-func pullOccupancy(client occupancysensorpb.OccupancySensorApiClient) func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-	return func(ctx context.Context, name string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		stream, err := client.PullOccupancy(ctx, &occupancysensorpb.PullOccupancyRequest{Name: name})
-		if err != nil {
-			return nil, nil, err
-		}
-		change, err := firstChange(stream, (*occupancysensorpb.PullOccupancyResponse).GetChanges)
-		if err != nil {
-			return nil, nil, err
-		}
-		return change.GetOccupancy(), change.GetChangeTime(), nil
 	}
 }

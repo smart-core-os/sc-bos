@@ -968,12 +968,12 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 		dbo.FieldZoneOccupancyCount:            {},
 	}, disc.Pointset.Points)
 
-	// Telemetry is stamped with when the readings last changed, not when they
-	// were fetched, nor when the room filled.
+	// Telemetry is stamped with when it was fetched, not when the readings
+	// last changed, nor when the room filled: a value still read is current.
 	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
 	ev, ok := dev.buildTelemetry(context.Background(), now, logger)
 	require.True(t, ok)
-	assert.Equal(t, sampled, ev.Timestamp)
+	assert.Equal(t, now, ev.Timestamp)
 	assert.Equal(t, udmi.PointsEvent{
 		dbo.FieldZoneAirTemperatureSensor:      {PresentValue: 22.5},
 		dbo.FieldZoneAirRelativeHumiditySensor: {PresentValue: float32(41)},
@@ -992,62 +992,31 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 		dev.buildDiscovery(now).Pointset.Points[dbo.FieldZoneAirPM2pt5DensitySensor])
 }
 
-// TestSensorCollectorPoints checks where a sensor reading's value and time come
-// from: Pull's first change where it sends one, else the Get reading stamped now.
+// TestSensorCollectorPoints checks a sensor reading comes from Get and is
+// stamped with the fetch time, as a meter's is.
 func TestSensorCollectorPoints(t *testing.T) {
 	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
-	changed := now.Add(-2 * time.Minute)
-	got := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}
-	pulled := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 3}
-	get := func(context.Context, string) (*occupancysensorpb.Occupancy, error) { return got, nil }
-	unoccupied := udmi.PointsEvent{
-		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
-		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
-	}
 
-	for _, tc := range []struct {
-		name   string
-		pull   func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error)
-		want   udmi.PointsEvent
-		wantTS time.Time
-	}{
-		{
-			name: "the pulled reading goes with its change time",
-			pull: func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-				return pulled, timestamppb.New(changed), nil
+	t.Run("the reading goes stamped now", func(t *testing.T) {
+		c := &sensorCollector[*occupancysensorpb.Occupancy]{
+			name: "s",
+			get: func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
+				return &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED, StateChangeTime: timestamppb.New(now.Add(-8 * time.Hour))}, nil
 			},
-			want: udmi.PointsEvent{
-				dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyOccupied},
-				dbo.FieldZoneOccupancyCount:  {PresentValue: int32(3)},
-			},
-			wantTS: changed,
-		},
-		{
-			name: "a pull with no change time leaves the Get reading, stamped now",
-			pull: func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-				return pulled, nil, nil
-			},
-			want:   unoccupied,
-			wantTS: now,
-		},
-		{
-			name: "a failed pull leaves the Get reading, stamped now",
-			pull: func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-				return nil, nil, errNoChanges
-			},
-			want:   unoccupied,
-			wantTS: now,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			c := &sensorCollector[*occupancysensorpb.Occupancy]{name: "s", get: get, pull: tc.pull, forEach: forEachOccupancyPoint}
-			pts, ts, err := c.points(context.Background(), now)
-			require.NoError(t, err)
-			assert.Equal(t, tc.wantTS, ts)
-			assert.Equal(t, tc.want, pts)
-			assert.Equal(t, envInventory(c.last, dbo.NamingDBO, forEachOccupancyPoint), c.inventory(), "discovery follows the reading sent")
-		})
-	}
+			forEach: forEachOccupancyPointFor(countingCounts),
+		}
+		pts, ts, err := c.points(context.Background(), now)
+		require.NoError(t, err)
+		assert.Equal(t, now, ts, "an empty room still reads now, not when it emptied")
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+			dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
+		}, pts)
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			dbo.FieldZoneOccupancyStatus: {},
+			dbo.FieldZoneOccupancyCount:  {},
+		}, c.inventory(), "discovery follows the reading sent")
+	})
 
 	t.Run("a failed get is a failed fetch", func(t *testing.T) {
 		c := &sensorCollector[*occupancysensorpb.Occupancy]{
@@ -1055,49 +1024,64 @@ func TestSensorCollectorPoints(t *testing.T) {
 			get: func(context.Context, string) (*occupancysensorpb.Occupancy, error) {
 				return nil, status.Error(codes.Unavailable, "sensor offline")
 			},
-			pull: func(context.Context, string) (*occupancysensorpb.Occupancy, *timestamppb.Timestamp, error) {
-				return pulled, timestamppb.New(changed), nil
-			},
-			forEach: forEachOccupancyPoint,
+			forEach: forEachOccupancyPointFor(countingCounts),
 		}
 		_, _, err := c.points(context.Background(), now)
 		assert.Error(t, err)
 	})
 }
 
-// notifyOnlyOccupancy serves Get but sends on Pull only when the value changes,
-// as the Gallagher occupancy driver does, so a Pull's first message never comes.
-type notifyOnlyOccupancy struct {
-	occupancysensorpb.UnimplementedOccupancySensorApiServer
+// occupancyInfo describes an occupancy sensor's people counting.
+type occupancyInfo struct {
+	occupancysensorpb.UnimplementedOccupancySensorInfoServer
+	maxPeople int32
 }
 
-func (notifyOnlyOccupancy) GetOccupancy(context.Context, *occupancysensorpb.GetOccupancyRequest) (*occupancysensorpb.Occupancy, error) {
-	return &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 7}, nil
+func (i occupancyInfo) DescribeOccupancy(context.Context, *occupancysensorpb.DescribeOccupancyRequest) (*occupancysensorpb.OccupancySupport, error) {
+	return &occupancysensorpb.OccupancySupport{MaxPeople: i.maxPeople}, nil
 }
 
-func (notifyOnlyOccupancy) PullOccupancy(_ *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
-	<-server.Context().Done()
-	return server.Context().Err()
-}
+// TestGetAllTraitImplementorsOccupancyCounting checks the occupancy collector
+// sends counts by what each sensor says about its counting, read when the
+// device is found.
+func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
+	root := node.New("occupancy")
+	devicesApi := devices.NewServer(root)
+	announce := func(name string, reading *occupancysensorpb.Occupancy, info ...node.Feature) {
+		model := occupancysensorpb.NewModel(resource.WithInitialValue(reading))
+		root.Announce(name, append([]node.Feature{
+			node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(model))),
+			node.HasTrait(trait.OccupancySensor),
+		}, info...)...)
+	}
+	empty := &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}
+	announce("counter", empty, node.HasServer(occupancysensorpb.RegisterOccupancySensorInfoServer, occupancysensorpb.OccupancySensorInfoServer(occupancyInfo{maxPeople: 40})))
+	announce("presence", &occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED, PeopleCount: 2}, node.HasServer(occupancysensorpb.RegisterOccupancySensorInfoServer, occupancysensorpb.OccupancySensorInfoServer(occupancyInfo{})))
+	announce("pir", empty)
 
-// TestSensorCollectorPoints_notifyOnlyPull checks a driver whose Pull sends
-// nothing first still exports its Get reading every cycle, within pullFirstWait
-// rather than the whole fetch timeout.
-func TestSensorCollectorPoints_notifyOnlyPull(t *testing.T) {
-	client := occupancysensorpb.NewOccupancySensorApiClient(wrap.ServerToClient(occupancysensorpb.OccupancySensorApi_ServiceDesc, notifyOnlyOccupancy{}))
-	c := newSensorCollector(context.Background(), "s", dbo.NamingDBO, getOccupancy(client), pullOccupancy(client), forEachOccupancyPoint, zap.NewNop())
-	require.NotNil(t, c.last, "seeded from Get")
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+	allDevices := make(map[string]*device)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, allDevices))
+	require.Len(t, allDevices, 3)
 
-	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
-	ctx, cancel := context.WithTimeout(context.Background(), testFetchTimeout)
-	defer cancel()
-	start := time.Now()
-	pts, ts, err := c.points(ctx, now)
-	require.NoError(t, err)
-	assert.Less(t, time.Since(start), 2*pullFirstWait, "the pull is given up on, not the fetch")
-	assert.Equal(t, now, ts)
+	sent := func(name string) udmi.PointsEvent {
+		ev, ok := allDevices[name].buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+		require.True(t, ok, name)
+		return ev.Points
+	}
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(0)},
+	}, sent("counter"), "a counter's empty room is a true 0")
 	assert.Equal(t, udmi.PointsEvent{
 		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyOccupied},
-		dbo.FieldZoneOccupancyCount:  {PresentValue: int32(7)},
-	}, pts)
+	}, sent("presence"), "a sensor that says it doesn't count sends none")
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
+	}, sent("pir"), "an undescribed sensor claims no empty room")
 }

@@ -122,16 +122,19 @@ it holds a numeric reading whose quantity has several units until discovery name
   on a multistate field: `OCCUPIED`→`occupied`, `UNOCCUPIED`→`unoccupied`, `IDLE`→`inactive`
   ("likely occupied but no activity") and `STATE_UNSPECIFIED`→`unknown`. Raw naming sends the
   trait's state name.
-- The trait reports a people count of 0 from a sensor that can't count, so a 0 beside an occupied
-  or idle state sends no count. A 0 beside unoccupied is a true count and is sent.
-- The reading comes from Get, which every driver serves (some poll the device on it). Its timestamp is
-  the change time on Pull's first message, which a model sends at once, so a stalled driver shows as
-  stale. A driver whose Pull sends only when the value changes is given a second, then its Get reading
-  goes stamped now. For occupancy the time is not `state_change_time`, which dates the state: a room
-  occupied all morning would otherwise send every reading stamped when it filled.
-- A device implementing several of these traits publishes one pointset with all their points, stamped
-  with the newest of their times, as any multi-trait device is. So one stalled trait beside a fresh
-  one doesn't show as stale.
+- The trait reports a people count of 0 from a sensor that can't count, such as a lighting PIR, so
+  which counts go depends on what the sensor says about itself (`OccupancySupport.max_people`, read
+  when the device is found):
+  - `max_people` above 0, a counter: every count, except a 0 beside an occupied or idle state, which
+    Connect's import also reads as no reading.
+  - `max_people` 0: no count.
+  - no answer, which is every driver today: only a count above 0, so a presence detector never
+    claims an empty room holds 0 people. A counter's true zeros wait for its driver to describe it.
+- The reading comes from Get, which every driver serves (some poll the device on it), and is stamped
+  with the time it was fetched, as a meter's is: a value the driver can still read is current. A
+  model's change time would make a sensor whose value doesn't change, such as an empty room's PIR,
+  look dead. A driver that can't read the device fails the Get, so nothing is sent.
+- A device implementing several of these traits publishes one pointset with all their points.
 
 ### Other traits
 

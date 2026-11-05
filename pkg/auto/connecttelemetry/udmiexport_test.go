@@ -357,28 +357,51 @@ func TestOccupancyTelemetry(t *testing.T) {
 		status = dbo.FieldZoneOccupancyStatus
 		count  = dbo.FieldZoneOccupancyCount
 	)
+	var (
+		occupied   = udmi.PointValue{PresentValue: dbo.OccupancyOccupied}
+		unoccupied = udmi.PointValue{PresentValue: dbo.OccupancyUnoccupied}
+		inactive   = udmi.PointValue{PresentValue: dbo.OccupancyInactive}
+		unknown    = udmi.PointValue{PresentValue: dbo.OccupancyUnknown}
+		people     = func(n int32) udmi.PointValue { return udmi.PointValue{PresentValue: n} }
+	)
 	for _, tc := range []struct {
-		name  string
-		state occupancysensorpb.Occupancy_State
-		count int32
-		want  udmi.PointsEvent
+		name     string
+		counting peopleCounting
+		state    occupancysensorpb.Occupancy_State
+		count    int32
+		want     udmi.PointsEvent
 	}{
-		{"occupied with a count", occupancysensorpb.Occupancy_OCCUPIED, 4,
-			udmi.PointsEvent{status: {PresentValue: "occupied"}, count: {PresentValue: int32(4)}}},
-		{"occupied by a sensor that can't count", occupancysensorpb.Occupancy_OCCUPIED, 0,
-			udmi.PointsEvent{status: {PresentValue: "occupied"}}},
-		{"idle is DBO's inactive", occupancysensorpb.Occupancy_IDLE, 0,
-			udmi.PointsEvent{status: {PresentValue: "inactive"}}},
-		{"unoccupied keeps its true zero", occupancysensorpb.Occupancy_UNOCCUPIED, 0,
-			udmi.PointsEvent{status: {PresentValue: "unoccupied"}, count: {PresentValue: int32(0)}}},
-		{"unspecified is DBO's unknown", occupancysensorpb.Occupancy_STATE_UNSPECIFIED, 0,
-			udmi.PointsEvent{status: {PresentValue: "unknown"}, count: {PresentValue: int32(0)}}},
-		{"a state the table doesn't know sends no state", occupancysensorpb.Occupancy_State(99), 2,
-			udmi.PointsEvent{count: {PresentValue: int32(2)}}},
+		// A sensor that says it counts sends its count, as Connect's import reads one.
+		{"counter: occupied with a count", countingCounts, occupancysensorpb.Occupancy_OCCUPIED, 4,
+			udmi.PointsEvent{status: occupied, count: people(4)}},
+		{"counter: a 0 beside occupied is no reading", countingCounts, occupancysensorpb.Occupancy_OCCUPIED, 0,
+			udmi.PointsEvent{status: occupied}},
+		{"counter: idle is DBO's inactive, and its 0 no reading", countingCounts, occupancysensorpb.Occupancy_IDLE, 0,
+			udmi.PointsEvent{status: inactive}},
+		{"counter: unoccupied keeps its true zero", countingCounts, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied, count: people(0)}},
+		{"counter: unspecified is DBO's unknown", countingCounts, occupancysensorpb.Occupancy_STATE_UNSPECIFIED, 0,
+			udmi.PointsEvent{status: unknown, count: people(0)}},
+		{"counter: a state the table doesn't know sends no state", countingCounts, occupancysensorpb.Occupancy_State(99), 2,
+			udmi.PointsEvent{count: people(2)}},
+
+		// A sensor that says it doesn't count sends no count, whatever it reports.
+		{"non-counter: unoccupied", countingNone, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied}},
+		{"non-counter: a count it reports anyway", countingNone, occupancysensorpb.Occupancy_OCCUPIED, 3,
+			udmi.PointsEvent{status: occupied}},
+
+		// An undescribed sensor sends only a count above 0, so a PIR claims no empty room.
+		{"undescribed: an empty room's 0 isn't claimed", countingUndescribed, occupancysensorpb.Occupancy_UNOCCUPIED, 0,
+			udmi.PointsEvent{status: unoccupied}},
+		{"undescribed: occupied with no count", countingUndescribed, occupancysensorpb.Occupancy_OCCUPIED, 0,
+			udmi.PointsEvent{status: occupied}},
+		{"undescribed: a count above 0 is sent", countingUndescribed, occupancysensorpb.Occupancy_OCCUPIED, 5,
+			udmi.PointsEvent{status: occupied, count: people(5)}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := &occupancysensorpb.Occupancy{State: tc.state, PeopleCount: tc.count, StateChangeTime: timestamppb.Now(), Confidence: 0.9}
-			assert.Equal(t, tc.want, envTelemetry(r, dbo.NamingDBO, forEachOccupancyPoint))
+			assert.Equal(t, tc.want, envTelemetry(r, dbo.NamingDBO, forEachOccupancyPointFor(tc.counting)))
 		})
 	}
 
@@ -387,12 +410,18 @@ func TestOccupancyTelemetry(t *testing.T) {
 		assert.Equal(t, udmi.PointsEvent{
 			"state":        {PresentValue: "IDLE"},
 			"people_count": {PresentValue: int32(3)},
-		}, envTelemetry(r, dbo.NamingRaw, forEachOccupancyPoint))
+		}, envTelemetry(r, dbo.NamingRaw, forEachOccupancyPointFor(countingCounts)))
 	})
 
 	t.Run("nil reading has no points", func(t *testing.T) {
-		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachOccupancyPoint))
+		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachOccupancyPointFor(countingCounts)))
 	})
+}
+
+func TestPeopleCountingOf(t *testing.T) {
+	assert.Equal(t, countingUndescribed, peopleCountingOf(nil))
+	assert.Equal(t, countingNone, peopleCountingOf(&occupancysensorpb.OccupancySupport{}))
+	assert.Equal(t, countingCounts, peopleCountingOf(&occupancysensorpb.OccupancySupport{MaxPeople: 40}))
 }
 
 // TestEnvInventory checks discovery declares every environmental point with the
@@ -426,7 +455,7 @@ func TestEnvInventory(t *testing.T) {
 	assert.Equal(t, map[string]udmi.MetadataPoint{
 		dbo.FieldZoneOccupancyStatus: {},
 		dbo.FieldZoneOccupancyCount:  {},
-	}, envInventory(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}, dbo.NamingDBO, forEachOccupancyPoint),
+	}, envInventory(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}, dbo.NamingDBO, forEachOccupancyPointFor(countingCounts)),
 		"a multistate and a headcount have no unit")
 
 	assert.Equal(t, map[string]udmi.MetadataPoint{

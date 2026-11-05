@@ -246,15 +246,46 @@ var occupancyStates = map[occupancysensorpb.Occupancy_State]string{
 	occupancysensorpb.Occupancy_STATE_UNSPECIFIED: dbo.OccupancyUnknown,
 }
 
+// peopleCounting is what an occupancy sensor says about its people count, read
+// from OccupancySupport.max_people.
+type peopleCounting int
+
+const (
+	// countingUndescribed is a sensor whose driver doesn't describe it, as no
+	// driver does yet. It may be a counter or a presence detector reporting 0.
+	countingUndescribed peopleCounting = iota
+	// countingNone is a sensor that says it reports no people count (max_people 0).
+	countingNone
+	// countingCounts is a sensor that says it counts people (max_people above 0).
+	countingCounts
+)
+
+// peopleCountingOf reads a sensor's OccupancySupport; nil is an undescribed sensor.
+func peopleCountingOf(support *occupancysensorpb.OccupancySupport) peopleCounting {
+	switch {
+	case support == nil:
+		return countingUndescribed
+	case support.GetMaxPeople() > 0:
+		return countingCounts
+	default:
+		return countingNone
+	}
+}
+
 // forEachOccupancyPoint calls fn for an Occupancy's state and headcount. The state
 // goes as its canonical DBO state, a string, since Connect holds a number on a
 // multistate field; raw naming sends the trait's own state name instead. A state
 // this table doesn't know sends no state.
 //
 // The trait reports a people count of 0 from a sensor that can't count, so a 0
-// beside an occupied or idle state is no reading and sends no count; a 0 beside
-// unoccupied is a true count. Connect's import reads the count the same way.
-func forEachOccupancyPoint(r *occupancysensorpb.Occupancy, n dbo.Naming, fn envPointFunc) {
+// can be no reading. Which counts go depends on what the sensor says it does:
+//   - one that counts sends its count, except a 0 beside an occupied or idle
+//     state, which Connect's import reads as no reading too;
+//   - one that doesn't count sends none;
+//   - an undescribed one sends only a count above 0, so a presence detector such
+//     as a lighting PIR never claims an empty room holds 0 people. A counter
+//     loses its true zeros until its driver describes it.
+func forEachOccupancyPoint(r *occupancysensorpb.Occupancy, counting peopleCounting, n dbo.Naming, fn envPointFunc) {
 	if r == nil {
 		return
 	}
@@ -265,10 +296,27 @@ func forEachOccupancyPoint(r *occupancysensorpb.Occupancy, n dbo.Naming, fn envP
 		fn(pointOccupancyState.name(n), s, pointOccupancyState.units)
 	}
 	count := r.GetPeopleCount()
-	if count == 0 && (state == occupancysensorpb.Occupancy_OCCUPIED || state == occupancysensorpb.Occupancy_IDLE) {
+	switch counting {
+	case countingNone:
 		return
+	case countingUndescribed:
+		if count == 0 {
+			return
+		}
+	case countingCounts:
+		if count == 0 && (state == occupancysensorpb.Occupancy_OCCUPIED || state == occupancysensorpb.Occupancy_IDLE) {
+			return
+		}
 	}
 	fn(pointPeopleCount.name(n), count, pointPeopleCount.units)
+}
+
+// forEachOccupancyPointFor binds a sensor's counting to forEachOccupancyPoint,
+// giving the shape sensorCollector takes.
+func forEachOccupancyPointFor(counting peopleCounting) func(*occupancysensorpb.Occupancy, dbo.Naming, envPointFunc) {
+	return func(r *occupancysensorpb.Occupancy, n dbo.Naming, fn envPointFunc) {
+		forEachOccupancyPoint(r, counting, n, fn)
+	}
 }
 
 // diskInstance is a disk's DBO numeric instance suffix: the fnv32a hash of its raw

@@ -57,6 +57,7 @@ type AutoImpl struct {
 	airTemperatureClient airtemperaturepb.AirTemperatureApiClient
 	airQualityClient     airqualitysensorpb.AirQualitySensorApiClient
 	occupancyClient      occupancysensorpb.OccupancySensorApiClient
+	occupancyInfoClient  occupancysensorpb.OccupancySensorInfoClient
 
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
@@ -79,6 +80,7 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.airTemperatureClient = airtemperaturepb.NewAirTemperatureApiClient(n.ClientConn())
 	a.airQualityClient = airqualitysensorpb.NewAirQualitySensorApiClient(n.ClientConn())
 	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
+	a.occupancyInfoClient = occupancysensorpb.NewOccupancySensorInfoClient(n.ClientConn())
 }
 
 func (a *AutoImpl) now() time.Time {
@@ -474,13 +476,20 @@ func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, devic
 		return c, true
 	case trait.AirTemperature:
 		return newSensorCollector(ctx, deviceName, a.pointNaming,
-			getAirTemperature(a.airTemperatureClient), pullAirTemperature(a.airTemperatureClient), forEachAirTemperaturePoint, a.Logger), true
+			getAirTemperature(a.airTemperatureClient), forEachAirTemperaturePoint, a.Logger), true
 	case trait.AirQualitySensor:
 		return newSensorCollector(ctx, deviceName, a.pointNaming,
-			getAirQuality(a.airQualityClient), pullAirQuality(a.airQualityClient), forEachAirQualityPoint, a.Logger), true
+			getAirQuality(a.airQualityClient), forEachAirQualityPoint, a.Logger), true
 	case trait.OccupancySensor:
+		// Whether the sensor counts people decides which counts it sends (see
+		// forEachOccupancyPoint). No driver describes itself yet, so a failure is
+		// the usual case and goes unlogged.
+		var support *occupancysensorpb.OccupancySupport
+		if s, err := a.occupancyInfoClient.DescribeOccupancy(ctx, &occupancysensorpb.DescribeOccupancyRequest{Name: deviceName}); err == nil {
+			support = s
+		}
 		return newSensorCollector(ctx, deviceName, a.pointNaming,
-			getOccupancy(a.occupancyClient), pullOccupancy(a.occupancyClient), forEachOccupancyPoint, a.Logger), true
+			getOccupancy(a.occupancyClient), forEachOccupancyPointFor(peopleCountingOf(support)), a.Logger), true
 	default:
 		return nil, false
 	}

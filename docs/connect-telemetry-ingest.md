@@ -87,8 +87,8 @@ vs body) is Connect's to configure — align the discriminator with `classifyKin
 }
 ```
 
-- ISO-8601 `timestamp` is the reading instant: a meter's `MeterReading.end_time`, or for another
-  trait the time the device last updated the reading where it says, falling back to now.
+- ISO-8601 `timestamp` is the reading instant: a meter's `MeterReading.end_time`, the time a node
+  last sampled its ResourceUse, or for an environmental sensor the time it was read.
 - Point names are **DBO standard field names** (`pkg/dbo`) — see the meter mapping below and
   `.claude/plans/dbo-conformance-plan.md`.
 - One `present_value` per present point; an absent point means "no update" (partial messages
@@ -192,13 +192,15 @@ concentration, pressure, density) until discovery names one.
   follow the same pattern. The automation README lists every point.
 - `zone_occupancy_status` is multistate, so it goes as its canonical state string
   (`occupied`, `unoccupied`, `inactive` for `IDLE`, `unknown` for `STATE_UNSPECIFIED`): Connect
-  holds a number on a multistate field. A people count of 0 beside an occupied or idle state is a
-  sensor that can't count, so it is not sent, as Connect's import also reads it.
+  holds a number on a multistate field. The trait reports a people count of 0 from a sensor that
+  can't count, so a count goes by what the sensor says about itself (`OccupancySupport.max_people`):
+  a counter sends every count but a 0 beside occupied or idle, as Connect's import reads them; a
+  non-counter sends none; and a sensor that doesn't say, as no driver does yet, sends only counts
+  above 0, so a lighting PIR never claims an empty room holds 0 people.
 - Unset optional fields are omitted. Set points, modes and vendor indices (comfort, score,
   infection risk) are not exported.
-- The reading comes from Get. The event is stamped with the change time on Pull's first message,
-  which a model sends at once; a driver whose Pull sends only on change is stamped now. A device
-  with several traits sends one event stamped with the newest of their times.
+- The reading comes from Get and is stamped with the time it was fetched, as a meter's is (SCB-1520):
+  a value the driver can still read is current, so an unchanging sensor doesn't look dead.
 
 ### Node resources (ResourceUse)
 
