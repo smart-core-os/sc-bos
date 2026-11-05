@@ -265,6 +265,25 @@ edge gateway and proxies along with Ops UI features like SC health and central m
 
 Enrolment is a manual one-off process performed on the hub to add new nodes to it. You can do this via the Ops UI.
 
+A node running with `--policy-mode=on` only lets a hub enrol it if the hub presents the node's setup code.
+A new node issues a setup code only if it has local accounts on, no accounts yet, and no other way to log in (such as
+Keycloak or an identities file). It logs where to read the code, usually `<data>/setup/setup-code.txt`. A node with
+policy on that issues no code can't be enrolled by a hub.
+
+Whoever holds the code can enrol the node with their own hub, so the hub only sends it over a connection verified
+against the certificates you give with it. Inspect the node with `InspectHubNode`, which for a node with policy on
+returns only its certificates. Check the certificate matches the one the node serves, because that check is what stops
+the code going to something else at the node's address. That is `<data>/grpc-self-signed.cert.pem`, or the node's
+`certs.certFile` (by default `<data>/grpc.cert.pem`) if it has one. Then pass the code as `setup_code` in
+`EnrollHubNode` along with those certificates as `public_certs`. The hub refuses a code without certificates. It checks
+them as trust roots for the address you enrol, so that address must be one the certificate names: the self-signed
+certificate names the node's IP addresses, `localhost`, and any `grpcAddr` host or `sans` in its system config. With
+`cmd/tools/enrollment-tool`, pass `--setup-code` and the node's certificate file as `--node-cert`. The Ops UI enrol
+dialog does not ask for the code yet.
+
+The hub never stores the code. Once the node is enrolled or has an account, it stops accepting the code. Nodes listed in
+the hub's `nodes` config are enrolled without a code, so those need policy `check` or `off`.
+
 ## Traits supported by SC BOS
 
 ### Access

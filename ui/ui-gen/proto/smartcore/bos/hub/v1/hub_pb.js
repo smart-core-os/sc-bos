@@ -918,7 +918,8 @@ proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.prototype.toObject = function(op
 proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 node: (f = msg.getNode()) && proto.smartcore.bos.hub.v1.HubNode.toObject(includeInstance, f),
-publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
+publicCertsList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
+setupCode: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -964,6 +965,10 @@ proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.deserializeBinaryFromReader = fu
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addPublicCerts(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setSetupCode(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1005,6 +1010,13 @@ proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.serializeBinaryToWriter = functi
   if (f.length > 0) {
     writer.writeRepeatedString(
       2,
+      f
+    );
+  }
+  f = message.getSetupCode();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
       f
     );
   }
@@ -1082,6 +1094,24 @@ proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.prototype.addPublicCerts = funct
  */
 proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.prototype.clearPublicCertsList = function() {
   return this.setPublicCertsList([]);
+};
+
+
+/**
+ * optional string setup_code = 3;
+ * @return {string}
+ */
+proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.prototype.getSetupCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.smartcore.bos.hub.v1.EnrollHubNodeRequest} returns this
+ */
+proto.smartcore.bos.hub.v1.EnrollHubNodeRequest.prototype.setSetupCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

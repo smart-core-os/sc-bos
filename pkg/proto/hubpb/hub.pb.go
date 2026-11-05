@@ -189,7 +189,10 @@ type EnrollHubNodeRequest struct {
 	// If provided, only if the node presents these certificates will the enrollment proceed.
 	// Can be used along with InspectHubNode to ensure the correct node is enrolled.
 	// This should contain PEM encoded x509 certificates as returned by InspectHubNode.
-	PublicCerts   []string `protobuf:"bytes,2,rep,name=public_certs,json=publicCerts,proto3" json:"public_certs,omitempty"`
+	PublicCerts []string `protobuf:"bytes,2,rep,name=public_certs,json=publicCerts,proto3" json:"public_certs,omitempty"`
+	// The target node's setup code, needed when the target has policy on and nobody has claimed it yet.
+	// Requires public_certs: the hub sends the code only over a connection verified against them, and never stores it.
+	SetupCode     string `protobuf:"bytes,3,opt,name=setup_code,json=setupCode,proto3" json:"setup_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,6 +239,13 @@ func (x *EnrollHubNodeRequest) GetPublicCerts() []string {
 		return x.PublicCerts
 	}
 	return nil
+}
+
+func (x *EnrollHubNodeRequest) GetSetupCode() string {
+	if x != nil {
+		return x.SetupCode
+	}
+	return ""
 }
 
 type RenewHubNodeRequest struct {
@@ -792,10 +802,12 @@ const file_smartcore_bos_hub_v1_hub_proto_rawDesc = "" +
 	"\bmetadata\x18\x01 \x01(\v2#.smartcore.bos.metadata.v1.MetadataR\bmetadata\x12!\n" +
 	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"-\n" +
 	"\x11GetHubNodeRequest\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"l\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x8b\x01\n" +
 	"\x14EnrollHubNodeRequest\x121\n" +
 	"\x04node\x18\x01 \x01(\v2\x1d.smartcore.bos.hub.v1.HubNodeR\x04node\x12!\n" +
-	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\"/\n" +
+	"\fpublic_certs\x18\x02 \x03(\tR\vpublicCerts\x12\x1d\n" +
+	"\n" +
+	"setup_code\x18\x03 \x01(\tR\tsetupCode\"/\n" +
 	"\x13RenewHubNodeRequest\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"Q\n" +
 	"\x13ListHubNodesRequest\x12\x1b\n" +

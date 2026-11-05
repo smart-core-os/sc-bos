@@ -57,6 +57,9 @@ message EnrollHubNodeRequest {
   // Can be used along with InspectHubNode to ensure the correct node is enrolled.
   // This should contain PEM encoded x509 certificates as returned by InspectHubNode.
   repeated string public_certs = 2;
+  // The target node's setup code, needed when the target has policy on and nobody has claimed it yet.
+  // Requires public_certs: the hub sends the code only over a connection verified against them, and never stores it.
+  string setup_code = 3;
 }
 
 message RenewHubNodeRequest {

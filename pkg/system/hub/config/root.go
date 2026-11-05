@@ -32,7 +32,9 @@ type Root struct {
 
 	Storage *Storage `json:"storage,omitempty"`
 
-	Nodes []NodeConfig `json:"nodes,omitempty"` // Nodes to auto-enroll on startup.
+	// Nodes to auto-enroll on startup.
+	// They are enrolled without a setup code, so this only works for nodes with policy check or off.
+	Nodes []NodeConfig `json:"nodes,omitempty"`
 }
 
 type NodeConfig struct {

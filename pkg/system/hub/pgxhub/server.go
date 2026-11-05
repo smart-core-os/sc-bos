@@ -130,10 +130,17 @@ func (n *Server) EnrollHubNode(ctx context.Context, request *hubpb.EnrollHubNode
 		TargetAddress:  nodeReg.Address,
 		ManagerName:    n.ManagerName,
 		ManagerAddress: n.ManagerAddr,
-	}, n.Authority, request.PublicCerts...)
+	}, n.Authority, request.SetupCode, request.PublicCerts...)
 	if err != nil {
 		logger.Error("failed to enroll area controller", zap.Error(err),
 			zap.String("target_address", nodeReg.Address))
+
+		switch status.Code(err) {
+		case codes.AlreadyExists:
+			return nil, status.Error(codes.AlreadyExists, "already enrolled")
+		case codes.InvalidArgument, codes.PermissionDenied:
+			return nil, err // the message says what the caller has to change, such as the setup code or certs
+		}
 		return nil, status.Error(codes.Unknown, "enrollment failed")
 	}
 

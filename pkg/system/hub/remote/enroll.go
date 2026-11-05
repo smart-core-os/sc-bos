@@ -25,7 +25,16 @@ import (
 // and invokes CreateEnrollment on the target with this information.
 // The Certificate and RootCAs will be computed from the authority and will be ignored if provided in enrollment.
 // If any remoteRoots are provided, the remote server will be checked using these as trust roots, otherwise any remote certificate will be allowed.
-func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority pki.Source, remoteRoots ...string) (*enrollmentpb.Enrollment, error) {
+//
+// A non-empty setupCode is presented to the target with CreateEnrollment, which a target with policy on requires
+// until somebody claims it. Whoever holds the code can enrol the node with their own hub, so it is only sent over a
+// connection verified against remoteRoots, and Enroll returns InvalidArgument for a code without them.
+// If the target rejects the request as unauthenticated, Enroll returns PermissionDenied.
+// If the target is already enrolled, Enroll returns AlreadyExists without asking it to enrol again.
+func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority pki.Source, setupCode string, remoteRoots ...string) (*enrollmentpb.Enrollment, error) {
+	if setupCode != "" && len(remoteRoots) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "a setup code needs the node's public certs from InspectHubNode")
+	}
 	enrollment = proto.Clone(enrollment).(*enrollmentpb.Enrollment)
 
 	// when in enrollment mode, the target node will be using a self-signed cert we won't be able to
@@ -36,7 +45,9 @@ func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority 
 		tlsConfig.InsecureSkipVerify = false
 		tlsConfig.RootCAs = x509.NewCertPool()
 		for _, root := range remoteRoots {
-			tlsConfig.RootCAs.AppendCertsFromPEM([]byte(root))
+			if !tlsConfig.RootCAs.AppendCertsFromPEM([]byte(root)) {
+				return nil, status.Error(codes.InvalidArgument, "public certs must be PEM encoded certificates")
+			}
 		}
 
 		// Make sure there's a timeout to avoid infinite (or 120s) connection loops in the case when tls fails.
@@ -55,12 +66,19 @@ func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority 
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
 
 	client := enrollmentpb.NewEnrollmentApiClient(conn)
-	// any api call will do to force the connection to be established (or fail)
+	// Any api call will do to force the connection to be established (or fail).
+	// GetEnrollment is open to anybody, so it needs no setup code, and doesn't spend a guess if the code is wrong.
 	_, err = client.GetEnrollment(ctx, &enrollmentpb.GetEnrollmentRequest{})
-	if err != nil && status.Code(err) != codes.NotFound {
-		// NotFound is expected if the remote node is not enrolled yet, ignore that error
+	switch {
+	case err == nil:
+		// A target with policy on stops accepting its setup code once enrolled, so CreateEnrollment would be refused
+		// as if the code were wrong. Say what is actually the matter, as CreateEnrollment does on other targets.
+		return nil, status.Error(codes.AlreadyExists, "already enrolled")
+	case status.Code(err) != codes.NotFound:
+		// NotFound is expected if the remote node is not enrolled yet
 		return nil, err
 	}
 
@@ -90,9 +108,9 @@ func Enroll(ctx context.Context, enrollment *enrollmentpb.Enrollment, authority 
 
 	_, err = client.CreateEnrollment(ctx, &enrollmentpb.CreateEnrollmentRequest{
 		Enrollment: enrollment,
-	})
+	}, withSetupCode(setupCode)...)
 	if err != nil {
-		return nil, err
+		return nil, authError(err, setupCode)
 	}
 
 	return enrollment, nil

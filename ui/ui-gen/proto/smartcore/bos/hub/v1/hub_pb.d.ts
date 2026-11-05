@@ -86,6 +86,9 @@ export class EnrollHubNodeRequest extends jspb.Message {
   clearPublicCertsList(): EnrollHubNodeRequest;
   addPublicCerts(value: string, index?: number): EnrollHubNodeRequest;
 
+  getSetupCode(): string;
+  setSetupCode(value: string): EnrollHubNodeRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnrollHubNodeRequest.AsObject;
   static toObject(includeInstance: boolean, msg: EnrollHubNodeRequest): EnrollHubNodeRequest.AsObject;
@@ -98,6 +101,7 @@ export namespace EnrollHubNodeRequest {
   export type AsObject = {
     node?: HubNode.AsObject;
     publicCertsList: Array<string>;
+    setupCode: string;
   };
 }
 
