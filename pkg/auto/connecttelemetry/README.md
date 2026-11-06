@@ -19,7 +19,10 @@ and publishes. A cycle that can't connect in that time is skipped, not caught up
 With `health.enabled` it also publishes the health checks this node evaluates, one complete
 set per resource on `tlm/bos/health` whenever the set changes, plus a periodic manifest of every
 set's hash on `tlm/bos/health-manifest`. Zones' checks are left out unless `health.includeZones`
-is set. See the Health section of the ingest doc.
+is set. Which sets the broker has acknowledged is saved in the node's database (`db.bolt`) once a
+minute, so a restart resends only the sets that changed while it was down or in the minute before.
+Sends wait after start until the node's checks stop being created, for up to 2 minutes. See the
+Health section of the ingest doc.
 
 See [`docs/connect-telemetry-ingest.md`](../../../docs/connect-telemetry-ingest.md) for
 the topic grammar and the payload contract agreed with the Connect ingest side.

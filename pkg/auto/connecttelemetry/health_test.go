@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"maps"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -64,12 +66,16 @@ func (f *fakeSink) connectionUp() <-chan struct{} {
 	return f.connUpCh
 }
 
-func (f *fakeSink) publishAcked(_ context.Context, topic string, payload []byte) error {
+func (f *fakeSink) publishAcked(ctx context.Context, topic string, payload []byte) error {
 	f.mu.Lock()
 	hold := f.hold
 	f.mu.Unlock()
 	if hold != nil {
-		<-hold
+		select {
+		case <-hold:
+		case <-ctx.Done():
+			return ctx.Err() // as a publish cut short waiting for its PUBACK
+		}
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -165,6 +171,7 @@ type healthHarness struct {
 	node             *node.Node
 	manifestInterval time.Duration
 	includeZones     bool
+	store            healthAckStore // shared by every run, like the node's database
 	start            time.Time
 }
 
@@ -177,21 +184,73 @@ func newHealthHarness(t *testing.T) *healthHarness {
 		checks:           devicespb.NewCollection(),
 		node:             node.New("test-node"),
 		manifestInterval: testManifestInterval,
+		store:            newMemAckStore(),
 	}
 }
 
-func (h *healthHarness) run(maxRate float64) {
+// run starts a publisher, which is stopped by calling stop or when the test ends.
+// Checks persist across runs, as they do across a restart.
+func (h *healthHarness) run(maxRate float64) (stop func()) {
 	ctx, cancel := context.WithCancel(context.Background())
-	p := newHealthPublisher(h.sink, h.checks, h.node, "tlm", h.manifestInterval, h.includeZones, maxRate, zaptest.NewLogger(h.t))
+	p := newHealthPublisher(h.sink, h.checks, h.node, h.store, "tlm", h.manifestInterval, h.includeZones, maxRate, zaptest.NewLogger(h.t))
 	done := make(chan error, 1)
 	go func() { done <- p.run(ctx) }()
 	h.start = time.Now()
-	h.t.Cleanup(func() {
-		cancel()
-		if err := <-done; err != nil {
-			h.t.Errorf("run() error = %v", err)
-		}
-	})
+	var once sync.Once
+	stop = func() {
+		once.Do(func() {
+			cancel()
+			if err := <-done; err != nil {
+				h.t.Errorf("run() error = %v", err)
+			}
+		})
+	}
+	h.t.Cleanup(stop)
+	return stop
+}
+
+// memAckStore is a healthAckStore in memory.
+type memAckStore struct {
+	mu        sync.Mutex
+	acks      map[string]healthAck
+	failSaves int // saves to fail
+}
+
+func newMemAckStore(acks ...healthAck) *memAckStore {
+	s := &memAckStore{acks: make(map[string]healthAck)}
+	for _, a := range acks {
+		s.acks[a.Name] = a
+	}
+	return s
+}
+
+func (s *memAckStore) load() (map[string]healthAck, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return maps.Clone(s.acks), nil
+}
+
+func (s *memAckStore) save(put []healthAck, del []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.failSaves > 0 {
+		s.failSaves--
+		return errors.New("disk full")
+	}
+	for _, a := range put {
+		s.acks[a.Name] = a
+	}
+	for _, name := range del {
+		delete(s.acks, name)
+	}
+	return nil
+}
+
+func (s *memAckStore) get(name string) (healthAck, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	a, ok := s.acks[name]
+	return a, ok
 }
 
 func (h *healthHarness) setChecks(name string, checks ...*healthpb.HealthCheck) {
@@ -224,10 +283,10 @@ func TestHealthPublisher_initialSendIsRateLimited(t *testing.T) {
 		}
 		h.run(1)
 
-		h.sleepUntil(healthStartDelay - time.Second)
+		h.sleepUntil(healthSettleQuiet - time.Second)
 		assert.Empty(t, h.sink.sets(""), "nothing sent before the start delay")
 
-		h.sleepUntil(healthStartDelay + 10*time.Second)
+		h.sleepUntil(healthSettleQuiet + 10*time.Second)
 		sets := h.sink.sets("")
 		var names []string
 		for _, s := range sets {
@@ -252,16 +311,16 @@ func TestHealthPublisher_sendsOnlyRealChanges(t *testing.T) {
 		h := newHealthHarness(t)
 		h.setChecks("dev1", boundsCheck("temp", 20, healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets("dev1"), 1)
 
 		// a value moving within the same state is not a change
 		h.setChecks("dev1", boundsCheck("temp", 30, healthpb.HealthCheck_NORMAL))
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 		require.Len(t, h.sink.sets("dev1"), 1)
 
 		h.setChecks("dev1", boundsCheck("temp", 130, healthpb.HealthCheck_HIGH))
-		h.sleepUntil(healthStartDelay + 2*time.Minute)
+		h.sleepUntil(healthSettleQuiet + 2*time.Minute)
 		sets := h.sink.sets("dev1")
 		require.Len(t, sets, 2)
 		var got map[string]any
@@ -277,12 +336,12 @@ func TestHealthPublisher_retriesFailures(t *testing.T) {
 		h.sink.setFailNext(1)
 		h.run(10)
 
-		h.sleepUntil(healthStartDelay)
+		h.sleepUntil(healthSettleQuiet)
 		assert.Empty(t, h.sink.sets("dev1"))
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		sets := h.sink.sets("dev1")
 		require.Len(t, sets, 1, "retried after a second")
-		assert.Equal(t, h.start.Add(healthStartDelay+time.Second), sets[0].at)
+		assert.Equal(t, h.start.Add(healthSettleQuiet+time.Second), sets[0].at)
 
 		// unacknowledged sends back off, until the connection comes back
 		h.sink.setFailNext(4) // fails at +0s, +1s, +3s, +7s, next retry +15s
@@ -306,7 +365,7 @@ func TestHealthPublisher_waitsForConnection(t *testing.T) {
 		h.sink.setConnected(false)
 		h.run(10)
 
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 		assert.Empty(t, h.sink.sets(""))
 		// the set built when the connection comes back is current
 		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_ABNORMAL))
@@ -327,11 +386,11 @@ func TestHealthPublisher_removal(t *testing.T) {
 		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.setChecks("dev2", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets(""), 2)
 
 		h.removeChecks("dev1")
-		h.sleepUntil(healthStartDelay + 2*time.Second)
+		h.sleepUntil(healthSettleQuiet + 2*time.Second)
 		sets := h.sink.sets("dev1")
 		require.Len(t, sets, 2)
 		assert.Empty(t, sets[1].set.Checks, "an empty set removes every check")
@@ -451,7 +510,7 @@ func TestHealthPublisher_kinds(t *testing.T) {
 		h.setChecks("test-node", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 
 		kindOf := func(name string) string {
 			sets := h.sink.sets(name)
@@ -466,12 +525,12 @@ func TestHealthPublisher_kinds(t *testing.T) {
 
 		// a change of kind is a change of set
 		undo := h.node.Announce("dev1", node.HasDeviceType(metadatapb.Metadata_GATEWAY))
-		h.sleepUntil(healthStartDelay + 2*time.Second)
+		h.sleepUntil(healthSettleQuiet + 2*time.Second)
 		require.Len(t, h.sink.sets("dev1"), 2)
 		assert.Equal(t, subjectKindNode, kindOf("dev1"))
 
 		undo()
-		h.sleepUntil(healthStartDelay + 3*time.Second)
+		h.sleepUntil(healthSettleQuiet + 3*time.Second)
 		require.Len(t, h.sink.sets("dev1"), 3)
 		assert.Equal(t, subjectKindDevice, kindOf("dev1"))
 	})
@@ -499,7 +558,7 @@ func TestHealthPublisher_zonesExcluded(t *testing.T) {
 			h.setChecks(name, faultCheck("c", healthpb.HealthCheck_ABNORMAL))
 		}
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 
 		assert.Empty(t, h.sink.sets("zone1"), "zones send no health by default")
 		for _, name := range []string{"svc1", "auto1", "test-node", "dev1"} {
@@ -512,13 +571,46 @@ func TestHealthPublisher_zonesExcluded(t *testing.T) {
 	})
 }
 
+func TestHealthPublisher_excludedZoneForgetsSavedAck(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		store := newMemAckStore()
+		h.store = store
+		h.includeZones = true
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets("zone1"), 1)
+		stop()
+		_, saved := store.get("zone1")
+		require.True(t, saved)
+
+		// zones turned off: Connect disposes of the zone's checks, as the manifest leaves it out
+		h.includeZones = false
+		h.sink = newFakeSink()
+		stop = h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		stop()
+		_, saved = store.get("zone1")
+		assert.False(t, saved, "Connect no longer holds the set")
+
+		// and back on, so the set must go again
+		h.includeZones = true
+		h.sink = newFakeSink()
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		assert.Len(t, h.sink.sets("zone1"), 1)
+	})
+}
+
 func TestHealthPublisher_zoneTypeArrivesLate(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		// checks and kinds arrive on separate streams, so a zone's set can go before its type is known
 		h := newHealthHarness(t)
 		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets("zone1"), 1)
 		assert.Equal(t, subjectKindDevice, h.sink.sets("zone1")[0].set.Subject.Kind)
 
@@ -542,11 +634,11 @@ func TestHealthPublisher_zoneRemoval(t *testing.T) {
 		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.setChecks("zone2", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Empty(t, h.sink.sets(""))
 
 		h.removeChecks("zone1")
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 		assert.Empty(t, h.sink.sets(""), "no empty set for a zone that was never sent")
 
 		// the zone service stops, on a config change say, while an automation keeps its checks on the zone
@@ -570,7 +662,7 @@ func TestHealthPublisher_zonesIncluded(t *testing.T) {
 		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
 		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 
 		sets := h.sink.sets("zone1")
 		require.Len(t, sets, 1)
@@ -587,7 +679,7 @@ func TestHealthPublisher_removalWithKind(t *testing.T) {
 		undo := h.node.Announce("svc1", node.HasDeviceType(metadatapb.Metadata_SERVICE))
 		h.setChecks("svc1", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets("svc1"), 1)
 
 		// the kind changes while the empty set is waiting for its PUBACK
@@ -597,14 +689,14 @@ func TestHealthPublisher_removalWithKind(t *testing.T) {
 		undo()
 		synctest.Wait()
 		release()
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 		sets := h.sink.sets("svc1")
 		require.Len(t, sets, 2, "one empty set, not resent for the change of kind")
 		assert.Empty(t, sets[1].set.Checks)
 
 		// the kind is current if the resource comes back
 		h.setChecks("svc1", faultCheck("c", healthpb.HealthCheck_NORMAL))
-		h.sleepUntil(healthStartDelay + 2*time.Minute)
+		h.sleepUntil(healthSettleQuiet + 2*time.Minute)
 		sets = h.sink.sets("svc1")
 		require.Len(t, sets, 3)
 		assert.Equal(t, subjectKindDevice, sets[2].set.Subject.Kind)
@@ -619,12 +711,12 @@ func TestHealthPublisher_skipsHugeSets(t *testing.T) {
 		h.setChecks("dev1", huge)
 		h.setChecks("dev2", faultCheck("c", healthpb.HealthCheck_NORMAL))
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Minute)
+		h.sleepUntil(healthSettleQuiet + time.Minute)
 		assert.Empty(t, h.sink.sets("dev1"))
 		assert.Len(t, h.sink.sets("dev2"), 1, "other sets still go")
 
 		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_ABNORMAL))
-		h.sleepUntil(healthStartDelay + 2*time.Minute)
+		h.sleepUntil(healthSettleQuiet + 2*time.Minute)
 		assert.Len(t, h.sink.sets("dev1"), 1, "sent once it changes to fit")
 	})
 }
@@ -643,11 +735,11 @@ func TestHealthPublisher_manifestListsSentHash(t *testing.T) {
 		h.setChecks("dev2", normal)
 		h.setChecks("dev4", normal)
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets(""), 3)
 
 		h.setChecks("dev4", huge)
-		h.sleepUntil(healthStartDelay + 2*time.Second)
+		h.sleepUntil(healthSettleQuiet + 2*time.Second)
 		require.Len(t, h.sink.sets("dev4"), 1, "skipped as too large")
 
 		// When the manifest is built dev1's change is waiting for its PUBACK, already stamped,
@@ -695,7 +787,7 @@ func TestHealthPublisher_failedSendIsResent(t *testing.T) {
 		}
 		h.setChecks("dev1", normal)
 		h.run(10)
-		h.sleepUntil(healthStartDelay + time.Second)
+		h.sleepUntil(healthSettleQuiet + time.Second)
 		require.Len(t, h.sink.sets("dev1"), 1)
 
 		// the change may have reached the broker even though it wasn't acknowledged
@@ -719,7 +811,7 @@ func TestHealthPublisher_failedSendIsResent(t *testing.T) {
 
 func TestHealthPublisher_backoffIsCapped(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
+		p := newHealthPublisher(newFakeSink(), nil, nil, nopAckStore{}, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
 		defer p.stopRetries()
 		p.setChecks("dev1", []*healthpb.HealthCheck{faultCheck("c", healthpb.HealthCheck_NORMAL)})
 		queued := func() bool {
@@ -744,7 +836,7 @@ func TestHealthPublisher_backoffIsCapped(t *testing.T) {
 
 func TestHealthPublisher_setTimestampsIncrease(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
+		p := newHealthPublisher(newFakeSink(), nil, nil, nopAckStore{}, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
 		p.setChecks("dev1", []*healthpb.HealthCheck{faultCheck("c", healthpb.HealthCheck_NORMAL)})
 		stamp := func() time.Time {
 			t.Helper()
@@ -764,4 +856,277 @@ func TestHealthPublisher_setTimestampsIncrease(t *testing.T) {
 		p.resources["dev1"].lastStamp = time.Now().Add(time.Hour).Truncate(time.Millisecond)
 		assert.Equal(t, time.Now().Add(time.Hour+time.Millisecond).Truncate(time.Millisecond).UTC(), stamp())
 	})
+}
+
+func hashOfCheck(c *healthpb.HealthCheck) string {
+	return checkSetHash(subjectKindDevice, []*healthpb.HealthCheck{c})
+}
+
+func TestHealthPublisher_restartSendsOnlyChangedSets(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		normal := faultCheck("c", healthpb.HealthCheck_NORMAL)
+		abnormal := faultCheck("c", healthpb.HealthCheck_ABNORMAL)
+		h.setChecks("dev1", normal)
+		h.setChecks("dev2", normal)
+		stop := h.run(10)
+		// stopped before the first periodic flush, so saved as the automation stops
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(""), 2)
+		stop()
+
+		// dev2 changes while the node is down
+		time.Sleep(time.Minute)
+		h.setChecks("dev2", abnormal)
+		h.sink = newFakeSink()
+		stop = h.run(10)
+		h.sleepUntil(healthFirstManifestDelay)
+		sets := h.sink.sets("")
+		require.Len(t, sets, 1, "only the set that changed")
+		assert.Equal(t, "dev2", sets[0].set.Resource)
+		assert.Equal(t, hashOfCheck(abnormal), sets[0].set.Hash)
+		assert.Equal(t, h.start.Add(healthSettleQuiet), sets[0].at, "once the checks have settled")
+		manifests := h.sink.manifests()
+		require.Len(t, manifests, 1)
+		assert.ElementsMatch(t, []manifestEntry{
+			{NameHash: nameHash("dev1"), Hash: hashOfCheck(normal)}, // confirms the set Connect already holds
+			{NameHash: nameHash("dev2"), Hash: hashOfCheck(abnormal)},
+		}, manifests[0].manifest.Resources)
+
+		// and nothing at all when nothing changed
+		stop()
+		time.Sleep(time.Minute)
+		h.sink = newFakeSink()
+		h.run(10)
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Empty(t, h.sink.sets(""))
+		require.Len(t, h.sink.manifests(), 1)
+		assert.Equal(t, manifests[0].manifest.Resources, h.sink.manifests()[0].manifest.Resources)
+	})
+}
+
+func TestHealthPublisher_sendInFlightAtStopIsResent(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		normal := faultCheck("c", healthpb.HealthCheck_NORMAL)
+		abnormal := faultCheck("c", healthpb.HealthCheck_ABNORMAL)
+		store := newMemAckStore(healthAck{Name: "dev1", Hash: hashOfCheck(normal), AckedAt: time.Now()})
+		h.store = store
+		h.setChecks("dev1", abnormal)
+		release := h.sink.setHold()
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		// the abnormal set is waiting for its PUBACK when the publisher stops, so it may yet land
+		stop()
+		release()
+		_, saved := store.get("dev1")
+		assert.False(t, saved, "the saved hash no longer says what Connect holds")
+
+		// back to normal while down, which must still be sent
+		h.setChecks("dev1", normal)
+		h.sink = newFakeSink()
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		sets := h.sink.sets("")
+		require.Len(t, sets, 1)
+		assert.Equal(t, hashOfCheck(normal), sets[0].set.Hash)
+	})
+}
+
+func TestHealthPublisher_restoredAckDueForResendIsSent(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		normal := faultCheck("c", healthpb.HealthCheck_NORMAL)
+		now := time.Now()
+		require.NotZero(t, dailySlot("fresh"), "test assumes the slot of fresh is not the start")
+		h.store = newMemAckStore(
+			healthAck{Name: "fresh", Hash: hashOfCheck(normal), AckedAt: now.Add(-time.Minute)},
+			// acknowledged just before the slot yesterday, so the resend since was missed
+			healthAck{Name: "due", Hash: hashOfCheck(normal), AckedAt: now.Add(-24*time.Hour + dailySlot("due") - time.Minute)},
+			healthAck{Name: "old", Hash: hashOfCheck(normal), AckedAt: now.Add(-25 * time.Hour)},
+			healthAck{Name: "changed", Hash: hashOfCheck(faultCheck("c", healthpb.HealthCheck_ABNORMAL)), AckedAt: now.Add(-time.Minute)},
+		)
+		for _, name := range []string{"fresh", "due", "old", "changed"} {
+			h.setChecks(name, normal)
+		}
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		var names []string
+		for _, s := range h.sink.sets("") {
+			names = append(names, s.set.Resource)
+		}
+		assert.ElementsMatch(t, []string{"due", "old", "changed"}, names)
+	})
+}
+
+func TestHealthPublisher_savedAcks(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		store := newMemAckStore()
+		h.store = store
+		normal := faultCheck("c", healthpb.HealthCheck_NORMAL)
+		h.setChecks("dev1", normal)
+		h.setChecks("dev2", normal)
+		h.run(10)
+		h.sleepUntil(time.Minute + time.Second)
+		ack, ok := store.get("dev1")
+		require.True(t, ok, "saved every minute")
+		assert.Equal(t, hashOfCheck(normal), ack.Hash)
+		assert.Equal(t, h.start.Add(healthSettleQuiet), ack.AckedAt)
+
+		// a removed resource is forgotten once its empty set is acknowledged
+		h.removeChecks("dev2")
+		synctest.Wait()
+		// the broker may hold either set after a failed send
+		h.sink.setFailNext(1000)
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_ABNORMAL))
+		h.sleepUntil(2*time.Minute + time.Second)
+		_, ok = store.get("dev2")
+		assert.False(t, ok, "removed resource")
+		_, ok = store.get("dev1")
+		assert.False(t, ok, "failed send")
+	})
+}
+
+func TestHealthPublisher_failedSaveIsRetried(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		store := newMemAckStore()
+		store.failSaves = 1
+		h.store = store
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(time.Minute + time.Second)
+		_, ok := store.get("dev1")
+		require.False(t, ok)
+		h.sleepUntil(2*time.Minute + time.Second)
+		_, ok = store.get("dev1")
+		assert.True(t, ok)
+	})
+}
+
+func TestHealthPublisher_restoredAcksKeptUntilSettled(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		normal := faultCheck("c", healthpb.HealthCheck_NORMAL)
+		store := newMemAckStore(
+			healthAck{Name: "late", Hash: hashOfCheck(normal), AckedAt: time.Now().Add(-time.Minute)},
+			healthAck{Name: "gone", Hash: hashOfCheck(normal), AckedAt: time.Now().Add(-time.Minute)},
+		)
+		h.store = store
+		h.setChecks("dev1", normal)
+		h.run(10)
+
+		// a resource that comes back late, while checks are still being created, is not resent
+		h.sleepUntil(20 * time.Second)
+		h.setChecks("dev2", normal)
+		h.sleepUntil(40 * time.Second)
+		h.setChecks("late", normal)
+		// the first save comes while held
+		h.sleepUntil(time.Minute + time.Second)
+		require.Empty(t, h.sink.sets(""))
+		_, ok := store.get("gone")
+		assert.True(t, ok, "not deleted while it might still come back")
+		h.sleepUntil(2*time.Minute + time.Second)
+		names := make(map[string]bool)
+		for _, s := range h.sink.sets("") {
+			names[s.set.Resource] = true
+		}
+		assert.Equal(t, map[string]bool{"dev1": true, "dev2": true}, names)
+		_, ok = store.get("gone")
+		assert.False(t, ok, "deleted once checks have settled")
+		_, ok = store.get("late")
+		assert.True(t, ok)
+	})
+}
+
+func TestHealthPublisher_holdWaitsForChecksToSettle(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		a := faultCheck("a", healthpb.HealthCheck_NORMAL)
+		b := faultCheck("b", healthpb.HealthCheck_NORMAL)
+		h.setChecks("dev1", a)
+		h.run(10)
+
+		h.sleepUntil(20 * time.Second)
+		h.setChecks("dev1", a, b) // a new check id
+		h.sleepUntil(40 * time.Second)
+		h.setChecks("dev2", a) // a new resource
+		h.sleepUntil(60 * time.Second)
+		// changes to existing checks are not new checks
+		h.setChecks("dev1", boundsCheck("a", 120, healthpb.HealthCheck_HIGH), b)
+		h.setChecks("dev2", boundsCheck("a", 20, healthpb.HealthCheck_NORMAL))
+		h.sleepUntil(65 * time.Second)
+		h.setChecks("dev2", boundsCheck("a", 30, healthpb.HealthCheck_NORMAL))
+
+		h.sleepUntil(70*time.Second - time.Millisecond)
+		assert.Empty(t, h.sink.sets(""), "held until 30s after the last new check")
+		h.sleepUntil(71 * time.Second)
+		dev1 := h.sink.sets("dev1")
+		require.Len(t, dev1, 1, "the settled set, once")
+		assert.Equal(t, h.start.Add(70*time.Second), dev1[0].at)
+		assert.Len(t, dev1[0].set.Checks, 2)
+		assert.Len(t, h.sink.sets("dev2"), 1)
+	})
+}
+
+func TestHealthPublisher_holdIsCapped(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.run(10)
+		for i := range 6 { // to 100s, so never quiet for 30s before the cap
+			h.sleepUntil(time.Duration(i) * 20 * time.Second)
+			h.setChecks(fmt.Sprintf("dev%d", i), faultCheck("c", healthpb.HealthCheck_NORMAL))
+		}
+		h.sleepUntil(healthSettleMax - time.Millisecond)
+		assert.Empty(t, h.sink.sets(""))
+		h.sleepUntil(healthSettleMax + time.Second)
+		sets := h.sink.sets("")
+		require.Len(t, sets, 6)
+		assert.Equal(t, h.start.Add(healthSettleMax), sets[0].at)
+	})
+}
+
+func TestHealthPublisher_noStoreResendsAfterRestart(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.store = nopAckStore{}
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets("dev1"), 1)
+		stop()
+
+		h.sink = newFakeSink()
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		assert.Len(t, h.sink.sets("dev1"), 1)
+	})
+}
+
+func TestSlotDue(t *testing.T) {
+	day := time.Date(2026, 11, 5, 0, 0, 0, 0, time.UTC)
+	at := func(h, m int) time.Time { return day.Add(time.Duration(h)*time.Hour + time.Duration(m)*time.Minute) }
+	slot := 10 * time.Hour
+	tests := []struct {
+		name     string
+		from, to time.Time
+		want     bool
+	}{
+		{"before", at(8, 0), at(9, 0), false},
+		{"in", at(9, 0), at(10, 0), true},
+		{"from is exclusive", at(10, 0), at(11, 0), false},
+		{"after", at(11, 0), at(12, 0), false},
+		{"wraps midnight", at(20, 0), at(34, 0), true},
+		{"wraps midnight, not reached", at(20, 0), at(33, 0), false},
+		{"a day or more", at(11, 0), at(35, 0), true},
+		{"empty", at(10, 0), at(10, 0), false},
+		{"backwards", at(11, 0), at(9, 0), false},
+		{"in another zone", at(9, 0).In(time.FixedZone("x", 5*3600)), at(10, 0).In(time.FixedZone("y", -3*3600)), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, slotDue(slot, tt.from, tt.to))
+		})
+	}
 }

@@ -141,7 +141,8 @@ func (a *AutoImpl) run(ctx context.Context, cfg config.Mqtt, publish func(ctx co
 }
 
 // publishAs connects to the broker as nodeID and publishes until ctx is done, then disconnects cleanly.
-// Everything it tracks, like which health sets the broker has acknowledged, starts afresh with each call.
+// What it tracks starts afresh with each call, except the health sets the broker has acknowledged,
+// which are saved per broker, client id, node id and topic prefix, see healthStreamKey.
 func (a *AutoImpl) publishAs(ctx context.Context, cfg config.Root, health bool, nodeID string) error {
 	pub, err := newPublisher(ctx, cfg.Mqtt, a.CloudCredential, nodeID, a.SystemCheck, a.Logger)
 	if err != nil {
@@ -154,7 +155,7 @@ func (a *AutoImpl) publishAs(ctx context.Context, cfg config.Root, health bool, 
 		a.runTelemetry(grpCtx, grp, cfg, pub)
 	}
 	if health {
-		a.runHealth(grpCtx, grp, cfg, pub)
+		a.runHealth(grpCtx, grp, cfg, nodeID, pub)
 	}
 	err = grp.Wait()
 
@@ -298,9 +299,17 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 }
 
 // runHealth starts publishing this node's own health checks.
-func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, pub *publisher) {
-	hp := newHealthPublisher(pub, a.LocalHealthChecks, a.Node, cfg.Mqtt.TopicPrefix,
-		cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, a.Logger.Named("health"))
+func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, nodeID string, pub *publisher) {
+	logger := a.Logger.Named("health")
+	var store healthAckStore = nopAckStore{}
+	if a.Database != nil {
+		stream := healthStreamKey(cfg.Mqtt.Host, mqttClientID(cfg.Mqtt, nodeID), nodeID, cfg.Mqtt.TopicPrefix)
+		store = newBoltAckStore(a.Database, stream)
+	} else {
+		logger.Warn("no database to save the acknowledged health sets in, a restart will resend them all")
+	}
+	hp := newHealthPublisher(pub, a.LocalHealthChecks, a.Node, store, cfg.Mqtt.TopicPrefix,
+		cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, logger)
 	grp.Go(func() error { return hp.run(autoCtx) })
 }
 

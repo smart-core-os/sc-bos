@@ -31,8 +31,12 @@ const (
 )
 
 const (
-	// healthStartDelay gives the initial checks and kinds time to arrive before the first sends.
-	healthStartDelay = 10 * time.Second
+	// Sets are held after start until checks stop being created: healthSettleQuiet after the last
+	// new resource or check id, or healthSettleMax after start, whichever is sooner. Drivers register
+	// their checks over the first minute or so, and a set sent before they have would go again
+	// once they had, telling Connect in the meantime that the missing checks were removed.
+	healthSettleQuiet = 30 * time.Second
+	healthSettleMax   = 2 * time.Minute
 	// healthFirstManifestDelay is how long after start the first manifest goes, see manifestLoop.
 	healthFirstManifestDelay = 5 * time.Minute
 	healthMinRetry           = time.Second
@@ -63,10 +67,15 @@ type devicesSource interface {
 // Zones' checks are left out unless includeZones: no sets are sent for them and the manifest
 // doesn't list them, so Connect disposes of any it holds. Everything on a zone's name is left
 // out, its own system check included.
+//
+// The acknowledged hashes are saved in store, so a restart doesn't resend the sets that haven't
+// changed: the first manifest after it lists them, which is all Connect needs to keep them.
+// No sets go until the checks have settled after start, see healthSettleQuiet.
 type healthPublisher struct {
 	sink             healthSink
 	checks           devicesSource // this node's own checks
 	devices          devicesSource // for each resource's device type
+	store            healthAckStore
 	topicPrefix      string
 	manifestInterval time.Duration
 	includeZones     bool
@@ -81,6 +90,14 @@ type healthPublisher struct {
 	queue     []string          // names that may need sending, in order
 	queued    map[string]bool
 	wake      chan struct{} // signalled when queue becomes non-empty
+	// restored holds the saved acknowledgements of resources that haven't appeared since start.
+	restored map[string]healthAck
+	// dirty names the resources whose saved acknowledgement is out of date, see flush.
+	dirty map[string]bool
+	// settled is set once the hold after start is over. Until then growth is signalled
+	// whenever a resource or check id is added.
+	settled bool
+	growth  chan struct{}
 	// inflight is the set being published, if any. sendLoop publishes one at a time.
 	inflight healthInflight
 	// tooManyWarned avoids repeating the resource limit warning until the count drops below it.
@@ -98,6 +115,7 @@ type healthResource struct {
 	kind             string
 	hash             string        // of checks and kind
 	ackedHash        string        // the last hash the broker acknowledged
+	ackedAt          time.Time     // when ackedHash was acknowledged
 	skippedHash      string        // the last hash too large to send
 	lastStamp        time.Time     // the timestamp of the last set built
 	warnedChecksHash string        // the last hash warned about for having too many checks
@@ -110,11 +128,18 @@ type healthResource struct {
 	retry            *time.Timer
 }
 
-func newHealthPublisher(sink healthSink, checks, devices devicesSource, topicPrefix string, manifestInterval time.Duration, includeZones bool, maxRate float64, logger *zap.Logger) *healthPublisher {
+// newHealthPublisher returns a publisher that starts from the acknowledgements saved in store.
+func newHealthPublisher(sink healthSink, checks, devices devicesSource, store healthAckStore, topicPrefix string, manifestInterval time.Duration, includeZones bool, maxRate float64, logger *zap.Logger) *healthPublisher {
+	restored, err := store.load()
+	if err != nil {
+		logger.Warn("failed to load the health sets acknowledged before restart, will send them all", zap.Error(err))
+		restored = nil
+	}
 	return &healthPublisher{
 		sink:             sink,
 		checks:           checks,
 		devices:          devices,
+		store:            store,
 		topicPrefix:      topicPrefix,
 		manifestInterval: manifestInterval,
 		includeZones:     includeZones,
@@ -125,6 +150,9 @@ func newHealthPublisher(sink healthSink, checks, devices devicesSource, topicPre
 		zones:            make(map[string]bool),
 		queued:           make(map[string]bool),
 		wake:             make(chan struct{}, 1),
+		restored:         restored,
+		dirty:            make(map[string]bool),
+		growth:           make(chan struct{}, 1),
 	}
 }
 
@@ -138,6 +166,7 @@ func (p *healthPublisher) run(ctx context.Context) error {
 	grp.Go(func() error { return p.manifestLoop(ctx) })
 	grp.Go(func() error { return p.timerLoop(ctx) })
 	err := grp.Wait()
+	p.flush()
 	if errors.Is(err, context.Canceled) {
 		return nil
 	}
@@ -184,6 +213,13 @@ func (p *healthPublisher) setChecks(name string, checks []*healthpb.HealthCheck)
 	if !ok {
 		r = &healthResource{kind: p.kindLocked(name), slot: dailySlot(name)}
 		p.resources[name] = r
+		p.restoreLocked(name, r) // before updateExcludedLocked, which forgets it again for an excluded zone
+	}
+	if !p.settled && (!ok || addsCheckID(r.checks, checks)) {
+		select {
+		case p.growth <- struct{}{}:
+		default:
+		}
 	}
 	r.removed = false
 	r.checks = checks
@@ -193,6 +229,37 @@ func (p *healthPublisher) setChecks(name string, checks []*healthpb.HealthCheck)
 		p.checkResourceCountLocked() // once excluded is known, so a new zone isn't counted
 	}
 	p.rehashLocked(name, r)
+}
+
+// restoreLocked seeds r, just created for name, with the acknowledgement saved before a restart.
+// One whose daily resend has fallen due since is dropped instead, so the set goes now as it would
+// have done had the node been running, keeping Connect's promise of every set at least once a day.
+func (p *healthPublisher) restoreLocked(name string, r *healthResource) {
+	ack, ok := p.restored[name]
+	if !ok {
+		return
+	}
+	delete(p.restored, name)
+	if slotDue(r.slot, ack.AckedAt, time.Now()) {
+		p.dirty[name] = true
+		return
+	}
+	r.ackedHash = ack.Hash
+	r.ackedAt = ack.AckedAt
+}
+
+// addsCheckID reports whether checks has an id that old doesn't.
+func addsCheckID(old, checks []*healthpb.HealthCheck) bool {
+	ids := make(map[string]bool, len(old))
+	for _, c := range old {
+		ids[c.GetId()] = true
+	}
+	for _, c := range checks {
+		if !ids[c.GetId()] {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *healthPublisher) removeResource(name string) {
@@ -208,6 +275,7 @@ func (p *healthPublisher) removeResource(name string) {
 			r.retry.Stop()
 		}
 		delete(p.resources, name)
+		p.dirty[name] = true
 		p.excluded--
 		p.checkResourceCountLocked()
 		return
@@ -258,7 +326,11 @@ func (p *healthPublisher) updateExcludedLocked(name string, r *healthResource) {
 		p.excluded++
 		// Its set may have gone before the zone's type arrived. The next manifest leaves it out and
 		// Connect then disposes of it, so forget it was acknowledged, in case it is sent again.
+		// That includes the saved acknowledgement, or turning includeZones on and restarting
+		// would leave the zone unsent.
 		r.ackedHash = ""
+		r.ackedAt = time.Time{}
+		p.dirty[name] = true
 		r.force = false
 		r.failures = 0
 		if r.retry != nil {
@@ -320,6 +392,7 @@ func (p *healthPublisher) forgetIfDoneLocked(name string, r *healthResource) {
 		r.retry.Stop()
 	}
 	delete(p.resources, name)
+	p.dirty[name] = true
 	p.checkResourceCountLocked()
 }
 
@@ -362,12 +435,43 @@ func (p *healthPublisher) dequeue(ctx context.Context) (string, error) {
 	}
 }
 
-// sendLoop sends queued sets, one at a time, no faster than the rate limit.
+// awaitSettled waits until no resource or check id has been added for healthSettleQuiet,
+// or healthSettleMax after start, whichever is sooner. Changes meanwhile wait in the queue.
+func (p *healthPublisher) awaitSettled(ctx context.Context) error {
+	limit := time.NewTimer(healthSettleMax)
+	defer limit.Stop()
+	quiet := time.NewTimer(healthSettleQuiet)
+	defer quiet.Stop()
+wait:
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-p.growth:
+			quiet.Reset(healthSettleQuiet)
+		case <-quiet.C:
+			break wait
+		case <-limit.C:
+			p.logger.Debug("health checks still being created, sending anyway", zap.Duration("after", healthSettleMax))
+			break wait
+		}
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.settled = true
+	// Resources that haven't come back by now are gone, and the manifest will tell Connect so.
+	for name := range p.restored {
+		p.dirty[name] = true
+	}
+	p.restored = nil
+	return nil
+}
+
+// sendLoop sends queued sets, one at a time, no faster than the rate limit, once the checks have settled.
 func (p *healthPublisher) sendLoop(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(healthStartDelay):
+	if err := p.awaitSettled(ctx); err != nil {
+		return err
 	}
 	for {
 		name, err := p.dequeue(ctx)
@@ -390,6 +494,7 @@ func (p *healthPublisher) sendLoop(ctx context.Context) error {
 		}
 		err = p.sink.publishAcked(ctx, healthTopic(p.topicPrefix), payload)
 		if ctx.Err() != nil {
+			p.stoppedSending(name, hash, err)
 			return ctx.Err()
 		}
 		p.sent(name, hash, err)
@@ -438,6 +543,24 @@ func (p *healthPublisher) buildSet(name string) (payload []byte, hash string, ok
 	return payload, r.hash, true
 }
 
+// stoppedSending records the outcome of a send cut short by the publisher stopping, for the final flush.
+// It doesn't retry. A send that failed may still land, as in sent, so the saved hash for name is dropped
+// and the next run sends name's set even if it is back to what was last acknowledged.
+func (p *healthPublisher) stoppedSending(name, hash string, err error) {
+	if err == nil {
+		p.sent(name, hash, nil)
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.inflight = healthInflight{}
+	if r, ok := p.resources[name]; ok {
+		r.ackedHash = ""
+		r.ackedAt = time.Time{}
+		p.dirty[name] = true
+	}
+}
+
 // sent records the outcome of sending hash for name.
 func (p *healthPublisher) sent(name, hash string, err error) {
 	p.mu.Lock()
@@ -456,6 +579,8 @@ func (p *healthPublisher) sent(name, hash string, err error) {
 		// An unacknowledged publish may still land, after a late PUBACK or resent from the session,
 		// so we no longer know which set the broker has: send the next even if it matches the last acknowledged.
 		r.ackedHash = ""
+		r.ackedAt = time.Time{}
+		p.dirty[name] = true
 		r.failures++
 		backoff := healthBackoff(r.failures)
 		log := p.logger.Debug
@@ -480,6 +605,8 @@ func (p *healthPublisher) sent(name, hash string, err error) {
 		r.force = false
 	}
 	r.ackedHash = hash
+	r.ackedAt = time.Now()
+	p.dirty[name] = true
 	p.forgetIfDoneLocked(name, r)
 	// the set may have changed while it was being sent
 	if needsSend(r) {
@@ -628,7 +755,42 @@ func (p *healthPublisher) buildManifest() ([]byte, bool) {
 	return payload, true
 }
 
-// timerLoop runs the daily resends, and retries failed sends when the connection comes back.
+// flush saves the acknowledgements that have changed since the last flush, in one transaction.
+// What fails to save is tried again at the next.
+//
+// Only what the broker acknowledged is saved, so losing what changed since the last flush costs no
+// more than resending those sets after the restart. That is the usual case, not only a crash: the
+// controller exits without stopping its automations, so the final flush in run only happens when
+// the automation itself is stopped or reconfigured.
+func (p *healthPublisher) flush() {
+	p.mu.Lock()
+	var put []healthAck
+	var del []string
+	for name := range p.dirty {
+		if r, ok := p.resources[name]; ok && r.ackedHash != "" {
+			put = append(put, healthAck{Name: name, Hash: r.ackedHash, AckedAt: r.ackedAt})
+		} else {
+			del = append(del, name)
+		}
+	}
+	clear(p.dirty)
+	p.mu.Unlock()
+
+	if err := p.store.save(put, del); err != nil {
+		p.logger.Warn("failed to save the acknowledged health sets, a restart may resend them", zap.Error(err))
+		p.mu.Lock()
+		for _, a := range put {
+			p.dirty[a.Name] = true
+		}
+		for _, name := range del {
+			p.dirty[name] = true
+		}
+		p.mu.Unlock()
+	}
+}
+
+// timerLoop runs the daily resends, retries failed sends when the connection comes back,
+// and saves the acknowledged sets.
 func (p *healthPublisher) timerLoop(ctx context.Context) error {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
@@ -646,33 +808,17 @@ func (p *healthPublisher) timerLoop(ctx context.Context) error {
 			now = now.UTC().Truncate(time.Minute)
 			p.forceDue(last, now)
 			last = now
+			p.flush()
 		}
 	}
 }
 
 // forceDue marks every resource whose daily slot is in (from, to] for resending.
 func (p *healthPublisher) forceDue(from, to time.Time) {
-	const day = 24 * time.Hour
-	if !to.After(from) {
-		return
-	}
-	if to.Sub(from) >= day {
-		from = to.Add(-day)
-	}
-	fromSlot := from.Sub(from.Truncate(day))
-	toSlot := to.Sub(to.Truncate(day))
-	due := func(slot time.Duration) bool {
-		if fromSlot < toSlot {
-			return slot > fromSlot && slot <= toSlot
-		}
-		// the window wraps past midnight
-		return slot > fromSlot || slot <= toSlot
-	}
-
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	for name, r := range p.resources {
-		if r.removed || r.excluded || !due(r.slot) {
+		if r.removed || r.excluded || !slotDue(r.slot, from, to) {
 			continue
 		}
 		r.force = true
@@ -680,4 +826,23 @@ func (p *healthPublisher) forceDue(from, to time.Time) {
 			p.enqueueLocked(name)
 		}
 	}
+}
+
+// slotDue reports whether a daily slot, a time of the UTC day, falls in (from, to].
+func slotDue(slot time.Duration, from, to time.Time) bool {
+	const day = 24 * time.Hour
+	if !to.After(from) {
+		return false
+	}
+	if to.Sub(from) >= day {
+		return true
+	}
+	from, to = from.UTC(), to.UTC()
+	fromSlot := from.Sub(from.Truncate(day))
+	toSlot := to.Sub(to.Truncate(day))
+	if fromSlot < toSlot {
+		return slot > fromSlot && slot <= toSlot
+	}
+	// the window wraps past midnight
+	return slot > fromSlot || slot <= toSlot
 }
