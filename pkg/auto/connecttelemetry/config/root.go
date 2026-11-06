@@ -56,6 +56,11 @@ type Health struct {
 	// Defaults to 10, keeping a node inside Connect's intake limit of 10,000 per 10 minutes,
 	// and at most MaxPublishRate.
 	MaxPublishRate float64 `json:"maxPublishRate,omitempty"`
+	// IncludeZones publishes the checks on zones (device type ZONE), as services of the node.
+	// Off by default: Connect models places itself and associates building checks with the
+	// devices in a space, while a service's checks are filed as health of the node, which
+	// support is alerted to at every site. Independent of Root.IncludeZones.
+	IncludeZones bool `json:"includeZones,omitempty"`
 }
 
 type Root struct {
@@ -83,7 +88,7 @@ type Root struct {
 	// IncludeZones publishes zones (device type ZONE) that implement Traits.
 	// Off by default: a zone's reading is the sum of meters this node already
 	// publishes, and Connect models zones itself, so publishing them double
-	// counts. Zone health is published either way.
+	// counts. Zone health is controlled separately, by health.includeZones.
 	IncludeZones bool `json:"includeZones,omitempty"`
 	// Devices limits a trait to the devices it names, keyed by trait name.
 	// A trait with an entry exports only the named devices, and a named zone is

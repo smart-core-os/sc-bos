@@ -300,7 +300,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 // runHealth starts publishing this node's own health checks.
 func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, pub *publisher) {
 	hp := newHealthPublisher(pub, a.LocalHealthChecks, a.Node, cfg.Mqtt.TopicPrefix,
-		cfg.Health.ManifestInterval.Duration, cfg.Health.MaxPublishRate, a.Logger.Named("health"))
+		cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, a.Logger.Named("health"))
 	grp.Go(func() error { return hp.run(autoCtx) })
 }
 

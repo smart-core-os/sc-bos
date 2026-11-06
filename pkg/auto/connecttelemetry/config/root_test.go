@@ -80,6 +80,17 @@ func TestParseConfig(t *testing.T) {
 		require.True(t, root.HealthEnabled())
 		assert.Equal(t, 15*time.Minute, root.Health.ManifestInterval.Duration)
 		assert.Equal(t, 10.0, root.Health.MaxPublishRate)
+		assert.False(t, root.Health.IncludeZones, "zone health is off by default")
+	})
+
+	t.Run("health includes zones", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"health": {"enabled": true, "includeZones": true}
+		}`))
+		require.NoError(t, err)
+		assert.True(t, root.Health.IncludeZones)
+		assert.False(t, root.IncludeZones, "independent of zone telemetry")
 	})
 
 	t.Run("health only", func(t *testing.T) {

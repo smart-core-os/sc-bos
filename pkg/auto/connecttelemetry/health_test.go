@@ -164,6 +164,7 @@ type healthHarness struct {
 	checks           *devicespb.Collection
 	node             *node.Node
 	manifestInterval time.Duration
+	includeZones     bool
 	start            time.Time
 }
 
@@ -181,7 +182,7 @@ func newHealthHarness(t *testing.T) *healthHarness {
 
 func (h *healthHarness) run(maxRate float64) {
 	ctx, cancel := context.WithCancel(context.Background())
-	p := newHealthPublisher(h.sink, h.checks, h.node, "tlm", h.manifestInterval, maxRate, zaptest.NewLogger(h.t))
+	p := newHealthPublisher(h.sink, h.checks, h.node, "tlm", h.manifestInterval, h.includeZones, maxRate, zaptest.NewLogger(h.t))
 	done := make(chan error, 1)
 	go func() { done <- p.run(ctx) }()
 	h.start = time.Now()
@@ -440,6 +441,7 @@ func TestHealthPublisher_dailyResend(t *testing.T) {
 func TestHealthPublisher_kinds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		h := newHealthHarness(t)
+		h.includeZones = true
 		h.node.Announce("svc1", node.HasDeviceType(metadatapb.Metadata_SERVICE))
 		h.node.Announce("auto1", node.HasDeviceType(metadatapb.Metadata_AUTOMATION))
 		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
@@ -472,6 +474,105 @@ func TestHealthPublisher_kinds(t *testing.T) {
 		h.sleepUntil(healthStartDelay + 3*time.Second)
 		require.Len(t, h.sink.sets("dev1"), 3)
 		assert.Equal(t, subjectKindDevice, kindOf("dev1"))
+	})
+}
+
+// manifestNameHashes returns the name hashes listed in the last manifest sent.
+func (h *healthHarness) manifestNameHashes() []string {
+	h.t.Helper()
+	manifests := h.sink.manifests()
+	require.NotEmpty(h.t, manifests)
+	var res []string
+	for _, e := range manifests[len(manifests)-1].manifest.Resources {
+		res = append(res, e.NameHash)
+	}
+	return res
+}
+
+func TestHealthPublisher_zonesExcluded(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.node.Announce("svc1", node.HasDeviceType(metadatapb.Metadata_SERVICE))
+		h.node.Announce("auto1", node.HasDeviceType(metadatapb.Metadata_AUTOMATION))
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		for _, name := range []string{"svc1", "auto1", "zone1", "test-node", "dev1"} {
+			h.setChecks(name, faultCheck("c", healthpb.HealthCheck_ABNORMAL))
+		}
+		h.run(10)
+		h.sleepUntil(healthStartDelay + time.Minute)
+
+		assert.Empty(t, h.sink.sets("zone1"), "zones send no health by default")
+		for _, name := range []string{"svc1", "auto1", "test-node", "dev1"} {
+			assert.Len(t, h.sink.sets(name), 1, name)
+		}
+
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.ElementsMatch(t, []string{nameHash("svc1"), nameHash("auto1"), nameHash("test-node"), nameHash("dev1")},
+			h.manifestNameHashes(), "a zone is left out of the manifest, so Connect disposes of any checks it holds")
+	})
+}
+
+func TestHealthPublisher_zoneTypeArrivesLate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// checks and kinds arrive on separate streams, so a zone's set can go before its type is known
+		h := newHealthHarness(t)
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(healthStartDelay + time.Second)
+		require.Len(t, h.sink.sets("zone1"), 1)
+		assert.Equal(t, subjectKindDevice, h.sink.sets("zone1")[0].set.Subject.Kind)
+
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		synctest.Wait()
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_ABNORMAL))
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Len(t, h.sink.sets("zone1"), 1, "no set once it is known to be a zone")
+		assert.NotContains(t, h.manifestNameHashes(), nameHash("zone1"), "dropped from the manifest")
+
+		h.sleepUntil(25 * time.Hour)
+		assert.Len(t, h.sink.sets("zone1"), 1, "not resent daily")
+	})
+}
+
+func TestHealthPublisher_zoneRemoval(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		undo := h.node.Announce("zone2", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.setChecks("zone2", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(healthStartDelay + time.Second)
+		require.Empty(t, h.sink.sets(""))
+
+		h.removeChecks("zone1")
+		h.sleepUntil(healthStartDelay + time.Minute)
+		assert.Empty(t, h.sink.sets(""), "no empty set for a zone that was never sent")
+
+		// without its ZONE type, such as when the zone service stops while an automation still has checks on it
+		undo()
+		h.sleepUntil(healthStartDelay + 2*time.Minute)
+		sets := h.sink.sets("zone2")
+		require.Len(t, sets, 1, "published like any untyped name")
+		assert.Equal(t, subjectKindDevice, sets[0].set.Subject.Kind)
+		assert.Empty(t, h.sink.sets("zone1"))
+	})
+}
+
+func TestHealthPublisher_zonesIncluded(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.includeZones = true
+		h.node.Announce("zone1", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.setChecks("zone1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(healthStartDelay + time.Second)
+
+		sets := h.sink.sets("zone1")
+		require.Len(t, sets, 1)
+		assert.Equal(t, subjectKindService, sets[0].set.Subject.Kind)
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Equal(t, []string{nameHash("zone1")}, h.manifestNameHashes())
 	})
 }
 
@@ -614,7 +715,7 @@ func TestHealthPublisher_failedSendIsResent(t *testing.T) {
 
 func TestHealthPublisher_backoffIsCapped(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, 10, zaptest.NewLogger(t))
+		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
 		defer p.stopRetries()
 		p.setChecks("dev1", []*healthpb.HealthCheck{faultCheck("c", healthpb.HealthCheck_NORMAL)})
 		queued := func() bool {
@@ -639,7 +740,7 @@ func TestHealthPublisher_backoffIsCapped(t *testing.T) {
 
 func TestHealthPublisher_setTimestampsIncrease(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, 10, zaptest.NewLogger(t))
+		p := newHealthPublisher(newFakeSink(), nil, nil, "tlm", testManifestInterval, false, 10, zaptest.NewLogger(t))
 		p.setChecks("dev1", []*healthpb.HealthCheck{faultCheck("c", healthpb.HealthCheck_NORMAL)})
 		stamp := func() time.Time {
 			t.Helper()
