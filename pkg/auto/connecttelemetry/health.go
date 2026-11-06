@@ -76,7 +76,7 @@ type healthPublisher struct {
 	mu        sync.Mutex
 	resources map[string]*healthResource
 	kinds     map[string]string // subject kind by name, absent means device
-	zones     map[string]bool   // names announced with device type ZONE
+	zones     map[string]bool   // names ever announced with device type ZONE, see setKind
 	excluded  int               // how many resources are excluded, not counted towards Connect's limit
 	queue     []string          // names that may need sending, in order
 	queued    map[string]bool
@@ -227,12 +227,11 @@ func (p *healthPublisher) setKind(name, kind string, zone bool) {
 	} else {
 		p.kinds[name] = kind
 	}
-	// A zone's type goes when its zone service stops. If another automation still has checks on the
-	// name, they are then published as a device's, like those on any name without a type.
+	// A name stays a zone once seen as one. A zone's type goes whenever its zone service stops,
+	// on every config change for example, while automations such as healthbounds keep their checks
+	// on its name. Forgetting it was a zone would send those checks as a device's in the meantime.
 	if zone {
 		p.zones[name] = true
-	} else {
-		delete(p.zones, name)
 	}
 	// Kinds often change as a resource is removed, a driver's SERVICE type goes with its check for example.
 	// An empty set removes every check whatever its kind, so a resource already removed isn't resent.

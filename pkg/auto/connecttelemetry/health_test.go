@@ -549,13 +549,17 @@ func TestHealthPublisher_zoneRemoval(t *testing.T) {
 		h.sleepUntil(healthStartDelay + time.Minute)
 		assert.Empty(t, h.sink.sets(""), "no empty set for a zone that was never sent")
 
-		// without its ZONE type, such as when the zone service stops while an automation still has checks on it
+		// the zone service stops, on a config change say, while an automation keeps its checks on the zone
 		undo()
-		h.sleepUntil(healthStartDelay + 2*time.Minute)
-		sets := h.sink.sets("zone2")
-		require.Len(t, sets, 1, "published like any untyped name")
-		assert.Equal(t, subjectKindDevice, sets[0].set.Subject.Kind)
-		assert.Empty(t, h.sink.sets("zone1"))
+		h.setChecks("zone2", faultCheck("c", healthpb.HealthCheck_ABNORMAL))
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Empty(t, h.sink.sets(""), "still a zone without its type")
+		assert.Empty(t, h.manifestNameHashes())
+
+		// and when it starts again
+		h.node.Announce("zone2", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.sleepUntil(healthFirstManifestDelay + time.Minute)
+		assert.Empty(t, h.sink.sets(""))
 	})
 }
 

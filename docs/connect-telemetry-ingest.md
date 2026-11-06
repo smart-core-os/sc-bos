@@ -354,8 +354,10 @@ checks, such as air quality bounds, and Connect associates those with the device
 itself. Filed as a `service` they would be node health, which Vanti support is alerted to at every
 site. Without the option nothing on a zone's name is sent, the zone's own system check included,
 and the manifest leaves the zone out, which is what makes Connect dispose of any checks it already
-holds for it. A name stops being treated as a zone when its `ZONE` type goes: should another
-automation still have checks on it, they are then sent as a `device`.
+holds for it. A name stays a zone once the node has seen it as one, since a zone's type goes
+whenever its zone service stops, on a config change say, while automations such as `healthbounds`
+keep their checks on the zone's name. A zone that is disabled when the node starts has no type
+to see, so checks on its name go as a `device`.
 
 ### Hashes
 
