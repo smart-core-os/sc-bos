@@ -228,8 +228,8 @@ func (p *healthPublisher) setKind(name, kind string, zone bool) {
 		p.kinds[name] = kind
 	}
 	// A name stays a zone once seen as one. A zone's type goes whenever its zone service stops,
-	// on every config change for example, while automations such as healthbounds keep their checks
-	// on its name. Forgetting it was a zone would send those checks as a device's in the meantime.
+	// on every config change for example, a little before automations such as healthbounds remove
+	// their checks on its name. Forgetting it was a zone would send those checks as a device's meanwhile.
 	if zone {
 		p.zones[name] = true
 	}
