@@ -12,10 +12,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectMeterReadingChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectMeterReadingChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := meterpb.NewMeterApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*meterpb.MeterReading](cmp.Equal(cmp.FloatValueApprox(0, 0.0001), cmp.TimeValueWithin(time.Second)))
+	last := newDeduper[*meterpb.MeterReading](cmp.Equal(cmp.FloatValueApprox(0, 0.0001), cmp.TimeValueWithin(time.Second)), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullMeterReadings(ctx, &meterpb.PullMeterReadingsRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -28,7 +28,7 @@ func (a *automation) collectMeterReadingChanges(ctx context.Context, source conf
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetMeterReading()) {
+				if !last.Changed(ctx, change.GetMeterReading()) {
 					continue
 				}
 
@@ -50,7 +50,7 @@ func (a *automation) collectMeterReadingChanges(ctx context.Context, source conf
 			return err
 		}
 
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -66,7 +66,7 @@ func (a *automation) collectMeterReadingChanges(ctx context.Context, source conf
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

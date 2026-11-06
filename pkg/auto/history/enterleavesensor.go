@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := enterleavesensorpb.NewEnterLeaveSensorApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*enterleavesensorpb.EnterLeaveEvent](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*enterleavesensorpb.EnterLeaveEvent](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullEnterLeaveEvents(ctx, &enterleavesensorpb.PullEnterLeaveEventsRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -27,7 +27,7 @@ func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source c
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetEnterLeaveEvent()) {
+				if !last.Changed(ctx, change.GetEnterLeaveEvent()) {
 					continue
 				}
 
@@ -50,7 +50,7 @@ func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source c
 			return err
 		}
 
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -67,7 +67,7 @@ func (a *automation) collectEnterLeaveEventChanges(ctx context.Context, source c
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

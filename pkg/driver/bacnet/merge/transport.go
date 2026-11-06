@@ -12,7 +12,6 @@ import (
 	grpcStatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -63,7 +62,7 @@ type transport struct {
 	transportpb.UnimplementedTransportApiServer
 	transportpb.UnimplementedTransportInfoServer
 
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -76,7 +75,7 @@ type transport struct {
 	units atomic.Value
 }
 
-func newTransport(client *gobacnet.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
+func newTransport(client *comm.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
 	cfg, err := readTransportConfig(config.Raw)
 	if err != nil {
 		return nil, err

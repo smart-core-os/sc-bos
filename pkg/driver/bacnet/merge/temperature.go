@@ -7,7 +7,6 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -33,7 +32,7 @@ func readTemperatureConfig(raw []byte) (cfg temperatureConfig, err error) {
 }
 
 type temperature struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -44,7 +43,7 @@ type temperature struct {
 	pollTask *task.Intermittent
 }
 
-func newTemperature(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
+func newTemperature(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
 	cfg, err := readTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err

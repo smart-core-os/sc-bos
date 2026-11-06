@@ -10,8 +10,11 @@ import (
 	gen "github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 )
 
-func (a *automation) collectResourceUseChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectResourceUseChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := gen.NewResourceUseApiClient(a.clients.ClientConn())
+
+	// Every reading is recorded, so there is no deduper.
+	// Each is still accepted on rec, so a heartbeat only comes once the source has gone quiet.
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullResourceUse(ctx, &gen.PullResourceUseRequest{
@@ -31,6 +34,9 @@ func (a *automation) collectResourceUseChanges(ctx context.Context, source confi
 				payload, err := proto.Marshal(change.GetResourceUse())
 				if err != nil {
 					return err
+				}
+				if !rec.accept(ctx) {
+					continue
 				}
 				select {
 				case <-ctx.Done():
@@ -52,6 +58,9 @@ func (a *automation) collectResourceUseChanges(ctx context.Context, source confi
 		if err != nil {
 			return err
 		}
+		if !rec.accept(ctx) {
+			return nil
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -60,7 +69,7 @@ func (a *automation) collectResourceUseChanges(ctx context.Context, source confi
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }
