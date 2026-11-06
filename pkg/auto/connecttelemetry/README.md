@@ -112,26 +112,32 @@ bytes) beside DBO's own `percentage`. They are the same in both `pointNaming` mo
 ### Environmental sensors
 
 Each reading lands on the DBO generic room-sensor field that Connect's BOS CSV import lands the
-same column on, so a sensor's imported history and its live telemetry share a series. Units are
+same column on, so a sensor's imported history and its live telemetry share a series. VOC by mass
+has no import column, so it lands through Connect's generic DBO field mapping instead. Units are
 fixed by the trait protos and declared in discovery as DBO unit names, which Connect converts by:
 it holds a numeric reading whose quantity has several units until discovery names one.
 
-| DBO point (field)                    | Source                                  | Units (discovery)            |
-|--------------------------------------|-----------------------------------------|------------------------------|
-| `zone_air_temperature_sensor`        | `AirTemperature.ambient_temperature`    | `degrees_celsius`            |
-| `zone_air_relative_humidity_sensor`  | `AirTemperature.ambient_humidity`       | `percent_relative_humidity`  |
-| `zone_air_co2_concentration_sensor`  | `AirQuality.carbon_dioxide_level`       | `parts_per_million`          |
-| `zone_air_voc_concentration_sensor`  | `AirQuality.volatile_organic_compounds` | `parts_per_million`          |
-| `air_pressure_sensor`                | `AirQuality.air_pressure`               | `hectopascals`               |
-| `zone_air_pm1pt0_density_sensor`     | `AirQuality.particulate_matter_1`       | `micrograms_per_cubic_meter` |
-| `zone_air_pm2pt5_density_sensor`     | `AirQuality.particulate_matter_25`      | `micrograms_per_cubic_meter` |
-| `zone_air_pm10pt0_density_sensor`    | `AirQuality.particulate_matter_10`      | `micrograms_per_cubic_meter` |
-| `zone_occupancy_status`              | `Occupancy.state`                       | none (multistate)            |
-| `zone_occupancy_count`               | `Occupancy.people_count`                | none (headcount)             |
+| DBO point (field)                   | Source                                          | Units (discovery)            |
+|-------------------------------------|-------------------------------------------------|------------------------------|
+| `zone_air_temperature_sensor`       | `AirTemperature.ambient_temperature`            | `degrees_celsius`            |
+| `zone_air_relative_humidity_sensor` | `AirTemperature.ambient_humidity`               | `percent_relative_humidity`  |
+| `zone_air_co2_concentration_sensor` | `AirQuality.carbon_dioxide_level`               | `parts_per_million`          |
+| `zone_air_voc_concentration_sensor` | `AirQuality.volatile_organic_compounds`         | `parts_per_million`          |
+| `zone_air_voc_density_sensor`       | `AirQuality.volatile_organic_compounds_density` | `micrograms_per_cubic_meter` |
+| `air_pressure_sensor`               | `AirQuality.air_pressure`                       | `hectopascals`               |
+| `zone_air_pm1pt0_density_sensor`    | `AirQuality.particulate_matter_1`               | `micrograms_per_cubic_meter` |
+| `zone_air_pm2pt5_density_sensor`    | `AirQuality.particulate_matter_25`              | `micrograms_per_cubic_meter` |
+| `zone_air_pm10pt0_density_sensor`   | `AirQuality.particulate_matter_10`              | `micrograms_per_cubic_meter` |
+| `zone_occupancy_status`             | `Occupancy.state`                               | none (multistate)            |
+| `zone_occupancy_count`              | `Occupancy.people_count`                        | none (headcount)             |
 
 - Under `pointNaming: raw` each point takes its source field's name (`carbon_dioxide_level`, `state`).
 - Unset optional fields produce no point, and discovery declares only the points the sensor's
   last reading populated.
+- VOC in ppm and VOC by mass are separate points, never converted into each other: that needs a
+  reference gas the sensor doesn't report. A sensor sends whichever it measures; a BMS that reports
+  TVOC in mg/m³ should be configured onto `volatile_organic_compounds_density` (the BACnet driver's
+  `vocDensity`, with `scale: 1000`), not onto the ppm field.
 - Set points, `mode`, dew point, and AirQuality's `comfort`, `score`, `infection_risk` and
   `air_change_per_hour` are not exported: set points and modes are writable or enum-valued, and the
   rest are vendor indices or have no DBO field.

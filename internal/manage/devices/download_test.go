@@ -22,6 +22,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/internal/download"
 	"github.com/smart-core-os/sc-bos/pkg/node"
+	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
@@ -363,6 +364,40 @@ func TestOccupancyToRow_changeTime(t *testing.T) {
 	vals := occupancyToRow(&occupancysensorpb.Occupancy{StateChangeTime: timestamppb.New(changeTime)})
 	if want, got := "2026-03-29T01:30:00Z", vals["occupancy.changetime"]; got != want {
 		t.Errorf("occupancy.changetime: want %q, got %q", want, got)
+	}
+}
+
+func TestAirQualityToRow_voc(t *testing.T) {
+	tests := []struct {
+		name string
+		in   *airqualitysensorpb.AirQuality
+		want map[string]string
+	}{
+		{
+			name: "ppm only",
+			in:   &airqualitysensorpb.AirQuality{VolatileOrganicCompounds: new(float32(0.3))},
+			want: map[string]string{"iaq.voc": "0.300"},
+		},
+		{
+			name: "mass only",
+			in:   &airqualitysensorpb.AirQuality{VolatileOrganicCompoundsDensity: new(float32(2650))},
+			want: map[string]string{"iaq.vocdensity": "2650.000"},
+		},
+		{
+			name: "both",
+			in: &airqualitysensorpb.AirQuality{
+				VolatileOrganicCompounds:        new(float32(0.3)),
+				VolatileOrganicCompoundsDensity: new(float32(2650)),
+			},
+			want: map[string]string{"iaq.voc": "0.300", "iaq.vocdensity": "2650.000"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if diff := cmp.Diff(tt.want, airQualityToRow(tt.in)); diff != "" {
+				t.Errorf("airQualityToRow (-want +got):\n%s", diff)
+			}
+		})
 	}
 }
 

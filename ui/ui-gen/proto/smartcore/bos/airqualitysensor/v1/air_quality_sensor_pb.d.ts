@@ -55,6 +55,11 @@ export class AirQuality extends jspb.Message {
   hasAirChangePerHour(): boolean;
   clearAirChangePerHour(): AirQuality;
 
+  getVolatileOrganicCompoundsDensity(): number;
+  setVolatileOrganicCompoundsDensity(value: number): AirQuality;
+  hasVolatileOrganicCompoundsDensity(): boolean;
+  clearVolatileOrganicCompoundsDensity(): AirQuality;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AirQuality.AsObject;
   static toObject(includeInstance: boolean, msg: AirQuality): AirQuality.AsObject;
@@ -75,6 +80,7 @@ export namespace AirQuality {
     particulateMatter25?: number;
     particulateMatter10?: number;
     airChangePerHour?: number;
+    volatileOrganicCompoundsDensity?: number;
   };
 
   export enum Comfort {
@@ -126,6 +132,11 @@ export namespace AirQuality {
   export enum AirChangePerHourCase {
     _AIR_CHANGE_PER_HOUR_NOT_SET = 0,
     AIR_CHANGE_PER_HOUR = 10,
+  }
+
+  export enum VolatileOrganicCompoundsDensityCase {
+    _VOLATILE_ORGANIC_COMPOUNDS_DENSITY_NOT_SET = 0,
+    VOLATILE_ORGANIC_COMPOUNDS_DENSITY = 11,
   }
 }
 
@@ -185,6 +196,11 @@ export class AirQualitySupport extends jspb.Message {
   hasAirChangePerHour(): boolean;
   clearAirChangePerHour(): AirQualitySupport;
 
+  getVolatileOrganicCompoundsDensity(): smartcore_bos_types_v1_number_pb.FloatBounds | undefined;
+  setVolatileOrganicCompoundsDensity(value?: smartcore_bos_types_v1_number_pb.FloatBounds): AirQualitySupport;
+  hasVolatileOrganicCompoundsDensity(): boolean;
+  clearVolatileOrganicCompoundsDensity(): AirQualitySupport;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AirQualitySupport.AsObject;
   static toObject(includeInstance: boolean, msg: AirQualitySupport): AirQualitySupport.AsObject;
@@ -206,6 +222,7 @@ export namespace AirQualitySupport {
     particulateMatter25?: smartcore_bos_types_v1_number_pb.FloatBounds.AsObject;
     particulateMatter10?: smartcore_bos_types_v1_number_pb.FloatBounds.AsObject;
     airChangePerHour?: smartcore_bos_types_v1_number_pb.FloatBounds.AsObject;
+    volatileOrganicCompoundsDensity?: smartcore_bos_types_v1_number_pb.FloatBounds.AsObject;
   };
 }
 

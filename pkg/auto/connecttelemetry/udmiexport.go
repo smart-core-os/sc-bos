@@ -172,6 +172,9 @@ var (
 	pointPM1            = envPoint{dbo.FieldZoneAirPM1pt0DensitySensor, "particulate_matter_1", dbo.UnitMicrogramsPerCubicMeter}
 	pointPM25           = envPoint{dbo.FieldZoneAirPM2pt5DensitySensor, "particulate_matter_25", dbo.UnitMicrogramsPerCubicMeter}
 	pointPM10           = envPoint{dbo.FieldZoneAirPM10pt0DensitySensor, "particulate_matter_10", dbo.UnitMicrogramsPerCubicMeter}
+	// VOC by mass is its own point, never folded into pointVOC: ppm and mass don't
+	// convert without a reference gas.
+	pointVOCDensity     = envPoint{dbo.FieldZoneAirVOCDensitySensor, "volatile_organic_compounds_density", dbo.UnitMicrogramsPerCubicMeter}
 	pointOccupancyState = envPoint{dbo.FieldZoneOccupancyStatus, "state", ""}
 	pointPeopleCount    = envPoint{dbo.FieldZoneOccupancyCount, "people_count", ""}
 )
@@ -230,6 +233,7 @@ func forEachAirQualityPoint(r *airqualitysensorpb.AirQuality, n dbo.Naming, fn e
 	}
 	emit(pointCO2, r.CarbonDioxideLevel)
 	emit(pointVOC, r.VolatileOrganicCompounds)
+	emit(pointVOCDensity, r.VolatileOrganicCompoundsDensity)
 	emit(pointAirPressure, r.AirPressure)
 	emit(pointPM1, r.ParticulateMatter_1)
 	emit(pointPM25, r.ParticulateMatter_25)

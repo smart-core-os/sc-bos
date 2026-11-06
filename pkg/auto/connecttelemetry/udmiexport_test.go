@@ -314,20 +314,22 @@ func TestAirTemperatureTelemetry(t *testing.T) {
 func TestAirQualityTelemetry(t *testing.T) {
 	t.Run("readings with a DBO field are exported", func(t *testing.T) {
 		r := &airqualitysensorpb.AirQuality{
-			CarbonDioxideLevel:       new(float32(612)),
-			VolatileOrganicCompounds: new(float32(0.3)),
-			AirPressure:              new(float32(1013)),
-			Comfort:                  airqualitysensorpb.AirQuality_COMFORTABLE,
-			InfectionRisk:            new(float32(5)),
-			Score:                    new(float32(90)),
-			ParticulateMatter_1:      new(float32(1)),
-			ParticulateMatter_25:     new(float32(2.5)),
-			ParticulateMatter_10:     new(float32(10)),
-			AirChangePerHour:         new(float32(4)),
+			CarbonDioxideLevel:              new(float32(612)),
+			VolatileOrganicCompounds:        new(float32(0.3)),
+			AirPressure:                     new(float32(1013)),
+			Comfort:                         airqualitysensorpb.AirQuality_COMFORTABLE,
+			InfectionRisk:                   new(float32(5)),
+			Score:                           new(float32(90)),
+			ParticulateMatter_1:             new(float32(1)),
+			ParticulateMatter_25:            new(float32(2.5)),
+			ParticulateMatter_10:            new(float32(10)),
+			AirChangePerHour:                new(float32(4)),
+			VolatileOrganicCompoundsDensity: new(float32(650)),
 		}
 		assert.Equal(t, udmi.PointsEvent{
 			dbo.FieldZoneAirCO2ConcentrationSensor: {PresentValue: float32(612)},
 			dbo.FieldZoneAirVOCConcentrationSensor: {PresentValue: float32(0.3)},
+			dbo.FieldZoneAirVOCDensitySensor:       {PresentValue: float32(650)},
 			dbo.FieldAirPressureSensor:             {PresentValue: float32(1013)},
 			dbo.FieldZoneAirPM1pt0DensitySensor:    {PresentValue: float32(1)},
 			dbo.FieldZoneAirPM2pt5DensitySensor:    {PresentValue: float32(2.5)},
@@ -341,6 +343,26 @@ func TestAirQualityTelemetry(t *testing.T) {
 			dbo.FieldZoneAirCO2ConcentrationSensor: {PresentValue: float32(0)},
 		}, envTelemetry(r, dbo.NamingDBO, forEachAirQualityPoint))
 		assert.Empty(t, envTelemetry(nil, dbo.NamingDBO, forEachAirQualityPoint))
+	})
+
+	t.Run("a ppm VOC sensor sends no VOC density", func(t *testing.T) {
+		r := &airqualitysensorpb.AirQuality{VolatileOrganicCompounds: new(float32(0.3))}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirVOCConcentrationSensor: {PresentValue: float32(0.3)},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirQualityPoint))
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			dbo.FieldZoneAirVOCConcentrationSensor: {Units: "parts_per_million"},
+		}, envInventory(r, dbo.NamingDBO, forEachAirQualityPoint))
+	})
+
+	t.Run("a VOC-by-mass sensor sends no ppm VOC", func(t *testing.T) {
+		r := &airqualitysensorpb.AirQuality{VolatileOrganicCompoundsDensity: new(float32(2650))}
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldZoneAirVOCDensitySensor: {PresentValue: float32(2650)},
+		}, envTelemetry(r, dbo.NamingDBO, forEachAirQualityPoint))
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			dbo.FieldZoneAirVOCDensitySensor: {Units: "micrograms_per_cubic_meter"},
+		}, envInventory(r, dbo.NamingDBO, forEachAirQualityPoint))
 	})
 
 	t.Run("raw naming emits the trait's field names", func(t *testing.T) {
@@ -439,17 +461,19 @@ func TestEnvInventory(t *testing.T) {
 	assert.Equal(t, map[string]udmi.MetadataPoint{
 		dbo.FieldZoneAirCO2ConcentrationSensor: {Units: "parts_per_million"},
 		dbo.FieldZoneAirVOCConcentrationSensor: {Units: "parts_per_million"},
+		dbo.FieldZoneAirVOCDensitySensor:       {Units: "micrograms_per_cubic_meter"},
 		dbo.FieldAirPressureSensor:             {Units: "hectopascals"},
 		dbo.FieldZoneAirPM1pt0DensitySensor:    {Units: "micrograms_per_cubic_meter"},
 		dbo.FieldZoneAirPM2pt5DensitySensor:    {Units: "micrograms_per_cubic_meter"},
 		dbo.FieldZoneAirPM10pt0DensitySensor:   {Units: "micrograms_per_cubic_meter"},
 	}, envInventory(&airqualitysensorpb.AirQuality{
-		CarbonDioxideLevel:       new(float32(1)),
-		VolatileOrganicCompounds: new(float32(1)),
-		AirPressure:              new(float32(1)),
-		ParticulateMatter_1:      new(float32(1)),
-		ParticulateMatter_25:     new(float32(1)),
-		ParticulateMatter_10:     new(float32(1)),
+		CarbonDioxideLevel:              new(float32(1)),
+		VolatileOrganicCompounds:        new(float32(1)),
+		AirPressure:                     new(float32(1)),
+		ParticulateMatter_1:             new(float32(1)),
+		ParticulateMatter_25:            new(float32(1)),
+		ParticulateMatter_10:            new(float32(1)),
+		VolatileOrganicCompoundsDensity: new(float32(1)),
 	}, dbo.NamingDBO, forEachAirQualityPoint))
 
 	assert.Equal(t, map[string]udmi.MetadataPoint{
