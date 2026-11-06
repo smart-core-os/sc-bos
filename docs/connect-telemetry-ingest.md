@@ -344,10 +344,11 @@ From the resource's `Metadata.device_type`:
 | anything else, or no metadata | `device` |
 
 Drivers' system checks (on the driver's id) and the history stores' checks (on the store's name)
-are announced as `SERVICE` for this. Automations and zones carry their own type, but every check on
-their name is the service's own, so they go as `service` too. Connect files a `service` as a
-component of the node's entity rather than as a device, and only knows these three kinds, so the
-resource name is all that tells a driver, an automation and a zone apart there.
+are announced as `SERVICE` for this. Automations carry their own type, but every check on their
+name is the automation's own, so they go as `service` too. Zones also carry their own type and go
+as `service` when they are published, see below. Connect files a `service` as a component of the
+node's entity rather than as a device, and only knows these three kinds, so the resource name is
+all that tells a driver, an automation and a zone apart there.
 
 Zones' checks are only published with `health.includeZones`. A zone's checks are mostly building
 checks, such as air quality bounds, and Connect associates those with the devices in a space
