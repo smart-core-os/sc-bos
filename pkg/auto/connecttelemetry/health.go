@@ -14,6 +14,7 @@ import (
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
@@ -58,18 +59,25 @@ type devicesSource interface {
 // Each resource's complete set of checks is sent whenever its hash differs from the last one the
 // broker acknowledged, and again once a day. A manifest of every set's hash is sent periodically
 // so Connect can find sets it lost, or holds but should not.
+//
+// Zones' checks are left out unless includeZones: no sets are sent for them and the manifest
+// doesn't list them, so Connect disposes of any it holds. Everything on a zone's name is left
+// out, its own system check included.
 type healthPublisher struct {
 	sink             healthSink
 	checks           devicesSource // this node's own checks
 	devices          devicesSource // for each resource's device type
 	topicPrefix      string
 	manifestInterval time.Duration
+	includeZones     bool
 	limiter          *rate.Limiter
 	logger           *zap.Logger
 
 	mu        sync.Mutex
 	resources map[string]*healthResource
 	kinds     map[string]string // subject kind by name, absent means device
+	zones     map[string]bool   // names ever announced with device type ZONE, see setKind
+	excluded  int               // how many resources are excluded, not counted towards Connect's limit
 	queue     []string          // names that may need sending, in order
 	queued    map[string]bool
 	wake      chan struct{} // signalled when queue becomes non-empty
@@ -95,23 +103,26 @@ type healthResource struct {
 	warnedChecksHash string        // the last hash warned about for having too many checks
 	warnedSizeHash   string        // the last hash warned about for being too large
 	removed          bool          // the resource no longer has checks, forget it once its empty set is acknowledged
+	excluded         bool          // a zone while zones are left out: never sent, nor listed in the manifest
 	force            bool          // send even if hash is acknowledged, for the daily resend
 	slot             time.Duration // the minute of the UTC day for the daily resend
 	failures         int
 	retry            *time.Timer
 }
 
-func newHealthPublisher(sink healthSink, checks, devices devicesSource, topicPrefix string, manifestInterval time.Duration, maxRate float64, logger *zap.Logger) *healthPublisher {
+func newHealthPublisher(sink healthSink, checks, devices devicesSource, topicPrefix string, manifestInterval time.Duration, includeZones bool, maxRate float64, logger *zap.Logger) *healthPublisher {
 	return &healthPublisher{
 		sink:             sink,
 		checks:           checks,
 		devices:          devices,
 		topicPrefix:      topicPrefix,
 		manifestInterval: manifestInterval,
+		includeZones:     includeZones,
 		limiter:          rate.NewLimiter(rate.Limit(maxRate), 1),
 		logger:           logger,
 		resources:        make(map[string]*healthResource),
 		kinds:            make(map[string]string),
+		zones:            make(map[string]bool),
 		queued:           make(map[string]bool),
 		wake:             make(chan struct{}, 1),
 	}
@@ -145,20 +156,23 @@ func (p *healthPublisher) watchChecks(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// watchKinds tracks the subject kind of every resource that isn't a device.
+// watchKinds tracks the subject kind of every resource that isn't a device, and which of them are zones.
 func (p *healthPublisher) watchKinds(ctx context.Context) error {
 	changes := p.devices.PullDevices(ctx,
 		resource.WithReadPaths(&devicespb.Device{}, "metadata.device_type"),
 		resource.WithInclude(func(_ string, item proto.Message) bool {
+			// zones are services, so included
 			return subjectKind(item.(*devicespb.Device).GetMetadata().GetDeviceType()) != subjectKindDevice
 		}),
 	)
 	for change := range changes {
-		kind := subjectKindDevice
+		kind, zone := subjectKindDevice, false
 		if change.ChangeType != typespb.ChangeType_REMOVE {
-			kind = subjectKind(change.NewValue.GetMetadata().GetDeviceType())
+			deviceType := change.NewValue.GetMetadata().GetDeviceType()
+			kind = subjectKind(deviceType)
+			zone = deviceType == metadatapb.Metadata_ZONE
 		}
-		p.setKind(change.Id, kind)
+		p.setKind(change.Id, kind, zone)
 	}
 	return ctx.Err()
 }
@@ -170,11 +184,14 @@ func (p *healthPublisher) setChecks(name string, checks []*healthpb.HealthCheck)
 	if !ok {
 		r = &healthResource{kind: p.kindLocked(name), slot: dailySlot(name)}
 		p.resources[name] = r
-		p.checkResourceCountLocked()
 	}
 	r.removed = false
 	r.checks = checks
 	r.kind = p.kindLocked(name) // ignored while removed, see setKind
+	p.updateExcludedLocked(name, r)
+	if !ok {
+		p.checkResourceCountLocked() // once excluded is known, so a new zone isn't counted
+	}
 	p.rehashLocked(name, r)
 }
 
@@ -185,6 +202,16 @@ func (p *healthPublisher) removeResource(name string) {
 	if !ok {
 		return
 	}
+	if r.excluded {
+		// The manifest already leaves it out, which is what removes its checks from Connect.
+		if r.retry != nil {
+			r.retry.Stop()
+		}
+		delete(p.resources, name)
+		p.excluded--
+		p.checkResourceCountLocked()
+		return
+	}
 	// Connect may hold checks for name from before we started, so always tell it the set is empty.
 	r.removed = true
 	r.checks = nil
@@ -192,7 +219,7 @@ func (p *healthPublisher) removeResource(name string) {
 	p.forgetIfDoneLocked(name, r)
 }
 
-func (p *healthPublisher) setKind(name, kind string) {
+func (p *healthPublisher) setKind(name, kind string, zone bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if kind == subjectKindDevice {
@@ -200,14 +227,48 @@ func (p *healthPublisher) setKind(name, kind string) {
 	} else {
 		p.kinds[name] = kind
 	}
+	// A name stays a zone once seen as one. A zone's type goes whenever its zone service stops,
+	// on every config change for example, a little before automations such as healthbounds remove
+	// their checks on its name. Forgetting it was a zone would send those checks as a device's meanwhile.
+	if zone {
+		p.zones[name] = true
+	}
 	// Kinds often change as a resource is removed, a driver's SERVICE type goes with its check for example.
 	// An empty set removes every check whatever its kind, so a resource already removed isn't resent.
 	// Kinds and checks arrive on separate streams though, so the kind change can be seen first,
 	// and the old checks can then go out briefly under the new kind until the empty set follows.
-	if r, ok := p.resources[name]; ok && !r.removed && r.kind != kind {
-		r.kind = kind
-		p.rehashLocked(name, r)
+	if r, ok := p.resources[name]; ok && !r.removed {
+		wasExcluded := r.excluded
+		p.updateExcludedLocked(name, r)
+		if r.kind != kind || r.excluded != wasExcluded {
+			r.kind = kind
+			p.rehashLocked(name, r)
+		}
 	}
+}
+
+// updateExcludedLocked brings r.excluded up to date with whether name is a zone.
+func (p *healthPublisher) updateExcludedLocked(name string, r *healthResource) {
+	excluded := !p.includeZones && p.zones[name]
+	if excluded == r.excluded {
+		return
+	}
+	r.excluded = excluded
+	if excluded {
+		p.excluded++
+		// Its set may have gone before the zone's type arrived. The next manifest leaves it out and
+		// Connect then disposes of it, so forget it was acknowledged, in case it is sent again.
+		r.ackedHash = ""
+		r.force = false
+		r.failures = 0
+		if r.retry != nil {
+			r.retry.Stop()
+			r.retry = nil
+		}
+	} else {
+		p.excluded--
+	}
+	p.checkResourceCountLocked()
 }
 
 func (p *healthPublisher) kindLocked(name string) string {
@@ -220,7 +281,7 @@ func (p *healthPublisher) kindLocked(name string) string {
 // rehashLocked recomputes r's hash after its checks or kind changed, queueing it if it needs sending.
 func (p *healthPublisher) rehashLocked(name string, r *healthResource) {
 	r.hash = checkSetHash(r.kind, r.checks)
-	if n := len(r.checks); n > healthMaxChecksPerSet && r.warnedChecksHash != r.hash {
+	if n := len(r.checks); n > healthMaxChecksPerSet && !r.excluded && r.warnedChecksHash != r.hash {
 		r.warnedChecksHash = r.hash
 		p.logger.Warn("health set has more checks than Connect accepts, Connect will drop it",
 			zap.String("resource", name), zap.Int("checks", n), zap.Int("limit", healthMaxChecksPerSet))
@@ -231,7 +292,7 @@ func (p *healthPublisher) rehashLocked(name string, r *healthResource) {
 }
 
 func (p *healthPublisher) checkResourceCountLocked() {
-	n := len(p.resources)
+	n := len(p.resources) - p.excluded
 	switch {
 	case n > healthMaxResources && !p.tooManyWarned:
 		p.tooManyWarned = true
@@ -244,7 +305,7 @@ func (p *healthPublisher) checkResourceCountLocked() {
 
 // needsSend reports whether r's current set should be sent.
 func needsSend(r *healthResource) bool {
-	if r.hash == r.skippedHash {
+	if r.excluded || r.hash == r.skippedHash {
 		return false
 	}
 	return r.force || r.hash != r.ackedHash
@@ -384,6 +445,11 @@ func (p *healthPublisher) sent(name, hash string, err error) {
 	p.inflight = healthInflight{}
 	r, ok := p.resources[name]
 	if !ok {
+		return
+	}
+	if r.excluded {
+		// It became an excluded zone while the set was going out, so whatever the outcome it isn't
+		// retried, and the manifest leaves it out.
 		return
 	}
 	if err != nil {
@@ -526,7 +592,8 @@ func (p *healthPublisher) buildManifest() ([]byte, bool) {
 	now := time.Now().Truncate(time.Millisecond)
 	entries := make([]manifestEntry, 0, len(p.resources))
 	for name, r := range p.resources {
-		if r.removed || len(r.checks) == 0 {
+		// Leaving out an excluded zone is what makes Connect dispose of any checks it holds for it.
+		if r.removed || r.excluded || len(r.checks) == 0 {
 			continue
 		}
 		// Connect judges each set stamped before the manifest against the hash listed, and shows the
@@ -605,7 +672,7 @@ func (p *healthPublisher) forceDue(from, to time.Time) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	for name, r := range p.resources {
-		if r.removed || !due(r.slot) {
+		if r.removed || r.excluded || !due(r.slot) {
 			continue
 		}
 		r.force = true

@@ -301,7 +301,8 @@ A resource's complete set, on `tlm/bos/health`:
   until the clock catches up, or until the daily resend. Connect orders a timestamp more than five
   minutes ahead of its own clock by when it was received instead.
 
-A manifest of every resource with at least one check, on `tlm/bos/health-manifest`:
+A manifest of every resource with at least one check, zones aside (see [Subject kind](#subject-kind)),
+on `tlm/bos/health-manifest`:
 
 ```json
 {
@@ -343,10 +344,20 @@ From the resource's `Metadata.device_type`:
 | anything else, or no metadata | `device` |
 
 Drivers' system checks (on the driver's id) and the history stores' checks (on the store's name)
-are announced as `SERVICE` for this. Automations and zones carry their own type, but every check on
-their name is the service's own, so they go as `service` too. Connect files a `service` as a
-component of the node's entity rather than as a device, and only knows these three kinds, so the
-resource name is all that tells a driver, an automation and a zone apart there.
+are announced as `SERVICE` for this. Automations carry their own type, but every check on their
+name is the automation's own, so they go as `service` too. Zones also carry their own type and go
+as `service` when they are published, see below. Connect files a `service` as a component of the
+node's entity rather than as a device, and only knows these three kinds, so the resource name is
+all that tells a driver, an automation and a zone apart there.
+
+Zones' checks are only published with `health.includeZones`. A zone's checks are mostly building
+checks, such as air quality bounds, and Connect associates those with the devices in a space
+itself. Filed as a `service` they would be node health, which Vanti support is alerted to at every
+site. Without the option nothing on a zone's name is sent, the zone's own system check included,
+and the manifest leaves the zone out, which is what makes Connect dispose of any checks it already
+holds for it. A name stays a zone once the node has seen it as one, since a zone's type goes
+whenever its zone service stops, on a config change say, a little before automations such as
+`healthbounds` remove their checks on the zone's name.
 
 ### Hashes
 

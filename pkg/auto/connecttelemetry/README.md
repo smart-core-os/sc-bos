@@ -18,7 +18,8 @@ and publishes. A cycle that can't connect in that time is skipped, not caught up
 
 With `health.enabled` it also publishes the health checks this node evaluates, one complete
 set per resource on `tlm/bos/health` whenever the set changes, plus a periodic manifest of every
-set's hash on `tlm/bos/health-manifest`. See the Health section of the ingest doc.
+set's hash on `tlm/bos/health-manifest`. Zones' checks are left out unless `health.includeZones`
+is set. See the Health section of the ingest doc.
 
 See [`docs/connect-telemetry-ingest.md`](../../../docs/connect-telemetry-ingest.md) for
 the topic grammar and the payload contract agreed with the Connect ingest side.
@@ -36,7 +37,7 @@ These traits are exported for every device that implements them:
 
 Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's reading is built from
 devices the node already publishes, such as the sum of its meters, and Connect models zones itself, so
-publishing them would count those devices twice. Zone health is still published when health is enabled.
+publishing them would count those devices twice. Zone health is separate: see `health.includeZones`.
 
 `devices` limits a trait to the devices it names, and admits a named zone whatever `includeZones`
 says. Use it for a zone whose reading is its own measurement rather than a sum of devices already
@@ -244,3 +245,4 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `health.enabled` | no | `false` | Publish this node's own health checks |
 | `health.manifestInterval` | no | `15m` | Time between health manifests, at most `15m`: Connect flags a node that goes 30 minutes without one |
 | `health.maxPublishRate` | no | `10` | Most health messages a second, at most `16` (Connect accepts 10,000 per 10 minutes) |
+| `health.includeZones` | no | `false` | Also publish the checks on zones, as services of the node. Off by default because Connect associates building checks with the devices in a space itself, and files a service's checks as node health. Independent of `includeZones` |
