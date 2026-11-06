@@ -187,7 +187,8 @@ concentration, pressure, density) until discovery names one.
 }
 ```
 
-- AirQuality's VOC (`parts_per_million`), air pressure (`air_pressure_sensor`, `hectopascals`) and
+- AirQuality's VOC (`parts_per_million`), VOC by mass (`zone_air_voc_density_sensor`,
+  `micrograms_per_cubic_meter`), air pressure (`air_pressure_sensor`, `hectopascals`) and
   PM1/PM2.5/PM10 (`zone_air_pm{1pt0,2pt5,10pt0}_density_sensor`, `micrograms_per_cubic_meter`)
   follow the same pattern. The automation README lists every point.
 - `zone_occupancy_status` is multistate, so it goes as its canonical state string

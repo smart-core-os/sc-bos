@@ -38,6 +38,7 @@ func TestFieldNamesAreValidDBOSubfields(t *testing.T) {
 		FieldZoneAirPM1pt0DensitySensor:    {},
 		FieldZoneAirPM2pt5DensitySensor:    {},
 		FieldZoneAirPM10pt0DensitySensor:   {},
+		FieldZoneAirVOCDensitySensor:       {},
 		FieldZoneOccupancyStatus:           {},
 		FieldZoneOccupancyCount:            {},
 	}

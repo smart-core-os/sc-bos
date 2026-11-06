@@ -168,6 +168,7 @@ const onDownloadClick = async () => {
           // see devices/download_data.go for list of available fields
           {name: 'iaq.co2', title: 'CO2 (ppm)'},
           {name: 'iaq.voc', title: 'VOC (ppm)'},
+          {name: 'iaq.vocdensity', title: 'VOC mass (ug/m3)'},
           {name: 'iaq.pressure', title: 'Pressure (hPa)'},
           {name: 'iaq.comfort', title: 'Comfort'},
           {name: 'iaq.infectionrisk', title: 'Infection Risk (%)'},

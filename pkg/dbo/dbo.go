@@ -45,6 +45,10 @@ const (
 	FieldZoneAirPM1pt0DensitySensor    = "zone_air_pm1pt0_density_sensor"
 	FieldZoneAirPM2pt5DensitySensor    = "zone_air_pm2pt5_density_sensor"
 	FieldZoneAirPM10pt0DensitySensor   = "zone_air_pm10pt0_density_sensor"
+	// FieldZoneAirVOCDensitySensor is total VOC by mass, for sensors that don't
+	// report it in ppm. The BOS CSV import has no such field; Connect takes it
+	// through its generic DBO field mapping.
+	FieldZoneAirVOCDensitySensor = "zone_air_voc_density_sensor"
 	// FieldZoneOccupancyStatus is multistate: its value is one of the Occupancy* states.
 	FieldZoneOccupancyStatus = "zone_occupancy_status"
 	// FieldZoneOccupancyCount is a bare headcount, with no unit.
