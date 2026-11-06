@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -62,6 +63,9 @@ type AutoImpl struct {
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
 	pointNaming dbo.Naming
+
+	healthMu   sync.Mutex
+	healthDone chan struct{} // closed when the latest health run returns, see runHealth
 }
 
 func (f factory) New(services auto.Services) service.Lifecycle {
@@ -141,7 +145,8 @@ func (a *AutoImpl) run(ctx context.Context, cfg config.Mqtt, publish func(ctx co
 }
 
 // publishAs connects to the broker as nodeID and publishes until ctx is done, then disconnects cleanly.
-// Everything it tracks, like which health sets the broker has acknowledged, starts afresh with each call.
+// What it tracks starts afresh with each call, except the health sets the broker has acknowledged,
+// which are saved per broker, client id, node id and topic prefix, see healthStreamKey.
 func (a *AutoImpl) publishAs(ctx context.Context, cfg config.Root, health bool, nodeID string) error {
 	pub, err := newPublisher(ctx, cfg.Mqtt, a.CloudCredential, nodeID, a.SystemCheck, a.Logger)
 	if err != nil {
@@ -154,7 +159,7 @@ func (a *AutoImpl) publishAs(ctx context.Context, cfg config.Root, health bool, 
 		a.runTelemetry(grpCtx, grp, cfg, pub)
 	}
 	if health {
-		a.runHealth(grpCtx, grp, cfg, pub)
+		a.runHealth(grpCtx, grp, cfg, nodeID, pub)
 	}
 	err = grp.Wait()
 
@@ -298,10 +303,39 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 }
 
 // runHealth starts publishing this node's own health checks.
-func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, pub *publisher) {
-	hp := newHealthPublisher(pub, a.LocalHealthChecks, a.Node, cfg.Mqtt.TopicPrefix,
-		cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, a.Logger.Named("health"))
-	grp.Go(func() error { return hp.run(autoCtx) })
+//
+// It starts once the previous health run, from before a reconfigure say, has returned. That run
+// saves its acknowledgements as it stops, and this one has to load them after that, or it starts
+// from a save up to a minute old and can skip a set the broker may no longer hold.
+func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg config.Root, nodeID string, sink healthSink) {
+	logger := a.Logger.Named("health")
+	var store healthAckStore = nopAckStore{}
+	if a.Database != nil {
+		stream := healthStreamKey(cfg.Mqtt.Host, mqttClientID(cfg.Mqtt, nodeID), nodeID, cfg.Mqtt.TopicPrefix)
+		store = newBoltAckStore(a.Database, stream)
+	} else {
+		logger.Warn("no database to save the acknowledged health sets in, a restart will resend them all")
+	}
+
+	a.healthMu.Lock()
+	prev := a.healthDone
+	done := make(chan struct{})
+	a.healthDone = done
+	a.healthMu.Unlock()
+
+	grp.Go(func() error {
+		defer close(done)
+		if prev != nil {
+			select {
+			case <-prev:
+			case <-autoCtx.Done():
+				return nil // as hp.run does when cancelled
+			}
+		}
+		hp := newHealthPublisher(sink, a.LocalHealthChecks, a.Node, store, cfg.Mqtt.TopicPrefix,
+			cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, logger)
+		return hp.run(autoCtx)
+	})
 }
 
 // publishCycle publishes telemetry, and any discovery owed, for every device,

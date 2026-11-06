@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
@@ -36,6 +38,13 @@ func TestCheckSetHash(t *testing.T) {
 	t.Run("ignores measured values", func(t *testing.T) {
 		moved := boundsCheck("a", 40, healthpb.HealthCheck_NORMAL)
 		assert.Equal(t, base, checkSetHash(subjectKindDevice, []*healthpb.HealthCheck{moved, b}))
+	})
+	t.Run("ignores create time", func(t *testing.T) {
+		// a check that never changed state comes back from a restart with a new one
+		created := proto.Clone(b).(*healthpb.HealthCheck)
+		created.CreateTime = timestamppb.New(time.Date(2026, 11, 5, 18, 0, 0, 0, time.UTC))
+		assert.Equal(t, base, checkSetHash(subjectKindDevice, []*healthpb.HealthCheck{a, created}))
+		assert.NotNil(t, created.CreateTime, "does not modify checks")
 	})
 	t.Run("does not modify checks", func(t *testing.T) {
 		assert.Equal(t, 20.0, a.GetBounds().GetCurrentValue().GetFloatValue())

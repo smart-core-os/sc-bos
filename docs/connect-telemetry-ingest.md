@@ -362,8 +362,9 @@ whenever its zone service stops, on a config change say, a little before automat
 ### Hashes
 
 - **Set hash:** SHA-256 over the kind and each check, sorted by id and deterministically
-  marshalled, with `bounds.current_value` and `deviation` cleared; first 16 hex digits. A value
-  moving within the same state is therefore not a change. Connect only compares it for
+  marshalled, with `bounds.current_value`, `deviation` and `create_time` cleared; first 16 hex
+  digits. A value moving within the same state is therefore not a change, and nor is a check
+  recreated with a new `create_time` after a restart. Connect only compares it for
   equality, so the recipe is ours and may change between releases (costing one resend of each set).
 - **Name hash:** the first 16 hex digits of the SHA-256 of the resource name's UTF-8 bytes.
   This one **is** part of the contract: Connect computes it too.
@@ -376,6 +377,12 @@ whenever its zone service stops, on a config change say, a little before automat
   reset when the connection comes back. It may still have landed (a late `PUBACK`, or resent from
   the MQTT session), so after a failure the next set is sent even if it matches the last one
   acknowledged.
+- The acknowledged hashes are saved in the node's database, per broker, client id, node id and
+  topic prefix, so a restart only sends the sets that changed. The first manifest after it lists
+  the rest, which confirms them to Connect. A re-enrolment under another node id starts afresh,
+  even with a fixed client id. A saved hash is not used if the set's daily resend fell due since
+  it was acknowledged. Hashes are saved once a minute, so a restart also resends the sets
+  acknowledged in the minute before it.
 - A resource that loses all its checks is sent as an empty set, and forgotten once that is
   acknowledged.
 - Every set is also resent once a day, at a minute of the UTC day derived from the name, so
@@ -385,9 +392,12 @@ whenever its zone service stops, on a config change say, a little before automat
   checks that are still being created, while a quick restart stays inside Connect's 30-minute
   [stall](#messages) window. An unacknowledged manifest is retried with backoff from 1s to 60s,
   rather than left for the next interval, and each retry is built afresh.
-- Sending starts 10s after the automation, and runs no faster than `health.maxPublishRate`
-  messages a second. The default of 10 is 6,000 per 10 minutes, inside Connect's 10,000; the
-  most accepted is 16.
+- Sending waits after start until checks stop being created: 30s after the last new resource or
+  check id, or 2 minutes at most. Until then a set could go out before its driver had registered
+  all its checks, telling Connect the missing ones were removed, then go again once it had.
+  Changes to existing checks don't extend the wait.
+- Sending runs no faster than `health.maxPublishRate` messages a second. The default of 10 is
+  6,000 per 10 minutes, inside Connect's 10,000; the most accepted is 16.
 
 ### Limits
 

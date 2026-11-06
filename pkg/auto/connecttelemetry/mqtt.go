@@ -47,10 +47,7 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 		return nil, err
 	}
 
-	clientID := cfg.ClientId
-	if clientID == "" {
-		clientID = nodeID
-	}
+	clientID := mqttClientID(cfg, nodeID)
 
 	p := &publisher{
 		qos:            byte(*cfg.Qos),
@@ -92,6 +89,14 @@ func newPublisher(ctx context.Context, cfg config.Mqtt, cred auto.CloudCredentia
 	}
 	p.cm = cm
 	return p, nil
+}
+
+// mqttClientID returns the client id to connect as nodeID with: the configured one, else nodeID.
+func mqttClientID(cfg config.Mqtt, nodeID string) string {
+	if cfg.ClientId != "" {
+		return cfg.ClientId
+	}
+	return nodeID
 }
 
 // brokerTarget validates the broker config, returning the broker URL and the TLS config to connect with.

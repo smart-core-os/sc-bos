@@ -99,6 +99,8 @@ func buildHealthManifest(now time.Time, entries []manifestEntry) ([]byte, error)
 // checkSetHash returns the hash of a resource's set of checks, as declared by kind.
 // Measured values, bounds.current_value and the deviation derived from it, are left out
 // so a value moving within the same state is not a change.
+// create_time is left out too: a check that has never changed state isn't saved across a restart,
+// so it comes back with a new one, and Connect doesn't store it.
 // The order of checks does not matter.
 //
 // Only equality is meaningful to Connect, so the hash can change between versions of this
@@ -122,6 +124,7 @@ func checkSetHash(kind string, checks []*healthpb.HealthCheck) string {
 			b.CurrentValue = nil
 		}
 		c.Deviation = 0
+		c.CreateTime = nil
 		b, err := marshal.Marshal(c)
 		if err != nil {
 			// HealthCheck has no required fields or invalid UTF-8 source, so this can't happen.
