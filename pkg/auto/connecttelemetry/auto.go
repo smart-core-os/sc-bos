@@ -2,10 +2,13 @@
 // instance to Smart Core Connect (SCC). It discovers devices by trait, polls the
 // typed trait API on a schedule, and publishes each device's data to the Connect
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
-// periodic device-metadata (discovery). The Meter trait, and the AirTemperature,
-// AirQualitySensor and OccupancySensor environmental sensor traits, are exported for
-// every device that implements them; the ResourceUse trait only for the local node,
-// which publishes its own host resources.
+// periodic device-metadata (discovery). The Meter and Temperature traits, and the
+// AirTemperature, AirQualitySensor and OccupancySensor environmental sensor traits, are
+// exported for every device that implements them; the ResourceUse trait only for the
+// local node, which publishes its own host resources.
+//
+// A trait in groupChildren sends each child device <parent>/<leaf> as a point of its
+// parent, telemetry and health alike, see groupTarget.
 //
 // When health is enabled it also publishes the health checks this node evaluates,
 // over the same connection.
@@ -18,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +40,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -59,6 +64,7 @@ type AutoImpl struct {
 	airQualityClient     airqualitysensorpb.AirQualitySensorApiClient
 	occupancyClient      occupancysensorpb.OccupancySensorApiClient
 	occupancyInfoClient  occupancysensorpb.OccupancySensorInfoClient
+	temperatureClient    temperaturepb.TemperatureApiClient
 
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
@@ -66,6 +72,12 @@ type AutoImpl struct {
 
 	healthMu   sync.Mutex
 	healthDone chan struct{} // closed when the latest health run returns, see runHealth
+
+	// The parents of grouped children found so far, and the names found to be zones, kept until
+	// the config changes. See groupChildren.
+	groupMu      sync.Mutex
+	groupParents map[string]*metadatapb.Metadata
+	groupZones   map[string]bool
 }
 
 func (f factory) New(services auto.Services) service.Lifecycle {
@@ -85,6 +97,7 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.airQualityClient = airqualitysensorpb.NewAirQualitySensorApiClient(n.ClientConn())
 	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
 	a.occupancyInfoClient = occupancysensorpb.NewOccupancySensorInfoClient(n.ClientConn())
+	a.temperatureClient = temperaturepb.NewTemperatureApiClient(n.ClientConn())
 }
 
 func (a *AutoImpl) now() time.Time {
@@ -112,6 +125,7 @@ func (a *AutoImpl) applyConfig(ctx context.Context, cfg config.Root) error {
 
 	a.initialiseClients(a.Node)
 	a.pointNaming = dbo.Naming(cfg.PointNaming)
+	a.forgetGroupParents()
 
 	publish := func(ctx context.Context, nodeID string) error {
 		return a.publishAs(ctx, cfg, health, nodeID)
@@ -334,6 +348,7 @@ func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg c
 		}
 		hp := newHealthPublisher(sink, a.LocalHealthChecks, a.Node, store, cfg.Mqtt.TopicPrefix,
 			cfg.Health.ManifestInterval.Duration, cfg.Health.IncludeZones, cfg.Health.MaxPublishRate, logger)
+		hp.groupTraits(cfg.GroupChildren)
 		return hp.run(autoCtx)
 	})
 }
@@ -388,7 +403,8 @@ func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, topic st
 // (re)builds the export set.
 func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevices map[string]*device) error {
 	for _, traitName := range cfg.Traits {
-		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, cfg.Devices[traitName], allDevices); err != nil {
+		group := slices.Contains(cfg.GroupChildren, traitName)
+		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, cfg.Devices[traitName], group, allDevices); err != nil {
 			a.Logger.Error("failed to get devices for trait", zap.String("trait", traitName), zap.Error(err))
 			return err
 		}
@@ -399,7 +415,8 @@ func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevic
 // getAllTraitImplementors populates devices with those implementing traitName,
 // attaching a collector for the trait. A non-empty only limits the trait to the
 // devices it names, zones included. Otherwise zones are skipped unless includeZones is set.
-func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, only []string, devices map[string]*device) error {
+// With group, a child device of the trait is added to its parent as a point, see groupTarget.
+func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, only []string, group bool, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
 			Field: "metadata.traits.name",
@@ -426,21 +443,9 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			},
 		})
 	}
-	var deviceInfos []*devicespb.Device
-	req := &devicespb.ListDevicesRequest{
-		Query:    &devicespb.Device_Query{Conditions: conditions},
-		PageSize: listDevicesPageSize,
-	}
-	for {
-		resp, err := a.Services.Devices.ListDevices(ctx, req)
-		if err != nil {
-			return err
-		}
-		deviceInfos = append(deviceInfos, resp.Devices...)
-		req.PageToken = resp.NextPageToken
-		if req.PageToken == "" {
-			break
-		}
+	deviceInfos, err := a.listDevices(ctx, conditions)
+	if err != nil {
+		return err
 	}
 	if !includeZones && len(only) == 0 {
 		// Filtered here rather than in the query: devices with no device type
@@ -448,6 +453,15 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
 			return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
 		})
+	}
+
+	groups := make([]groupedAs, len(deviceInfos)) // each sent as itself unless grouped
+	if group {
+		// By name, so a grouped device's collectors keep their order across refreshes, see carryFetchState.
+		slices.SortFunc(deviceInfos, func(x, y *devicespb.Device) int { return strings.Compare(x.GetName(), y.GetName()) })
+		if groups, err = a.groupChildren(ctx, deviceInfos); err != nil {
+			return err
+		}
 	}
 
 	// Building a collector fetches from the device, so bound each build as
@@ -460,27 +474,38 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	var grp errgroup.Group
 	grp.SetLimit(maxConcurrentFetches)
 	for i, deviceInfo := range deviceInfos {
+		if groups[i].skip {
+			continue
+		}
 		grp.Go(func() error {
 			fetchCtx, cancel := context.WithTimeout(ctx, fetchTimeout)
 			defer cancel()
-			builds[i].collector, builds[i].supported = a.newCollector(fetchCtx, traitName, deviceInfo.Name)
+			builds[i].collector, builds[i].supported = a.newCollector(fetchCtx, traitName, deviceInfo.Name, groups[i].key)
 			return nil
 		})
 	}
 	_ = grp.Wait()
 
 	for i, deviceInfo := range deviceInfos {
+		if groups[i].skip {
+			continue
+		}
 		if !builds[i].supported {
 			a.Logger.Warn("trait is configured but not supported",
 				zap.String("trait", string(traitName)), zap.String("device", deviceInfo.Name))
 			continue
 		}
-		dev, ok := devices[deviceInfo.Name]
-		if !ok {
-			dev = &device{name: deviceInfo.Name, metaData: deviceInfo.Metadata, discoveryOwed: true}
-			devices[deviceInfo.Name] = dev
+		name, meta, collector := deviceInfo.Name, deviceInfo.Metadata, builds[i].collector
+		if target := groups[i].target; target != "" {
+			name, meta = target, groups[i].targetMeta
+			collector = childCollector{traitCollector: collector, child: deviceInfo.Name}
 		}
-		dev.collectors = append(dev.collectors, builds[i].collector)
+		dev, ok := devices[name]
+		if !ok {
+			dev = &device{name: name, metaData: meta, discoveryOwed: true}
+			devices[name] = dev
+		}
+		dev.collectors = append(dev.collectors, collector)
 	}
 	for _, name := range only {
 		// A mistyped or unannounced name would otherwise look like a device with no data.
@@ -492,6 +517,125 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	return nil
 }
 
+// listDevices lists every device matching conditions.
+func (a *AutoImpl) listDevices(ctx context.Context, conditions []*devicespb.Device_Query_Condition) ([]*devicespb.Device, error) {
+	var deviceInfos []*devicespb.Device
+	req := &devicespb.ListDevicesRequest{
+		Query:    &devicespb.Device_Query{Conditions: conditions},
+		PageSize: listDevicesPageSize,
+	}
+	for {
+		resp, err := a.Services.Devices.ListDevices(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		deviceInfos = append(deviceInfos, resp.Devices...)
+		req.PageToken = resp.NextPageToken
+		if req.PageToken == "" {
+			return deviceInfos, nil
+		}
+	}
+}
+
+// forgetGroupParents forgets the parents groupChildren has found, for a new config.
+func (a *AutoImpl) forgetGroupParents() {
+	a.groupMu.Lock()
+	defer a.groupMu.Unlock()
+	a.groupParents, a.groupZones = nil, nil
+}
+
+// groupedAs is how one device of a grouped trait is sent. The zero value sends it as itself.
+type groupedAs struct {
+	target     string               // the parent it is sent as a point of, or empty to send it as itself
+	targetMeta *metadatapb.Metadata // the parent's, for its discovery
+	key        string               // its point in the parent's telemetry, see pointKey
+	skip       bool                 // its point is taken, so it isn't sent
+}
+
+// groupChildren decides how each of deviceInfos, sorted by name, is sent when its trait is grouped.
+// A child groups into its parent, see groupTarget, when the parent is an announced device and
+// neither is a zone. The parents come from one query, since a parent such as a heat exchanger
+// needn't implement the trait itself, and their metadata is what the grouped device's discovery carries.
+//
+// A parent, once found, stays one until the config changes, as it does for health (see healthGroups):
+// a driver reconfiguring removes and re-announces its devices, and a refresh that caught a child
+// without its parent would send the child as itself until the next refresh.
+//
+// A child whose point key is empty, or taken by another child or by the reading of a parent that
+// has the trait itself, isn't sent: two readings can't share a point. The first by name keeps it.
+func (a *AutoImpl) groupChildren(ctx context.Context, deviceInfos []*devicespb.Device) ([]groupedAs, error) {
+	isZone := func(d *devicespb.Device) bool { return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE }
+	var candidates []string
+	seen := make(map[string]bool)
+	for _, d := range deviceInfos {
+		if parent, _, ok := splitChild(d.GetName()); ok && !isZone(d) && !seen[parent] {
+			seen[parent] = true
+			candidates = append(candidates, parent)
+		}
+	}
+	var found []*devicespb.Device
+	if len(candidates) > 0 {
+		var err error
+		found, err = a.listDevices(ctx, []*devicespb.Device_Query_Condition{{
+			Field: "name",
+			Value: &devicespb.Device_Query_Condition_StringIn{StringIn: &devicespb.Device_Query_StringList{Strings: candidates}},
+		}})
+		if err != nil {
+			return nil, err
+		}
+	}
+	a.groupMu.Lock()
+	if a.groupParents == nil {
+		a.groupParents = make(map[string]*metadatapb.Metadata)
+		a.groupZones = make(map[string]bool)
+	}
+	for _, d := range found {
+		if isZone(d) {
+			a.groupZones[d.GetName()] = true
+		} else {
+			a.groupParents[d.GetName()] = d.GetMetadata()
+		}
+	}
+	parents := make(map[string]*metadatapb.Metadata, len(a.groupParents))
+	for name, md := range a.groupParents {
+		if !a.groupZones[name] {
+			parents[name] = md
+		}
+	}
+	a.groupMu.Unlock()
+	parentKnown := func(p string) bool { _, ok := parents[p]; return ok }
+
+	hasTrait := make(map[string]bool, len(deviceInfos)) // a parent with the trait sends its own reading
+	for _, d := range deviceInfos {
+		hasTrait[d.GetName()] = true
+	}
+	own := pointTemperature.name(a.pointNaming)
+	taken := make(map[string]map[string]string) // target -> point key -> child
+	res := make([]groupedAs, len(deviceInfos))
+	for i, d := range deviceInfos {
+		if isZone(d) {
+			continue
+		}
+		target, leaf, ok := groupTarget(d.GetName(), parentKnown)
+		if !ok {
+			continue
+		}
+		key := pointKey(leaf)
+		if taken[target] == nil {
+			taken[target] = make(map[string]string)
+		}
+		if other, dup := taken[target][key]; key == "" || (key == own && hasTrait[target]) || dup {
+			a.Logger.Warn("child device's point is taken, not sending it",
+				zap.String("device", d.GetName()), zap.String("parent", target), zap.String("point", key), zap.String("takenBy", other))
+			res[i].skip = true
+			continue
+		}
+		taken[target][key] = d.GetName()
+		res[i] = groupedAs{target: target, targetMeta: parents[target], key: key}
+	}
+	return res, nil
+}
+
 // listDevicesPageSize is the devices server's maximum page size, so most sites
 // list each trait in one round trip.
 const listDevicesPageSize = 1000
@@ -501,8 +645,8 @@ const listDevicesPageSize = 1000
 const maxConcurrentFetches = 100
 
 // newCollector builds a collector for traitName. supported is false if the trait
-// can't be exported.
-func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, deviceName string) (_ traitCollector, supported bool) {
+// can't be exported. key, if not empty, is the point a grouped child is sent as, see pointKey.
+func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, deviceName, key string) (_ traitCollector, supported bool) {
 	switch traitName {
 	case resourceusepb.TraitName:
 		c := &resourceUseCollector{name: deviceName, client: a.resourceUseClient}
@@ -540,6 +684,13 @@ func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, devic
 		}
 		return newSensorCollector(ctx, deviceName, a.pointNaming,
 			getOccupancy(a.occupancyClient), forEachOccupancyPointFor(peopleCountingOf(support)), a.Logger), true
+	case temperaturepb.TraitName: // smartcore.bos.Temperature, not trait.Temperature (smartcore.traits.Temperature)
+		forEach := forEachTemperaturePoint
+		if key != "" {
+			forEach = forEachTemperaturePointFor(key)
+		}
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getTemperature(a.temperatureClient), forEach, a.Logger), true
 	default:
 		return nil, false
 	}

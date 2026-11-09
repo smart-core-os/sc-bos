@@ -19,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
 
@@ -171,6 +172,7 @@ type healthHarness struct {
 	node             *node.Node
 	manifestInterval time.Duration
 	includeZones     bool
+	groupTraits      []string       // as config.Root.GroupChildren
 	store            healthAckStore // shared by every run, like the node's database
 	start            time.Time
 }
@@ -193,6 +195,7 @@ func newHealthHarness(t *testing.T) *healthHarness {
 func (h *healthHarness) run(maxRate float64) (stop func()) {
 	ctx, cancel := context.WithCancel(context.Background())
 	p := newHealthPublisher(h.sink, h.checks, h.node, h.store, "tlm", h.manifestInterval, h.includeZones, maxRate, zaptest.NewLogger(h.t))
+	p.groupTraits(h.groupTraits)
 	done := make(chan error, 1)
 	go func() { done <- p.run(ctx) }()
 	h.start = time.Now()
@@ -1129,4 +1132,262 @@ func TestSlotDue(t *testing.T) {
 			assert.Equal(t, tt.want, slotDue(slot, tt.from, tt.to))
 		})
 	}
+}
+
+// checkIDs returns the ids of the checks in a sent set, with their display names.
+func checkIDs(t *testing.T, m sentMsg) map[string]string {
+	t.Helper()
+	res := make(map[string]string)
+	for _, raw := range m.set.Checks {
+		var c struct {
+			ID          string `json:"id"`
+			DisplayName string `json:"display_name"`
+		}
+		require.NoError(t, json.Unmarshal(raw, &c))
+		res[c.ID] = c.DisplayName
+	}
+	return res
+}
+
+// lastSet returns the checks of the last set sent for resource.
+func (h *healthHarness) lastSet(resource string) map[string]string {
+	h.t.Helper()
+	sets := h.sink.sets(resource)
+	require.NotEmpty(h.t, sets, resource)
+	return checkIDs(h.t, sets[len(sets)-1])
+}
+
+const (
+	testPHX       = "floors/01/PHX-S-01-01"
+	testPHXFlow   = testPHX + "/chw-primary-flow"
+	testPHXReturn = testPHX + "/chw-primary-return"
+)
+
+// announcePHX announces a heat exchanger with no Temperature of its own, and two of its points.
+func (h *healthHarness) announcePHX() {
+	h.node.Announce(testPHX)
+	h.node.Announce(testPHXFlow, node.HasTrait(temperaturepb.TraitName))
+	h.node.Announce(testPHXReturn, node.HasTrait(temperaturepb.TraitName))
+}
+
+// returnRange is the check a healthbounds automation puts on every point it selects, with the same id on each.
+func returnRange() *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{Id: "healthbounds:chw-return", DisplayName: "CHW Return Temperature Range", Normality: healthpb.HealthCheck_NORMAL}
+}
+
+func TestHealthPublisher_groupsChildren(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.announcePHX()
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_NORMAL))
+		h.setChecks(testPHXFlow, returnRange())
+		h.setChecks(testPHXReturn, returnRange())
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+
+		assert.Equal(t, map[string]string{
+			"comms": "comms",
+			"chw-primary-flow/healthbounds:chw-return":   "chw-primary-flow: CHW Return Temperature Range",
+			"chw-primary-return/healthbounds:chw-return": "chw-primary-return: CHW Return Temperature Range",
+		}, h.lastSet(testPHX), "one set, its ids unique")
+		require.Len(t, h.sink.sets(testPHX), 1)
+		assert.Empty(t, h.sink.sets(testPHXFlow), "a child has no set of its own")
+		assert.Empty(t, h.sink.sets(testPHXReturn))
+		assert.Equal(t, map[string]string{"c": "c"}, h.lastSet("dev1"), "other devices are unchanged")
+
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.ElementsMatch(t, []string{nameHash(testPHX), nameHash("dev1")}, h.manifestNameHashes())
+
+		// a child's change is a change of its parent's set
+		changed := returnRange()
+		changed.Normality = healthpb.HealthCheck_HIGH
+		h.setChecks(testPHXFlow, changed)
+		h.sleepUntil(healthFirstManifestDelay + time.Second)
+		require.Len(t, h.sink.sets(testPHX), 2)
+		assert.Empty(t, h.sink.sets(testPHXFlow))
+
+		// removing a child takes its checks out of the set
+		h.removeChecks(testPHXReturn)
+		h.sleepUntil(healthFirstManifestDelay + 2*time.Second)
+		assert.Equal(t, map[string]string{
+			"comms": "comms",
+			"chw-primary-flow/healthbounds:chw-return": "chw-primary-flow: CHW Return Temperature Range",
+		}, h.lastSet(testPHX))
+		assert.Empty(t, h.sink.sets(testPHXReturn))
+
+		// removing the rest empties it
+		h.removeChecks(testPHX)
+		h.sleepUntil(healthFirstManifestDelay + 3*time.Second)
+		assert.Equal(t, map[string]string{
+			"chw-primary-flow/healthbounds:chw-return": "chw-primary-flow: CHW Return Temperature Range",
+		}, h.lastSet(testPHX), "the children keep the set when the parent's own checks go")
+		h.removeChecks(testPHXFlow)
+		h.sleepUntil(healthFirstManifestDelay + 4*time.Second)
+		sets := h.sink.sets(testPHX)
+		assert.Empty(t, sets[len(sets)-1].set.Checks)
+		assert.NotNil(t, sets[len(sets)-1].set.Checks, "an empty set removes every check")
+		assert.Empty(t, h.sink.sets(testPHXFlow))
+	})
+}
+
+// TestHealthPublisher_groupsChildrenAnnouncedLate checks a child whose device the publisher hasn't
+// seen yet at start is held until it has, rather than sent as itself and then emptied: otherwise
+// every start would send every child's ref an empty set.
+func TestHealthPublisher_groupsChildrenAnnouncedLate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.setChecks(testPHXFlow, returnRange())
+		h.setChecks(testPHXReturn, returnRange())
+		h.run(10)
+		h.sleepUntil(5 * time.Second)
+		h.announcePHX()
+		h.sleepUntil(healthSettleMax + time.Second)
+
+		require.Len(t, h.sink.sets(""), 1)
+		assert.Len(t, h.lastSet(testPHX), 2)
+	})
+}
+
+// TestHealthPublisher_groupedLate checks a child seen only after the hold is first sent as itself,
+// then moved into its parent's set, its own ref sent an empty set.
+func TestHealthPublisher_groupedLate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.node.Announce(testPHX)
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_NORMAL))
+		h.setChecks(testPHXFlow, returnRange())
+		h.run(10)
+		h.sleepUntil(healthSettleMax + time.Second)
+		assert.Equal(t, map[string]string{"healthbounds:chw-return": "CHW Return Temperature Range"}, h.lastSet(testPHXFlow),
+			"a device never announced goes as itself once the hold is over")
+		assert.Equal(t, map[string]string{"comms": "comms"}, h.lastSet(testPHX))
+
+		h.node.Announce(testPHXFlow, node.HasTrait(temperaturepb.TraitName))
+		h.sleepUntil(healthSettleMax + 2*time.Second)
+		assert.Empty(t, h.lastSet(testPHXFlow), "its own ref is emptied")
+		assert.Len(t, h.sink.sets(testPHXFlow), 2)
+		assert.Equal(t, map[string]string{
+			"comms": "comms",
+			"chw-primary-flow/healthbounds:chw-return": "chw-primary-flow: CHW Return Temperature Range",
+		}, h.lastSet(testPHX))
+	})
+}
+
+// TestHealthPublisher_groupsKeepThroughReannounce checks a driver reconfiguring, which removes and
+// re-announces its devices, doesn't move children's checks onto their own refs meanwhile.
+func TestHealthPublisher_groupsKeepThroughReannounce(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		undoParent := h.node.Announce(testPHX)
+		undoChild := h.node.Announce(testPHXFlow, node.HasTrait(temperaturepb.TraitName))
+		h.setChecks(testPHXFlow, returnRange())
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(""), 1)
+
+		undoChild()
+		undoParent()
+		h.sleepUntil(healthSettleQuiet + 2*time.Second)
+		h.node.Announce(testPHX)
+		h.node.Announce(testPHXFlow, node.HasTrait(temperaturepb.TraitName))
+		h.sleepUntil(healthSettleQuiet + 3*time.Second)
+		assert.Len(t, h.sink.sets(""), 1, "nothing to send")
+	})
+}
+
+func TestHealthPublisher_groupsRespectZones(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.node.Announce("plant", node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.node.Announce("plant/temp", node.HasTrait(temperaturepb.TraitName))
+		h.node.Announce("phx")
+		h.node.Announce("phx/zone", node.HasTrait(temperaturepb.TraitName), node.HasDeviceType(metadatapb.Metadata_ZONE))
+		h.setChecks("plant", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.setChecks("plant/temp", returnRange())
+		h.setChecks("phx/zone", returnRange())
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+
+		assert.Empty(t, h.sink.sets("plant"), "zones are left out")
+		assert.Equal(t, map[string]string{"healthbounds:chw-return": "CHW Return Temperature Range"}, h.lastSet("plant/temp"),
+			"a zone's child isn't grouped into it")
+		assert.Empty(t, h.sink.sets("phx/zone"), "a zone isn't grouped, and is left out")
+		assert.Empty(t, h.sink.sets("phx"))
+	})
+}
+
+// TestHealthPublisher_notGrouped checks children go as themselves when nothing is grouped.
+func TestHealthPublisher_notGrouped(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.announcePHX()
+		h.setChecks(testPHXFlow, returnRange())
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		assert.Equal(t, map[string]string{"healthbounds:chw-return": "CHW Return Temperature Range"}, h.lastSet(testPHXFlow))
+		assert.Empty(t, h.sink.sets(testPHX))
+	})
+}
+
+// TestHealthPublisher_groupedRestartSendsNothing checks a restart doesn't resend a grouped parent's
+// set (SCB-1532): it is rebuilt from its children before the saved acknowledgements are dropped.
+func TestHealthPublisher_groupedRestartSendsNothing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.announcePHX()
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_NORMAL))
+		h.setChecks(testPHXFlow, returnRange())
+		h.setChecks(testPHXReturn, returnRange())
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(""), 1)
+		stop()
+		ack, ok := h.store.(*memAckStore).get(testPHX)
+		require.True(t, ok, "the parent's set is saved")
+		_, ok = h.store.(*memAckStore).get(testPHXFlow)
+		require.False(t, ok, "a child has nothing of its own to save")
+
+		h.run(10)
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Len(t, h.sink.sets(""), 1, "nothing resent")
+		var listed string
+		for _, e := range h.sink.manifests()[len(h.sink.manifests())-1].manifest.Resources {
+			if e.NameHash == nameHash(testPHX) {
+				listed = e.Hash
+			}
+		}
+		assert.Equal(t, ack.Hash, listed, "the manifest lists the saved set")
+	})
+}
+
+// TestHealthPublisher_groupingChildDropsItsSavedAck checks turning grouping on drops a child's
+// saved acknowledgement from before, so its ref leaves the manifest and Connect disposes of its set.
+func TestHealthPublisher_groupingChildDropsItsSavedAck(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.announcePHX()
+		h.setChecks(testPHXFlow, returnRange())
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(testPHXFlow), 1)
+		stop()
+		_, ok := h.store.(*memAckStore).get(testPHXFlow)
+		require.True(t, ok)
+
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.run(10)
+		h.sleepUntil(healthFirstManifestDelay)
+		assert.Len(t, h.sink.sets(testPHXFlow), 1, "no empty set: the manifest leaving it out is enough")
+		require.Len(t, h.sink.sets(testPHX), 1)
+		assert.ElementsMatch(t, []string{nameHash(testPHX)}, h.manifestNameHashes())
+		_, ok = h.store.(*memAckStore).get(testPHXFlow)
+		assert.False(t, ok, "the child's saved acknowledgement is dropped")
+	})
 }

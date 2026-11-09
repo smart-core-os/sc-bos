@@ -2,6 +2,7 @@ package connecttelemetry
 
 import (
 	"encoding/json"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
@@ -444,6 +446,83 @@ func TestPeopleCountingOf(t *testing.T) {
 	assert.Equal(t, countingUndescribed, peopleCountingOf(nil))
 	assert.Equal(t, countingNone, peopleCountingOf(&occupancysensorpb.OccupancySupport{}))
 	assert.Equal(t, countingCounts, peopleCountingOf(&occupancysensorpb.OccupancySupport{MaxPeople: 40}))
+}
+
+func TestTemperatureTelemetry(t *testing.T) {
+	r := &temperaturepb.Temperature{
+		SetPoint: &typespb.Temperature{ValueCelsius: 6},
+		Measured: &typespb.Temperature{ValueCelsius: 7.5},
+	}
+
+	t.Run("measured maps to the generic temperature field", func(t *testing.T) {
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldTemperatureSensor: {PresentValue: 7.5},
+		}, envTelemetry(r, dbo.NamingDBO, forEachTemperaturePoint), "the set point is not exported")
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			dbo.FieldTemperatureSensor: {Units: dbo.UnitDegreesCelsius},
+		}, envInventory(r, dbo.NamingDBO, forEachTemperaturePoint))
+	})
+
+	t.Run("raw naming emits the trait's field name", func(t *testing.T) {
+		assert.Equal(t, udmi.PointsEvent{"measured": {PresentValue: 7.5}}, envTelemetry(r, dbo.NamingRaw, forEachTemperaturePoint))
+		assert.Equal(t, map[string]udmi.MetadataPoint{"measured": {Units: dbo.UnitDegreesCelsius}},
+			envInventory(r, dbo.NamingRaw, forEachTemperaturePoint))
+	})
+
+	t.Run("a grouped child is keyed by its point in either naming", func(t *testing.T) {
+		forEach := forEachTemperaturePointFor("chw_primary_flow")
+		for _, n := range []dbo.Naming{dbo.NamingDBO, dbo.NamingRaw} {
+			assert.Equal(t, udmi.PointsEvent{"chw_primary_flow": {PresentValue: 7.5}}, envTelemetry(r, n, forEach), "naming %v", n)
+			assert.Equal(t, map[string]udmi.MetadataPoint{"chw_primary_flow": {Units: dbo.UnitDegreesCelsius}},
+				envInventory(r, n, forEach), "naming %v", n)
+		}
+	})
+
+	t.Run("no measured reading sends nothing", func(t *testing.T) {
+		assert.Empty(t, envTelemetry(&temperaturepb.Temperature{SetPoint: &typespb.Temperature{ValueCelsius: 6}}, dbo.NamingDBO, forEachTemperaturePoint))
+		assert.Empty(t, envInventory[*temperaturepb.Temperature](nil, dbo.NamingDBO, forEachTemperaturePoint))
+		assert.Equal(t, udmi.PointsEvent{dbo.FieldTemperatureSensor: {PresentValue: 0.0}},
+			envTelemetry(&temperaturepb.Temperature{Measured: &typespb.Temperature{}}, dbo.NamingDBO, forEachTemperaturePoint),
+			"a measured 0 °C is a reading")
+	})
+}
+
+func TestPointKey(t *testing.T) {
+	for leaf, want := range map[string]string{
+		"chw-primary-flow":               "chw_primary_flow",
+		"lthw-secondary-return":          "lthw_secondary_return",
+		"PHX-X-01-01-primary-lthw-flow":  "phx_x_01_01_primary_lthw_flow",
+		"DHW-N-09-PHX-primary-lthw-flow": "dhw_n_09_phx_primary_lthw_flow",
+		"  Flow  Temp (°C) ":             "flow_temp_c",
+		"--a__b--":                       "a_b",
+		"already_snake_1":                "already_snake_1",
+		"°/·":                            "",
+	} {
+		assert.Equal(t, want, pointKey(leaf), "pointKey(%q)", leaf)
+	}
+}
+
+func TestGroupTarget(t *testing.T) {
+	known := func(names ...string) func(string) bool {
+		return func(n string) bool { return slices.Contains(names, n) }
+	}
+	const parent = "uk-40lh/floors/01/devices/BMS-S-01-02-PHX-S-01-01"
+
+	target, leaf, ok := groupTarget(parent+"/chw-primary-flow", known(parent))
+	assert.True(t, ok)
+	assert.Equal(t, parent, target)
+	assert.Equal(t, "chw-primary-flow", leaf)
+
+	_, _, ok = groupTarget(parent+"/chw-primary-flow", known())
+	assert.False(t, ok, "a parent that isn't announced")
+	_, _, ok = groupTarget(parent, known("uk-40lh/floors/01/devices"))
+	assert.True(t, ok, "any announced parent, whatever its depth")
+	_, _, ok = groupTarget("standalone", known(""))
+	assert.False(t, ok, "no '/'")
+	_, _, ok = groupTarget(parent+"/", known(parent))
+	assert.False(t, ok, "an empty leaf")
+	_, _, ok = groupTarget("/leaf", known(""))
+	assert.False(t, ok, "an empty parent")
 }
 
 // TestEnvInventory checks discovery declares every environmental point with the

@@ -38,6 +38,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -208,7 +209,7 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, false, allDevices))
 
 	require.Len(t, allDevices, 1)
 	dev := allDevices["foo"]
@@ -265,7 +266,7 @@ func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 		{includeZones: true, want: []string{"meter", "untyped", "zone"}},
 	} {
 		allDevices := make(map[string]*device)
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, nil, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, nil, false, allDevices))
 		assert.ElementsMatch(t, tc.want, slices.Collect(maps.Keys(allDevices)), "includeZones=%v", tc.includeZones)
 	}
 }
@@ -433,7 +434,7 @@ func TestGetAllTraitImplementorsPaginates(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, false, allDevices))
 
 	assert.Equal(t, n, len(allDevices))
 	assert.NotNil(t, allDevices[fmt.Sprintf("meter-%04d", n-1)], "last device by name")
@@ -468,7 +469,7 @@ func TestGetAllTraitImplementorsSlowDevices(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	start := time.Now()
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, nil, false, allDevices))
 	assert.Less(t, time.Since(start), n*fetchTimeout/2, "seed fetches should time out together")
 
 	assert.Equal(t, n, len(allDevices))
@@ -511,7 +512,7 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, nil, false, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }
 
@@ -546,7 +547,7 @@ func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, nil, false, allDevices))
 
 	require.Len(t, allDevices, 1, "a gateway must not republish its cohort's resources")
 	dev := allDevices["node1"]
@@ -1090,7 +1091,7 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	for _, tn := range []trait.Name{trait.AirTemperature, trait.AirQualitySensor, trait.OccupancySensor} {
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, nil, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, nil, false, allDevices))
 	}
 	require.Len(t, allDevices, 1)
 	dev := allDevices["sensor"]
@@ -1207,7 +1208,7 @@ func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
 	}}
 	a.initialiseClients(root)
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, nil, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, nil, false, allDevices))
 	require.Len(t, allDevices, 3)
 
 	sent := func(name string) udmi.PointsEvent {
@@ -1225,4 +1226,211 @@ func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
 	assert.Equal(t, udmi.PointsEvent{
 		dbo.FieldZoneOccupancyStatus: {PresentValue: dbo.OccupancyUnoccupied},
 	}, sent("pir"), "an undescribed sensor claims no empty room")
+}
+
+// temperatureFixture announces Temperature devices on a node, as a BACnet driver announces a
+// heat exchanger's points: each point its own device under the heat exchanger's name.
+type temperatureFixture struct {
+	t    *testing.T
+	root *node.Node
+	a    *AutoImpl
+}
+
+func newTemperatureFixture(t *testing.T) *temperatureFixture {
+	root := node.New("site")
+	devicesApi := devices.NewServer(root)
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zaptest.NewLogger(t),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+	}}
+	a.initialiseClients(root)
+	return &temperatureFixture{t: t, root: root, a: a}
+}
+
+// point announces a Temperature device measuring celsius.
+func (f *temperatureFixture) point(name string, celsius float64, opts ...node.Feature) {
+	model := temperaturepb.NewModel(resource.WithInitialValue(&temperaturepb.Temperature{
+		SetPoint: &typespb.Temperature{ValueCelsius: 99},
+		Measured: &typespb.Temperature{ValueCelsius: celsius},
+	}))
+	f.root.Announce(name, append([]node.Feature{
+		node.HasServer(temperaturepb.RegisterTemperatureApiServer, temperaturepb.TemperatureApiServer(temperaturepb.NewModelServer(model))),
+		node.HasTrait(temperaturepb.TraitName),
+	}, opts...)...)
+}
+
+func (f *temperatureFixture) refresh(group bool) map[string]*device {
+	f.t.Helper()
+	devs := make(map[string]*device)
+	require.NoError(f.t, f.a.getAllTraitImplementors(context.Background(), temperaturepb.TraitName, testFetchTimeout, false, nil, group, devs))
+	return devs
+}
+
+func telemetryOf(t *testing.T, dev *device) udmi.PointsEvent {
+	t.Helper()
+	ev, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+	require.True(t, ok)
+	return ev.Points
+}
+
+// TestGetAllTraitImplementorsGroupsTemperature checks a heat exchanger's points go as one device,
+// the heat exchanger, keyed by their leaves, while devices that aren't children go as themselves.
+func TestGetAllTraitImplementorsGroupsTemperature(t *testing.T) {
+	const phx = "site/devices/BMS-S-01-02-PHX-S-01-01"
+	const dhw = "site/devices/DHWS-N-09"
+	f := newTemperatureFixture(t)
+	// The heat exchanger itself has no Temperature, only its setpoints and alarms.
+	f.root.Announce(phx, node.HasMetadata(&metadatapb.Metadata{
+		Appearance: &metadatapb.Metadata_Appearance{Title: "PHX-S-01-01"},
+		Membership: &metadatapb.Metadata_Membership{Subsystem: "hvac"},
+	}))
+	f.point(phx+"/chw-primary-flow", 6)
+	f.point(phx+"/chw-primary-return", 12)
+	f.point(phx+"/chw-secondary-flow", 7)
+	f.point(phx+"/chw-secondary-return", 13)
+	// A parent with a Temperature of its own, and children named the other way round.
+	f.point(dhw, 60, node.HasMetadata(&metadatapb.Metadata{Appearance: &metadatapb.Metadata_Appearance{Title: "DHWS-N-09"}}))
+	f.point(dhw+"/DHW-N-09-PHX-primary-lthw-flow", 70)
+	f.point(dhw+"/DHW-N-09-PHX-primary-lthw-return", 50)
+	// Devices whose parent isn't announced, or is a zone, go as themselves.
+	f.point("site/devices/AHU-01/temp", 21) // no site/devices/AHU-01
+	f.root.Announce("site/zones/plant", node.HasDeviceType(metadatapb.Metadata_ZONE))
+	f.point("site/zones/plant/temp", 18)
+
+	t.Run("grouped", func(t *testing.T) {
+		devs := f.refresh(true)
+		assert.ElementsMatch(t, []string{phx, dhw, "site/devices/AHU-01/temp", "site/zones/plant/temp"}, slices.Collect(maps.Keys(devs)))
+
+		dev := devs[phx]
+		require.Len(t, dev.collectors, 4)
+		assert.Equal(t, udmi.PointsEvent{
+			"chw_primary_flow":     {PresentValue: 6.0},
+			"chw_primary_return":   {PresentValue: 12.0},
+			"chw_secondary_flow":   {PresentValue: 7.0},
+			"chw_secondary_return": {PresentValue: 13.0},
+		}, telemetryOf(t, dev))
+		disc := dev.buildDiscovery(time.Now())
+		assert.Equal(t, "PHX-S-01-01", disc.System.Name, "the heat exchanger's metadata")
+		assert.Equal(t, []string{"hvac"}, disc.System.Tags)
+		require.NotNil(t, disc.Pointset)
+		assert.Equal(t, map[string]udmi.MetadataPoint{
+			"chw_primary_flow":     {Units: dbo.UnitDegreesCelsius},
+			"chw_primary_return":   {Units: dbo.UnitDegreesCelsius},
+			"chw_secondary_flow":   {Units: dbo.UnitDegreesCelsius},
+			"chw_secondary_return": {Units: dbo.UnitDegreesCelsius},
+		}, disc.Pointset.Points)
+
+		dev = devs[dhw]
+		assert.Equal(t, udmi.PointsEvent{
+			dbo.FieldTemperatureSensor:         {PresentValue: 60.0},
+			"dhw_n_09_phx_primary_lthw_flow":   {PresentValue: 70.0},
+			"dhw_n_09_phx_primary_lthw_return": {PresentValue: 50.0},
+		}, telemetryOf(t, dev), "the parent's own reading stays on the generic field")
+		assert.Equal(t, "DHWS-N-09", dev.buildDiscovery(time.Now()).System.Name)
+
+		assert.Equal(t, udmi.PointsEvent{dbo.FieldTemperatureSensor: {PresentValue: 21.0}}, telemetryOf(t, devs["site/devices/AHU-01/temp"]))
+		assert.Equal(t, udmi.PointsEvent{dbo.FieldTemperatureSensor: {PresentValue: 18.0}}, telemetryOf(t, devs["site/zones/plant/temp"]))
+	})
+
+	t.Run("not grouped", func(t *testing.T) {
+		devs := f.refresh(false)
+		assert.Len(t, devs, 9)
+		assert.Equal(t, udmi.PointsEvent{dbo.FieldTemperatureSensor: {PresentValue: 6.0}}, telemetryOf(t, devs[phx+"/chw-primary-flow"]))
+		assert.NotContains(t, devs, phx)
+	})
+}
+
+// TestGetAllTraitImplementorsGroupedPointTaken checks a child whose point another child has, or
+// the parent's own reading has, isn't sent, rather than overwriting it.
+func TestGetAllTraitImplementorsGroupedPointTaken(t *testing.T) {
+	const parent = "site/devices/PHX"
+	f := newTemperatureFixture(t)
+	f.point(parent, 1)
+	f.point(parent+"/CHW-Flow", 2)
+	f.point(parent+"/chw-flow", 3)           // the same point as CHW-Flow, which sorts first
+	f.point(parent+"/temperature-sensor", 4) // the parent's own point
+
+	devs := f.refresh(true)
+	require.Len(t, devs, 1)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldTemperatureSensor: {PresentValue: 1.0},
+		"chw_flow":                 {PresentValue: 2.0},
+	}, telemetryOf(t, devs[parent]))
+}
+
+// TestRefreshDevicesGroupChildren checks grouping follows groupChildren, and that a grouped
+// device's fetch failures are carried across a refresh with its children.
+func TestRefreshDevicesGroupChildren(t *testing.T) {
+	const parent = "site/devices/PHX"
+	f := newTemperatureFixture(t)
+	f.root.Announce(parent)
+	f.point(parent+"/flow", 6)
+	f.point(parent+"/return", 12)
+
+	cfg := config.Root{
+		Traits:        []string{string(temperaturepb.TraitName)},
+		GroupChildren: []string{string(temperaturepb.TraitName)},
+		FetchTimeout:  &jsontypes.Duration{Duration: testFetchTimeout},
+	}
+	before := make(map[string]*device)
+	require.NoError(t, f.a.refreshDevices(context.Background(), cfg, before))
+	require.Contains(t, before, parent)
+	before[parent].failing = []bool{false, true}
+
+	after := make(map[string]*device)
+	require.NoError(t, f.a.refreshDevices(context.Background(), cfg, after))
+	carryFetchState(before, after)
+	assert.Equal(t, []bool{false, true}, after[parent].failing)
+
+	cfg.GroupChildren = nil
+	ungrouped := make(map[string]*device)
+	require.NoError(t, f.a.refreshDevices(context.Background(), cfg, ungrouped))
+	assert.ElementsMatch(t, []string{parent + "/flow", parent + "/return"}, slices.Collect(maps.Keys(ungrouped)))
+}
+
+// TestDeviceBuildTelemetry_namesFailingChild checks a grouped child that can't be read is named in the log.
+func TestDeviceBuildTelemetry_namesFailingChild(t *testing.T) {
+	core, logs := observer.New(zap.WarnLevel)
+	dev := &device{name: "phx", collectors: []traitCollector{
+		childCollector{traitCollector: fakeCollector{err: errors.New("no route to device")}, child: "phx/flow"},
+	}}
+	_, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.New(core))
+	assert.False(t, ok)
+	require.Equal(t, 1, logs.Len())
+	fields := logs.All()[0].ContextMap()
+	assert.Equal(t, "phx", fields["device"])
+	assert.Equal(t, "phx/flow", fields["child"])
+}
+
+// TestGetAllTraitImplementorsGroupedOwnPoint checks only a parent with the trait itself keeps its
+// own point from its children.
+func TestGetAllTraitImplementorsGroupedOwnPoint(t *testing.T) {
+	const parent = "site/devices/PHX"
+	f := newTemperatureFixture(t)
+	f.root.Announce(parent)
+	f.point(parent+"/temperature-sensor", 4)
+
+	devs := f.refresh(true)
+	require.Len(t, devs, 1)
+	assert.Equal(t, udmi.PointsEvent{dbo.FieldTemperatureSensor: {PresentValue: 4.0}}, telemetryOf(t, devs[parent]),
+		"a parent with no reading of its own leaves the point to its child")
+}
+
+// TestGetAllTraitImplementorsGroupsThroughReannounce checks a child stays grouped while its parent
+// is briefly gone, as when a driver is reconfigured, until the config changes.
+func TestGetAllTraitImplementorsGroupsThroughReannounce(t *testing.T) {
+	const parent = "site/devices/PHX"
+	f := newTemperatureFixture(t)
+	undo := f.root.Announce(parent, node.HasMetadata(&metadatapb.Metadata{Appearance: &metadatapb.Metadata_Appearance{Title: "PHX"}}))
+	f.point(parent+"/flow", 6)
+	require.Contains(t, f.refresh(true), parent)
+
+	undo()
+	devs := f.refresh(true)
+	assert.ElementsMatch(t, []string{parent}, slices.Collect(maps.Keys(devs)), "still grouped while the parent is gone")
+	assert.Equal(t, "PHX", devs[parent].buildDiscovery(time.Now()).System.Name, "with the metadata it was last found with")
+
+	f.a.forgetGroupParents() // as applyConfig does
+	assert.ElementsMatch(t, []string{parent + "/flow"}, slices.Collect(maps.Keys(f.refresh(true))), "forgotten once the config changes")
 }

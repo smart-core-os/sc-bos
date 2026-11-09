@@ -41,6 +41,7 @@ func TestFieldNamesAreValidDBOSubfields(t *testing.T) {
 		FieldZoneAirVOCDensitySensor:       {},
 		FieldZoneOccupancyStatus:           {},
 		FieldZoneOccupancyCount:            {},
+		FieldTemperatureSensor:             {},
 	}
 	for _, f := range MeterFields("kWh", "kWh") { // electricity: energy + exported
 		names[f.Field] = struct{}{}

@@ -14,6 +14,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 )
 
 // UDMI event subfolders, the trailing topic segment Connect classifies on.
@@ -177,6 +178,7 @@ var (
 	pointVOCDensity     = envPoint{dbo.FieldZoneAirVOCDensitySensor, "volatile_organic_compounds_density", dbo.UnitMicrogramsPerCubicMeter}
 	pointOccupancyState = envPoint{dbo.FieldZoneOccupancyStatus, "state", ""}
 	pointPeopleCount    = envPoint{dbo.FieldZoneOccupancyCount, "people_count", ""}
+	pointTemperature    = envPoint{dbo.FieldTemperatureSensor, "measured", dbo.UnitDegreesCelsius}
 )
 
 // envPointFunc receives one point of a reading: its name under the naming mode,
@@ -238,6 +240,26 @@ func forEachAirQualityPoint(r *airqualitysensorpb.AirQuality, n dbo.Naming, fn e
 	emit(pointPM1, r.ParticulateMatter_1)
 	emit(pointPM25, r.ParticulateMatter_25)
 	emit(pointPM10, r.ParticulateMatter_10)
+}
+
+// forEachTemperaturePoint calls fn for a Temperature's measured reading. The set point is
+// writable, not a reading, so it isn't exported.
+func forEachTemperaturePoint(r *temperaturepb.Temperature, n dbo.Naming, fn envPointFunc) {
+	forEachTemperaturePointAs(r, pointTemperature.name(n), fn)
+}
+
+// forEachTemperaturePointFor gives the shape sensorCollector takes for a grouped child's
+// Temperature, sending its measured reading as point key, see pointKey, in either naming.
+func forEachTemperaturePointFor(key string) func(*temperaturepb.Temperature, dbo.Naming, envPointFunc) {
+	return func(r *temperaturepb.Temperature, _ dbo.Naming, fn envPointFunc) {
+		forEachTemperaturePointAs(r, key, fn)
+	}
+}
+
+func forEachTemperaturePointAs(r *temperaturepb.Temperature, name string, fn envPointFunc) {
+	if t := r.GetMeasured(); t != nil {
+		fn(name, t.GetValueCelsius(), pointTemperature.units)
+	}
 }
 
 // occupancyStates maps OccupancySensor states onto DBO zone_occupancy_status, as

@@ -61,6 +61,43 @@ func TestParseConfig(t *testing.T) {
 		assert.ErrorContains(t, err, "not in traits")
 	})
 
+	t.Run("groupChildren", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter", "smartcore.bos.Temperature"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"groupChildren": ["smartcore.bos.Temperature"]
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"smartcore.bos.Temperature"}, root.GroupChildren)
+	})
+
+	t.Run("groupChildren defaults to none", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Temperature"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}
+		}`))
+		require.NoError(t, err)
+		assert.Empty(t, root.GroupChildren)
+	})
+
+	t.Run("groupChildren for a trait not exported", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"groupChildren": ["smartcore.bos.Temperature"]
+		}`))
+		assert.ErrorContains(t, err, "not in traits")
+	})
+
+	t.Run("groupChildren for a trait that can't be grouped", func(t *testing.T) {
+		_, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"groupChildren": ["smartcore.bos.Meter"]
+		}`))
+		assert.ErrorContains(t, err, "can't be grouped")
+	})
+
 	t.Run("devices with an empty list", func(t *testing.T) {
 		_, err := ParseConfig([]byte(`{
 			"traits": ["smartcore.traits.OccupancySensor"],

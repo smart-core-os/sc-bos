@@ -19,9 +19,11 @@ with the Connect ingest side.
 > until Connect builds it. What follows is aligned to the spec's shapes + the concrete infra.
 
 The exporter discovers devices **by trait**, polls the typed trait API on a schedule, and
-publishes each device's data as UDMI. Meter and the environmental sensor traits (AirTemperature,
-AirQualitySensor, OccupancySensor) are published for every device that implements them;
-ResourceUse only for the local node, which publishes its own host resources.
+publishes each device's data as UDMI. Meter, Temperature and the environmental sensor traits
+(AirTemperature, AirQualitySensor, OccupancySensor) are published for every device that implements
+them; ResourceUse only for the local node, which publishes its own host resources. A trait in
+`groupChildren` sends each child device as a point of its parent, see
+[Grouped children](#temperature-and-grouped-children).
 
 It can also publish the node's **health checks**, over the same connection, in sc-bos's own
 shape rather than UDMI. See [Health](#health).
@@ -203,6 +205,49 @@ concentration, pressure, density) until discovery names one.
 - The reading comes from Get and is stamped with the time it was fetched, as a meter's is (SCB-1520):
   a value the driver can still read is current, so an unchanging sensor doesn't look dead.
 
+### Temperature and grouped children
+
+`smartcore.bos.Temperature` (`{set_point, measured}`) says nothing of what it measures, a room, a
+pipe or a tank, so its `measured` reading goes on DBO's generic `temperature_sensor` (`measured`
+under raw naming), in `degrees_celsius`, and Connect's per-source mappings land it on a more
+specific field. The set point is writable, not a reading, and isn't sent. Like the environmental
+sensors, the reading comes from Get and is stamped with the time it was fetched.
+
+Some drivers announce each point of a piece of plant as its own device, a heat exchanger's
+`<phx>/chw-primary-flow`, `<phx>/chw-primary-return` and so on, while the plant itself is a device
+holding set points and alarms. Sent as they are, Connect would see one device per point and could
+not make the plant one entity. With `"groupChildren": ["smartcore.bos.Temperature"]`:
+
+- A device of the trait named `<parent>/<leaf>`, whose parent is an announced device, is sent as a
+  point of `<parent>`: one pointset and one discovery per parent, the discovery carrying the parent's
+  metadata. A parent needn't implement the trait itself.
+- Its point key is its leaf in lower case, each run of other characters than letters and digits
+  becoming `_` (`chw-primary-flow` → `chw_primary_flow`), in either naming. The keys aren't DBO
+  fields, so Connect's per-source mappings turn them into fields. A parent with the trait itself
+  keeps its own reading on `temperature_sensor`.
+- A child whose key is taken, by another child or by a parent that has the trait itself, isn't
+  sent, and is logged.
+- A parent, once found, stays one until the config changes, so a driver re-announcing its devices
+  doesn't send its children as themselves meanwhile.
+- Its health checks go in the parent's set, see [Grouped children's checks](#grouped-childrens-checks),
+  so the parent's ref carries its points' readings and checks alike.
+- Neither a zone nor a zone's child is grouped.
+
+```json
+{
+  "timestamp": "2026-11-09T10:00:00Z",
+  "version": "1.5.2",
+  "points": {
+    "chw_primary_flow":     { "present_value": 6.1 },
+    "chw_primary_return":   { "present_value": 11.8 },
+    "chw_secondary_flow":   { "present_value": 7.0 },
+    "chw_secondary_return": { "present_value": 12.9 }
+  }
+}
+```
+
+Discovery declares each key with `"units": "degrees_celsius"`.
+
 ### Node resources (ResourceUse)
 
 Connect's health spec (`docs/health.md`, "Host resources are telemetry, not a snapshot") wants a
@@ -359,6 +404,29 @@ and the manifest leaves the zone out, which is what makes Connect dispose of any
 holds for it. A name stays a zone once the node has seen it as one, since a zone's type goes
 whenever its zone service stops, on a config change say, a little before automations such as
 `healthbounds` remove their checks on the zone's name.
+
+### Grouped children's checks
+
+With `groupChildren` set, a child grouped into its parent for telemetry (see
+[Temperature and grouped children](#temperature-and-grouped-children)) sends its checks in its
+parent's set instead of its own. The set holds the parent's own checks as they are, then each
+child's with its leaf prefixed to the id (`chw-primary-flow/healthbounds:chw-return`) and to the
+display name (`chw-primary-flow: CHW Return Temperature Range`). An automation such as `healthbounds`
+gives its check the same id on every device it selects, so without the prefix the ids would clash
+within the set. A change to any child's checks is a change of the parent's set.
+
+- A child's own ref has no set and isn't in the manifest, so Connect disposes of any it holds. A
+  child that is only found to be one after it has been sent, its device announced late say, has
+  its own ref sent an empty set as it moves.
+- After start, a check whose device, or whose parent if it is a child, the node hasn't seen yet is
+  held until the hold on sets is over, so a restart doesn't send each child as itself and then empty it.
+- Kind and zone exclusion are the parent's.
+- Health publishes every check whatever `traits` and `devices` say, so a child is grouped by the
+  traits it is announced with even when its reading isn't sent, its point being taken say.
+- What the node knows of each device is kept once seen, as a zone's type is. A driver reconfiguring
+  removes and re-announces its devices, and forgetting a parent meanwhile would move every child's
+  checks onto its own ref and back.
+- Connect's limits apply to the merged set: at most 50 checks and 64 KB.
 
 ### Hashes
 
