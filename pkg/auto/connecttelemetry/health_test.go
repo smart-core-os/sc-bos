@@ -1232,6 +1232,112 @@ func TestHealthPublisher_groupsChildren(t *testing.T) {
 	})
 }
 
+// normalities returns each check's normality in m, by id.
+func normalities(t *testing.T, m sentMsg) map[string]string {
+	t.Helper()
+	res := make(map[string]string)
+	for _, raw := range m.set.Checks {
+		var c struct {
+			ID        string `json:"id"`
+			Normality string `json:"normality"`
+		}
+		require.NoError(t, json.Unmarshal(raw, &c))
+		res[c.ID] = c.Normality
+	}
+	return res
+}
+
+// TestHealthPublisher_groupsChildrenChangingTogether checks children changing together, as one
+// healthbounds automation's checks on every point of a device do, send their parent's set once, with
+// every change in it, rather than once each, however other devices' changes fall.
+func TestHealthPublisher_groupsChildrenChangingTogether(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const phx2, phx2Flow = "floors/01/PHX-S-01-02", "floors/01/PHX-S-01-02/chw-primary-flow"
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.announcePHX()
+		h.node.Announce(phx2)
+		h.node.Announce(phx2Flow, node.HasTrait(temperaturepb.TraitName))
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_NORMAL))
+		h.setChecks(testPHXFlow, returnRange())
+		h.setChecks(testPHXReturn, returnRange())
+		h.setChecks(phx2Flow, returnRange())
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_NORMAL))
+		h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(testPHX), 1)
+		require.Len(t, h.sink.sets(phx2), 1)
+		require.Len(t, h.sink.sets("dev1"), 1)
+
+		// another exchanger changes first, its wait ending part way through this one's changes
+		high := returnRange()
+		high.Normality = healthpb.HealthCheck_HIGH
+		h.setChecks(phx2Flow, high)
+		time.Sleep(healthGroupSettle - 100*time.Millisecond)
+		h.setChecks(testPHXFlow, high)
+		time.Sleep(200 * time.Millisecond)
+		h.setChecks(testPHXReturn, high)
+		h.setChecks("dev1", faultCheck("c", healthpb.HealthCheck_HIGH))
+		synctest.Wait()
+		assert.Len(t, h.sink.sets(phx2), 2, "the other exchanger's wait is over")
+		assert.Len(t, h.sink.sets(testPHX), 1, "the parent waits from its own first change")
+		assert.Len(t, h.sink.sets("dev1"), 2, "a device with no children goes at once")
+
+		time.Sleep(healthGroupSettle)
+		synctest.Wait()
+		sets := h.sink.sets(testPHX)
+		require.Len(t, sets, 2, "one set for both changes")
+		assert.Equal(t, map[string]string{
+			"comms": "NORMAL",
+			"chw-primary-flow/healthbounds:chw-return":   "HIGH",
+			"chw-primary-return/healthbounds:chw-return": "HIGH",
+		}, normalities(t, sets[1]))
+
+		// a change of the parent's own checks waits the same way
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_HIGH))
+		synctest.Wait()
+		assert.Len(t, h.sink.sets(testPHX), 2)
+		time.Sleep(healthGroupSettle)
+		synctest.Wait()
+		assert.Len(t, h.sink.sets(testPHX), 3)
+	})
+}
+
+// TestHealthPublisher_groupedChangeAtStop checks a set still waiting when the publisher stops isn't
+// sent then, and goes after the next start, since it differs from the one acknowledged.
+func TestHealthPublisher_groupedChangeAtStop(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newHealthHarness(t)
+		h.groupTraits = []string{string(temperaturepb.TraitName)}
+		h.announcePHX()
+		h.setChecks(testPHX, faultCheck("comms", healthpb.HealthCheck_NORMAL))
+		h.setChecks(testPHXFlow, returnRange())
+		h.setChecks(testPHXReturn, returnRange())
+		stop := h.run(10)
+		h.sleepUntil(healthSettleQuiet + time.Second)
+		require.Len(t, h.sink.sets(testPHX), 1)
+		sent := h.sink.sets(testPHX)[0].set.Hash
+
+		high := returnRange()
+		high.Normality = healthpb.HealthCheck_HIGH
+		h.setChecks(testPHXFlow, high)
+		synctest.Wait()
+		stop()
+		time.Sleep(healthGroupSettle)
+		synctest.Wait()
+		assert.Len(t, h.sink.sets(testPHX), 1, "nothing sent once stopped")
+		saved, ok := h.store.(*memAckStore).get(testPHX)
+		require.True(t, ok)
+		assert.Equal(t, sent, saved.Hash, "the saved set is the last one sent")
+
+		h.run(10)
+		h.sleepUntil(healthSettleMax + time.Second)
+		sets := h.sink.sets(testPHX)
+		require.Len(t, sets, 2, "the changed set goes after the next start")
+		assert.Equal(t, "HIGH", normalities(t, sets[1])["chw-primary-flow/healthbounds:chw-return"])
+	})
+}
+
 // TestHealthPublisher_groupsChildrenAnnouncedLate checks a child whose device the publisher hasn't
 // seen yet at start is held until it has, rather than sent as itself and then emptied: otherwise
 // every start would send every child's ref an empty set.

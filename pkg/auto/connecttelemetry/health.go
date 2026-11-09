@@ -169,6 +169,9 @@ func (p *healthPublisher) run(ctx context.Context) error {
 	grp.Go(func() error { return p.manifestLoop(ctx) })
 	grp.Go(func() error { return p.timerLoop(ctx) })
 	err := grp.Wait()
+	if p.groups != nil {
+		p.stopGroups()
+	}
 	p.flush()
 	if errors.Is(err, context.Canceled) {
 		return nil

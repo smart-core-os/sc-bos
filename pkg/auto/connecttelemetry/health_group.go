@@ -3,6 +3,7 @@ package connecttelemetry
 import (
 	"slices"
 	"sync"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -34,7 +35,26 @@ type healthGroups struct {
 	target   map[string]string                  // each placed source's target
 	members  map[string]map[string]bool         // each target's sources
 	byParent map[string]map[string]bool         // each present source, by the parent it may group into
+
+	// Each grouped target waiting healthGroupSettle after a change of its sources' checks, see
+	// publishTargetSoonLocked.
+	pending map[string]*pendingFlush
 }
+
+// pendingFlush is a target's wait before its set is published. Its timer's callback publishes only
+// while this is still the target's pending flush, so a timer that fires as the target is published
+// some other way doesn't cut short the wait that follows.
+type pendingFlush struct {
+	timer *time.Timer
+}
+
+// healthGroupSettle is how long a grouped target's set waits after a change of its sources' checks
+// before it is published, so children changing together, as a healthbounds automation's checks on every
+// point of one device do each time it reads them, send their parent's set once rather than once each.
+// Each send is the parent's whole set, so without it a device whose points change in one pass sends
+// that set several times within a fraction of a second. Each target waits from its own first change,
+// so another device's changes don't cut its wait short.
+const healthGroupSettle = 500 * time.Millisecond
 
 func newHealthGroups(traits []string) *healthGroups {
 	return &healthGroups{
@@ -46,6 +66,7 @@ func newHealthGroups(traits []string) *healthGroups {
 		target:   make(map[string]string),
 		members:  make(map[string]map[string]bool),
 		byParent: make(map[string]map[string]bool),
+		pending:  make(map[string]*pendingFlush),
 	}
 }
 
@@ -146,16 +167,73 @@ func (p *healthPublisher) placeLocked(name string, changed bool) {
 	if !ok {
 		return
 	}
-	if !placed || old != target || changed {
+	switch {
+	case !placed || old != target:
 		g.target[name] = target
 		addMember(g.members, target, name)
 		p.publishTargetLocked(target)
+	case changed:
+		p.publishTargetSoonLocked(target)
+	}
+}
+
+// publishTargetSoonLocked publishes target's set after a change to one of its sources' checks. A target
+// with children waits healthGroupSettle from its first change, so its set is built once from what its
+// sources hold then; anything else is published at once.
+func (p *healthPublisher) publishTargetSoonLocked(target string) {
+	g := p.groups
+	if !hasChildLocked(g, target) {
+		p.publishTargetLocked(target)
+		return
+	}
+	if g.pending[target] != nil {
+		return // already waiting
+	}
+	pf := &pendingFlush{}
+	g.pending[target] = pf
+	pf.timer = time.AfterFunc(healthGroupSettle, func() { p.flushTarget(target, pf) })
+}
+
+// hasChildLocked reports whether any source other than target itself is published under it.
+func hasChildLocked(g *healthGroups, target string) bool {
+	for src := range g.members[target] {
+		if src != target {
+			return true
+		}
+	}
+	return false
+}
+
+// flushTarget publishes target at the end of its wait pf, unless it has been published since.
+func (p *healthPublisher) flushTarget(target string, pf *pendingFlush) {
+	g := p.groups
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.pending[target] != pf {
+		return
+	}
+	p.publishTargetLocked(target)
+}
+
+// stopGroups stops every pending wait, for when the publisher stops.
+// The sets they would have published differ from those acknowledged, so they go after the next start.
+func (p *healthPublisher) stopGroups() {
+	g := p.groups
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for target, pf := range g.pending {
+		pf.timer.Stop()
+		delete(g.pending, target)
 	}
 }
 
 // publishTargetLocked publishes target's set from its sources' checks, or its removal if it has none.
 func (p *healthPublisher) publishTargetLocked(target string) {
 	g := p.groups
+	if pf := g.pending[target]; pf != nil { // built from what its sources hold now, so nothing is left to flush
+		pf.timer.Stop()
+		delete(g.pending, target)
+	}
 	sources := g.members[target]
 	if len(sources) == 0 {
 		p.removeResource(target)

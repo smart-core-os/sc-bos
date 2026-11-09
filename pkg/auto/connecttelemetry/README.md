@@ -201,6 +201,11 @@ Connect would see one device per point. `groupChildren` sends them as one:
   (`chw-primary-flow/healthbounds:chw-return`), so the same automation's check on several children
   stays unique. The child's own ref gets no set. Health doesn't depend on `traits` or `devices`, so
   this holds for a child whose reading isn't sent too. See the ingest doc's Health section.
+- Each change resends the parent's whole set, so a parent whose checks change waits half a second
+  before its set is built, and children changing together (one automation's checks on every point,
+  which change in the same pass) send it once. A device with no children goes at once, as ungrouped.
+  A check that flips often, such as a bound set where a point normally runs, now costs its parent's
+  whole set each time, so give bounds a deadband wider than the reading's normal swing.
 - Neither a zone nor a zone's child is grouped.
 - A parent, once found, stays one until the config changes, for telemetry and health alike: a driver
   reconfiguring removes and re-announces its devices, and a child caught without its parent would
