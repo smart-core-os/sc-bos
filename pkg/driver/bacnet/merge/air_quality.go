@@ -29,7 +29,12 @@ type airQualityConfig struct {
 	Pm10 *config.ValueSource `json:"pm10,omitempty"`
 	// A measure of particles in the air measuring 2.5 microns or less in size, in micrograms per cubic meter.
 	Pm25 *config.ValueSource `json:"pm25,omitempty"`
-	VOC  *config.ValueSource `json:"voc,omitempty"`
+	// Total volatile organic compounds in parts per million.
+	VOC *config.ValueSource `json:"voc,omitempty"`
+	// Total volatile organic compounds as a mass concentration, in micrograms per cubic meter.
+	// Use this rather than VOC when the device reports by mass: ppm and mass are not interchangeable.
+	// Set the source's scale for other mass units, for example 1000 for mg/m³.
+	VOCDensity *config.ValueSource `json:"vocDensity,omitempty"`
 }
 
 func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
@@ -166,6 +171,17 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 				return comm.ErrReadProperty{Prop: "voc", Cause: err}
 			}
 			data.VolatileOrganicCompounds = &voc
+			return nil
+		})
+	}
+	if aq.config.VOCDensity != nil {
+		readValues = append(readValues, *aq.config.VOCDensity)
+		resProcessors = append(resProcessors, func(response any) error {
+			density, err := comm.Float32Value(response)
+			if err != nil {
+				return comm.ErrReadProperty{Prop: "voc density", Cause: err}
+			}
+			data.VolatileOrganicCompoundsDensity = &density
 			return nil
 		})
 	}

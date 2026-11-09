@@ -101,8 +101,13 @@ type AirQuality struct {
 	ParticulateMatter_10 *float32 `protobuf:"fixed32,9,opt,name=particulate_matter_10,json=particulateMatter10,proto3,oneof" json:"particulate_matter_10,omitempty"`
 	// The number of times per hour the air in the area is replaced.
 	AirChangePerHour *float32 `protobuf:"fixed32,10,opt,name=air_change_per_hour,json=airChangePerHour,proto3,oneof" json:"air_change_per_hour,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Total volatile organic compounds as a mass concentration, in micrograms per cubic meter.
+	// This is a different measure from volatile_organic_compounds, which is in parts per million:
+	// converting between the two needs a reference gas, so a sensor reports whichever its hardware measures.
+	// Unset means the sensor does not report VOC by mass.
+	VolatileOrganicCompoundsDensity *float32 `protobuf:"fixed32,11,opt,name=volatile_organic_compounds_density,json=volatileOrganicCompoundsDensity,proto3,oneof" json:"volatile_organic_compounds_density,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *AirQuality) Reset() {
@@ -205,6 +210,13 @@ func (x *AirQuality) GetAirChangePerHour() float32 {
 	return 0
 }
 
+func (x *AirQuality) GetVolatileOrganicCompoundsDensity() float32 {
+	if x != nil && x.VolatileOrganicCompoundsDensity != nil {
+		return *x.VolatileOrganicCompoundsDensity
+	}
+	return 0
+}
+
 // AirQualitySupport describes the capabilities of devices implementing this trait
 type AirQualitySupport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -231,8 +243,11 @@ type AirQualitySupport struct {
 	ParticulateMatter_10 *typespb.FloatBounds `protobuf:"bytes,10,opt,name=particulate_matter_10,json=particulateMatter10,proto3" json:"particulate_matter_10,omitempty"`
 	// If present then the sensor supports reporting air changes per hour.
 	AirChangePerHour *typespb.FloatBounds `protobuf:"bytes,11,opt,name=air_change_per_hour,json=airChangePerHour,proto3" json:"air_change_per_hour,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// If present then the sensor supports reporting total volatile organic compounds as a mass concentration,
+	// in micrograms per cubic meter.
+	VolatileOrganicCompoundsDensity *typespb.FloatBounds `protobuf:"bytes,12,opt,name=volatile_organic_compounds_density,json=volatileOrganicCompoundsDensity,proto3" json:"volatile_organic_compounds_density,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *AirQualitySupport) Reset() {
@@ -338,6 +353,13 @@ func (x *AirQualitySupport) GetParticulateMatter_10() *typespb.FloatBounds {
 func (x *AirQualitySupport) GetAirChangePerHour() *typespb.FloatBounds {
 	if x != nil {
 		return x.AirChangePerHour
+	}
+	return nil
+}
+
+func (x *AirQualitySupport) GetVolatileOrganicCompoundsDensity() *typespb.FloatBounds {
+	if x != nil {
+		return x.VolatileOrganicCompoundsDensity
 	}
 	return nil
 }
@@ -625,7 +647,7 @@ var File_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto protoreflect
 
 const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = "" +
 	"\n" +
-	":smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\"\xb6\x06\n" +
+	":smartcore/bos/airqualitysensor/v1/air_quality_sensor.proto\x12!smartcore.bos.airqualitysensor.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!smartcore/bos/types/v1/info.proto\x1a#smartcore/bos/types/v1/number.proto\"\xaf\a\n" +
 	"\n" +
 	"AirQuality\x125\n" +
 	"\x14carbon_dioxide_level\x18\x01 \x01(\x02H\x00R\x12carbonDioxideLevel\x88\x01\x01\x12A\n" +
@@ -638,7 +660,8 @@ const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = 
 	"\x15particulate_matter_25\x18\b \x01(\x02H\x06R\x13particulateMatter25\x88\x01\x01\x127\n" +
 	"\x15particulate_matter_10\x18\t \x01(\x02H\aR\x13particulateMatter10\x88\x01\x01\x122\n" +
 	"\x13air_change_per_hour\x18\n" +
-	" \x01(\x02H\bR\x10airChangePerHour\x88\x01\x01\"F\n" +
+	" \x01(\x02H\bR\x10airChangePerHour\x88\x01\x01\x12P\n" +
+	"\"volatile_organic_compounds_density\x18\v \x01(\x02H\tR\x1fvolatileOrganicCompoundsDensity\x88\x01\x01\"F\n" +
 	"\aComfort\x12\x17\n" +
 	"\x13COMFORT_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vCOMFORTABLE\x10\x01\x12\x11\n" +
@@ -651,7 +674,8 @@ const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = 
 	"\x15_particulate_matter_1B\x18\n" +
 	"\x16_particulate_matter_25B\x18\n" +
 	"\x16_particulate_matter_10B\x16\n" +
-	"\x14_air_change_per_hour\"\x9e\a\n" +
+	"\x14_air_change_per_hourB%\n" +
+	"#_volatile_organic_compounds_density\"\x90\b\n" +
 	"\x11AirQualitySupport\x12R\n" +
 	"\x10resource_support\x18\x01 \x01(\v2'.smartcore.bos.types.v1.ResourceSupportR\x0fresourceSupport\x12U\n" +
 	"\x14carbon_dioxide_level\x18\x02 \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x12carbonDioxideLevel\x12a\n" +
@@ -664,7 +688,8 @@ const file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_rawDesc = 
 	"\x15particulate_matter_25\x18\t \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x13particulateMatter25\x12W\n" +
 	"\x15particulate_matter_10\x18\n" +
 	" \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x13particulateMatter10\x12R\n" +
-	"\x13air_change_per_hour\x18\v \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x10airChangePerHour\"c\n" +
+	"\x13air_change_per_hour\x18\v \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x10airChangePerHour\x12p\n" +
+	"\"volatile_organic_compounds_density\x18\f \x01(\v2#.smartcore.bos.types.v1.FloatBoundsR\x1fvolatileOrganicCompoundsDensity\"c\n" +
 	"\x14GetAirQualityRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\tread_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"\x87\x01\n" +
@@ -731,23 +756,24 @@ var file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_depIdxs = []
 	9,  // 9: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_25:type_name -> smartcore.bos.types.v1.FloatBounds
 	9,  // 10: smartcore.bos.airqualitysensor.v1.AirQualitySupport.particulate_matter_10:type_name -> smartcore.bos.types.v1.FloatBounds
 	9,  // 11: smartcore.bos.airqualitysensor.v1.AirQualitySupport.air_change_per_hour:type_name -> smartcore.bos.types.v1.FloatBounds
-	10, // 12: smartcore.bos.airqualitysensor.v1.GetAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
-	10, // 13: smartcore.bos.airqualitysensor.v1.PullAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
-	7,  // 14: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.changes:type_name -> smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change
-	11, // 15: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.change_time:type_name -> google.protobuf.Timestamp
-	1,  // 16: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.air_quality:type_name -> smartcore.bos.airqualitysensor.v1.AirQuality
-	10, // 17: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.update_mask:type_name -> google.protobuf.FieldMask
-	3,  // 18: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.GetAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.GetAirQualityRequest
-	4,  // 19: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.PullAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.PullAirQualityRequest
-	6,  // 20: smartcore.bos.airqualitysensor.v1.AirQualitySensorInfo.DescribeAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.DescribeAirQualityRequest
-	1,  // 21: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.GetAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.AirQuality
-	5,  // 22: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.PullAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.PullAirQualityResponse
-	2,  // 23: smartcore.bos.airqualitysensor.v1.AirQualitySensorInfo.DescribeAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.AirQualitySupport
-	21, // [21:24] is the sub-list for method output_type
-	18, // [18:21] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	9,  // 12: smartcore.bos.airqualitysensor.v1.AirQualitySupport.volatile_organic_compounds_density:type_name -> smartcore.bos.types.v1.FloatBounds
+	10, // 13: smartcore.bos.airqualitysensor.v1.GetAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
+	10, // 14: smartcore.bos.airqualitysensor.v1.PullAirQualityRequest.read_mask:type_name -> google.protobuf.FieldMask
+	7,  // 15: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.changes:type_name -> smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change
+	11, // 16: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.change_time:type_name -> google.protobuf.Timestamp
+	1,  // 17: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.air_quality:type_name -> smartcore.bos.airqualitysensor.v1.AirQuality
+	10, // 18: smartcore.bos.airqualitysensor.v1.PullAirQualityResponse.Change.update_mask:type_name -> google.protobuf.FieldMask
+	3,  // 19: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.GetAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.GetAirQualityRequest
+	4,  // 20: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.PullAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.PullAirQualityRequest
+	6,  // 21: smartcore.bos.airqualitysensor.v1.AirQualitySensorInfo.DescribeAirQuality:input_type -> smartcore.bos.airqualitysensor.v1.DescribeAirQualityRequest
+	1,  // 22: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.GetAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.AirQuality
+	5,  // 23: smartcore.bos.airqualitysensor.v1.AirQualitySensorApi.PullAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.PullAirQualityResponse
+	2,  // 24: smartcore.bos.airqualitysensor.v1.AirQualitySensorInfo.DescribeAirQuality:output_type -> smartcore.bos.airqualitysensor.v1.AirQualitySupport
+	22, // [22:25] is the sub-list for method output_type
+	19, // [19:22] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_smartcore_bos_airqualitysensor_v1_air_quality_sensor_proto_init() }

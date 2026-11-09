@@ -130,7 +130,7 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 			},
 		},
 		string(trait.AirQualitySensor): {
-			headers: []string{"iaq.co2", "iaq.voc", "iaq.pressure", "iaq.comfort", "iaq.infectionrisk", "iaq.score", "iaq.pm1", "iaq.pm25", "iaq.pm10", "iaq.airchange"},
+			headers: []string{"iaq.co2", "iaq.voc", "iaq.vocdensity", "iaq.pressure", "iaq.comfort", "iaq.infectionrisk", "iaq.score", "iaq.pm1", "iaq.pm25", "iaq.pm10", "iaq.airchange"},
 			get: func(ctx context.Context, name string) (map[string]string, error) {
 				c := airqualitysensorpb.NewAirQualitySensorApiClient(s.m.ClientConn())
 				data, err := c.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name})
@@ -456,6 +456,9 @@ func airQualityToRow(d *airqualitysensorpb.AirQuality) map[string]string {
 	}
 	if d.VolatileOrganicCompounds != nil {
 		vals["iaq.voc"] = fmt.Sprintf("%.3f", *d.VolatileOrganicCompounds)
+	}
+	if d.VolatileOrganicCompoundsDensity != nil {
+		vals["iaq.vocdensity"] = fmt.Sprintf("%.3f", *d.VolatileOrganicCompoundsDensity)
 	}
 	if d.AirPressure != nil {
 		vals["iaq.pressure"] = fmt.Sprintf("%.3f", *d.AirPressure)

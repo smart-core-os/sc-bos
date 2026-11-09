@@ -170,6 +170,15 @@ func mergeAirQuality(all []*airqualitysensorpb.AirQuality) (*airqualitysensorpb.
 		}); ok {
 			out.VolatileOrganicCompounds = &val
 		}
+		// VOC by mass, kept apart from the ppm reading: the two can't be averaged together.
+		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
+			if e == nil || e.VolatileOrganicCompoundsDensity == nil {
+				return 0, false
+			}
+			return *e.VolatileOrganicCompoundsDensity, true
+		}); ok {
+			out.VolatileOrganicCompoundsDensity = &val
+		}
 		// AirPressure
 		if val, ok := merge.Mean(all, func(e *airqualitysensorpb.AirQuality) (float32, bool) {
 			if e == nil || e.AirPressure == nil {

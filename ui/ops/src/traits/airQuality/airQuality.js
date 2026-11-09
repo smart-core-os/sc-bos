@@ -129,6 +129,21 @@ export const metrics = {
       {value: 0.5, status: status.ERROR}
     ]
   },
+  // Total VOC by mass, from sensors that don't report ppm. Named apart from the ppm VOC so a
+  // sensor reporting both doesn't show two readings both called VOC.
+  // Levels follow WELL v2 (500 µg/m³) and the German UBA's 1 mg/m³ hygienic concern level.
+  'volatileOrganicCompoundsDensity': {
+    label: 'VOC mass',
+    labelText: 'VOC mass',
+    unit: 'µg/m³',
+    min: 0,
+    max: 3000,
+    levels: [
+      {value: 0, status: status.SUCCESS},
+      {value: 500, status: status.WARNING},
+      {value: 1000, status: status.ERROR}
+    ]
+  },
   'airPressure': {
     label: 'Air Pressure',
     labelText: 'Air Pressure',

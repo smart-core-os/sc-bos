@@ -219,7 +219,8 @@ score: (f = jspb.Message.getOptionalFloatingPointField(msg, 6)) == null ? undefi
 particulateMatter1: (f = jspb.Message.getOptionalFloatingPointField(msg, 7)) == null ? undefined : f,
 particulateMatter25: (f = jspb.Message.getOptionalFloatingPointField(msg, 8)) == null ? undefined : f,
 particulateMatter10: (f = jspb.Message.getOptionalFloatingPointField(msg, 9)) == null ? undefined : f,
-airChangePerHour: (f = jspb.Message.getOptionalFloatingPointField(msg, 10)) == null ? undefined : f
+airChangePerHour: (f = jspb.Message.getOptionalFloatingPointField(msg, 10)) == null ? undefined : f,
+volatileOrganicCompoundsDensity: (f = jspb.Message.getOptionalFloatingPointField(msg, 11)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -295,6 +296,10 @@ proto.smartcore.bos.airqualitysensor.v1.AirQuality.deserializeBinaryFromReader =
     case 10:
       var value = /** @type {number} */ (reader.readFloat());
       msg.setAirChangePerHour(value);
+      break;
+    case 11:
+      var value = /** @type {number} */ (reader.readFloat());
+      msg.setVolatileOrganicCompoundsDensity(value);
       break;
     default:
       reader.skipField();
@@ -392,6 +397,13 @@ proto.smartcore.bos.airqualitysensor.v1.AirQuality.serializeBinaryToWriter = fun
   if (f != null) {
     writer.writeFloat(
       10,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 11));
+  if (f != null) {
+    writer.writeFloat(
+      11,
       f
     );
   }
@@ -749,6 +761,42 @@ proto.smartcore.bos.airqualitysensor.v1.AirQuality.prototype.hasAirChangePerHour
 };
 
 
+/**
+ * optional float volatile_organic_compounds_density = 11;
+ * @return {number}
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQuality.prototype.getVolatileOrganicCompoundsDensity = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 11, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQuality} returns this
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQuality.prototype.setVolatileOrganicCompoundsDensity = function(value) {
+  return jspb.Message.setField(this, 11, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQuality} returns this
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQuality.prototype.clearVolatileOrganicCompoundsDensity = function() {
+  return jspb.Message.setField(this, 11, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQuality.prototype.hasVolatileOrganicCompoundsDensity = function() {
+  return jspb.Message.getField(this, 11) != null;
+};
+
+
 
 /**
  * List of repeated fields within this message type.
@@ -798,7 +846,8 @@ score: (f = msg.getScore()) && smartcore_bos_types_v1_number_pb.FloatBounds.toOb
 particulateMatter1: (f = msg.getParticulateMatter1()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f),
 particulateMatter25: (f = msg.getParticulateMatter25()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f),
 particulateMatter10: (f = msg.getParticulateMatter10()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f),
-airChangePerHour: (f = msg.getAirChangePerHour()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f)
+airChangePerHour: (f = msg.getAirChangePerHour()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f),
+volatileOrganicCompoundsDensity: (f = msg.getVolatileOrganicCompoundsDensity()) && smartcore_bos_types_v1_number_pb.FloatBounds.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -887,6 +936,11 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.deserializeBinaryFromR
       var value = new smartcore_bos_types_v1_number_pb.FloatBounds;
       reader.readMessage(value,smartcore_bos_types_v1_number_pb.FloatBounds.deserializeBinaryFromReader);
       msg.setAirChangePerHour(value);
+      break;
+    case 12:
+      var value = new smartcore_bos_types_v1_number_pb.FloatBounds;
+      reader.readMessage(value,smartcore_bos_types_v1_number_pb.FloatBounds.deserializeBinaryFromReader);
+      msg.setVolatileOrganicCompoundsDensity(value);
       break;
     default:
       reader.skipField();
@@ -1000,6 +1054,14 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.serializeBinaryToWrite
   if (f != null) {
     writer.writeMessage(
       11,
+      f,
+      smartcore_bos_types_v1_number_pb.FloatBounds.serializeBinaryToWriter
+    );
+  }
+  f = message.getVolatileOrganicCompoundsDensity();
+  if (f != null) {
+    writer.writeMessage(
+      12,
       f,
       smartcore_bos_types_v1_number_pb.FloatBounds.serializeBinaryToWriter
     );
@@ -1411,6 +1473,43 @@ proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.clearAirChan
  */
 proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.hasAirChangePerHour = function() {
   return jspb.Message.getField(this, 11) != null;
+};
+
+
+/**
+ * optional smartcore.bos.types.v1.FloatBounds volatile_organic_compounds_density = 12;
+ * @return {?proto.smartcore.bos.types.v1.FloatBounds}
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.getVolatileOrganicCompoundsDensity = function() {
+  return /** @type{?proto.smartcore.bos.types.v1.FloatBounds} */ (
+    jspb.Message.getWrapperField(this, smartcore_bos_types_v1_number_pb.FloatBounds, 12));
+};
+
+
+/**
+ * @param {?proto.smartcore.bos.types.v1.FloatBounds|undefined} value
+ * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport} returns this
+*/
+proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.setVolatileOrganicCompoundsDensity = function(value) {
+  return jspb.Message.setWrapperField(this, 12, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport} returns this
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.clearVolatileOrganicCompoundsDensity = function() {
+  return this.setVolatileOrganicCompoundsDensity(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.smartcore.bos.airqualitysensor.v1.AirQualitySupport.prototype.hasVolatileOrganicCompoundsDensity = function() {
+  return jspb.Message.getField(this, 12) != null;
 };
 
 

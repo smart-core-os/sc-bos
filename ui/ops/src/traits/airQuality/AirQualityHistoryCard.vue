@@ -48,6 +48,7 @@ const p = defineProps({
 const optionalFields = [
   {name: 'iaq.co2', title: 'CO2 (ppm)'},
   {name: 'iaq.voc', title: 'VOC (ppb)'},
+  {name: 'iaq.vocdensity', title: 'VOC mass (ug/m3)'},
   {name: 'iaq.pressure', title: 'Pressure (hPa)'},
   {name: 'iaq.comfort', title: 'Comfort'},
   {name: 'iaq.infectionrisk', title: 'Infection Risk (%)'},

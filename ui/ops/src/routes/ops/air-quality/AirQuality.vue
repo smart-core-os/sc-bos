@@ -94,6 +94,7 @@ const metricUnit = computed(() => acronyms[selectedMetric.value]?.unit ?? '');
 const colorMapping = {
   carbonDioxideLevel: 'rgba(255, 179, 186, 0.9)',
   volatileOrganicCompounds: 'rgba(255, 223, 186, 0.9)',
+  volatileOrganicCompoundsDensity: 'rgba(255, 223, 186, 0.9)',
   airPressure: 'rgba(255, 255, 186, 0.9)',
   comfort: 'rgba(150, 255, 201, 0.9)',
   infectionRisk: 'rgba(100, 225, 255, 1)',

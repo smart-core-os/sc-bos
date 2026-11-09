@@ -45,7 +45,7 @@ const props = defineProps({
 });
 
 const orderedMetrics = [
-  'volatileOrganicCompounds', 'carbonDioxideLevel',
+  'volatileOrganicCompounds', 'volatileOrganicCompoundsDensity', 'carbonDioxideLevel',
   'particulateMatter25', 'particulateMatter10', 'particulateMatter1',
   'infectionRisk', 'airChangePerHour'
 ];

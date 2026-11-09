@@ -46,6 +46,11 @@ message AirQuality {
   optional float particulate_matter_10 = 9;
   // The number of times per hour the air in the area is replaced.
   optional float air_change_per_hour = 10;
+  // Total volatile organic compounds as a mass concentration, in micrograms per cubic meter.
+  // This is a different measure from volatile_organic_compounds, which is in parts per million:
+  // converting between the two needs a reference gas, so a sensor reports whichever its hardware measures.
+  // Unset means the sensor does not report VOC by mass.
+  optional float volatile_organic_compounds_density = 11;
 
   // Comfort encodes levels of comfort for an area.
   enum Comfort {
@@ -84,6 +89,9 @@ message AirQualitySupport {
   smartcore.bos.types.v1.FloatBounds particulate_matter_10 = 10;
   // If present then the sensor supports reporting air changes per hour.
   smartcore.bos.types.v1.FloatBounds air_change_per_hour = 11;
+  // If present then the sensor supports reporting total volatile organic compounds as a mass concentration,
+  // in micrograms per cubic meter.
+  smartcore.bos.types.v1.FloatBounds volatile_organic_compounds_density = 12;
 }
 
 message GetAirQualityRequest {

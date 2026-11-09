@@ -300,6 +300,8 @@ export default function(props) {
   const acronyms = {
     carbonDioxideLevel: {label: 'CO₂', unit: 'ppm'},
     volatileOrganicCompounds: {label: 'VOC', unit: 'ppm'},
+    // Named apart from the ppm VOC: the page's metric picker lists these by label alone.
+    volatileOrganicCompoundsDensity: {label: 'VOC mass', unit: 'µg/m³'},
     airPressure: {label: 'Air Pressure', unit: 'hPa'},
     comfort: {label: 'Comfort', unit: ''},
     infectionRisk: {label: 'Infection Risk', unit: '%'},
