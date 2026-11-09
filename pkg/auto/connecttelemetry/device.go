@@ -15,6 +15,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 )
 
 // traitCollector fetches telemetry and declares the discovery inventory for one
@@ -56,18 +57,22 @@ func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.
 		d.failing = make([]bool, len(d.collectors))
 	}
 	for i, c := range d.collectors {
+		fields := []zap.Field{zap.String("device", d.name)}
+		if cc, ok := c.(childCollector); ok {
+			fields = append(fields, zap.String("child", cc.child))
+		}
 		points, readingTime, err := c.points(ctx, now)
 		if err != nil {
 			if d.failing[i] {
-				logger.Debug("still failing to fetch trait telemetry", zap.String("device", d.name), zap.Error(err))
+				logger.Debug("still failing to fetch trait telemetry", append(fields, zap.Error(err))...)
 			} else {
-				logger.Warn("failed to fetch trait telemetry, will keep trying", zap.String("device", d.name), zap.Error(err))
+				logger.Warn("failed to fetch trait telemetry, will keep trying", append(fields, zap.Error(err))...)
 			}
 			d.failing[i] = true
 			continue
 		}
 		if d.failing[i] {
-			logger.Info("fetching trait telemetry again", zap.String("device", d.name))
+			logger.Info("fetching trait telemetry again", fields...)
 			d.failing[i] = false
 		}
 		for name, v := range points {
@@ -88,13 +93,20 @@ func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.
 
 // carryFetchState copies each device's fetch failures from before a refresh, for a device that
 // still has the same collectors, so a refresh does not repeat the warning for every device
-// that was already failing.
+// that was already failing. A grouped device's children are added in name order, so its
+// failures line up while its children stay the same.
 func carryFetchState(from, to map[string]*device) {
 	for name, dev := range to {
 		if old, ok := from[name]; ok && len(old.collectors) == len(dev.collectors) {
 			dev.failing = old.failing
 		}
 	}
+}
+
+// childCollector is the collector of a child device sent as a point of its parent, see groupTarget.
+type childCollector struct {
+	traitCollector
+	child string // the child's device name, for logs
 }
 
 // buildDiscovery builds the UDMI device-metadata (discovery) event, merging the
@@ -231,6 +243,12 @@ func getAirTemperature(client airtemperaturepb.AirTemperatureApiClient) func(con
 func getAirQuality(client airqualitysensorpb.AirQualitySensorApiClient) func(context.Context, string) (*airqualitysensorpb.AirQuality, error) {
 	return func(ctx context.Context, name string) (*airqualitysensorpb.AirQuality, error) {
 		return client.GetAirQuality(ctx, &airqualitysensorpb.GetAirQualityRequest{Name: name})
+	}
+}
+
+func getTemperature(client temperaturepb.TemperatureApiClient) func(context.Context, string) (*temperaturepb.Temperature, error) {
+	return func(ctx context.Context, name string) (*temperaturepb.Temperature, error) {
+		return client.GetTemperature(ctx, &temperaturepb.GetTemperatureRequest{Name: name})
 	}
 }
 

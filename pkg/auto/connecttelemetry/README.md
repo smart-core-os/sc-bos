@@ -32,6 +32,8 @@ the topic grammar and the payload contract agreed with the Connect ingest side.
 These traits are exported for every device that implements them:
 
 - **Meter** (`smartcore.bos.Meter`)
+- **Temperature** (`smartcore.bos.Temperature`), whose child devices can be sent as points of
+  their parent, see [Grouping children](#grouping-children)
 - the environmental sensor traits **AirTemperature** (`smartcore.traits.AirTemperature`),
   **AirQualitySensor** (`smartcore.traits.AirQualitySensor`) and **OccupancySensor**
   (`smartcore.traits.OccupancySensor`)
@@ -155,6 +157,52 @@ it holds a numeric reading whose quantity has several units until discovery name
   look dead. A driver that can't read the device fails the Get, so nothing is sent.
 - A device implementing several of these traits publishes one pointset with all their points.
 
+### Temperature
+
+`smartcore.bos.Temperature` says nothing of what it measures, a room, a pipe or a tank, so its
+reading goes on DBO's generic temperature field, and Connect's per-source mappings land it on a
+more specific one.
+
+| DBO point (field)    | Raw point  | Source                 | Units (discovery) |
+|----------------------|------------|------------------------|-------------------|
+| `temperature_sensor` | `measured` | `Temperature.measured` | `degrees_celsius` |
+
+The set point is writable, not a reading, and isn't exported. As for the environmental sensors, the
+reading comes from Get and is stamped with the time it was fetched, and an unset `measured` sends nothing.
+
+### Grouping children
+
+Some drivers announce each point of a piece of plant as its own device. A BACnet heat exchanger, for
+example, is a device holding its set points and alarms, with each water temperature a Temperature
+device beneath it: `…/PHX-S-01-01/chw-primary-flow`, `…/PHX-S-01-01/chw-primary-return` and so on.
+Connect would see one device per point. `groupChildren` sends them as one:
+
+```json
+"traits": ["smartcore.bos.Temperature"],
+"groupChildren": ["smartcore.bos.Temperature"]
+```
+
+- A device of a grouped trait named `<parent>/<leaf>`, whose parent is an announced device, is sent
+  as a point of `<parent>`: one pointset and one discovery for the parent, with the parent's metadata.
+  The parent needn't implement the trait.
+- The point is keyed by the leaf in lower case, each run of characters other than letters and digits
+  becoming `_`: `chw-primary-flow` → `chw_primary_flow`, `DHW-N-09-PHX-primary-lthw-flow` →
+  `dhw_n_09_phx_primary_lthw_flow`, in either `pointNaming`. Connect's per-source mappings turn the
+  keys into fields. A parent with the trait itself keeps its own reading on `temperature_sensor`.
+- A child whose key is taken, by another child or by a parent that has the trait itself, is logged
+  and not sent.
+- With health on, each child's checks go in its parent's set, ids prefixed with the leaf
+  (`chw-primary-flow/healthbounds:chw-return`), so the same automation's check on several children
+  stays unique. The child's own ref gets no set. Health doesn't depend on `traits` or `devices`, so
+  this holds for a child whose reading isn't sent too. See the ingest doc's Health section.
+- Neither a zone nor a zone's child is grouped.
+- A parent, once found, stays one until the config changes, for telemetry and health alike: a driver
+  reconfiguring removes and re-announces its devices, and a child caught without its parent would
+  otherwise go out as itself until the next device refresh.
+
+Only `smartcore.bos.Temperature` can be grouped, and grouping is off unless configured, so other
+sites see no change.
+
 ### Other traits
 
 Other traits configured in `traits` are logged as unsupported and skipped. Add a trait by
@@ -229,7 +277,8 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
+| `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.bos.Temperature`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
+| `groupChildren` | no | — | Traits whose `<parent>/<leaf>` devices are sent as points of their parent, telemetry and health alike, see [Grouping children](#grouping-children). Only `smartcore.bos.Temperature`, which must be in `traits` |
 | `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
 | `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |

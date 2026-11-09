@@ -51,6 +51,11 @@ const (
 	FieldZoneOccupancyCount = "zone_occupancy_count"
 )
 
+// FieldTemperatureSensor is DBO's generic temperature reading, for a smartcore.bos.Temperature
+// device. The trait doesn't say what it measures, a room, a pipe or a tank, so the reading
+// takes no more specific field; Connect's per-source mappings can land it on one.
+const FieldTemperatureSensor = "temperature_sensor"
+
 // States of FieldZoneOccupancyStatus, spelt in lower case as Smart Core Connect's
 // catalogue lands them.
 const (

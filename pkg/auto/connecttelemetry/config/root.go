@@ -68,9 +68,9 @@ type Root struct {
 
 	// Traits is the set of traits to export. Devices implementing one of these
 	// traits are discovered and polled. smartcore.bos.Meter,
-	// smartcore.bos.ResourceUse, and the environmental sensor traits
-	// smartcore.traits.AirTemperature, smartcore.traits.AirQualitySensor and
-	// smartcore.traits.OccupancySensor are supported; ResourceUse only for the
+	// smartcore.bos.ResourceUse, smartcore.bos.Temperature, and the environmental
+	// sensor traits smartcore.traits.AirTemperature, smartcore.traits.AirQualitySensor
+	// and smartcore.traits.OccupancySensor are supported; ResourceUse only for the
 	// local node. May be empty only when health is enabled.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
@@ -96,7 +96,18 @@ type Root struct {
 	// Use it to send one zone whose reading is its own measurement, such as an
 	// enter/leave people count, without the trait's other devices.
 	Devices map[string][]string `json:"devices,omitempty"`
+	// GroupChildren names traits whose child devices are sent as part of their parent.
+	// A device of one of these traits named <parent>/<leaf>, whose parent is an announced
+	// device, is exported as a point of <parent>, keyed by its leaf, and its health checks
+	// join the parent's set with ids prefixed by the leaf. Neither may be a zone.
+	// Use it where a driver announces each point of a piece of plant as its own device,
+	// such as a heat exchanger's flow and return temperatures. Each must be in Traits.
+	// Only smartcore.bos.Temperature can be grouped.
+	GroupChildren []string `json:"groupChildren,omitempty"`
 }
+
+// GroupableTraits are the traits GroupChildren may name: those whose points can be keyed by a child's leaf.
+var GroupableTraits = []string{"smartcore.bos.Temperature"}
 
 func ParseConfig(data []byte) (Root, error) {
 	root := Root{}
@@ -183,6 +194,14 @@ func ParseConfig(data []byte) (Root, error) {
 		}
 		if len(names) == 0 {
 			return Root{}, fmt.Errorf("config parse failed, devices[%q] is empty: list the devices to export, or remove the entry", traitName)
+		}
+	}
+	for _, traitName := range root.GroupChildren {
+		if !slices.Contains(root.Traits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, groupChildren names %q, which is not in traits", traitName)
+		}
+		if !slices.Contains(GroupableTraits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, groupChildren names %q, which can't be grouped: only %v can", traitName, GroupableTraits)
 		}
 	}
 	if len(root.Traits) == 0 && !root.HealthEnabled() {

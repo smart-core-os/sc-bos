@@ -81,6 +81,9 @@ type healthPublisher struct {
 	includeZones     bool
 	limiter          *rate.Limiter
 	logger           *zap.Logger
+	// groups folds grouped children's checks into their parents' sets, nil when nothing is grouped.
+	// See groupTraits. Its lock is taken before mu.
+	groups *healthGroups
 
 	mu        sync.Mutex
 	resources map[string]*healthResource
@@ -176,9 +179,13 @@ func (p *healthPublisher) run(ctx context.Context) error {
 // watchChecks tracks this node's own checks.
 func (p *healthPublisher) watchChecks(ctx context.Context) error {
 	for change := range p.checks.PullDevices(ctx) {
-		if change.ChangeType == typespb.ChangeType_REMOVE {
+		removed := change.ChangeType == typespb.ChangeType_REMOVE
+		switch {
+		case p.groups != nil:
+			p.groupedChecks(change.Id, change.NewValue.GetHealthChecks(), removed)
+		case removed:
 			p.removeResource(change.Id)
-		} else {
+		default:
 			p.setChecks(change.Id, change.NewValue.GetHealthChecks())
 		}
 	}
@@ -186,22 +193,34 @@ func (p *healthPublisher) watchChecks(ctx context.Context) error {
 }
 
 // watchKinds tracks the subject kind of every resource that isn't a device, and which of them are zones.
+// When children are grouped it watches every device, for the names and traits grouping needs.
 func (p *healthPublisher) watchKinds(ctx context.Context) error {
-	changes := p.devices.PullDevices(ctx,
+	opts := []resource.ReadOption{
 		resource.WithReadPaths(&devicespb.Device{}, "metadata.device_type"),
 		resource.WithInclude(func(_ string, item proto.Message) bool {
 			// zones are services, so included
 			return subjectKind(item.(*devicespb.Device).GetMetadata().GetDeviceType()) != subjectKindDevice
 		}),
-	)
-	for change := range changes {
+	}
+	if p.groups != nil {
+		opts = []resource.ReadOption{resource.WithReadPaths(&devicespb.Device{}, "metadata.device_type", "metadata.traits")}
+	}
+	for change := range p.devices.PullDevices(ctx, opts...) {
 		kind, zone := subjectKindDevice, false
-		if change.ChangeType != typespb.ChangeType_REMOVE {
+		removed := change.ChangeType == typespb.ChangeType_REMOVE
+		if !removed {
 			deviceType := change.NewValue.GetMetadata().GetDeviceType()
 			kind = subjectKind(deviceType)
 			zone = deviceType == metadatapb.Metadata_ZONE
 		}
 		p.setKind(change.Id, kind, zone)
+		if p.groups != nil && !removed {
+			var traits []string
+			for _, t := range change.NewValue.GetMetadata().GetTraits() {
+				traits = append(traits, t.GetName())
+			}
+			p.groupedDevice(change.Id, traits, zone)
+		}
 	}
 	return ctx.Err()
 }
@@ -457,6 +476,9 @@ wait:
 		}
 	}
 
+	if p.groups != nil {
+		p.settleGroups() // before mu, see healthPublisher.groups
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.settled = true
