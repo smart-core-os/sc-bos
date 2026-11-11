@@ -15,7 +15,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -54,10 +53,10 @@ func readLightConfig(raw []byte) (cfg lightCfg, err error) {
 }
 
 type light struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *lightpb.Model
 	*lightpb.ModelServer
@@ -65,7 +64,7 @@ type light struct {
 	pollTask *task.Intermittent
 }
 
-func newLight(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*light, error) {
+func newLight(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*light, error) {
 	cfg, err := readLightConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -76,7 +75,7 @@ func newLight(client *comm.Client, devices known.Context, faultCheck *healthpb.F
 	l := &light{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: lightpb.NewModelServer(model),
@@ -187,7 +186,7 @@ func (l *light) pollPeer(ctx context.Context) (*lightpb.Brightness, error) {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, l.faultCheck, l.config.Name, trait.Light, errs)
+	l.fault.update(l.config.Name, trait.Light, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

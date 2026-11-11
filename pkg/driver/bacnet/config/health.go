@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
@@ -11,6 +12,27 @@ import (
 type Health struct {
 	OccupantImpact  OccupantImpact  `json:"occupantImpact"`
 	EquipmentImpact EquipmentImpact `json:"equipmentImpact"`
+}
+
+// DefaultTraitFaultAfter is how long a trait's reads must keep failing before its health check goes abnormal,
+// when TraitHealth.FaultAfter is not set.
+const DefaultTraitFaultAfter = 2 * time.Minute
+
+// TraitHealth configures the health check each trait publishes for its own BACnet reads.
+type TraitHealth struct {
+	Health
+	// FaultAfter is how long a trait's reads must keep failing before its health check goes abnormal.
+	// A single failed poll that recovers within this time leaves the check normal.
+	// Defaults to DefaultTraitFaultAfter. Zero raises a fault on the first failed read.
+	FaultAfter *Duration `json:"faultAfter,omitempty"`
+}
+
+// FaultAfterDuration returns FaultAfter, or DefaultTraitFaultAfter if it is not set.
+func (h TraitHealth) FaultAfterDuration() time.Duration {
+	if h.FaultAfter == nil {
+		return DefaultTraitFaultAfter
+	}
+	return max(h.FaultAfter.Duration, 0)
 }
 
 type HealthCheck struct {

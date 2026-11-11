@@ -13,7 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/energystoragepb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -32,10 +31,10 @@ func readEnergyStorageConfig(raw []byte) (cfg energyStorageConfig, err error) {
 }
 
 type energyStorage struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *energystoragepb.Model
 	*energystoragepb.ModelServer
@@ -43,7 +42,7 @@ type energyStorage struct {
 	pollTask *task.Intermittent
 }
 
-func newEnergyStorage(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
+func newEnergyStorage(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
 	cfg, err := readEnergyStorageConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -54,7 +53,7 @@ func newEnergyStorage(client *comm.Client, devices known.Context, faultCheck *he
 	e := &energyStorage{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: energystoragepb.NewModelServer(model),
@@ -133,7 +132,7 @@ func (e *energyStorage) pollPeer(ctx context.Context) (*energystoragepb.EnergyLe
 		}
 	}
 
-	updateTraitFaultCheck(ctx, e.faultCheck, e.config.Name, trait.EnergyStorage, errs)
+	e.fault.update(e.config.Name, trait.EnergyStorage, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

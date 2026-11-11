@@ -12,7 +12,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -42,10 +41,10 @@ func readAirQualitySensorConfig(raw []byte) (cfg airQualityConfig, err error) {
 }
 
 type airQualitySensor struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *airqualitysensorpb.Model
 	*airqualitysensorpb.ModelServer
@@ -53,7 +52,7 @@ type airQualitySensor struct {
 	pollTask *task.Intermittent
 }
 
-func newAirQualitySensor(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
+func newAirQualitySensor(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*airQualitySensor, error) {
 	cfg, err := readAirQualitySensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -64,7 +63,7 @@ func newAirQualitySensor(client *comm.Client, devices known.Context, faultCheck 
 	t := &airQualitySensor{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: airqualitysensorpb.NewModelServer(model),
@@ -192,7 +191,7 @@ func (aq *airQualitySensor) pollPeer(ctx context.Context) (*airqualitysensorpb.A
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, aq.faultCheck, aq.config.Name, trait.AirQualitySensor, errs)
+	aq.fault.update(aq.config.Name, trait.AirQualitySensor, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

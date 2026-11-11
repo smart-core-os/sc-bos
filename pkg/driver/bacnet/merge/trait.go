@@ -1,9 +1,10 @@
 package merge
 
 import (
-	"context"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -30,48 +31,75 @@ const (
 )
 
 func IntoTrait(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, traitConfig config.RawTrait, logger *zap.Logger) (node.SelfAnnouncer, error) {
+	fault := newTraitFault(faultCheck, traitConfig.Health.FaultAfterDuration())
 	// todo: implement some traits that pull data from different bacnet devices.
 	switch traitConfig.Kind {
 	case trait.AirQualitySensor:
-		return newAirQualitySensor(client, devices, faultCheck, traitConfig, logger)
+		return newAirQualitySensor(client, devices, fault, traitConfig, logger)
 	case trait.AirTemperature:
-		return newAirTemperature(client, devices, faultCheck, traitConfig, logger)
+		return newAirTemperature(client, devices, fault, traitConfig, logger)
 	case trait.Electric:
-		return newElectric(client, devices, faultCheck, traitConfig, logger)
+		return newElectric(client, devices, fault, traitConfig, logger)
 	case trait.Emergency:
-		return newEmergency(client, devices, faultCheck, traitConfig, logger)
+		return newEmergency(client, devices, fault, traitConfig, logger)
 	case trait.EnergyStorage:
-		return newEnergyStorage(client, devices, faultCheck, traitConfig, logger)
+		return newEnergyStorage(client, devices, fault, traitConfig, logger)
 	case trait.FanSpeed:
-		return newFanSpeed(client, devices, faultCheck, traitConfig, logger)
+		return newFanSpeed(client, devices, fault, traitConfig, logger)
 	case trait.Light:
-		return newLight(client, devices, faultCheck, traitConfig, logger)
+		return newLight(client, devices, fault, traitConfig, logger)
 	case meterpb.TraitName:
-		return newMeter(client, devices, faultCheck, traitConfig, logger)
+		return newMeter(client, devices, fault, traitConfig, logger)
 	case trait.Mode:
-		return newMode(client, devices, faultCheck, traitConfig, logger)
+		return newMode(client, devices, fault, traitConfig, logger)
 	case trait.OccupancySensor:
-		return newOccupancy(client, devices, faultCheck, traitConfig, logger)
+		return newOccupancy(client, devices, fault, traitConfig, logger)
 	case trait.OnOff:
-		return newOnOff(client, devices, faultCheck, traitConfig, logger)
+		return newOnOff(client, devices, fault, traitConfig, logger)
 	case accesspb.TraitName:
-		return newAccess(client, devices, faultCheck, traitConfig, logger)
+		return newAccess(client, devices, fault, traitConfig, logger)
 	case securityeventpb.TraitName:
-		return newSecurityEvent(client, devices, faultCheck, traitConfig, logger)
+		return newSecurityEvent(client, devices, fault, traitConfig, logger)
 	case soundsensorpb.TraitName:
-		return newSoundSensor(client, devices, faultCheck, traitConfig, logger)
+		return newSoundSensor(client, devices, fault, traitConfig, logger)
 	case temperaturepb.TraitName:
-		return newTemperature(client, devices, faultCheck, traitConfig, logger)
+		return newTemperature(client, devices, fault, traitConfig, logger)
 	case transportpb.TraitName:
-		return newTransport(client, devices, faultCheck, traitConfig, logger)
+		return newTransport(client, devices, fault, traitConfig, logger)
 	case UdmiMergeName, udmipb.TraitName:
-		return newUdmiMerge(client, devices, faultCheck, traitConfig, logger)
+		return newUdmiMerge(client, devices, fault, traitConfig, logger)
 	}
 	return nil, ErrTraitNotSupported
 }
 
-func updateTraitFaultCheck(_ context.Context, faultCheck *healthpb.FaultCheck, name string, trait trait.Name, errs []error) {
-	if faultCheck == nil {
+// traitFault drives a trait's health check from the outcome of each poll.
+// A failed poll only makes the check abnormal once reads have been failing for at least after,
+// so a one-off dropped or slow read doesn't raise a fault that clears itself a poll later.
+// A clean poll clears the check straight away.
+//
+// That clean poll also ends the streak, so a device that fails most polls but succeeds at least once
+// every after never goes abnormal. Accepted on purpose: requiring a run of good polls before clearing
+// would leave a real recovery showing as a fault for up to after, and a device that intermittent still
+// answers, so its trait values keep updating.
+//
+// The poll loop and Get/Update calls poll concurrently, so update is safe to call from many goroutines.
+// A nil *traitFault, or one with a nil FaultCheck, does nothing.
+type traitFault struct {
+	fc    *healthpb.FaultCheck
+	after time.Duration
+
+	mu           sync.Mutex
+	failingSince time.Time // zero while the last poll succeeded
+}
+
+func newTraitFault(fc *healthpb.FaultCheck, after time.Duration) *traitFault {
+	return &traitFault{fc: fc, after: after}
+}
+
+// update records the outcome of one poll of the trait name of kind trait, whose reads returned errs.
+// Nil entries in errs are successful reads.
+func (f *traitFault) update(name string, trait trait.Name, errs []error) {
+	if f == nil || f.fc == nil {
 		return
 	}
 
@@ -82,12 +110,23 @@ func updateTraitFaultCheck(_ context.Context, faultCheck *healthpb.FaultCheck, n
 		}
 		descriptions = append(descriptions, err.Error())
 	}
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if len(descriptions) == 0 {
 		// No (non-nil) errors, clear any existing fault for this trait.
-		faultCheck.ClearFaults()
+		f.failingSince = time.Time{}
+		f.fc.ClearFaults()
 		return
 	}
-	faultCheck.SetFault(&healthpb.HealthCheck_Error{
+	now := time.Now()
+	if f.failingSince.IsZero() {
+		f.failingSince = now
+	}
+	if now.Sub(f.failingSince) < f.after {
+		return
+	}
+	f.fc.SetFault(&healthpb.HealthCheck_Error{
 		SummaryText: fmt.Sprintf("%s[%s] has %d errors", name, trait.String(), len(descriptions)),
 		DetailsText: fmt.Sprintf("Trait %s errors: %s", trait, strings.Join(descriptions, "; ")),
 		Code: &healthpb.HealthCheck_Error_Code{

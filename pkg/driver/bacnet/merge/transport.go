@@ -16,7 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -62,10 +61,10 @@ type transport struct {
 	transportpb.UnimplementedTransportApiServer
 	transportpb.UnimplementedTransportInfoServer
 
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *transportpb.Model
 	*transportpb.ModelServer
@@ -75,7 +74,7 @@ type transport struct {
 	units atomic.Value
 }
 
-func newTransport(client *comm.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*transport, error) {
+func newTransport(client *comm.Client, known known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*transport, error) {
 	cfg, err := readTransportConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func newTransport(client *comm.Client, known known.Context, faultCheck *healthpb
 	t := &transport{
 		client:      client,
 		known:       known,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: transportpb.NewModelServer(model),
@@ -183,7 +182,7 @@ func (t *transport) pollPeer(ctx context.Context) (*transportpb.Transport, error
 		}
 	}
 
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, transportpb.TraitName, errs)
+	t.fault.update(t.config.Name, transportpb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

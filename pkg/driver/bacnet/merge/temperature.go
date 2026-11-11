@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -32,10 +31,10 @@ func readTemperatureConfig(raw []byte) (cfg temperatureConfig, err error) {
 }
 
 type temperature struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *temperaturepb.Model
 	*temperaturepb.ModelServer
@@ -43,7 +42,7 @@ type temperature struct {
 	pollTask *task.Intermittent
 }
 
-func newTemperature(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
+func newTemperature(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*temperature, error) {
 	cfg, err := readTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ func newTemperature(client *comm.Client, devices known.Context, faultCheck *heal
 	t := &temperature{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: temperaturepb.NewModelServer(model),
@@ -146,7 +145,7 @@ func (t *temperature) pollPeer(ctx context.Context) (*temperaturepb.Temperature,
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, temperaturepb.TraitName, errs)
+	t.fault.update(t.config.Name, temperaturepb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

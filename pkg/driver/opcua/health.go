@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -299,12 +301,55 @@ func newHealth(c config.RawTrait, logger *zap.Logger) (*Health, error) {
 	}, nil
 }
 
-func raisePointError(point string, code string, summary string, fc *healthpb.FaultCheck) {
+// raisePointError reports that hc's point read value instead of its normal value.
+//
+// The value goes in the details, not just a log line, because it is often what decides how
+// urgent the fault is: an IEC 61850 Health point reads 2 for Warning and 3 for Alarm, and both
+// break a check whose normal value is 1. It also means a move from one abnormal value to
+// another changes the fault, so it is published, whereas a repeat of the same value renders
+// identically and checkBase.write drops it.
+func raisePointError(hc *config.HealthCheck, value float64, bitSize int, fc *healthpb.FaultCheck) {
 	fc.AddOrUpdateFault(&healthpb.HealthCheck_Error{
-		SummaryText: summary,
-		DetailsText: "An error has been detected on point: " + point,
-		Code:        statusToHealthCode(code),
+		SummaryText: hc.Summary,
+		DetailsText: pointErrorDetails(hc, value, bitSize),
+		Code:        statusToHealthCode(hc.ErrorCode),
 	})
+}
+
+// pointErrorDetails renders what hc's point read against what it should have, for example
+// "Point LPHD1.EEHealth read 2 (Warning), expected 1 (Ok). NodeID: ns=2;s=...".
+//
+// Both values are raw, before any scale, because that is what normalValue is compared against.
+// bitSize is the precision the point reported its value in: see labelHealthValue.
+func pointErrorDetails(hc *config.HealthCheck, value float64, bitSize int) string {
+	point := hc.Name
+	if point == "" {
+		point = hc.NodeId
+	}
+	details := fmt.Sprintf("Point %s read %s, expected %s.",
+		point, labelHealthValue(hc.Enum, value, bitSize), labelHealthValue(hc.Enum, *hc.NormalValue, 64))
+	if hc.Name != "" {
+		details += " NodeID: " + hc.NodeId
+	}
+	return details
+}
+
+// labelHealthValue renders v as the shortest number that reads back as v, so 2 prints as "2"
+// rather than "2.000000", followed by its label from enum when it has one. bitSize is 32 for a
+// value the point reported as a Float, which keeps 20.1 from printing as 20.100000381469727.
+//
+// ValueSource.GetValueFromIntKey would do the lookup, but it takes the point's own integer
+// type and handleEvent has already converted the value to a float64, so only a whole number
+// is looked up here: 2.5 has no label, and must not be truncated into one.
+func labelHealthValue(enum map[string]string, v float64, bitSize int) string {
+	s := strconv.FormatFloat(v, 'f', -1, bitSize)
+	if v != math.Trunc(v) {
+		return s
+	}
+	if label, ok := enum[s]; ok {
+		return s + " (" + label + ")"
+	}
+	return s
 }
 
 // floatEqual compares two float64 values for equality. Has tolerance in case of floating-point issues.
@@ -314,6 +359,15 @@ func floatEqual(a, b float64) bool {
 		diff = -diff
 	}
 	return diff < floatTolerance
+}
+
+// floatBits is the precision to render a point's value in: 32 for a Float point, whose value
+// conv.Float64Value widens, and 64 for everything else.
+func floatBits(value any) int {
+	if _, ok := value.(float32); ok {
+		return 32
+	}
+	return 64
 }
 
 func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
@@ -333,7 +387,7 @@ func (h *Health) handleEvent(_ context.Context, node *ua.NodeID, value any) {
 	for _, hc := range checks {
 		if !floatEqual(numValue, *hc.NormalValue) {
 			if check, ok := h.errorChecks[hc.Id]; ok {
-				raisePointError(hc.Name, hc.ErrorCode, hc.Summary, check)
+				raisePointError(hc, numValue, floatBits(value), check)
 			} else {
 				h.logger.Warn("no fault check found for ID", zap.String("healthCheckId", hc.Id))
 			}

@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
@@ -32,10 +31,10 @@ func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
 }
 
 type meterTrait struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *meterpb.Model
 	*meterpb.ModelServer
@@ -43,7 +42,7 @@ type meterTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newMeter(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
+func newMeter(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
 	cfg, err := readMeterConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -54,7 +53,7 @@ func newMeter(client *comm.Client, devices known.Context, faultCheck *healthpb.F
 	t := &meterTrait{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: meterpb.NewModelServer(model),
@@ -117,7 +116,7 @@ func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error
 	if err != nil {
 		errs = append(errs, comm.ErrReadProperty{Prop: "usage", Cause: err})
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Meter, errs)
+	t.fault.update(t.config.Name, trait.Meter, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

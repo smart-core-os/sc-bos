@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -32,10 +31,10 @@ var _ occupancysensorpb.OccupancySensorApiServer = (*occupancy)(nil)
 type occupancy struct {
 	occupancysensorpb.UnimplementedOccupancySensorApiServer
 
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *occupancysensorpb.Model
 	*occupancysensorpb.ModelServer
@@ -43,7 +42,7 @@ type occupancy struct {
 	pollTask *task.Intermittent
 }
 
-func newOccupancy(client *comm.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
+func newOccupancy(client *comm.Client, known known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*occupancy, error) {
 	cfg, err := readOccupancyConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -54,7 +53,7 @@ func newOccupancy(client *comm.Client, known known.Context, faultCheck *healthpb
 	o := &occupancy{
 		client:      client,
 		known:       known,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: occupancysensorpb.NewModelServer(model),
@@ -125,7 +124,7 @@ func (o *occupancy) pollPeer(ctx context.Context) (*occupancysensorpb.Occupancy,
 		}
 	}
 
-	updateTraitFaultCheck(ctx, o.faultCheck, o.config.Name, trait.OccupancySensor, errs)
+	o.fault.update(o.config.Name, trait.OccupancySensor, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
