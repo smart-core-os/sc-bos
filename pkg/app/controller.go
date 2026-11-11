@@ -341,6 +341,7 @@ func initCloud(ctx context.Context, config sysconf.Config, logger *zap.Logger, s
 	updaterOpts := []cloud.BinaryUpdaterOption{
 		cloud.WithBinaryLogger(logger.Named("cloud.update")),
 		cloud.WithBinaryVersion(EffectiveVersion()),
+		cloud.WithBinaryVersionsFile(resolveCloudPath(cloudDataDir, "binary-versions.json")),
 	}
 	// A nil client means the Supervisor integration is disabled
 	if supClient != nil {

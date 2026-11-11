@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -30,11 +31,41 @@ type Capabilities struct {
 }
 
 // RunningArtefact identifies the version a stream is currently running. VersionID and Hash are
-// best-effort drift identity and may be empty.
+// best-effort drift identity: Hash may be empty, and VersionID may be absent or null.
 type RunningArtefact struct {
-	Version   string `json:"version,omitempty"`
-	VersionID string `json:"versionId,omitempty"`
-	Hash      string `json:"hash,omitempty"`
+	Version   string     `json:"version,omitempty"`
+	VersionID ReportedID `json:"versionId,omitzero"` // VersionID may be absent or null, which each have different behavior.
+	Hash      string     `json:"hash,omitempty"`     // Hash may be empty if no hash known
+}
+
+// ReportedID is a version id reported in a check-in. The cloud reads it three ways: absent leaves its
+// record unchanged, null means the node runs no version the cloud knows, and an id names that version.
+// The zero value is absent.
+type ReportedID struct {
+	id   string
+	null bool
+}
+
+// ReportID returns a ReportedID naming id. An empty id is absent.
+func ReportID(id string) ReportedID {
+	return ReportedID{id: id}
+}
+
+// ReportNoID returns a ReportedID that tells the cloud the node runs no version it knows.
+func ReportNoID() ReportedID {
+	return ReportedID{null: true}
+}
+
+// IsZero reports whether r is absent, so an omitzero field leaves it out.
+func (r ReportedID) IsZero() bool {
+	return r.id == "" && !r.null
+}
+
+func (r ReportedID) MarshalJSON() ([]byte, error) {
+	if r.id == "" {
+		return []byte("null"), nil
+	}
+	return json.Marshal(r.id)
 }
 
 // Platform is the node's runtime platform (GOOS/GOARCH).

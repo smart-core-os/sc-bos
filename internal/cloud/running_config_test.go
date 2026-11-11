@@ -88,7 +88,7 @@ func TestConfigFlow_ReportsRunningConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CheckInRequest (after commit): %v", err)
 	}
-	if req.Running.Config == nil || req.Running.Config.VersionID != wantID || req.Running.Config.Version != "1.0.0" {
+	if req.Running.Config == nil || req.Running.Config.VersionID != ReportID(wantID) || req.Running.Config.Version != "1.0.0" {
 		t.Fatalf("running.config = %+v, want VersionID %q and Version %q", req.Running.Config, wantID, "1.0.0")
 	}
 
@@ -103,7 +103,7 @@ func TestConfigFlow_ReportsRunningConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CheckInRequest (dep2 staged): %v", err)
 	}
-	if req.Running.Config == nil || req.Running.Config.VersionID != wantID {
+	if req.Running.Config == nil || req.Running.Config.VersionID != ReportID(wantID) {
 		t.Fatalf("running.config while dep2 staged = %+v, want VersionID %q (still cv1)", req.Running.Config, wantID)
 	}
 }

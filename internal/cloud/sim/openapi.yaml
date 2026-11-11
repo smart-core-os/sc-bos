@@ -1163,6 +1163,10 @@ components:
           type: string
         versionId:
           type: string
+          nullable: true
+          description: >-
+            Version ID of the running artefact as reported by the cloud when the node installed that version.
+            Null if the running artefact was not installed from the cloud (so no version ID is known).
         hash:
           type: string
           description: Type-prefixed "<algo>:<base64>" digest of the running artefact
