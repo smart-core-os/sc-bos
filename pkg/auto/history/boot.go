@@ -10,12 +10,12 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/bootpb"
 )
 
-func (a *automation) collectBootRecordChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectBootRecordChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := bootpb.NewBootApiClient(a.clients.ClientConn())
 
 	// Deduplicate on full proto equality: any field change in BootState triggers
 	// a history record, but reconnects that replay the same state are ignored.
-	last := newDeduper[*bootpb.BootState](nil)
+	last := newDeduper[*bootpb.BootState](nil, rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullBootState(ctx, &bootpb.PullBootStateRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -28,7 +28,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetBootState()) {
+				if !last.Changed(ctx, change.GetBootState()) {
 					continue
 				}
 				payload, err := proto.Marshal(change.GetBootState())
@@ -49,7 +49,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 		if err != nil {
 			return err
 		}
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 		payload, err := proto.Marshal(resp)
@@ -64,7 +64,7 @@ func (a *automation) collectBootRecordChanges(ctx context.Context, source config
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

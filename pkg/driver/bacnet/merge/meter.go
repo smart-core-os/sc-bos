@@ -7,7 +7,6 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -33,7 +32,7 @@ func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
 }
 
 type meterTrait struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -44,7 +43,7 @@ type meterTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newMeter(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
+func newMeter(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
 	cfg, err := readMeterConfig(config.Raw)
 	if err != nil {
 		return nil, err

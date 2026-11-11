@@ -11,10 +11,10 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/util/cmp"
 )
 
-func (a *automation) collectElectricDemandChanges(ctx context.Context, source config.Source, payloads chan<- []byte) {
+func (a *automation) collectElectricDemandChanges(ctx context.Context, source config.Source, payloads chan<- []byte, rec *recency, logger *zap.Logger) {
 	client := electricpb.NewElectricApiClient(a.clients.ClientConn())
 
-	last := newDeduper[*electricpb.ElectricDemand](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)))
+	last := newDeduper[*electricpb.ElectricDemand](cmp.Equal(cmp.FloatValueApprox(0, 0.0001)), rec)
 
 	pullFn := func(ctx context.Context, changes chan<- []byte) error {
 		stream, err := client.PullDemand(ctx, &electricpb.PullDemandRequest{Name: source.Name, UpdatesOnly: true, ReadMask: source.ReadMask.PB()})
@@ -27,7 +27,7 @@ func (a *automation) collectElectricDemandChanges(ctx context.Context, source co
 				return err
 			}
 			for _, change := range msg.Changes {
-				if !last.Changed(change.GetDemand()) {
+				if !last.Changed(ctx, change.GetDemand()) {
 					continue
 				}
 
@@ -50,7 +50,7 @@ func (a *automation) collectElectricDemandChanges(ctx context.Context, source co
 			return err
 		}
 
-		if !last.Changed(resp) {
+		if !last.Changed(ctx, resp) {
 			return nil
 		}
 
@@ -67,7 +67,7 @@ func (a *automation) collectElectricDemandChanges(ctx context.Context, source co
 		return nil
 	}
 
-	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, a.logger); err != nil {
-		a.logger.Warn("collection aborted", zap.Error(err))
+	if err := collectChanges(ctx, source, pullFn, pollFn, payloads, rec, logger); err != nil {
+		logger.Warn("collection aborted", zap.Error(err))
 	}
 }

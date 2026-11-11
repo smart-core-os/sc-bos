@@ -8,7 +8,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/smart-core-os/gobacnet"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/comm"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
@@ -33,7 +32,7 @@ func readEnergyStorageConfig(raw []byte) (cfg energyStorageConfig, err error) {
 }
 
 type energyStorage struct {
-	client     *gobacnet.Client
+	client     *comm.Client
 	known      known.Context
 	faultCheck *healthpb.FaultCheck
 	logger     *zap.Logger
@@ -44,7 +43,7 @@ type energyStorage struct {
 	pollTask *task.Intermittent
 }
 
-func newEnergyStorage(client *gobacnet.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
+func newEnergyStorage(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*energyStorage, error) {
 	cfg, err := readEnergyStorageConfig(config.Raw)
 	if err != nil {
 		return nil, err
