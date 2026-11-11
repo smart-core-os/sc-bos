@@ -87,7 +87,7 @@ func (u *ConfigUpdater) CheckInRequest(ctx context.Context) (CheckInRequest, err
 
 	req := CheckInRequest{}
 	if version.ID != "" || version.Version != "" {
-		req.Running.Config = &RunningArtefact{Version: version.Version, VersionID: version.ID}
+		req.Running.Config = &RunningArtefact{Version: version.Version, VersionID: ReportID(version.ID)}
 	}
 	if installing != "" {
 		req.Progress = append(req.Progress, ProgressReport{DeploymentID: installing, State: ProgressInstalling})

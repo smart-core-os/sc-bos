@@ -24,15 +24,17 @@ const rollbackReasonFallback = "update rolled back: running version does not mat
 // noSupervisorReason is reported when BOS is offered an update it can't install because it has no Supervisor.
 const noSupervisorReason = "software updates are not supported on this node: no Supervisor configured"
 
-// BinaryUpdater handles the binary channel of a check-in. It is stateless: the
-// Supervisor is the source of truth for an update's outcome, and the cloud re-offers the active
-// deployment on every poll until BOS reports a terminal result, so BOS persists nothing.
+// BinaryUpdater handles the binary channel of a check-in. The Supervisor is the source of truth for an
+// update's outcome, and the cloud re-offers the active deployment on every poll until BOS reports a
+// terminal result. The only state BOS keeps is the cloud's version id for each version it was asked to
+// run, so it can report which cloud version it is running.
 type BinaryUpdater struct {
 	// installer is the Supervisor's gRPC client, or nil when the integration is disabled. When nil the
 	// binary channel attempts no install (BOS cannot apply an update without a Supervisor) and reports
 	// any update it isn't already running as failed.
 	installer supervisorpb.SupervisorApiClient
-	version   string // the version BOS currently runs; "" when unknown
+	version   string          // the version BOS currently runs; "" when unknown
+	versions  *binaryVersions // optional - if nil, BinaryUpdater reports versions without version IDs
 	logger    *zap.Logger
 }
 
@@ -58,12 +60,45 @@ func WithBinaryVersion(version string) BinaryUpdaterOption {
 	return func(u *BinaryUpdater) { u.version = version }
 }
 
-// runningBinary reports the binary version BOS is running, or nil when unknown.
+// WithBinaryVersionsFile enables the storage of recently deployed version ID mappings in a file with the given path.
+// This allows the BinaryUpdater to remember which cloud versionID is associated with each version.
+// A fixed number of mappings are stored, with mappings for newly deployed versions replacing the oldest version.
+func WithBinaryVersionsFile(path string) BinaryUpdaterOption {
+	return func(u *BinaryUpdater) { u.versions = &binaryVersions{path: path} }
+}
+
+// runningBinary reports the binary version BOS is running, or nil when unknown. Attempts to resolve version ID from
+// u.versions but returns null version ID if not found, or empty version ID if attempt to resolve it failed.
 func (u *BinaryUpdater) runningBinary() *RunningArtefact {
 	if u.version == "" {
 		return nil
 	}
-	return &RunningArtefact{Version: u.version}
+	running := &RunningArtefact{Version: u.version}
+	if u.versions == nil {
+		return running
+	}
+	id, ok, err := u.versions.lookup(u.version)
+	switch {
+	case err != nil:
+		u.logger.Error("can't read recorded software version ids, not reporting one", zap.Error(err))
+	case ok:
+		running.VersionID = ReportID(id)
+	default:
+		running.VersionID = ReportNoID()
+	}
+	return running
+}
+
+// storeVersionMapping records the cloud's version id associated with an offered version.
+// operation may fail - this is logged. It isn't returned because it is noncritical and there is no real way to handle it.
+func (u *BinaryUpdater) storeVersionMapping(v VersionProjection) {
+	if u.versions == nil {
+		return
+	}
+	if err := u.versions.add(v.Version, v.ID); err != nil {
+		u.logger.Error("can't record software version id",
+			zap.String("version", v.Version), zap.String("versionId", v.ID), zap.Error(err))
+	}
 }
 
 // canInstall reports whether BOS can install software updates, which needs a Supervisor.
@@ -110,6 +145,14 @@ func installInFlight(st *supervisorpb.UpdateStatus) bool {
 	}
 }
 
+// mayRollBack reports whether the Supervisor might still roll back version.
+func mayRollBack(st *supervisorpb.UpdateStatus, stErr error, version string) bool {
+	if stErr != nil || installInFlight(st) {
+		return true
+	}
+	return st.GetState() == supervisorpb.UpdateStatus_FAILED && st.GetVersion() == version
+}
+
 // reportBinary reports the binary channel's status from a check-in response, using the Supervisor status
 // st (fetched once per poll by the caller). It reconciles the offered latestBinary against st and reports
 // the appropriate outcome via a follow-up check-in:
@@ -149,7 +192,7 @@ func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp Ch
 		if runningTarget {
 			u.logger.Info("running the deployment's target version, reporting current to server",
 				zap.String("deploymentId", deploymentID), zap.String("version", version.Version))
-			return installState{}, u.reportApplied(ctx, client, deploymentID)
+			return installState{}, u.reportApplied(ctx, client, latest)
 		}
 		u.logger.Warn("binary deployment received but no Supervisor configured, reporting failure to server",
 			zap.String("deploymentId", deploymentID), zap.String("version", version.Version))
@@ -164,7 +207,7 @@ func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp Ch
 		case supervisorpb.UpdateStatus_COMPLETED:
 			// The Supervisor confirmed the update. Report current; the server completes the deployment
 			// whether it was still pending or already in_progress.
-			return installState{}, u.reportApplied(ctx, client, deploymentID)
+			return installState{}, u.reportApplied(ctx, client, latest)
 		case supervisorpb.UpdateStatus_FAILED:
 			reason := st.GetError()
 			if reason == "" {
@@ -196,7 +239,7 @@ func (u *BinaryUpdater) reportBinary(ctx context.Context, client Client, resp Ch
 	if runningTarget {
 		u.logger.Info("running the deployment's target version, reporting current to server",
 			zap.String("deploymentId", deploymentID), zap.String("version", version.Version))
-		return installState{}, u.reportApplied(ctx, client, deploymentID)
+		return installState{}, u.reportApplied(ctx, client, latest)
 	}
 
 	// A genuinely new deployment. Leave it for the caller to install (subject to the interlock); report
@@ -220,6 +263,9 @@ func (u *BinaryUpdater) installBinary(ctx context.Context, client Client, latest
 	if _, err := client.CheckIn(ctx, CheckInRequest{Progress: []ProgressReport{installing}}); err != nil {
 		return fmt.Errorf("check-in to report installing update: %w", err)
 	}
+
+	// Recorded before installing, since BOS may restart into the new version at any point after this.
+	u.storeVersionMapping(version)
 
 	installCtx, cancel := context.WithTimeout(ctx, supervisorCallTimeout)
 	defer cancel()
@@ -258,11 +304,15 @@ func (u *BinaryUpdater) installBinary(ctx context.Context, client Client, latest
 	}
 }
 
-// reportApplied reports the deployment as running its target version (progress:applied) via a follow-up
-// check-in. The server completes the deployment whether it was still pending or already in_progress.
-func (u *BinaryUpdater) reportApplied(ctx context.Context, client Client, deploymentID string) error {
+// reportApplied records the version id of latest, then reports its deployment as running its target
+// version (progress:applied) via a follow-up check-in that also carries the running binary, so the cloud
+// learns its version id without waiting for the next poll. The server completes the deployment whether
+// it was still pending or already in_progress.
+func (u *BinaryUpdater) reportApplied(ctx context.Context, client Client, latest *LatestStream) error {
+	u.storeVersionMapping(latest.Version)
 	if _, err := client.CheckIn(ctx, CheckInRequest{
-		Progress: []ProgressReport{{DeploymentID: deploymentID, State: ProgressApplied}},
+		Running:  RunningState{Binary: u.runningBinary()},
+		Progress: []ProgressReport{{DeploymentID: latest.Deployment.ID, State: ProgressApplied}},
 	}); err != nil {
 		return fmt.Errorf("check-in to report current update: %w", err)
 	}

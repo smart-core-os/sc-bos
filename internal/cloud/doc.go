@@ -24,6 +24,10 @@
 //  2. Ask the supervisor to install the new update
 //  3. Upon restarting, BOS will check in with the new version
 //
+// BOS records the cloud's version id for each version it installs, in binary-versions.json in the cloud data
+// directory, and reports the id of the version it runs once the Supervisor has confirmed it. A version BOS has
+// no record of, such as a hand-installed build, is reported with a null version id.
+//
 // If no supervisor integration is available, any binary updates offered by the server will be rejected.
 // The client's capability to accept binary updates is indicated by the check-in `capabilities` object.
 //

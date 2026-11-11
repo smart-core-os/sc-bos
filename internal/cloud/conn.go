@@ -402,7 +402,13 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	}
 	req.Running.Platform = new(c.platform)
 	if c.binaryUpdater != nil {
-		req.Running.Binary = c.binaryUpdater.runningBinary()
+		running := c.binaryUpdater.runningBinary()
+		// The cloud completes a deployment once BOS reports its target's version id, so the id is held back
+		// while the Supervisor might still roll back.
+		if running != nil && mayRollBack(supStatus, supErr, running.Version) {
+			running.VersionID = ReportedID{}
+		}
+		req.Running.Binary = running
 		req.Running.Capabilities = &Capabilities{BinaryUpdates: new(c.binaryUpdater.canInstall())}
 	}
 
