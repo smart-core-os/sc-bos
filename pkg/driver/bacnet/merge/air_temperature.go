@@ -12,7 +12,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -76,10 +75,10 @@ func readAirTemperatureConfig(raw []byte) (cfg airTemperatureConfig, err error) 
 }
 
 type airTemperature struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *airtemperaturepb.Model
 	*airtemperaturepb.ModelServer
@@ -87,7 +86,7 @@ type airTemperature struct {
 	pollTask *task.Intermittent
 }
 
-func newAirTemperature(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
+func newAirTemperature(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*airTemperature, error) {
 	cfg, err := readAirTemperatureConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func newAirTemperature(client *comm.Client, devices known.Context, faultCheck *h
 	t := &airTemperature{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: airtemperaturepb.NewModelServer(model),
@@ -259,7 +258,7 @@ func (t *airTemperature) pollPeer(ctx context.Context) (*airtemperaturepb.AirTem
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.AirTemperature, errs)
+	t.fault.update(t.config.Name, trait.AirTemperature, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

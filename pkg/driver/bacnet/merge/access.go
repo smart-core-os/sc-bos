@@ -16,7 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -36,10 +35,10 @@ func readAccessConfig(raw []byte) (cfg accessConfig, err error) {
 }
 
 type access struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *accesspb.Model
 	*accesspb.ModelServer
@@ -47,7 +46,7 @@ type access struct {
 	pollTask *task.Intermittent
 }
 
-func newAccess(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*access, error) {
+func newAccess(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*access, error) {
 	cfg, err := readAccessConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -56,7 +55,7 @@ func newAccess(client *comm.Client, devices known.Context, faultCheck *healthpb.
 	a := &access{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: accesspb.NewModelServer(model),
@@ -118,7 +117,7 @@ func (a *access) pollPeer(ctx context.Context) (*accesspb.AccessAttempt, error) 
 		}
 	}
 
-	updateTraitFaultCheck(ctx, a.faultCheck, a.cfg.Name, trait.Access, errs)
+	a.fault.update(a.cfg.Name, trait.Access, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

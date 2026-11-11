@@ -45,6 +45,31 @@ and the [merge](merge) package.
 The driver also publishes a non-Smart Core gRPC API described in [bacnet.proto](rpc/bacnet.proto) that provides low
 level access to BACnet services like ReadProperty and WriteProperty against configured devices.
 
+## Trait health
+
+Each trait in `traits` publishes a "Trait Status Check" health check for its own BACnet reads. The check goes abnormal,
+with code `BACnet Communication Error`, once the trait's reads have been failing for `health.faultAfter`, and clears on
+the first poll where every read succeeds. This stops a single dropped or slow read raising a fault that clears itself a
+poll later.
+
+```json
+{
+  "name": "room-1-temp", "kind": "smartcore.bos.Temperature",
+  "health": {"occupantImpact": "COMFORT", "faultAfter": "30s"},
+  "measured": {"device": 10002, "object": "AnalogInput:0"}
+}
+```
+
+- `faultAfter` defaults to `2m`. `0s` raises the fault on the first failed read.
+- The check goes abnormal on the first failed read that comes at least `faultAfter` after the reads began failing. While
+  the trait is pulled it polls every `pollPeriod` (default 10s), so that is about `faultAfter` after the first failure.
+  With only the keep-alive poll running it is the second failed keep-alive poll, so up to `pollKeepAlive` (default 5m)
+  later.
+- Any poll counts, including those run for a Get or Update.
+- One clean poll ends the streak, so a device whose reads fail most of the time but succeed at least once every
+  `faultAfter` stays NORMAL. That is accepted on purpose: clearing as soon as reads work again keeps a real recovery
+  from lingering as a fault, and a device that intermittent still answers, so its trait values keep updating.
+
 ## BACnet - Destination Network Addressing
 
 One project worked on, that uses this driver had the following setup:

@@ -13,7 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/onoffpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -37,10 +36,10 @@ func readOnOffConfig(raw []byte) (cfg onOffCfg, err error) {
 }
 
 type onOff struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *onoffpb.Model
 	*onoffpb.ModelServer
@@ -48,7 +47,7 @@ type onOff struct {
 	pollTask *task.Intermittent
 }
 
-func newOnOff(client *comm.Client, known known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
+func newOnOff(client *comm.Client, known known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*onOff, error) {
 	cfg, err := readOnOffConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -58,7 +57,7 @@ func newOnOff(client *comm.Client, known known.Context, faultCheck *healthpb.Fau
 	o := &onOff{
 		client:      client,
 		known:       known,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: onoffpb.NewModelServer(model),
@@ -149,7 +148,7 @@ func (o *onOff) pollPeer(ctx context.Context) (*onoffpb.OnOff, error) {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, o.faultCheck, o.config.Name, trait.OnOff, errs)
+	o.fault.update(o.config.Name, trait.OnOff, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

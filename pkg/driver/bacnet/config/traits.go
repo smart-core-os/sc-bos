@@ -38,7 +38,7 @@ type Trait struct {
 	ChunkSize int `json:"chunkSize,omitempty"`
 	// Each trait can have its own health check configuration.
 	// If not configured, occupant and equipment impact will default to UNSPECIFIED.
-	Health Health `json:"health"`
+	Health TraitHealth `json:"health"`
 	// PollKeepAlive is the interval between background keep-alive polls when no listeners are active.
 	// Defaults to 5m.
 	PollKeepAlive *Duration `json:"pollKeepAlive,omitempty"`

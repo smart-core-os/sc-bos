@@ -13,7 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/modepb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -54,10 +53,10 @@ func readModeConfig(raw []byte) (cfg modeConfig, err error) {
 }
 
 type mode struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *modepb.Model
 	*modepb.ModelServer
@@ -66,7 +65,7 @@ type mode struct {
 	pollTask   *task.Intermittent
 }
 
-func newMode(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*mode, error) {
+func newMode(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*mode, error) {
 	cfg, err := readModeConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -76,7 +75,7 @@ func newMode(client *comm.Client, devices known.Context, faultCheck *healthpb.Fa
 	t := &mode{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: modepb.NewModelServer(model),
@@ -211,7 +210,7 @@ responses:
 		}
 		dst.Values[cfg.name] = value
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Mode, errs)
+	t.fault.update(t.config.Name, trait.Mode, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

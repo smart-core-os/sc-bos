@@ -14,7 +14,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/electricpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -46,10 +45,10 @@ func readElectricConfig(raw []byte) (cfg electricConfig, err error) {
 }
 
 type electricTrait struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *electricpb.Model
 	*electricpb.ModelServer
@@ -57,7 +56,7 @@ type electricTrait struct {
 	pollTask *task.Intermittent
 }
 
-func newElectric(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
+func newElectric(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*electricTrait, error) {
 	cfg, err := readElectricConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -67,7 +66,7 @@ func newElectric(client *comm.Client, devices known.Context, faultCheck *healthp
 	t := &electricTrait{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: electricpb.NewModelServer(model),
@@ -238,7 +237,7 @@ func (t *electricTrait) pollPeer(ctx context.Context) (*electricpb.ElectricDeman
 	if dst.ReactivePower == nil && reactive != 0 {
 		dst.ReactivePower = &reactive
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Electric, errs)
+	t.fault.update(t.config.Name, trait.Electric, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

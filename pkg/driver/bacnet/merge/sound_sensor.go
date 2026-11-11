@@ -11,7 +11,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/config"
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/task"
@@ -34,10 +33,10 @@ var _ soundsensorpb.SoundSensorApiServer = (*soundSensor)(nil)
 type soundSensor struct {
 	soundsensorpb.UnimplementedSoundSensorApiServer
 
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *soundsensorpb.Model
 	*soundsensorpb.ModelServer
@@ -45,7 +44,7 @@ type soundSensor struct {
 	pollTask *task.Intermittent
 }
 
-func newSoundSensor(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*soundSensor, error) {
+func newSoundSensor(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*soundSensor, error) {
 	cfg, err := readSoundSensorConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func newSoundSensor(client *comm.Client, devices known.Context, faultCheck *heal
 	s := &soundSensor{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: soundsensorpb.NewModelServer(model),
@@ -119,7 +118,7 @@ func (s *soundSensor) pollPeer(ctx context.Context) (*soundsensorpb.SoundLevel, 
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, soundsensorpb.TraitName, errs)
+	s.fault.update(s.config.Name, soundsensorpb.TraitName, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

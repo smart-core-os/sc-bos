@@ -21,7 +21,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/node"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -194,10 +193,10 @@ func readUdmiMergeConfig(raw []byte) (cfg UdmiMergeConfig, err error) {
 // control is implemented via OnMessage, only points present in the config are controllable.
 type udmiMerge struct {
 	udmipb.UnimplementedUdmiServiceServer
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	config UdmiMergeConfig
 	bus    minibus.Bus[*udmipb.PullExportMessagesResponse]
@@ -212,7 +211,7 @@ type udmiMerge struct {
 	operational atomic.Bool
 }
 
-func newUdmiMerge(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
+func newUdmiMerge(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*udmiMerge, error) {
 	cfg, err := readUdmiMergeConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -225,11 +224,11 @@ func newUdmiMerge(client *comm.Client, devices known.Context, faultCheck *health
 			zap.Strings("examples", unknown[:min(len(unknown), maxLoggedUnknownPoints)]))
 	}
 	f := &udmiMerge{
-		client:     client,
-		known:      devices,
-		faultCheck: faultCheck,
-		config:     cfg,
-		logger:     logger,
+		client: client,
+		known:  devices,
+		fault:  fault,
+		config: cfg,
+		logger: logger,
 	}
 	f.pollTask = task.NewIntermittent(f.startPoll)
 	return f, nil
@@ -382,7 +381,7 @@ func (f *udmiMerge) pollPeer(ctx context.Context) error {
 		}
 	}
 
-	updateTraitFaultCheck(ctx, f.faultCheck, f.config.Name, udmipb.TraitName, errs)
+	f.fault.update(f.config.Name, udmipb.TraitName, errs)
 
 	// Re-publish state only when operational changes, mirroring the pointset
 	// hasUpdate behaviour below. Metadata is effectively static and isn't

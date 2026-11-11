@@ -61,11 +61,11 @@ func readHealthConfig(raw []byte) (cfg healthConfig, err error) {
 }
 
 type Health struct {
-	client     *comm.Client
-	known      known.Context
-	checks     *healthpb.Checks
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	checks *healthpb.Checks
+	fault  *traitFault
+	logger *zap.Logger
 
 	// map of config.HealthCheck.ID to HealthCheck
 	DeviceChecks map[string]*healthpb.FaultCheck
@@ -80,11 +80,11 @@ func NewHealth(client *comm.Client, known known.Context, checks *healthpb.Checks
 	}
 
 	h := &Health{
-		client:     client,
-		known:      known,
-		checks:     checks,
-		faultCheck: faultCheck,
-		logger:     logger,
+		client: client,
+		known:  known,
+		checks: checks,
+		fault:  newTraitFault(faultCheck, config.Health.FaultAfterDuration()),
+		logger: logger,
 
 		config:       cfg,
 		DeviceChecks: make(map[string]*healthpb.FaultCheck),
@@ -183,7 +183,7 @@ func (h *Health) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, h.faultCheck, h.config.Name, healthpb.TraitName, errs)
+	h.fault.update(h.config.Name, healthpb.TraitName, errs)
 	if len(errs) > 0 {
 		return fmt.Errorf("health poll errors: %w", multierr.Combine(errs...))
 	}

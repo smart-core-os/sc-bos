@@ -13,7 +13,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/fanspeedpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -30,10 +29,10 @@ func readFanSpeedConfig(raw []byte) (cfg fanSpeedConfig, err error) {
 }
 
 type fanSpeed struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *fanspeedpb.Model
 	*fanspeedpb.ModelServer
@@ -41,7 +40,7 @@ type fanSpeed struct {
 	pollTask *task.Intermittent
 }
 
-func newFanSpeed(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
+func newFanSpeed(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*fanSpeed, error) {
 	cfg, err := readFanSpeedConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func newFanSpeed(client *comm.Client, devices known.Context, faultCheck *healthp
 	t := &fanSpeed{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: fanspeedpb.NewModelServer(model),
@@ -132,7 +131,7 @@ func (t *fanSpeed) pollPeer(ctx context.Context) (*fanspeedpb.FanSpeed, error) {
 	if err != nil {
 		errs = append(errs, comm.ErrReadProperty{Prop: "speed", Cause: err})
 	}
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.FanSpeed, errs)
+	t.fault.update(t.config.Name, trait.FanSpeed, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/actorpb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/securityeventpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 )
@@ -85,10 +84,10 @@ func readSecurityEventConfig(raw []byte) (cfg securityEventConfig, err error) {
 }
 
 type securityEventImpl struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *securityeventpb.Model
 	*securityeventpb.ModelServer
@@ -97,7 +96,7 @@ type securityEventImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newSecurityEvent(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
+func newSecurityEvent(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*securityEventImpl, error) {
 	cfg, err := readSecurityEventConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -114,7 +113,7 @@ func newSecurityEvent(client *comm.Client, devices known.Context, faultCheck *he
 	t := &securityEventImpl{
 		client:      client,
 		known:       devices,
-		faultCheck:  faultCheck,
+		fault:       fault,
 		logger:      logger,
 		model:       model,
 		ModelServer: securityeventpb.NewModelServer(model),
@@ -178,7 +177,7 @@ func (s *securityEventImpl) pollPeer(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	updateTraitFaultCheck(ctx, s.faultCheck, s.config.Name, securityeventpb.TraitName, errs)
+	s.fault.update(s.config.Name, securityeventpb.TraitName, errs)
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}

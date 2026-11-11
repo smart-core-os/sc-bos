@@ -14,7 +14,6 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/bacnet/known"
 	"github.com/smart-core-os/sc-bos/pkg/node"
 	"github.com/smart-core-os/sc-bos/pkg/proto/emergencypb"
-	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 	"github.com/smart-core-os/sc-bos/pkg/task"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -56,10 +55,10 @@ func readEmergencyConfig(raw []byte) (cfg emergencyConfig, err error) {
 }
 
 type emergencyImpl struct {
-	client     *comm.Client
-	known      known.Context
-	faultCheck *healthpb.FaultCheck
-	logger     *zap.Logger
+	client *comm.Client
+	known  known.Context
+	fault  *traitFault
+	logger *zap.Logger
 
 	model *emergencypb.MemoryDevice
 	emergencypb.EmergencyApiServer
@@ -67,7 +66,7 @@ type emergencyImpl struct {
 	pollTask *task.Intermittent
 }
 
-func newEmergency(client *comm.Client, devices known.Context, faultCheck *healthpb.FaultCheck, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
+func newEmergency(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*emergencyImpl, error) {
 	cfg, err := readEmergencyConfig(config.Raw)
 	if err != nil {
 		return nil, err
@@ -76,7 +75,7 @@ func newEmergency(client *comm.Client, devices known.Context, faultCheck *health
 	t := &emergencyImpl{
 		client:             client,
 		known:              devices,
-		faultCheck:         faultCheck,
+		fault:              fault,
 		logger:             logger,
 		model:              model,
 		EmergencyApiServer: model,
@@ -190,7 +189,7 @@ func (t *emergencyImpl) pollPeer(ctx context.Context) (*emergencypb.Emergency, e
 		}
 	}
 
-	updateTraitFaultCheck(ctx, t.faultCheck, t.config.Name, trait.Emergency, errs)
+	t.fault.update(t.config.Name, trait.Emergency, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
