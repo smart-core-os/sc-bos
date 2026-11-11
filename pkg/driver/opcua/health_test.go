@@ -354,6 +354,23 @@ func TestHealthCheck_ToleranceHandling(t *testing.T) {
 	h.assertNormality(t, "temp-check", healthpb.HealthCheck_ABNORMAL)
 }
 
+// currentFault returns the one fault on checkId, failing the test if there is not exactly one.
+func (h *healthTestHarness) currentFault(t *testing.T, checkId string) *healthpb.HealthCheck_Error {
+	t.Helper()
+	for _, check := range h.getHealthChecks(t) {
+		if check.Id == "example:"+checkId {
+			faults := check.GetFaults().GetCurrentFaults()
+			require.Len(t, faults, 1)
+			return faults[0]
+		}
+	}
+	t.Fatalf("check %s not found", checkId)
+	return nil
+}
+
+// TestHealthCheck_FaultUpdate checks a move from one abnormal value to another changes the
+// fault, so it is published, where it used to repeat the same text and look unchanged: a board
+// going from Warning to Alarm read the same in Connect as one sitting at Warning.
 func TestHealthCheck_FaultUpdate(t *testing.T) {
 	configJSON := `{
 		"kind": "smartcore.trait.Health",
@@ -369,35 +386,113 @@ func TestHealthCheck_FaultUpdate(t *testing.T) {
 	}`
 
 	h := setupHealthTestHarness(t, configJSON)
+	node := mustParseNodeID("ns=2;s=Temperature")
 
-	// First abnormal value
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(35.0))
-	h.assertFaultCount(t, "temp-check", 1)
+	h.health.handleEvent(t.Context(), node, float32(35.0))
+	first := h.currentFault(t, "temp-check")
+	require.Contains(t, first.DetailsText, "read 35,")
 
-	checks := h.getHealthChecks(t)
-	var firstFaultCode string
-	for _, check := range checks {
-		if check.Id == "example:temp-check" {
-			faults := check.GetFaults().GetCurrentFaults()
-			require.Len(t, faults, 1)
-			firstFaultCode = faults[0].Code.Code
-		}
+	// the same value again leaves the fault exactly as it was, so nothing is republished
+	h.health.handleEvent(t.Context(), node, float32(35.0))
+	if diff := cmp.Diff(first, h.currentFault(t, "temp-check"), protocmp.Transform()); diff != "" {
+		t.Errorf("a repeated value should leave the fault unchanged (-want +got):\n%s", diff)
 	}
 
-	// Another abnormal value - fault should persist with same code
-	h.health.handleEvent(t.Context(), mustParseNodeID("ns=2;s=Temperature"), float32(40.0))
-	h.assertFaultCount(t, "temp-check", 1)
+	// another abnormal value replaces the fault rather than adding a second one
+	h.health.handleEvent(t.Context(), node, float32(40.0))
+	second := h.currentFault(t, "temp-check")
+	require.Contains(t, second.DetailsText, "read 40,")
+	require.NotEqual(t, first.DetailsText, second.DetailsText)
+	if diff := cmp.Diff(first.Code, second.Code, protocmp.Transform()); diff != "" {
+		t.Errorf("fault code should remain the same (-want +got):\n%s", diff)
+	}
+	require.Equal(t, first.SummaryText, second.SummaryText, "the configured summary is kept as is")
+}
 
-	checks = h.getHealthChecks(t)
-	for _, check := range checks {
-		if check.Id == "example:temp-check" {
-			faults := check.GetFaults().GetCurrentFaults()
-			require.Len(t, faults, 1)
-
-			if diff := cmp.Diff(firstFaultCode, faults[0].Code.Code); diff != "" {
-				t.Errorf("fault code should remain the same (-want +got):\n%s", diff)
+// TestHealthCheck_FaultDetails checks a fault says what the point read, what was expected,
+// and which point it was. An IEC 61850 Health point reads 2 for Warning and 3 for Alarm, so
+// the value is what tells an operator how urgent the fault is.
+func TestHealthCheck_FaultDetails(t *testing.T) {
+	const nodeId = `ns=2;s=LDB_X.LPHD1.EEHealth`
+	tests := []struct {
+		name        string
+		pointName   string
+		enum        string
+		value       any
+		wantDetails string
+	}{
+		{
+			name:        "no enum",
+			pointName:   "LPHD1.EEHealth",
+			value:       int16(2),
+			wantDetails: `Point LPHD1.EEHealth read 2, expected 1. NodeID: ns=2;s=LDB_X.LPHD1.EEHealth`,
+		},
+		{
+			name:        "enum labels both values",
+			pointName:   "LPHD1.EEHealth",
+			enum:        `{"1": "Ok", "2": "Warning", "3": "Alarm"}`,
+			value:       int16(3),
+			wantDetails: `Point LPHD1.EEHealth read 3 (Alarm), expected 1 (Ok). NodeID: ns=2;s=LDB_X.LPHD1.EEHealth`,
+		},
+		{
+			name:        "value with no enum entry",
+			pointName:   "LPHD1.EEHealth",
+			enum:        `{"1": "Ok", "2": "Warning", "3": "Alarm"}`,
+			value:       int16(7),
+			wantDetails: `Point LPHD1.EEHealth read 7, expected 1 (Ok). NodeID: ns=2;s=LDB_X.LPHD1.EEHealth`,
+		},
+		{
+			// 2.5 must not be truncated into the label for 2
+			name:        "fractional value",
+			pointName:   "LPHD1.EEHealth",
+			enum:        `{"1": "Ok", "2": "Warning", "3": "Alarm"}`,
+			value:       float32(2.5),
+			wantDetails: `Point LPHD1.EEHealth read 2.5, expected 1 (Ok). NodeID: ns=2;s=LDB_X.LPHD1.EEHealth`,
+		},
+		{
+			// rendered at the precision the point reported, not as 20.100000381469727
+			name:        "float point",
+			pointName:   "Temp",
+			value:       float32(20.1),
+			wantDetails: `Point Temp read 20.1, expected 1. NodeID: ns=2;s=LDB_X.LPHD1.EEHealth`,
+		},
+		{
+			name:        "no name leads with the node id",
+			value:       int16(2),
+			wantDetails: `Point ns=2;s=LDB_X.LPHD1.EEHealth read 2, expected 1.`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			extra := ""
+			if tt.pointName != "" {
+				extra += `"name": "` + tt.pointName + `",`
 			}
-		}
+			if tt.enum != "" {
+				extra += `"enum": ` + tt.enum + `,`
+			}
+			configJSON := `{
+				"kind": "smartcore.trait.Health",
+				"checks": [{
+					"id": "board-health",
+					"displayName": "Board Health",
+					"description": "Checks the board reports itself healthy",
+					"summary": "Board health is not OK",
+					"errorCode": "BoardHealth",
+					"nodeId": "` + nodeId + `",` + extra + `
+					"normalValue": 1
+				}]
+			}`
+
+			h := setupHealthTestHarness(t, configJSON)
+			h.health.handleEvent(t.Context(), mustParseNodeID(nodeId), tt.value)
+
+			fault := h.currentFault(t, "board-health")
+			require.Equal(t, tt.wantDetails, fault.DetailsText)
+			require.Equal(t, "Board health is not OK", fault.SummaryText)
+			require.Equal(t, "BoardHealth", fault.GetCode().GetCode())
+			require.Equal(t, SystemName, fault.GetCode().GetSystem())
+		})
 	}
 }
 

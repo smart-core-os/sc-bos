@@ -88,6 +88,43 @@ refused. Meter usage is the device's primary function, and a Health check only f
 notification, so a point that never reports would leave it NORMAL; either way its failures would
 be hidden from `deviceStatusCheck`. Other traits, such as Electric and UDMI, may read one.
 
+## Health checks
+
+The Health trait turns a point into its own health check: the check is abnormal while the
+point reads anything other than `normalValue`. Its fault carries the configured `summary` and
+`errorCode`, and details saying what the point read, what it should have read, and which point
+it was:
+
+```
+Point LPHD1.EEHealth read 2 (Warning), expected 1 (Ok). NodeID: ns=2;s=LDB_X\LPHD1\EEHealth
+```
+
+Both values are the raw ones `normalValue` is compared against, before any `scale`. A check
+with no `name` leads with the nodeId instead. The fault changes whenever the value does, so a
+point moving from one abnormal value to another is republished rather than looking unchanged.
+
+`enum` on a check labels whole-number values in those details. The IEC 61850 `Health` data
+attribute is 1 Ok, 2 Warning, 3 Alarm, and the value is what says how urgent the fault is:
+
+```json
+{
+  "kind": "smartcore.trait.Health",
+  "checks": [{
+    "id": "boardHealth",
+    "displayName": "Board Health",
+    "description": "Checks the metering board reports itself healthy",
+    "summary": "The metering board reports a fault",
+    "errorCode": "BoardHealth",
+    "nodeId": "ns=2;s=LDB_X\\LPHD1\\EEHealth",
+    "name": "LPHD1.EEHealth",
+    "normalValue": 1,
+    "enum": {"1": "Ok", "2": "Warning", "3": "Alarm"}
+  }]
+}
+```
+
+A value with no entry, or one that is not a whole number, is shown as the bare number.
+
 ## Connecting to the server
 
 The `conn` block says where the server is and how to authenticate against it.
