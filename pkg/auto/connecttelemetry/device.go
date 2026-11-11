@@ -40,41 +40,88 @@ type device struct {
 	// Only one goroutine touches a device at a time: the loop between cycles, or its
 	// publishDevice during one.
 	discoveryOwed bool
-	// failing is whether each collector, by index, failed its last fetch, so a device that
-	// can't be read logs once when it starts failing and once when it recovers rather than on
-	// every cycle. A dark meter is a state worth one line, not twelve an hour. Carried across
-	// a device refresh by carryFetchState.
-	failing []bool
+	// state is each collector's, by index. Its fetch and send state is carried across a device
+	// refresh by carryFetchState.
+	state []collectorState
 }
 
-// buildTelemetry fetches every collector's current points and merges them into a
-// single UDMI pointset event. ok is false when no points could be collected. The
-// event timestamp is the most recent reading instant across collectors.
-func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.Logger) (udmi.PointsetEvent, bool) {
+// collectorState is what a device keeps about one of its collectors between cycles.
+type collectorState struct {
+	// heartbeat is how long the collector's unchanged points may go unsent, see
+	// config.Root.SendOnChange. Zero sends them every cycle. Set when the collector is added.
+	heartbeat time.Duration
+	// failing is whether the collector failed its last fetch, so a device that can't be read logs
+	// once when it starts failing and once when it recovers rather than on every cycle. A dark
+	// meter is a state worth one line, not twelve an hour.
+	failing bool
+	// sent and sentAt are the points last published for an on-change collector, and the
+	// scheduled time of the cycle that published them. sentAt is zero until they are sent, and
+	// again after a failed fetch, so a collector that recovers sends at once.
+	sent   udmi.PointsEvent
+	sentAt time.Time
+}
+
+// due reports whether points, read at the cycle scheduled for cycle, should be sent.
+func (s collectorState) due(points udmi.PointsEvent, cycle time.Time) bool {
+	if s.heartbeat == 0 || s.sentAt.IsZero() {
+		return true
+	}
+	return cycle.Sub(s.sentAt) >= s.heartbeat || !points.Equal(s.sent)
+}
+
+// sentPoints is the points one collector, by index, contributed to a pointset.
+type sentPoints struct {
+	index  int
+	points udmi.PointsEvent
+}
+
+// states returns d.state, one for each collector.
+func (d *device) states() []collectorState {
+	if len(d.state) != len(d.collectors) {
+		d.state = make([]collectorState, len(d.collectors)) // a device built without addCollector
+	}
+	return d.state
+}
+
+// addCollector adds c to d, to be sent every cycle or, with a non-zero heartbeat, on change.
+func (d *device) addCollector(c traitCollector, heartbeat time.Duration) {
+	d.collectors = append(d.collectors, c)
+	d.state = append(d.state, collectorState{heartbeat: heartbeat})
+}
+
+// buildTelemetry fetches every collector's current points and merges those due into a single
+// UDMI pointset event, see collectorState.due. cycle is the scheduled time of the send.
+// ok is false when no points are due. The event timestamp is the most recent reading instant
+// across the collectors included, which sent lists for recordSent.
+func (d *device) buildTelemetry(ctx context.Context, now, cycle time.Time, logger *zap.Logger) (_ udmi.PointsetEvent, sent []sentPoints, ok bool) {
 	merged := udmi.PointsEvent{}
 	var ts time.Time
-	if len(d.failing) != len(d.collectors) {
-		d.failing = make([]bool, len(d.collectors))
-	}
+	states := d.states()
 	for i, c := range d.collectors {
+		st := &states[i]
 		fields := []zap.Field{zap.String("device", d.name)}
 		if cc, ok := c.(childCollector); ok {
 			fields = append(fields, zap.String("child", cc.child))
 		}
 		points, readingTime, err := c.points(ctx, now)
 		if err != nil {
-			if d.failing[i] {
+			if st.failing {
 				logger.Debug("still failing to fetch trait telemetry", append(fields, zap.Error(err))...)
 			} else {
 				logger.Warn("failed to fetch trait telemetry, will keep trying", append(fields, zap.Error(err))...)
 			}
-			d.failing[i] = true
+			st.failing = true
+			st.sent, st.sentAt = nil, time.Time{}
 			continue
 		}
-		if d.failing[i] {
+		if st.failing {
 			logger.Info("fetching trait telemetry again", fields...)
-			d.failing[i] = false
+			st.failing = false
 		}
+		if !st.due(points, cycle) {
+			continue
+		}
+		sent = append(sent, sentPoints{index: i, points: points})
 		for name, v := range points {
 			merged[name] = v
 		}
@@ -83,22 +130,40 @@ func (d *device) buildTelemetry(ctx context.Context, now time.Time, logger *zap.
 		}
 	}
 	if len(merged) == 0 {
-		return udmi.PointsetEvent{}, false
+		return udmi.PointsetEvent{}, nil, false
 	}
 	if ts.IsZero() {
 		ts = now
 	}
-	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: merged}, true
+	return udmi.PointsetEvent{Timestamp: ts, Version: udmi.PointsetVersion, Points: merged}, sent, true
 }
 
-// carryFetchState copies each device's fetch failures from before a refresh, for a device that
-// still has the same collectors, so a refresh does not repeat the warning for every device
-// that was already failing. A grouped device's children are added in name order, so its
-// failures line up while its children stay the same.
+// recordSent notes that sent, from buildTelemetry, was published in the cycle scheduled for cycle,
+// so the on-change collectors among them wait for a change or their heartbeat.
+func (d *device) recordSent(sent []sentPoints, cycle time.Time) {
+	for _, s := range sent {
+		st := &d.state[s.index]
+		if st.heartbeat == 0 {
+			continue // sent every cycle anyway
+		}
+		st.sent, st.sentAt = s.points, cycle
+	}
+}
+
+// carryFetchState copies each device's fetch failures and on-change send state from before a
+// refresh, for a device that still has the same collectors, so a refresh neither repeats the
+// warning for every device that was already failing nor resends every unchanged on-change reading.
+// A grouped device's children are added in name order, so its state lines up while its children
+// stay the same. Each collector keeps the heartbeat it was added with.
 func carryFetchState(from, to map[string]*device) {
 	for name, dev := range to {
-		if old, ok := from[name]; ok && len(old.collectors) == len(dev.collectors) {
-			dev.failing = old.failing
+		old, ok := from[name]
+		if !ok || len(old.collectors) != len(dev.collectors) {
+			continue
+		}
+		oldStates, states := old.states(), dev.states()
+		for i, o := range oldStates {
+			states[i].failing, states[i].sent, states[i].sentAt = o.failing, o.sent, o.sentAt
 		}
 	}
 }

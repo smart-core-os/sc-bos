@@ -5,7 +5,8 @@ instance to Smart Core Connect (SCC) as **UDMI**, over the Connect telemetry
 (Azure Event Grid) **MQTT v5** broker.
 
 It discovers devices by trait, polls the typed trait API on a schedule, and publishes
-each device's data per-device as:
+each device's data per-device (every cycle, or for a trait in `sendOnChange` only on change and
+heartbeat, see [Sending on change](#sending-on-change)) as:
 
 - **Telemetry** — a UDMI pointset (`{timestamp, version, points{<name>{present_value}}}`).
 - **Discovery** — a UDMI device-metadata message (`{system{name, description, tags,
@@ -56,6 +57,19 @@ zone without the floor's PIRs or any other zone:
 ```
 
 Meters stay unrestricted here, since `smartcore.bos.Meter` has no entry.
+
+`zones` adds named zones to a trait without restricting it. A trait with an entry exports its devices
+as it would with no entry, other zones still skipped unless `includeZones` is set, plus the zones it
+names. To send the floor's PIRs as well as the counted zone above, without naming each PIR:
+
+```json
+"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+"zones": {"smartcore.traits.OccupancySensor": ["site/zones/meeting-suite"]}
+```
+
+A trait can't have both a `devices` and a `zones` entry, since `devices` already sends the zones it
+names. A name in `zones` that isn't an announced zone implementing the trait is logged as
+`configured zone not found for trait` at each device refresh.
 
 ### Meter
 
@@ -214,6 +228,38 @@ Connect would see one device per point. `groupChildren` sends them as one:
 Only `smartcore.bos.Temperature` can be grouped, and grouping is off unless configured, so other
 sites see no change.
 
+### Sending on change
+
+Every device is sent on every cycle by default, whether or not its reading changed. For traits
+whose readings rarely change, such as a PIR, nearly every one of those pointsets repeats
+the last. `sendOnChange` sends a trait's points only when they change, or when its heartbeat has
+passed since they were last sent:
+
+```json
+"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+"sendOnChange": {"smartcore.traits.OccupancySensor": {"heartbeat": "1h"}}
+```
+
+- Each device is still polled every `sendInterval`; only what is published is reduced. A change is
+  sent on the next cycle after it happens, so it is never more than one interval late.
+- Any difference in a point's value is a change: there is no deadband. A continuous reading such as
+  a temperature or CO2 level moves a little on nearly every cycle, so sending it on change saves
+  little. It suits readings that hold steady, such as occupancy.
+- The unit of change is one trait of one device, or one grouped child. Its points are left out of the
+  device's pointset while they are unchanged and not yet due, and Connect reads an absent point as no
+  update. A device whose other traits are on the grid still sends those points every cycle, so its
+  pointsets are partial between heartbeats. A device with nothing to send sends no pointset.
+- The pointset's timestamp is the latest reading among the points it carries.
+- `heartbeat` defaults to `1h` and must be positive. It is measured between the cycles' scheduled
+  times, so `1h` on a `*/5` grid sends an unchanged reading on exactly every 12th cycle. It counts from
+  the last send, change or heartbeat, and isn't staggered across devices.
+- A failed publish, or a trait that couldn't be read, sends its points again on the next cycle that
+  reads them.
+- What was last sent is held in memory and kept across a device refresh, but not across a restart
+  or a config change: the first cycle after either sends every on-change trait, changed or not.
+- `smartcore.bos.Meter` can't be sent on change: meters stay on the send grid, which Connect's meter
+  liveness relies on.
+
 ### Other traits
 
 Other traits configured in `traits` are logged as unsupported and skipped. Add a trait by
@@ -290,10 +336,12 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 |-------|----------|---------|-------------|
 | `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.bos.Temperature`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
 | `groupChildren` | no | — | Traits whose `<parent>/<leaf>` devices are sent as points of their parent, telemetry and health alike, see [Grouping children](#grouping-children). Only `smartcore.bos.Temperature`, which must be in `traits` |
+| `sendOnChange` | no | — | Map of trait name to `{"heartbeat": "<duration>"}`. Those traits' points are sent only when they change or when `heartbeat` (default `1h`) has passed since they were last sent, see [Sending on change](#sending-on-change). Each key must be in `traits`; `smartcore.bos.Meter` is rejected |
 | `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
 | `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |
 | `devices` | no | — | Map of trait name to the device names to export for it. A trait with an entry exports only those devices, zones included whatever `includeZones` says; traits without one are unchanged. Each key must be in `traits` and each list non-empty |
+| `zones` | no | — | Map of trait name to zone names to export alongside the trait's other devices, see [Supported traits](#supported-traits). Has no effect with `includeZones` set. Each key must be in `traits` and have no `devices` entry, and each list non-empty |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |
 | `mqtt.topicPrefix` | no | `tlm` | Fixed intent prefix (publish-authz scope) |
 | `mqtt.clientId` | no | node id | MQTT client id |

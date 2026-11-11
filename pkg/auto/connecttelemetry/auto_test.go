@@ -3,10 +3,12 @@ package connecttelemetry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -74,7 +76,7 @@ func TestDeviceBuildTelemetry(t *testing.T) {
 			fakeCollector{pts: udmi.PointsEvent{"b": {PresentValue: 2.0}}, ts: later},
 		}}
 
-		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		ev, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 		require.True(t, ok)
 		assert.Equal(t, later, ev.Timestamp)
 		assert.Equal(t, udmi.PointsetVersion, ev.Version)
@@ -88,7 +90,7 @@ func TestDeviceBuildTelemetry(t *testing.T) {
 			fakeCollector{pts: udmi.PointsEvent{"b": {PresentValue: 2.0}}, ts: later},
 		}}
 
-		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		ev, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 		require.True(t, ok)
 		assert.NotContains(t, ev.Points, "a")
 		assert.Contains(t, ev.Points, "b")
@@ -96,7 +98,7 @@ func TestDeviceBuildTelemetry(t *testing.T) {
 
 	t.Run("no points ⇒ not ok", func(t *testing.T) {
 		dev := &device{name: "m1", collectors: []traitCollector{fakeCollector{err: errors.New("boom")}}}
-		_, ok := dev.buildTelemetry(context.Background(), now, logger)
+		_, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 		assert.False(t, ok)
 	})
 
@@ -104,7 +106,7 @@ func TestDeviceBuildTelemetry(t *testing.T) {
 		dev := &device{name: "m1", collectors: []traitCollector{
 			fakeCollector{pts: udmi.PointsEvent{"a": {PresentValue: 1.0}}}, // zero ts
 		}}
-		ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+		ev, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 		require.True(t, ok)
 		assert.Equal(t, now, ev.Timestamp)
 	})
@@ -125,7 +127,7 @@ func TestDeviceBuildTelemetry_unreadableMeter(t *testing.T) {
 	client := meterpb.NewMeterApiClient(wrap.ServerToClient(meterpb.MeterApi_ServiceDesc, unreadableMeter{}))
 	dev := &device{name: "m1", collectors: []traitCollector{&meterCollector{name: "m1", client: client}}}
 
-	_, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+	_, _, ok := dev.buildTelemetry(context.Background(), time.Now(), time.Now(), zap.NewNop())
 	assert.False(t, ok)
 }
 
@@ -140,18 +142,18 @@ func TestDeviceBuildTelemetry_thinsFailureLogging(t *testing.T) {
 	dev := &device{name: "m1", collectors: []traitCollector{failing}}
 
 	for range 3 {
-		dev.buildTelemetry(context.Background(), time.Now(), logger)
+		dev.buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	}
 	require.Equal(t, 1, logs.FilterLevelExact(zap.WarnLevel).Len(), "one warning however many cycles fail")
 	require.Equal(t, 2, logs.FilterLevelExact(zap.DebugLevel).Len())
 
 	dev.collectors[0] = working
-	dev.buildTelemetry(context.Background(), time.Now(), logger)
-	dev.buildTelemetry(context.Background(), time.Now(), logger)
+	dev.buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
+	dev.buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	require.Equal(t, 1, logs.FilterLevelExact(zap.InfoLevel).Len(), "one line on recovery")
 
 	dev.collectors[0] = failing
-	dev.buildTelemetry(context.Background(), time.Now(), logger)
+	dev.buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	require.Equal(t, 2, logs.FilterLevelExact(zap.WarnLevel).Len(), "failing again is worth saying again")
 }
 
@@ -165,17 +167,128 @@ func TestCarryFetchState(t *testing.T) {
 	}
 
 	before := newDevices()
-	before["m1"].buildTelemetry(context.Background(), time.Now(), logger)
+	before["m1"].buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	after := newDevices()
 	carryFetchState(before, after)
-	after["m1"].buildTelemetry(context.Background(), time.Now(), logger)
+	after["m1"].buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	require.Equal(t, 1, logs.Len())
 
 	// a device whose collectors changed starts over, since the indexes no longer line up
 	changed := newDevices()
 	changed["m1"].collectors = append(changed["m1"].collectors, fakeCollector{})
 	carryFetchState(after, changed)
-	require.Nil(t, changed["m1"].failing)
+	require.Nil(t, changed["m1"].state)
+}
+
+// pointsetSink records the pointsets published to it, failing them while fail is set.
+type pointsetSink struct {
+	fail bool
+	sent []udmi.PointsetEvent
+}
+
+func (s *pointsetSink) awaitConnection(context.Context) error { return nil }
+
+func (s *pointsetSink) publish(_ context.Context, topic string, payload []byte) error {
+	if !strings.HasSuffix(topic, "/events/pointset") {
+		return nil
+	}
+	if s.fail {
+		return errors.New("no PUBACK")
+	}
+	var ev udmi.PointsetEvent
+	if err := json.Unmarshal(payload, &ev); err != nil {
+		return err
+	}
+	s.sent = append(s.sent, ev)
+	return nil
+}
+
+// TestPublishDevice_sendOnChange is SCB-1539: an on-change collector sends when its points change
+// or its heartbeat is due, and otherwise leaves its points out of the device's pointset.
+func TestPublishDevice_sendOnChange(t *testing.T) {
+	t0 := time.Date(2026, 11, 11, 10, 0, 0, 0, time.UTC)
+	cycle := func(n int) time.Time { return t0.Add(time.Duration(n) * 5 * time.Minute) }
+	reading := func(v float64) fakeCollector {
+		return fakeCollector{pts: udmi.PointsEvent{"occupied": {PresentValue: v}}, ts: t0}
+	}
+	cfg := config.Root{FetchTimeout: &jsontypes.Duration{Duration: testFetchTimeout}, Mqtt: config.Mqtt{TopicPrefix: "tlm"}}
+	a := &AutoImpl{Services: auto.Services{Logger: zap.NewNop()}}
+	// publish runs cycle n of a 5 minute grid for dev, and returns the points it sent, or nil.
+	publish := func(t *testing.T, sink *pointsetSink, dev *device, n int) udmi.PointsEvent {
+		t.Helper()
+		before := len(sink.sent)
+		a.publishDevice(context.Background(), cfg, sink, dev, cycle(n))
+		if len(sink.sent) == before {
+			return nil
+		}
+		return sink.sent[len(sink.sent)-1].Points
+	}
+	onChange := func(c traitCollector) *device {
+		dev := &device{name: "pir1"}
+		dev.addCollector(c, time.Hour)
+		return dev
+	}
+
+	t.Run("sends on change and at the heartbeat", func(t *testing.T) {
+		sink := &pointsetSink{}
+		dev := onChange(reading(1))
+		assert.NotNil(t, publish(t, sink, dev, 0), "the first cycle sends")
+		assert.Nil(t, publish(t, sink, dev, 1), "unchanged")
+		dev.collectors[0] = reading(2)
+		assert.Equal(t, udmi.PointsEvent{"occupied": {PresentValue: 2.0}}, publish(t, sink, dev, 2), "changed")
+		for n := 3; n < 14; n++ {
+			assert.Nil(t, publish(t, sink, dev, n), "unchanged at cycle %d", n)
+		}
+		assert.NotNil(t, publish(t, sink, dev, 14), "an hour after the change")
+		assert.Nil(t, publish(t, sink, dev, 15), "the heartbeat counts from the last send")
+	})
+
+	t.Run("a device of both sends its grid points every cycle", func(t *testing.T) {
+		sink := &pointsetSink{}
+		dev := &device{name: "pir1"}
+		meter := fakeCollector{pts: udmi.PointsEvent{"usage": {PresentValue: 7.0}}, ts: t0.Add(-time.Minute)}
+		dev.addCollector(meter, 0)
+		dev.addCollector(reading(1), time.Hour)
+
+		both := udmi.PointsEvent{"usage": {PresentValue: 7.0}, "occupied": {PresentValue: 1.0}}
+		assert.Equal(t, both, publish(t, sink, dev, 0))
+		assert.Equal(t, t0, sink.sent[0].Timestamp, "the latest reading")
+		for n := 1; n < 12; n++ {
+			assert.Equal(t, udmi.PointsEvent{"usage": {PresentValue: 7.0}}, publish(t, sink, dev, n), "cycle %d", n)
+		}
+		assert.Equal(t, t0.Add(-time.Minute), sink.sent[1].Timestamp, "the latest reading of those sent")
+		assert.Equal(t, both, publish(t, sink, dev, 12), "the heartbeat")
+	})
+
+	t.Run("a failed publish goes again next cycle", func(t *testing.T) {
+		sink := &pointsetSink{fail: true}
+		dev := onChange(reading(1))
+		assert.Nil(t, publish(t, sink, dev, 0))
+		sink.fail = false
+		assert.NotNil(t, publish(t, sink, dev, 1))
+		assert.Nil(t, publish(t, sink, dev, 2))
+	})
+
+	t.Run("a failed fetch sends on recovery", func(t *testing.T) {
+		sink := &pointsetSink{}
+		dev := onChange(reading(1))
+		assert.NotNil(t, publish(t, sink, dev, 0))
+		dev.collectors[0] = fakeCollector{err: errors.New("unavailable")}
+		assert.Nil(t, publish(t, sink, dev, 1))
+		dev.collectors[0] = reading(1)
+		assert.NotNil(t, publish(t, sink, dev, 2), "unchanged, but read again")
+	})
+
+	t.Run("a refresh keeps what was sent", func(t *testing.T) {
+		sink := &pointsetSink{}
+		before := map[string]*device{"pir1": onChange(reading(1))}
+		assert.NotNil(t, publish(t, sink, before["pir1"], 0))
+		after := map[string]*device{"pir1": onChange(reading(1))}
+		carryFetchState(before, after)
+		assert.Equal(t, time.Hour, after["pir1"].state[0].heartbeat)
+		assert.Nil(t, publish(t, sink, after["pir1"], 1), "not resent after the refresh")
+		assert.NotNil(t, publish(t, sink, after["pir1"], 12), "the heartbeat counts from the first send")
+	})
 }
 
 // TestGetAllTraitImplementorsMeter exercises discovery + collector wiring against
@@ -209,7 +322,7 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, traitExport{}, allDevices))
 
 	require.Len(t, allDevices, 1)
 	dev := allDevices["foo"]
@@ -217,7 +330,7 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	require.Len(t, dev.collectors, 1)
 
 	// Telemetry: usage + produced, timestamped from the reading's end_time.
-	ev, ok := dev.buildTelemetry(context.Background(), time.Now(), logger)
+	ev, _, ok := dev.buildTelemetry(context.Background(), time.Now(), time.Now(), logger)
 	require.True(t, ok)
 	require.Contains(t, ev.Points, dbo.FieldEnergyAccumulator)
 	require.Contains(t, ev.Points, dbo.FieldExportedEnergyAccumulator)
@@ -266,13 +379,14 @@ func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 		{includeZones: true, want: []string{"meter", "untyped", "zone"}},
 	} {
 		allDevices := make(map[string]*device)
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, tc.includeZones, nil, false, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, traitExport{includeZones: tc.includeZones}, allDevices))
 		assert.ElementsMatch(t, tc.want, slices.Collect(maps.Keys(allDevices)), "includeZones=%v", tc.includeZones)
 	}
 }
 
 // TestRefreshDevicesAllowlist checks a trait with a devices entry exports only
-// the devices named, admitting a named zone, while other traits are unchanged.
+// the devices named, admitting a named zone, and one with a zones entry exports
+// its devices plus the zones named, while other traits are unchanged.
 func TestRefreshDevicesAllowlist(t *testing.T) {
 	root := node.New("site")
 	devicesApi := devices.NewServer(root)
@@ -302,10 +416,12 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 	a.initialiseClients(root)
 
 	for _, tc := range []struct {
-		name        string
-		devices     map[string][]string
-		want        []string
-		wantMissing []string
+		name             string
+		devices          map[string][]string
+		zones            map[string][]string
+		want             []string
+		wantMissing      []string
+		wantMissingZones []string
 	}{
 		{
 			name: "no allowlist",
@@ -322,6 +438,24 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 			want:        []string{"treehouse", "meter"},
 			wantMissing: []string{"tree-house"},
 		},
+		{
+			name:  "occupancy zones",
+			zones: map[string][]string{string(trait.OccupancySensor): {"treehouse"}},
+			want:  []string{"pir", "treehouse", "meter"},
+		},
+		{
+			name:             "zones naming a missing zone",
+			zones:            map[string][]string{string(trait.OccupancySensor): {"tree-house"}},
+			want:             []string{"pir", "meter"},
+			wantMissingZones: []string{"tree-house"},
+		},
+		{
+			// Exported anyway as one of the trait's devices, but the entry does nothing, so say so.
+			name:             "zones naming a device that isn't a zone",
+			zones:            map[string][]string{string(trait.OccupancySensor): {"pir"}},
+			want:             []string{"pir", "meter"},
+			wantMissingZones: []string{"pir"},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			core, logs := observer.New(zap.WarnLevel)
@@ -330,6 +464,7 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 				Traits:       []string{string(trait.OccupancySensor), string(meterpb.TraitName)},
 				FetchTimeout: &jsontypes.Duration{Duration: testFetchTimeout},
 				Devices:      tc.devices,
+				Zones:        tc.zones,
 			}
 			allDevices := make(map[string]*device)
 			require.NoError(t, a.refreshDevices(context.Background(), cfg, allDevices))
@@ -340,6 +475,11 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 				missing = append(missing, e.ContextMap()["device"].(string))
 			}
 			assert.ElementsMatch(t, tc.wantMissing, missing)
+			var missingZones []string
+			for _, e := range logs.FilterMessage("configured zone not found for trait").All() {
+				missingZones = append(missingZones, e.ContextMap()["zone"].(string))
+			}
+			assert.ElementsMatch(t, tc.wantMissingZones, missingZones)
 		})
 	}
 }
@@ -384,7 +524,7 @@ func TestRefreshDevicesEnterLeaveZone(t *testing.T) {
 	}, 5*time.Second, 10*time.Millisecond)
 
 	sent := func() udmi.PointsEvent {
-		ev, ok := allDevices["treehouse"].buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+		ev, _, ok := allDevices["treehouse"].buildTelemetry(context.Background(), time.Now(), time.Now(), zap.NewNop())
 		require.True(t, ok)
 		return ev.Points
 	}
@@ -434,7 +574,7 @@ func TestGetAllTraitImplementorsPaginates(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, traitExport{}, allDevices))
 
 	assert.Equal(t, n, len(allDevices))
 	assert.NotNil(t, allDevices[fmt.Sprintf("meter-%04d", n-1)], "last device by name")
@@ -469,7 +609,7 @@ func TestGetAllTraitImplementorsSlowDevices(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	start := time.Now()
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, fetchTimeout, traitExport{}, allDevices))
 	assert.Less(t, time.Since(start), n*fetchTimeout/2, "seed fetches should time out together")
 
 	assert.Equal(t, n, len(allDevices))
@@ -512,7 +652,7 @@ func TestGetAllTraitImplementorsUnsupported(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.BrightnessSensor, testFetchTimeout, traitExport{}, allDevices))
 	assert.Empty(t, allDevices, "unsupported trait should attach no devices")
 }
 
@@ -547,7 +687,7 @@ func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
 	a.initialiseClients(root)
 
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), resourceusepb.TraitName, testFetchTimeout, traitExport{}, allDevices))
 
 	require.Len(t, allDevices, 1, "a gateway must not republish its cohort's resources")
 	dev := allDevices["node1"]
@@ -563,7 +703,7 @@ func TestGetAllTraitImplementorsResourceUse(t *testing.T) {
 	// Telemetry is stamped with when the node sampled the reading, not when it
 	// was fetched, so a stalled sampler arrives stale.
 	now := time.Date(2026, 10, 12, 9, 0, 0, 0, time.UTC)
-	ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+	ev, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 	require.True(t, ok)
 	assert.Equal(t, sampled, ev.Timestamp)
 	assert.Equal(t, udmi.PointsEvent{
@@ -687,15 +827,16 @@ func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.List
 }
 
 type telemetryHarness struct {
-	t       *testing.T
-	sink    *fakeTelemetrySink
-	devices *flakyDevicesClient
-	a       *AutoImpl
-	start   time.Time
+	t         *testing.T
+	sink      *fakeTelemetrySink
+	devices   *flakyDevicesClient
+	a         *AutoImpl
+	occupancy *occupancysensorpb.Model // the PIR's
+	start     time.Time
 }
 
 // newTelemetryHarness must be called inside a synctest bubble.
-// It announces one meter, "foo".
+// It announces one meter, "foo", and one PIR, "pir", which only runOnChange exports.
 func newTelemetryHarness(t *testing.T) *telemetryHarness {
 	root := node.New("meter")
 	meterModel := meterpb.NewModel(resource.WithInitialValue(&meterpb.MeterReading{Usage: 123.45}))
@@ -703,6 +844,11 @@ func newTelemetryHarness(t *testing.T) *telemetryHarness {
 		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
 		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{UsageUnit: "kWh"}})),
 		node.HasTrait(meterpb.TraitName),
+	)
+	occupancyModel := occupancysensorpb.NewModel(resource.WithInitialValue(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}))
+	root.Announce("pir",
+		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancyModel))),
+		node.HasTrait(trait.OccupancySensor),
 	)
 	devicesClient := &flakyDevicesClient{
 		DevicesApiClient: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devices.NewServer(root))),
@@ -713,16 +859,32 @@ func newTelemetryHarness(t *testing.T) *telemetryHarness {
 		Devices: devicesClient,
 	}}
 	a.initialiseClients(root)
-	return &telemetryHarness{t: t, sink: newFakeTelemetrySink(), devices: devicesClient, a: a}
+	return &telemetryHarness{t: t, sink: newFakeTelemetrySink(), devices: devicesClient, a: a, occupancy: occupancyModel}
 }
 
-// run starts the telemetry loop, sending every minute and discovery every metadataInterval sends.
+// run starts the telemetry loop for the meter, sending every minute and discovery every
+// metadataInterval sends.
 func (h *telemetryHarness) run(metadataInterval int) {
-	cfg, err := config.ParseConfig(fmt.Appendf(nil, `{
+	h.runConfig(fmt.Sprintf(`{
 		"traits": [%q],
 		"mqtt": {"host": "tls://broker:8883", "clientCertPath": "c", "clientKeyPath": "k",
 			"sendInterval": "* * * * *", "metadataInterval": %d}
 	}`, meterpb.TraitName, metadataInterval))
+}
+
+// runOnChange starts the telemetry loop for the meter and the PIR, sending every minute, with
+// the PIR's occupancy sent on change with a 5 minute heartbeat.
+func (h *telemetryHarness) runOnChange() {
+	h.runConfig(fmt.Sprintf(`{
+		"traits": [%q, %q],
+		"mqtt": {"host": "tls://broker:8883", "clientCertPath": "c", "clientKeyPath": "k", "sendInterval": "* * * * *"},
+		"sendOnChange": {%[2]q: {"heartbeat": "5m"}}
+	}`, meterpb.TraitName, trait.OccupancySensor))
+}
+
+// runConfig starts the telemetry loop with cfgJSON.
+func (h *telemetryHarness) runConfig(cfgJSON string) {
+	cfg, err := config.ParseConfig([]byte(cfgJSON))
 	require.NoError(h.t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -743,7 +905,19 @@ func (h *telemetryHarness) sleepUntil(d time.Duration) {
 	synctest.Wait()
 }
 
-func (h *telemetryHarness) telemetry() []time.Time { return h.sink.sent(pointsetTopic("tlm", "foo")) }
+func (h *telemetryHarness) telemetry() []time.Time { return h.telemetryOf("foo") }
+func (h *telemetryHarness) telemetryOf(name string) []time.Time {
+	return h.sink.sent(pointsetTopic("tlm", name))
+}
+
+// minutes returns the times each of ms minutes after run.
+func (h *telemetryHarness) minutes(ms ...int) []time.Time {
+	var res []time.Time
+	for _, m := range ms {
+		res = append(res, h.start.Add(time.Duration(m)*time.Minute))
+	}
+	return res
+}
 func (h *telemetryHarness) discovery() []time.Time { return h.sink.sent(discoveryTopic("tlm", "foo")) }
 
 // TestRunTelemetry_waitsForConnection is SCB-1512: a broker that refuses the node for part
@@ -830,6 +1004,37 @@ func TestRunTelemetry_retriesFailedRefresh(t *testing.T) {
 		h.sleepUntil(2*time.Minute + time.Second)
 		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute)}, h.telemetry(), "found on the retried refresh")
 		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute)}, h.discovery(), "found on the retried refresh")
+	})
+}
+
+// TestRunTelemetry_sendOnChangeHeartbeat is SCB-1539: an on-change trait whose reading doesn't
+// change is sent once a heartbeat, on the cycle the heartbeat lands on, while a meter on the same
+// node is sent every cycle.
+func TestRunTelemetry_sendOnChangeHeartbeat(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		h.runOnChange()
+
+		h.sleepUntil(12*time.Minute + time.Second)
+		assert.Equal(t, h.minutes(1, 6, 11), h.telemetryOf("pir"), "unchanged, once each heartbeat")
+		assert.Equal(t, h.minutes(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), h.telemetry(), "the meter every cycle")
+	})
+}
+
+// TestRunTelemetry_sendOnChangeChange is SCB-1539: a change goes on the next cycle, and the
+// heartbeat counts from then.
+func TestRunTelemetry_sendOnChangeChange(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		h.runOnChange()
+
+		h.sleepUntil(2*time.Minute + 30*time.Second)
+		_, err := h.occupancy.SetOccupancy(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_OCCUPIED})
+		require.NoError(t, err)
+
+		h.sleepUntil(13*time.Minute + time.Second)
+		assert.Equal(t, h.minutes(1, 3, 8, 13), h.telemetryOf("pir"))
+		assert.Len(t, h.telemetry(), 13, "the meter every cycle")
 	})
 }
 
@@ -1091,7 +1296,7 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 
 	allDevices := make(map[string]*device)
 	for _, tn := range []trait.Name{trait.AirTemperature, trait.AirQualitySensor, trait.OccupancySensor} {
-		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, false, nil, false, allDevices))
+		require.NoError(t, a.getAllTraitImplementors(context.Background(), tn, testFetchTimeout, traitExport{}, allDevices))
 	}
 	require.Len(t, allDevices, 1)
 	dev := allDevices["sensor"]
@@ -1113,7 +1318,7 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 	// Telemetry is stamped with when it was fetched, not when the readings
 	// last changed, nor when the room filled: a value still read is current.
 	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
-	ev, ok := dev.buildTelemetry(context.Background(), now, logger)
+	ev, _, ok := dev.buildTelemetry(context.Background(), now, now, logger)
 	require.True(t, ok)
 	assert.Equal(t, now, ev.Timestamp)
 	assert.Equal(t, udmi.PointsEvent{
@@ -1128,7 +1333,7 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 	_, err := airQuality.UpdateAirQuality(&airqualitysensorpb.AirQuality{ParticulateMatter_25: new(float32(2.5))},
 		resource.WithUpdatePaths("particulate_matter_25"))
 	require.NoError(t, err)
-	_, ok = dev.buildTelemetry(context.Background(), now, logger)
+	_, _, ok = dev.buildTelemetry(context.Background(), now, now, logger)
 	require.True(t, ok)
 	assert.Equal(t, udmi.MetadataPoint{Units: dbo.UnitMicrogramsPerCubicMeter},
 		dev.buildDiscovery(now).Pointset.Points[dbo.FieldZoneAirPM2pt5DensitySensor])
@@ -1208,11 +1413,11 @@ func TestGetAllTraitImplementorsOccupancyCounting(t *testing.T) {
 	}}
 	a.initialiseClients(root)
 	allDevices := make(map[string]*device)
-	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, false, nil, false, allDevices))
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.OccupancySensor, testFetchTimeout, traitExport{}, allDevices))
 	require.Len(t, allDevices, 3)
 
 	sent := func(name string) udmi.PointsEvent {
-		ev, ok := allDevices[name].buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+		ev, _, ok := allDevices[name].buildTelemetry(context.Background(), time.Now(), time.Now(), zap.NewNop())
 		require.True(t, ok, name)
 		return ev.Points
 	}
@@ -1263,13 +1468,13 @@ func (f *temperatureFixture) point(name string, celsius float64, opts ...node.Fe
 func (f *temperatureFixture) refresh(group bool) map[string]*device {
 	f.t.Helper()
 	devs := make(map[string]*device)
-	require.NoError(f.t, f.a.getAllTraitImplementors(context.Background(), temperaturepb.TraitName, testFetchTimeout, false, nil, group, devs))
+	require.NoError(f.t, f.a.getAllTraitImplementors(context.Background(), temperaturepb.TraitName, testFetchTimeout, traitExport{group: group}, devs))
 	return devs
 }
 
 func telemetryOf(t *testing.T, dev *device) udmi.PointsEvent {
 	t.Helper()
-	ev, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.NewNop())
+	ev, _, ok := dev.buildTelemetry(context.Background(), time.Now(), time.Now(), zap.NewNop())
 	require.True(t, ok)
 	return ev.Points
 }
@@ -1376,12 +1581,13 @@ func TestRefreshDevicesGroupChildren(t *testing.T) {
 	before := make(map[string]*device)
 	require.NoError(t, f.a.refreshDevices(context.Background(), cfg, before))
 	require.Contains(t, before, parent)
-	before[parent].failing = []bool{false, true}
+	require.Len(t, before[parent].state, 2)
+	before[parent].state[1].failing = true
 
 	after := make(map[string]*device)
 	require.NoError(t, f.a.refreshDevices(context.Background(), cfg, after))
 	carryFetchState(before, after)
-	assert.Equal(t, []bool{false, true}, after[parent].failing)
+	assert.Equal(t, []bool{false, true}, []bool{after[parent].state[0].failing, after[parent].state[1].failing})
 
 	cfg.GroupChildren = nil
 	ungrouped := make(map[string]*device)
@@ -1395,7 +1601,7 @@ func TestDeviceBuildTelemetry_namesFailingChild(t *testing.T) {
 	dev := &device{name: "phx", collectors: []traitCollector{
 		childCollector{traitCollector: fakeCollector{err: errors.New("no route to device")}, child: "phx/flow"},
 	}}
-	_, ok := dev.buildTelemetry(context.Background(), time.Now(), zap.New(core))
+	_, _, ok := dev.buildTelemetry(context.Background(), time.Now(), time.Now(), zap.New(core))
 	assert.False(t, ok)
 	require.Equal(t, 1, logs.Len())
 	fields := logs.All()[0].ContextMap()
