@@ -94,8 +94,16 @@ type Root struct {
 	// A trait with an entry exports only the named devices, and a named zone is
 	// exported whatever IncludeZones says. Traits without an entry are unchanged.
 	// Use it to send one zone whose reading is its own measurement, such as an
-	// enter/leave people count, without the trait's other devices.
+	// enter/leave people count, without the trait's other devices. To send a zone
+	// alongside all of the trait's devices, use Zones instead.
 	Devices map[string][]string `json:"devices,omitempty"`
+	// Zones adds named zones to a trait, keyed by trait name. A trait with an entry
+	// exports its devices as if it had no entry, zones still skipped unless
+	// IncludeZones is set, plus the zones it names. Use it to send a zone whose
+	// reading is its own measurement alongside the trait's devices. With
+	// IncludeZones set it changes nothing. A trait may not have both a Devices and
+	// a Zones entry: Devices already exports the zones it names.
+	Zones map[string][]string `json:"zones,omitempty"`
 	// GroupChildren names traits whose child devices are sent as part of their parent.
 	// A device of one of these traits named <parent>/<leaf>, whose parent is an announced
 	// device, is exported as a point of <parent>, keyed by its leaf, and its health checks
@@ -104,10 +112,34 @@ type Root struct {
 	// such as a heat exchanger's flow and return temperatures. Each must be in Traits.
 	// Only smartcore.bos.Temperature can be grouped.
 	GroupChildren []string `json:"groupChildren,omitempty"`
+	// SendOnChange names traits whose points are sent only when they change, or when their heartbeat
+	// has passed since they were last sent, keyed by trait name. Each must be in Traits. Every device
+	// is still polled each sendInterval; a trait's points that are unchanged and not yet due are left
+	// out of the device's pointset, and a device with nothing to send sends no pointset. Traits
+	// without an entry are sent every cycle. Any difference in a value is a change, with no
+	// deadband, so it suits readings that hold steady, such as occupancy, rather than
+	// continuous ones like temperature.
+	//
+	// smartcore.bos.Meter can't be named: meters stay on the send grid, which Connect's meter
+	// liveness relies on.
+	SendOnChange map[string]*OnChange `json:"sendOnChange,omitempty"`
 }
+
+// OnChange configures a trait in Root.SendOnChange.
+type OnChange struct {
+	// Heartbeat is the longest an unchanged reading goes unsent, compared between scheduled send
+	// times, so 1h on a */5 grid sends on every 12th cycle. Defaults to DefaultHeartbeat.
+	Heartbeat *jsontypes.Duration `json:"heartbeat,omitempty,omitzero"`
+}
+
+// DefaultHeartbeat is OnChange.Heartbeat when it isn't set.
+const DefaultHeartbeat = time.Hour
 
 // GroupableTraits are the traits GroupChildren may name: those whose points can be keyed by a child's leaf.
 var GroupableTraits = []string{"smartcore.bos.Temperature"}
+
+// gridTraits are the traits SendOnChange may not name: those Connect expects every cycle.
+var gridTraits = []string{"smartcore.bos.Meter"}
 
 func ParseConfig(data []byte) (Root, error) {
 	root := Root{}
@@ -196,12 +228,40 @@ func ParseConfig(data []byte) (Root, error) {
 			return Root{}, fmt.Errorf("config parse failed, devices[%q] is empty: list the devices to export, or remove the entry", traitName)
 		}
 	}
+	for traitName, names := range root.Zones {
+		if !slices.Contains(root.Traits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, zones has an entry for %q, which is not in traits", traitName)
+		}
+		if len(names) == 0 {
+			return Root{}, fmt.Errorf("config parse failed, zones[%q] is empty: list the zones to export, or remove the entry", traitName)
+		}
+		if _, ok := root.Devices[traitName]; ok {
+			return Root{}, fmt.Errorf("config parse failed, %q has both a devices and a zones entry: devices already exports the zones it names, so list the zones there, or remove the devices entry to export all of the trait's devices", traitName)
+		}
+	}
 	for _, traitName := range root.GroupChildren {
 		if !slices.Contains(root.Traits, traitName) {
 			return Root{}, fmt.Errorf("config parse failed, groupChildren names %q, which is not in traits", traitName)
 		}
 		if !slices.Contains(GroupableTraits, traitName) {
 			return Root{}, fmt.Errorf("config parse failed, groupChildren names %q, which can't be grouped: only %v can", traitName, GroupableTraits)
+		}
+	}
+	for traitName, oc := range root.SendOnChange {
+		if !slices.Contains(root.Traits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, sendOnChange has an entry for %q, which is not in traits", traitName)
+		}
+		if slices.Contains(gridTraits, traitName) {
+			return Root{}, fmt.Errorf("config parse failed, sendOnChange has an entry for %q, which must be sent every cycle: Connect judges a meter's liveness by its readings arriving on the send grid", traitName)
+		}
+		if oc == nil {
+			oc = &OnChange{}
+			root.SendOnChange[traitName] = oc
+		}
+		if oc.Heartbeat == nil {
+			oc.Heartbeat = &jsontypes.Duration{Duration: DefaultHeartbeat}
+		} else if oc.Heartbeat.Duration <= 0 {
+			return Root{}, fmt.Errorf("config parse failed, sendOnChange[%q].heartbeat must be positive", traitName)
 		}
 	}
 	if len(root.Traits) == 0 && !root.HealthEnabled() {

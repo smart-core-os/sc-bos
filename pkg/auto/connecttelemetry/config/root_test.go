@@ -61,6 +61,51 @@ func TestParseConfig(t *testing.T) {
 		assert.ErrorContains(t, err, "not in traits")
 	})
 
+	t.Run("zones", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"zones": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, map[string][]string{"smartcore.traits.OccupancySensor": {"zones/treehouse"}}, root.Zones)
+		assert.Empty(t, root.Devices)
+	})
+
+	for name, tc := range map[string]struct{ cfg, err string }{
+		"zones for a trait not exported": {
+			cfg: `"traits": ["smartcore.bos.Meter"], "zones": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}`,
+			err: "zones has an entry for \"smartcore.traits.OccupancySensor\", which is not in traits",
+		},
+		"zones with an empty list": {
+			cfg: `"traits": ["smartcore.traits.OccupancySensor"], "zones": {"smartcore.traits.OccupancySensor": []}`,
+			err: "zones[\"smartcore.traits.OccupancySensor\"] is empty",
+		},
+		"zones and devices for one trait": {
+			cfg: `"traits": ["smartcore.traits.OccupancySensor"],
+				"devices": {"smartcore.traits.OccupancySensor": ["pir-01"]},
+				"zones": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}`,
+			err: "has both a devices and a zones entry",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ParseConfig([]byte(`{"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}, ` + tc.cfg + `}`))
+			assert.ErrorContains(t, err, tc.err)
+		})
+	}
+
+	t.Run("zones and devices for different traits", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"devices": {"smartcore.bos.Meter": ["meter-01"]},
+			"zones": {"smartcore.traits.OccupancySensor": ["zones/treehouse"]}
+		}`))
+		require.NoError(t, err)
+		assert.Len(t, root.Devices, 1)
+		assert.Len(t, root.Zones, 1)
+	})
+
 	t.Run("groupChildren", func(t *testing.T) {
 		root, err := ParseConfig([]byte(`{
 			"traits": ["smartcore.bos.Meter", "smartcore.bos.Temperature"],
@@ -97,6 +142,56 @@ func TestParseConfig(t *testing.T) {
 		}`))
 		assert.ErrorContains(t, err, "can't be grouped")
 	})
+
+	t.Run("sendOnChange heartbeat defaults to an hour", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter", "smartcore.traits.OccupancySensor", "smartcore.traits.AirTemperature"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"sendOnChange": {"smartcore.traits.OccupancySensor": {}, "smartcore.traits.AirTemperature": null}
+		}`))
+		require.NoError(t, err)
+		require.Len(t, root.SendOnChange, 2)
+		for name, oc := range root.SendOnChange {
+			require.NotNil(t, oc, name)
+			require.NotNil(t, oc.Heartbeat, name)
+			assert.Equal(t, time.Hour, oc.Heartbeat.Duration, name)
+		}
+		assert.NotContains(t, root.SendOnChange, "smartcore.bos.Meter", "traits without an entry stay on the grid")
+	})
+
+	t.Run("sendOnChange keeps a heartbeat", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.traits.OccupancySensor"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true},
+			"sendOnChange": {"smartcore.traits.OccupancySensor": {"heartbeat": "15m"}}
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, 15*time.Minute, root.SendOnChange["smartcore.traits.OccupancySensor"].Heartbeat.Duration)
+	})
+
+	for name, tc := range map[string]struct{ cfg, err string }{
+		"sendOnChange for a trait not exported": {
+			cfg: `"traits": ["smartcore.bos.Meter"], "sendOnChange": {"smartcore.traits.OccupancySensor": {}}`,
+			err: "not in traits",
+		},
+		"sendOnChange for meters": {
+			cfg: `"traits": ["smartcore.bos.Meter"], "sendOnChange": {"smartcore.bos.Meter": {}}`,
+			err: "meter's liveness",
+		},
+		"sendOnChange with a zero heartbeat": {
+			cfg: `"traits": ["smartcore.traits.OccupancySensor"], "sendOnChange": {"smartcore.traits.OccupancySensor": {"heartbeat": "0s"}}`,
+			err: "must be positive",
+		},
+		"sendOnChange with a negative heartbeat": {
+			cfg: `"traits": ["smartcore.traits.OccupancySensor"], "sendOnChange": {"smartcore.traits.OccupancySensor": {"heartbeat": "-5m"}}`,
+			err: "must be positive",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ParseConfig([]byte(`{"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true}, ` + tc.cfg + `}`))
+			assert.ErrorContains(t, err, tc.err)
+		})
+	}
 
 	t.Run("devices with an empty list", func(t *testing.T) {
 		_, err := ParseConfig([]byte(`{

@@ -10,6 +10,11 @@
 // A trait in groupChildren sends each child device <parent>/<leaf> as a point of its
 // parent, telemetry and health alike, see groupTarget.
 //
+// A trait in sendOnChange is still polled every cycle, but its points are published only when
+// they change or when its heartbeat has passed since they were last sent, see
+// collectorState.due. Its device's pointsets are then partial, or absent, in between. Meters
+// can't be sent on change: they stay on the send grid.
+//
 // When health is enabled it also publishes the health checks this node evaluates,
 // over the same connection.
 //
@@ -311,7 +316,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				}
 			}
 
-			a.publishCycle(autoCtx, cfg, sink, allDevices)
+			a.publishCycle(autoCtx, cfg, sink, allDevices, next)
 		}
 	})
 }
@@ -354,28 +359,37 @@ func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg c
 }
 
 // publishCycle publishes telemetry, and any discovery owed, for every device,
-// bounding concurrency to avoid overwhelming slow devices.
-func (a *AutoImpl) publishCycle(ctx context.Context, cfg config.Root, sink telemetrySink, devices map[string]*device) {
+// bounding concurrency to avoid overwhelming slow devices. cycle is the time the cycle was
+// scheduled for, see publishDevice.
+func (a *AutoImpl) publishCycle(ctx context.Context, cfg config.Root, sink telemetrySink, devices map[string]*device, cycle time.Time) {
 	var wg errgroup.Group
 	wg.SetLimit(maxConcurrentFetches)
 	for _, dev := range devices {
 		wg.Go(func() error {
-			a.publishDevice(ctx, cfg, sink, dev)
+			a.publishDevice(ctx, cfg, sink, dev, cycle)
 			return nil
 		})
 	}
 	_ = wg.Wait()
 }
 
-func (a *AutoImpl) publishDevice(ctx context.Context, cfg config.Root, sink telemetrySink, dev *device) {
+// publishDevice publishes dev's telemetry, and its discovery if owed.
+//
+// cycle is the time the cycle was scheduled for, which an on-change collector's heartbeat is
+// measured between. The time a cycle actually runs lags its schedule by a varying amount, so
+// measured by that a 1h heartbeat could fall just short on the hour and slip to the next cycle.
+func (a *AutoImpl) publishDevice(ctx context.Context, cfg config.Root, sink telemetrySink, dev *device, cycle time.Time) {
 	// Bound the trait fetches so a slow device can't stall the cycle.
 	fetchCtx, cancel := context.WithTimeout(ctx, cfg.FetchTimeout.Duration)
 	defer cancel()
 
 	now := a.now()
 
-	if ev, ok := dev.buildTelemetry(fetchCtx, now, a.Logger); ok {
-		a.publishJSON(ctx, sink, pointsetTopic(cfg.Mqtt.TopicPrefix, dev.name), ev, "telemetry", dev.name)
+	if ev, sent, ok := dev.buildTelemetry(fetchCtx, now, cycle, a.Logger); ok {
+		// Unrecorded, a failed send's points go again next cycle.
+		if a.publishJSON(ctx, sink, pointsetTopic(cfg.Mqtt.TopicPrefix, dev.name), ev, "telemetry", dev.name) {
+			dev.recordSent(sent, cycle)
+		}
 	}
 
 	if dev.discoveryOwed {
@@ -403,8 +417,16 @@ func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, topic st
 // (re)builds the export set.
 func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevices map[string]*device) error {
 	for _, traitName := range cfg.Traits {
-		group := slices.Contains(cfg.GroupChildren, traitName)
-		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, cfg.IncludeZones, cfg.Devices[traitName], group, allDevices); err != nil {
+		export := traitExport{
+			includeZones: cfg.IncludeZones,
+			only:         cfg.Devices[traitName],
+			zones:        cfg.Zones[traitName],
+			group:        slices.Contains(cfg.GroupChildren, traitName),
+		}
+		if oc := cfg.SendOnChange[traitName]; oc != nil && oc.Heartbeat != nil {
+			export.heartbeat = oc.Heartbeat.Duration
+		}
+		if err := a.getAllTraitImplementors(ctx, trait.Name(traitName), cfg.FetchTimeout.Duration, export, allDevices); err != nil {
 			a.Logger.Error("failed to get devices for trait", zap.String("trait", traitName), zap.Error(err))
 			return err
 		}
@@ -412,11 +434,24 @@ func (a *AutoImpl) refreshDevices(ctx context.Context, cfg config.Root, allDevic
 	return nil
 }
 
+// traitExport is how one trait's devices are chosen and sent, from config.Root.
+type traitExport struct {
+	// includeZones exports every zone implementing the trait.
+	includeZones bool
+	// only, when non-empty, limits the trait to the devices it names, zones included.
+	only []string
+	// zones names zones exported alongside the trait's other devices.
+	zones []string
+	// group adds a child device of the trait to its parent as a point, see groupTarget.
+	group bool
+	// heartbeat, when non-zero, sends the trait on change, see config.Root.SendOnChange.
+	heartbeat time.Duration
+}
+
 // getAllTraitImplementors populates devices with those implementing traitName,
-// attaching a collector for the trait. A non-empty only limits the trait to the
-// devices it names, zones included. Otherwise zones are skipped unless includeZones is set.
-// With group, a child device of the trait is added to its parent as a point, see groupTarget.
-func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, includeZones bool, only []string, group bool, devices map[string]*device) error {
+// attaching a collector for the trait, chosen and sent as export says.
+// Zones are skipped unless export includes them.
+func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, export traitExport, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
 			Field: "metadata.traits.name",
@@ -435,11 +470,11 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			},
 		})
 	}
-	if len(only) > 0 {
+	if len(export.only) > 0 {
 		conditions = append(conditions, &devicespb.Device_Query_Condition{
 			Field: "name",
 			Value: &devicespb.Device_Query_Condition_StringIn{
-				StringIn: &devicespb.Device_Query_StringList{Strings: only},
+				StringIn: &devicespb.Device_Query_StringList{Strings: export.only},
 			},
 		})
 	}
@@ -447,16 +482,16 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	if err != nil {
 		return err
 	}
-	if !includeZones && len(only) == 0 {
+	if !export.includeZones && len(export.only) == 0 {
 		// Filtered here rather than in the query: devices with no device type
 		// have no value for the field, so a "not ZONE" condition would drop them too.
 		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
-			return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
+			return isZone(d) && !slices.Contains(export.zones, d.GetName())
 		})
 	}
 
 	groups := make([]groupedAs, len(deviceInfos)) // each sent as itself unless grouped
-	if group {
+	if export.group {
 		// By name, so a grouped device's collectors keep their order across refreshes, see carryFetchState.
 		slices.SortFunc(deviceInfos, func(x, y *devicespb.Device) int { return strings.Compare(x.GetName(), y.GetName()) })
 		if groups, err = a.groupChildren(ctx, deviceInfos); err != nil {
@@ -505,16 +540,27 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 			dev = &device{name: name, metaData: meta, discoveryOwed: true}
 			devices[name] = dev
 		}
-		dev.collectors = append(dev.collectors, collector)
+		dev.addCollector(collector, export.heartbeat)
 	}
-	for _, name := range only {
+	for _, name := range export.only {
 		// A mistyped or unannounced name would otherwise look like a device with no data.
 		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name }) {
 			a.Logger.Warn("configured device not found for trait",
 				zap.String("trait", string(traitName)), zap.String("device", name))
 		}
 	}
+	for _, name := range export.zones {
+		// As above, and a name that isn't a zone is never exported by zones, so it is missing too.
+		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name && isZone(d) }) {
+			a.Logger.Warn("configured zone not found for trait",
+				zap.String("trait", string(traitName)), zap.String("zone", name))
+		}
+	}
 	return nil
+}
+
+func isZone(d *devicespb.Device) bool {
+	return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
 }
 
 // listDevices lists every device matching conditions.
@@ -564,7 +610,6 @@ type groupedAs struct {
 // A child whose point key is empty, or taken by another child or by the reading of a parent that
 // has the trait itself, isn't sent: two readings can't share a point. The first by name keeps it.
 func (a *AutoImpl) groupChildren(ctx context.Context, deviceInfos []*devicespb.Device) ([]groupedAs, error) {
-	isZone := func(d *devicespb.Device) bool { return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE }
 	var candidates []string
 	seen := make(map[string]bool)
 	for _, d := range deviceInfos {

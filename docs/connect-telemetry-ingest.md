@@ -95,6 +95,10 @@ vs body) is Connect's to configure — align the discriminator with `classifyKin
   `.claude/plans/dbo-conformance-plan.md`.
 - One `present_value` per present point; an absent point means "no update" (partial messages
   are first-class in `ingest.md`).
+- A trait configured in `sendOnChange` sends its points only when they change, or once per its
+  heartbeat (default an hour) while they don't, rather than every cycle. Between those, a device's
+  pointsets carry only its other traits' points, or don't come at all. Meters are always sent
+  every cycle.
 - `version` is the UDMI envelope schema version. Note: `ingest.md`'s telemetry example **omits
   `version`** — it is a UDMI extra, harmless and ignored, not a Connect-required field.
 - Read-only: writable/command points never appear in telemetry.
