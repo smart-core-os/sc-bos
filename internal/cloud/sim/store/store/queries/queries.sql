@@ -83,6 +83,16 @@ UPDATE nodes
 SET binary_updates = :binary_updates
 WHERE id = :id;
 
+-- name: UpdateNodeReportedConfigVersionID :exec
+UPDATE nodes
+SET reported_config_version_id = :reported_config_version_id
+WHERE id = :id;
+
+-- name: UpdateNodeReportedBinaryVersionID :exec
+UPDATE nodes
+SET reported_binary_version_id = :reported_binary_version_id
+WHERE id = :id;
+
 -- name: DeleteNode :execrows
 DELETE FROM nodes
 WHERE id = :id;

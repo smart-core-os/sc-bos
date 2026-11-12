@@ -20,6 +20,10 @@ type Node struct {
 	Arch         string       `json:"arch"`         // GOARCH, empty until the node reports its platform on check-in
 	Capabilities Capabilities `json:"capabilities"` // as last reported on check-in; nil fields are unknown
 	CreateTime   time.Time    `json:"createTime"`
+
+	// The version id each stream last reported running on check-in; empty when none is recorded.
+	ReportedConfigVersionID string `json:"reportedConfigVersionId,omitempty"`
+	ReportedBinaryVersionID string `json:"reportedBinaryVersionId,omitempty"`
 }
 
 func toNode(n queries.Node) Node {
@@ -30,6 +34,9 @@ func toNode(n queries.Node) Node {
 		OS:         n.Os,
 		Arch:       n.Arch,
 		CreateTime: n.CreateTime,
+
+		ReportedConfigVersionID: n.ReportedConfigVersionID.String,
+		ReportedBinaryVersionID: n.ReportedBinaryVersionID.String,
 	}
 	if n.BinaryUpdates.Valid {
 		node.Capabilities.BinaryUpdates = new(n.BinaryUpdates.Bool)

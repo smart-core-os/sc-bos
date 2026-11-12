@@ -403,10 +403,16 @@ func (c *Conn) Update(ctx context.Context) (needReboot bool, err error) {
 	req.Running.Platform = new(c.platform)
 	if c.binaryUpdater != nil {
 		running := c.binaryUpdater.runningBinary()
-		// The cloud completes a deployment once BOS reports its target's version id, so the id is held back
-		// while the Supervisor might still roll back.
-		if running != nil && mayRollBack(supStatus, supErr, running.Version) {
+		switch {
+		case running == nil:
+		case mayRollBack(supStatus, supErr):
+			// The cloud completes a deployment once BOS reports its target's version id, so the id is held
+			// back while the Supervisor might still roll back.
 			running.VersionID = ReportedID{}
+		case supStatus.GetState() == supervisorpb.UpdateStatus_FAILED && supStatus.GetVersion() == running.Version:
+			// The Supervisor failed the version BOS runs, because its rollback failed. Reporting no known
+			// version stops the cloud completing the failed deployment or keeping an earlier version's id.
+			running.VersionID = ReportNoID()
 		}
 		req.Running.Binary = running
 		req.Running.Capabilities = &Capabilities{BinaryUpdates: new(c.binaryUpdater.canInstall())}
