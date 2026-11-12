@@ -35,6 +35,9 @@ These traits are exported for every device that implements them:
 - **Meter** (`smartcore.bos.Meter`)
 - **Temperature** (`smartcore.bos.Temperature`), whose child devices can be sent as points of
   their parent, see [Grouping children](#grouping-children)
+- **Light** (`smartcore.traits.Light`), a lamp's brightness, see [Light](#light)
+- **Transport** (`smartcore.bos.Transport`), a lift's or escalator's floor, direction, doors, load,
+  speed and operating mode, see [Transport](#transport)
 - the environmental sensor traits **AirTemperature** (`smartcore.traits.AirTemperature`),
   **AirQualitySensor** (`smartcore.traits.AirQualitySensor`) and **OccupancySensor**
   (`smartcore.traits.OccupancySensor`)
@@ -43,7 +46,10 @@ These traits are exported for every device that implements them:
 
 Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's reading is built from
 devices the node already publishes, such as the sum of its meters, and Connect models zones itself, so
-publishing them would count those devices twice. Zone health is separate: see `health.includeZones`.
+publishing them would count those devices twice. The same goes for the groups a zone announces as
+`<zone>/<key>`, such as its `lightGroups`, `meterGroups` and `thermostatGroups`: a device named under a
+zone with no device type is taken to be one of these. `devices` and `zones` can name a group as they
+name a zone. Zone health is separate: see `health.includeZones`.
 
 `devices` limits a trait to the devices it names, and admits a named zone whatever `includeZones`
 says. Use it for a zone whose reading is its own measurement rather than a sum of devices already
@@ -190,6 +196,77 @@ more specific one.
 The set point is writable, not a reading, and isn't exported. As for the environmental sensors, the
 reading comes from Get and is stamped with the time it was fetched, and an unset `measured` sends nothing.
 
+### Light
+
+A `smartcore.traits.Light` device sends the lamp's brightness level, 0 when it is off.
+
+| DBO point (field)              | Raw point       | Source                     | Units (discovery) |
+|--------------------------------|-----------------|----------------------------|-------------------|
+| `brightness_percentage_sensor` | `level_percent` | `Brightness.level_percent` | `percent`         |
+
+- The field is DBO's brightness monitoring field, not `lighting_percentage_sensor`, which is a
+  photocell's input to a lighting controller.
+- A `confidence` of 0 means the driver doesn't know the level, as when a driver that reports
+  confidence hasn't heard from a lamp since start-up, so nothing is sent until it does. A low but
+  non-zero confidence is still sent. A driver that doesn't report confidence is taken at its word,
+  so a lamp it hasn't read yet may be sent as 0.
+- Discovery declares the point even while the level is unknown, so Connect has its unit before the
+  first reading.
+- The preset (a scene name) and the target level (where a fade is heading) aren't readings and
+  aren't sent. The proto's rule that a zero level is ignored when a preset is present isn't applied:
+  some drivers, such as the BACnet merge light, always set a preset, empty when no scene matches, and
+  following it would drop lamps that are off.
+- As for the environmental sensors, the reading comes from Get and is stamped with the time it was
+  fetched, including a heartbeat's.
+
+A site with many lamps whose levels hold steady can send them on change, see
+[Sending on change](#sending-on-change):
+
+```json
+"traits": ["smartcore.traits.Light"],
+"sendOnChange": {"smartcore.traits.Light": {"heartbeat": "1h"}}
+```
+
+### Transport
+
+A `smartcore.bos.Transport` device, a lift or escalator, sends each value that has a field agreed
+with Connect in SCC-1209. Multistate values are lower-case strings, Connect's vocabulary for them, in
+both namings.
+
+| DBO point (field)        | Raw point          | Source                  | Value / units (discovery)                                                       |
+|--------------------------|--------------------|-------------------------|---------------------------------------------------------------------------------|
+| `floor_count`            | `actual_position`  | `actual_position.floor` | integer, the driver's floor number                                               |
+| `direction_status`       | `moving_direction` | `moving_direction`      | `up`, `down`, `stopped` (`NO_DIRECTION`), or another direction's lower-case name |
+| `position_status`        | `doors`            | `doors[].status`        | `open`, `opening`, `closed`, `closing`, `safety_locked`, `limited_open`         |
+| `load_percentage_sensor` | `load`             | `load`                  | `percent`, when Describe's `load_unit` is a percentage                          |
+| `mass_sensor`            | `load`             | `load`                  | `kilograms`, `pounds_mass` or `metric_tons`, when Describe's `load_unit` is a weight |
+| `linearvelocity_sensor`  | `speed`            | `speed`                 | Describe's `speed_unit` as its DBO name, such as `mm/s` as `millimeters_per_second` |
+| `operating_mode`         | `operating_mode`   | `operating_mode`        | the full enum name in lower case, such as `normal` or `out_of_service`          |
+
+- An unspecified direction, door state or operating mode, or an unset load or speed, sends no point.
+- Connect reads `floor_count` as 0 for the ground floor and negative for a basement. The floor is
+  sent as the driver gives it, so a controller that numbers floors otherwise, from 1 or from the
+  lowest basement, needs its driver to map them, as the OPC UA driver's `actualPosition.enum` does.
+- The floor is sent only when it is a whole number. The OPC UA driver gives a numeric node's value as
+  `12`, or `12.00` from a float node, and both are sent as 12; a floor named through an enum, such as
+  `GF`, isn't sent.
+- A transport with one door sends it as `position_status` (`doors` raw). One with more sends each as
+  `position_status_<n>` (`doors_<n>`), `n` from 1 in the trait's door order, since Connect takes only
+  a numeric instance suffix. The OPC UA driver keeps its doors in config order.
+- The load goes on the field its unit says and is never converted: Connect converts each unit to its
+  quantity's standard one itself. Speed units are `mm/s`, `m/s`, `m/min`, `km/h`, `ft/s`, `ft/min` and
+  `mph`, and weights `kg`, `lb` and `t`, or their DBO names. Connect fails a point whose unit it can't
+  resolve, so a load or speed in any other unit, or from a device whose driver doesn't describe it,
+  isn't sent.
+- The units are read from Describe each time the devices are listed. Discovery declares the load and
+  speed points with their units then, so Connect has them before the first value. A driver that
+  learns its units late, such as the BACnet merge transport, whose first Describe is `unspecified`
+  until its first poll, sends no load until the devices are next listed.
+- Next destinations, the journey, ETA, payloads, the passenger alarm, the active state and the stopped
+  reason have no agreed field and aren't sent. Faults belong to health, not telemetry.
+- As for the environmental sensors, the reading comes from Get and is stamped with the time it was
+  fetched.
+
 ### Grouping children
 
 Some drivers announce each point of a piece of plant as its own device. A BACnet heat exchanger, for
@@ -244,7 +321,7 @@ passed since they were last sent:
   sent on the next cycle after it happens, so it is never more than one interval late.
 - Any difference in a point's value is a change: there is no deadband. A continuous reading such as
   a temperature or CO2 level moves a little on nearly every cycle, so sending it on change saves
-  little. It suits readings that hold steady, such as occupancy.
+  little. It suits readings that hold steady, such as occupancy or a lamp's level.
 - The unit of change is one trait of one device, or one grouped child. Its points are left out of the
   device's pointset while they are unchanged and not yet due, and Connect reads an absent point as no
   update. A device whose other traits are on the grid still sends those points every cycle, so its
@@ -334,12 +411,12 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.bos.Temperature`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
+| `traits` | unless health is enabled | — | Traits to export, any of `smartcore.bos.Meter`, `smartcore.bos.ResourceUse`, `smartcore.bos.Temperature`, `smartcore.bos.Transport`, `smartcore.traits.Light`, `smartcore.traits.AirTemperature`, `smartcore.traits.AirQualitySensor` and `smartcore.traits.OccupancySensor` |
 | `groupChildren` | no | — | Traits whose `<parent>/<leaf>` devices are sent as points of their parent, telemetry and health alike, see [Grouping children](#grouping-children). Only `smartcore.bos.Temperature`, which must be in `traits` |
 | `sendOnChange` | no | — | Map of trait name to `{"heartbeat": "<duration>"}`. Those traits' points are sent only when they change or when `heartbeat` (default `1h`) has passed since they were last sent, see [Sending on change](#sending-on-change). Each key must be in `traits`; `smartcore.bos.Meter` is rejected |
 | `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
-| `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |
+| `includeZones` | no | `false` | Also publish zones that implement `traits`, and their groups such as `lightGroups`. Off by default because a zone's readings are built from devices already published |
 | `devices` | no | — | Map of trait name to the device names to export for it. A trait with an entry exports only those devices, zones included whatever `includeZones` says; traits without one are unchanged. Each key must be in `traits` and each list non-empty |
 | `zones` | no | — | Map of trait name to zone names to export alongside the trait's other devices, see [Supported traits](#supported-traits). Has no effect with `includeZones` set. Each key must be in `traits` and have no `devices` entry, and each list non-empty |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |

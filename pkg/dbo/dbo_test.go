@@ -20,6 +20,16 @@ func TestUnitName(t *testing.T) {
 		"m³":             UnitCubicMeters,
 		"m3":             UnitCubicMeters,
 		"cubic_meters":   UnitCubicMeters,
+		"mm/s":           UnitMillimetersPerSecond,
+		"M/S":            UnitMetersPerSecond,
+		"km/h":           UnitKilometersPerHour,
+		"ft/min":         UnitFeetPerMinute,
+		"mph":            UnitMilesPerHour,
+		"kg":             UnitKilograms,
+		"kilograms":      UnitKilograms,
+		"lbs":            UnitPoundsMass,
+		"tonnes":         UnitMetricTons,
+		"furlongs/s":     "",
 		"furlongs":       "", // unknown → empty
 		"":               "",
 	}

@@ -68,10 +68,11 @@ type Root struct {
 
 	// Traits is the set of traits to export. Devices implementing one of these
 	// traits are discovered and polled. smartcore.bos.Meter,
-	// smartcore.bos.ResourceUse, smartcore.bos.Temperature, and the environmental
-	// sensor traits smartcore.traits.AirTemperature, smartcore.traits.AirQualitySensor
-	// and smartcore.traits.OccupancySensor are supported; ResourceUse only for the
-	// local node. May be empty only when health is enabled.
+	// smartcore.bos.ResourceUse, smartcore.bos.Temperature, smartcore.bos.Transport,
+	// smartcore.traits.Light, and the environmental sensor traits smartcore.traits.AirTemperature,
+	// smartcore.traits.AirQualitySensor and smartcore.traits.OccupancySensor are
+	// supported; ResourceUse only for the local node. May be empty only when health is
+	// enabled.
 	Traits []string `json:"traits"`
 	Mqtt   Mqtt     `json:"mqtt"`
 	Health *Health  `json:"health,omitempty"`
@@ -85,8 +86,8 @@ type Root struct {
 	// If a device takes longer than this, the fetch is cancelled and the device is skipped
 	// Default is 5 seconds
 	FetchTimeout *jsontypes.Duration `json:"fetchTimeout,omitempty,omitzero"`
-	// IncludeZones publishes zones (device type ZONE) that implement Traits.
-	// Off by default: a zone's reading is the sum of meters this node already
+	// IncludeZones publishes zones (device type ZONE) that implement Traits, and the
+	// groups a zone announces as <zone>/<key>, such as its lightGroups. Off by default: a zone's reading is the sum of meters this node already
 	// publishes, and Connect models zones itself, so publishing them double
 	// counts. Zone health is controlled separately, by health.includeZones.
 	IncludeZones bool `json:"includeZones,omitempty"`

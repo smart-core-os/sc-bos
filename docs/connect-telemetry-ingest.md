@@ -19,7 +19,7 @@ with the Connect ingest side.
 > until Connect builds it. What follows is aligned to the spec's shapes + the concrete infra.
 
 The exporter discovers devices **by trait**, polls the typed trait API on a schedule, and
-publishes each device's data as UDMI. Meter, Temperature and the environmental sensor traits
+publishes each device's data as UDMI. Meter, Temperature, Light, Transport and the environmental sensor traits
 (AirTemperature, AirQualitySensor, OccupancySensor) are published for every device that implements
 them; ResourceUse only for the local node, which publishes its own host resources. A trait in
 `groupChildren` sends each child device as a point of its parent, see
@@ -251,6 +251,78 @@ not make the plant one entity. With `"groupChildren": ["smartcore.bos.Temperatur
 ```
 
 Discovery declares each key with `"units": "degrees_celsius"`.
+
+### Light
+
+A `smartcore.traits.Light` lamp sends its brightness, agreed with Connect in SCC-1208:
+
+| Point (DBO naming)             | Point (raw naming) | Source                     | Units (discovery) |
+|--------------------------------|--------------------|----------------------------|-------------------|
+| `brightness_percentage_sensor` | `level_percent`    | `Brightness.level_percent` | `percent`         |
+
+- The value is 0 to 100, and 0 when the lamp is off.
+- A `confidence` of 0 means the level is unknown, as for a lamp a confidence-reporting driver
+  hasn't heard from since start-up, and sends no point. A low but non-zero confidence is still
+  sent. A driver that doesn't report confidence is taken at its word.
+- Discovery declares the point even while the level is unknown.
+- The preset and target level aren't sent, and a zero level is sent even when a preset is present:
+  some drivers always set a preset, empty when no scene matches.
+- Like the environmental sensors, the reading comes from Get and is stamped with the time it was
+  fetched, a `sendOnChange` heartbeat's included.
+
+```json
+{
+  "timestamp": "2026-11-11T09:05:00Z",
+  "version": "1.5.2",
+  "points": {
+    "brightness_percentage_sensor": { "present_value": 42 }
+  }
+}
+```
+
+### Transport
+
+A `smartcore.bos.Transport` lift or escalator sends the values that have a field agreed with Connect
+in SCC-1209. Every name below passes Connect's field grammar; one that didn't would be dropped at
+ingest without being quarantined.
+
+| Point (DBO naming)       | Point (raw naming) | Source                  | Value / units (discovery)                                                        |
+|--------------------------|--------------------|-------------------------|----------------------------------------------------------------------------------|
+| `floor_count`            | `actual_position`  | `actual_position.floor` | integer; 0 is ground, a basement negative, as the driver numbers them             |
+| `direction_status`       | `moving_direction` | `moving_direction`      | `up`, `down`, `stopped` (`NO_DIRECTION`); another, such as `forward`, as its lower-case name |
+| `position_status[_<n>]`  | `doors[_<n>]`      | `doors[].status`        | `open`, `opening`, `closed`, `closing`, `safety_locked`, `limited_open`          |
+| `load_percentage_sensor` | `load`             | `load`                  | `percent`, when `load_unit` is a percentage                                      |
+| `mass_sensor`            | `load`             | `load`                  | `kilograms`, `pounds_mass` or `metric_tons`, when `load_unit` is a weight        |
+| `linearvelocity_sensor`  | `speed`            | `speed`                 | `speed_unit` as its DBO name, such as `millimeters_per_second`                   |
+| `operating_mode`         | `operating_mode`   | `operating_mode`        | full enum name in lower case                                                     |
+
+- Multistate values are lower-case strings in both namings. An unspecified state, or an unset load
+  or speed, sends no point.
+- A floor that isn't a whole number, such as `GF`, isn't sent.
+- One door is the bare `position_status`; two or more are `position_status_1`, `_2`, … in the trait's
+  door order. Connect accepts only a numeric instance suffix, so a door's title isn't used.
+- `load_unit` and `speed_unit` come from `DescribeTransport`, read each time the devices are listed, and
+  are announced by their DBO catalogue names (`dbo.LinearVelocityUnits`, `dbo.MassUnits`, `percent`).
+  Connect converts each to its standard unit, so sc-bos converts nothing, and it fails a point whose
+  unit it can't resolve, so a load or speed whose unit has no catalogue name, or from a device that
+  isn't described, is not sent. Discovery declares the load and speed points from Describe before their
+  first value.
+- Not sent: next destinations, journey, ETA, payloads, passenger alarm, active state, stopped reason.
+  Faults go to health.
+- The reading comes from Get and is stamped with the time it was fetched.
+
+```json
+{
+  "timestamp": "2026-11-11T09:05:00Z",
+  "version": "1.5.2",
+  "points": {
+    "floor_count": { "present_value": 12 },
+    "direction_status": { "present_value": "up" },
+    "position_status": { "present_value": "opening" },
+    "load_percentage_sensor": { "present_value": 35 }
+  }
+}
+```
 
 ### Node resources (ResourceUse)
 

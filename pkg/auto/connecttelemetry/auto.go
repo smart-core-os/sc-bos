@@ -2,10 +2,10 @@
 // instance to Smart Core Connect (SCC). It discovers devices by trait, polls the
 // typed trait API on a schedule, and publishes each device's data to the Connect
 // telemetry (Event Grid MQTT) broker as UDMI: per-device pointset telemetry plus
-// periodic device-metadata (discovery). The Meter and Temperature traits, and the
-// AirTemperature, AirQualitySensor and OccupancySensor environmental sensor traits, are
-// exported for every device that implements them; the ResourceUse trait only for the
-// local node, which publishes its own host resources.
+// periodic device-metadata (discovery). The Meter, Temperature, Light and Transport
+// traits, and the AirTemperature, AirQualitySensor and OccupancySensor environmental
+// sensor traits, are exported for every device that implements them; the ResourceUse
+// trait only for the local node, which publishes its own host resources.
 //
 // A trait in groupChildren sends each child device <parent>/<leaf> as a point of its
 // parent, telemetry and health alike, see groupTarget.
@@ -32,6 +32,8 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/smart-core-os/sc-bos/pkg/auto"
 	"github.com/smart-core-os/sc-bos/pkg/auto/connecttelemetry/config"
@@ -41,11 +43,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -70,6 +74,9 @@ type AutoImpl struct {
 	occupancyClient      occupancysensorpb.OccupancySensorApiClient
 	occupancyInfoClient  occupancysensorpb.OccupancySensorInfoClient
 	temperatureClient    temperaturepb.TemperatureApiClient
+	lightClient          lightpb.LightApiClient
+	transportClient      transportpb.TransportApiClient
+	transportInfoClient  transportpb.TransportInfoClient
 
 	// pointNaming is the resolved payload naming mode for the current config; it
 	// selects raw vs DBO point keys when collectors are built. Zero value ⇒ DBO.
@@ -103,6 +110,9 @@ func (a *AutoImpl) initialiseClients(n *node.Node) {
 	a.occupancyClient = occupancysensorpb.NewOccupancySensorApiClient(n.ClientConn())
 	a.occupancyInfoClient = occupancysensorpb.NewOccupancySensorInfoClient(n.ClientConn())
 	a.temperatureClient = temperaturepb.NewTemperatureApiClient(n.ClientConn())
+	a.lightClient = lightpb.NewLightApiClient(n.ClientConn())
+	a.transportClient = transportpb.NewTransportApiClient(n.ClientConn())
+	a.transportInfoClient = transportpb.NewTransportInfoClient(n.ClientConn())
 }
 
 func (a *AutoImpl) now() time.Time {
@@ -450,7 +460,7 @@ type traitExport struct {
 
 // getAllTraitImplementors populates devices with those implementing traitName,
 // attaching a collector for the trait, chosen and sent as export says.
-// Zones are skipped unless export includes them.
+// Zones and their groups are skipped unless export includes them, see zoneMembership.
 func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, export traitExport, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
@@ -482,11 +492,18 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	if err != nil {
 		return err
 	}
-	if !export.includeZones && len(export.only) == 0 {
+	skipZones := !export.includeZones && len(export.only) == 0
+	var inZone func(*devicespb.Device) bool
+	if skipZones || len(export.zones) > 0 {
+		if inZone, err = a.zoneMembership(ctx); err != nil {
+			return err
+		}
+	}
+	if skipZones {
 		// Filtered here rather than in the query: devices with no device type
 		// have no value for the field, so a "not ZONE" condition would drop them too.
 		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
-			return isZone(d) && !slices.Contains(export.zones, d.GetName())
+			return inZone(d) && !slices.Contains(export.zones, d.GetName())
 		})
 	}
 
@@ -551,7 +568,7 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	}
 	for _, name := range export.zones {
 		// As above, and a name that isn't a zone is never exported by zones, so it is missing too.
-		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name && isZone(d) }) {
+		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name && inZone(d) }) {
 			a.Logger.Warn("configured zone not found for trait",
 				zap.String("trait", string(traitName)), zap.String("zone", name))
 		}
@@ -561,6 +578,31 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 
 func isZone(d *devicespb.Device) bool {
 	return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
+}
+
+// zoneMembership returns whether a device is a zone or one of a zone's groups. A zone announces
+// its groups, such as lightGroups, meterGroups and thermostatGroups, as <zone>/<key> with no
+// device type, and builds each from member devices just as it builds its own reading. A driver's
+// devices carry a type, so one named under a zone isn't taken for a group.
+func (a *AutoImpl) zoneMembership(ctx context.Context) (func(*devicespb.Device) bool, error) {
+	zones, err := a.listDevices(ctx, []*devicespb.Device_Query_Condition{{
+		Field: "metadata.device_type",
+		Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: metadatapb.Metadata_ZONE.String()},
+	}})
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]bool, len(zones))
+	for _, z := range zones {
+		names[z.GetName()] = true
+	}
+	return func(d *devicespb.Device) bool {
+		if isZone(d) {
+			return true
+		}
+		parent, _, ok := splitChild(d.GetName())
+		return ok && names[parent] && d.GetMetadata().GetDeviceType() == metadatapb.Metadata_DEVICE_TYPE_UNSPECIFIED
+	}, nil
 }
 
 // listDevices lists every device matching conditions.
@@ -736,6 +778,23 @@ func (a *AutoImpl) newCollector(ctx context.Context, traitName trait.Name, devic
 		}
 		return newSensorCollector(ctx, deviceName, a.pointNaming,
 			getTemperature(a.temperatureClient), forEach, a.Logger), true
+	case trait.Light:
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getBrightness(a.lightClient), forEachLightPoint, a.Logger).alwaysDeclare(pointBrightness), true
+	case transportpb.TraitName:
+		// The load and speed units decide how those are sent (see transportUnits). A device
+		// without an Info server is still exported, sending neither, which isn't worth a
+		// warning; any other failure is, since load and speed then go unsent until the devices
+		// are next refreshed.
+		var support *transportpb.TransportSupport
+		if s, err := a.transportInfoClient.DescribeTransport(ctx, &transportpb.DescribeTransportRequest{Name: deviceName}); err == nil {
+			support = s
+		} else if c := status.Code(err); c != codes.Unimplemented && c != codes.NotFound {
+			a.Logger.Warn("failed to describe transport; not sending its load or speed", zap.String("device", deviceName), zap.Error(err))
+		}
+		units := transportUnitsOf(support)
+		return newSensorCollector(ctx, deviceName, a.pointNaming,
+			getTransport(a.transportClient), forEachTransportPointFor(units), a.Logger).alwaysDeclare(units.declared()...), true
 	default:
 		return nil, false
 	}

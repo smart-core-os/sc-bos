@@ -3,6 +3,9 @@ package connecttelemetry
 import (
 	"fmt"
 	"hash/fnv"
+	"math"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,11 +13,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 )
 
 // UDMI event subfolders, the trailing topic segment Connect classifies on.
@@ -81,12 +86,9 @@ func meterInventory(support *meterpb.MeterReadingSupport, naming dbo.Naming) map
 	return inv
 }
 
-// Units declared in discovery for ResourceUse points. ResourceUse leaves them
-// implicit: utilisation is a 0-100 percentage and usage/limit are byte counts.
-const (
-	unitPercent = "percent"
-	unitBytes   = "bytes"
-)
+// unitBytes is the unit discovery declares for ResourceUse's usage and limit points, which
+// the trait leaves implicit; its utilisation points are a 0-100 dbo.UnitPercent.
+const unitBytes = "bytes"
 
 // resourceUseTelemetry maps a node's ResourceUse to UDMI points. The names are
 // DBO-style fields from Connect's catalogue, which extends DBO with the `cpu`,
@@ -119,11 +121,11 @@ func resourceUseInventory(r *resourceusepb.ResourceUse) map[string]udmi.Metadata
 // telemetry and discovery can't drift apart. ref is the disk mount point, or empty.
 func forEachResourceUsePoint(r *resourceusepb.ResourceUse, fn func(name string, value any, units, ref string)) {
 	if cpu := r.GetCpu(); cpu != nil && cpu.Utilization != nil {
-		fn("cpu_percentage_sensor", cpu.GetUtilization(), unitPercent, "")
+		fn("cpu_percentage_sensor", cpu.GetUtilization(), dbo.UnitPercent, "")
 	}
 	if mem := r.GetMemory(); mem != nil {
 		if mem.Utilization != nil {
-			fn("memory_percentage_sensor", mem.GetUtilization(), unitPercent, "")
+			fn("memory_percentage_sensor", mem.GetUtilization(), dbo.UnitPercent, "")
 		}
 		if mem.Usage != nil {
 			fn("memory_datasize_sensor", mem.GetUsage(), unitBytes, "")
@@ -136,7 +138,7 @@ func forEachResourceUsePoint(r *resourceusepb.ResourceUse, fn func(name string, 
 		mount := d.GetMountPoint()
 		n := diskInstance(mount)
 		if d.Utilization != nil {
-			fn(fmt.Sprintf("disk_percentage_sensor_%d", n), d.GetUtilization(), unitPercent, mount)
+			fn(fmt.Sprintf("disk_percentage_sensor_%d", n), d.GetUtilization(), dbo.UnitPercent, mount)
 		}
 		if d.Usage != nil {
 			fn(fmt.Sprintf("disk_datasize_sensor_%d", n), d.GetUsage(), unitBytes, mount)
@@ -179,6 +181,7 @@ var (
 	pointOccupancyState = envPoint{dbo.FieldZoneOccupancyStatus, "state", ""}
 	pointPeopleCount    = envPoint{dbo.FieldZoneOccupancyCount, "people_count", ""}
 	pointTemperature    = envPoint{dbo.FieldTemperatureSensor, "measured", dbo.UnitDegreesCelsius}
+	pointBrightness     = envPoint{dbo.FieldBrightnessPercentageSensor, "level_percent", dbo.UnitPercent}
 )
 
 // envPointFunc receives one point of a reading: its name under the naming mode,
@@ -254,6 +257,25 @@ func forEachTemperaturePointFor(key string) func(*temperaturepb.Temperature, dbo
 	return func(r *temperaturepb.Temperature, _ dbo.Naming, fn envPointFunc) {
 		forEachTemperaturePointAs(r, key, fn)
 	}
+}
+
+// forEachLightPoint calls fn for a Light's brightness level, 0 to 100, which is 0 when the
+// lamp is off. A confidence of 0 means the driver doesn't know the level, such as a lamp
+// a confidence-reporting driver hasn't heard from since start-up, so nothing is sent
+// rather than a level that may be stale; a low but non-zero confidence is still a reading
+// and is sent. The preset is a name for a scene, not a reading, and the target level is
+// where a fade is heading, not where the lamp is, so neither is exported. The proto's rule
+// that a zero level is ignored when a preset is present isn't applied: drivers such as
+// BACnet's merge light always set a preset, empty when no scene matches, so following it
+// would drop lamps that are off.
+func forEachLightPoint(r *lightpb.Brightness, n dbo.Naming, fn envPointFunc) {
+	if r == nil {
+		return
+	}
+	if r.Confidence != nil && *r.Confidence == 0 {
+		return
+	}
+	fn(pointBrightness.name(n), r.GetLevelPercent(), pointBrightness.units)
 }
 
 func forEachTemperaturePointAs(r *temperaturepb.Temperature, name string, fn envPointFunc) {
@@ -342,6 +364,171 @@ func forEachOccupancyPoint(r *occupancysensorpb.Occupancy, counting peopleCounti
 func forEachOccupancyPointFor(counting peopleCounting) func(*occupancysensorpb.Occupancy, dbo.Naming, envPointFunc) {
 	return func(r *occupancysensorpb.Occupancy, n dbo.Naming, fn envPointFunc) {
 		forEachOccupancyPoint(r, counting, n, fn)
+	}
+}
+
+// The Transport points, on the fields agreed with Connect in SCC-1209 (see dbo.FieldFloorCount).
+// A mass load's and speed's units come from the device's TransportSupport, see transportUnits.
+var (
+	pointFloor         = envPoint{dbo.FieldFloorCount, "actual_position", ""}
+	pointDirection     = envPoint{dbo.FieldDirectionStatus, "moving_direction", ""}
+	pointDoor          = envPoint{dbo.FieldPositionStatus, "doors", ""}
+	pointLoadPercent   = envPoint{dbo.FieldLoadPercentageSensor, "load", dbo.UnitPercent}
+	pointLoadMass      = envPoint{dbo.FieldMassSensor, "load", ""}
+	pointSpeed         = envPoint{dbo.FieldLinearVelocitySensor, "speed", ""}
+	pointOperatingMode = envPoint{dbo.FieldOperatingMode, "operating_mode", ""}
+)
+
+// transportUnits is what a transport's TransportSupport says about its load and speed, read
+// each time the devices are listed. The trait leaves both units to the driver. Each is the point
+// the value is sent as, with its DBO unit, or nil when the device isn't described or its unit
+// has no DBO name for the quantity: Connect fails a point whose unit it can't resolve, and a
+// bare load could be a percentage or a weight.
+type transportUnits struct {
+	load, speed *envPoint
+}
+
+func transportUnitsOf(support *transportpb.TransportSupport) transportUnits {
+	var u transportUnits
+	if raw := support.GetLoadUnit(); isPercentUnit(raw) {
+		u.load = &pointLoadPercent
+	} else if unit := dbo.UnitName(raw); slices.Contains(dbo.MassUnits, unit) {
+		p := pointLoadMass
+		p.units = unit
+		u.load = &p
+	}
+	if unit := dbo.UnitName(support.GetSpeedUnit()); slices.Contains(dbo.LinearVelocityUnits, unit) {
+		p := pointSpeed
+		p.units = unit
+		u.speed = &p
+	}
+	return u
+}
+
+// declared are the points discovery declares before the transport reports them, so Connect
+// learns their units at once rather than at the next discovery after the first reading.
+func (u transportUnits) declared() []envPoint {
+	var ps []envPoint
+	for _, p := range []*envPoint{u.load, u.speed} {
+		if p != nil {
+			ps = append(ps, *p)
+		}
+	}
+	return ps
+}
+
+// isPercentUnit reports whether a load unit is a percentage, such as KONE's "% of max load".
+func isPercentUnit(raw string) bool {
+	u := strings.ToLower(strings.TrimSpace(raw))
+	return strings.HasPrefix(u, "%") || u == "percent" || u == "percentage"
+}
+
+// directionStates are the directions Connect's UI knows; other directions, such as an
+// escalator's forward, go as their lower-case enum name.
+var directionStates = map[transportpb.Transport_Direction]string{
+	transportpb.Transport_NO_DIRECTION: dbo.DirectionStopped,
+	transportpb.Transport_UP:           dbo.DirectionUp,
+	transportpb.Transport_DOWN:         dbo.DirectionDown,
+}
+
+var doorStates = map[transportpb.Transport_Door_DoorStatus]string{
+	transportpb.Transport_Door_OPEN:           dbo.DoorOpen,
+	transportpb.Transport_Door_OPENING:        dbo.DoorOpening,
+	transportpb.Transport_Door_CLOSED:         dbo.DoorClosed,
+	transportpb.Transport_Door_CLOSING:        dbo.DoorClosing,
+	transportpb.Transport_Door_SAFETY_LOCKED:  dbo.DoorSafetyLocked,
+	transportpb.Transport_Door_LIMITED_OPENED: dbo.DoorLimitedOpen,
+}
+
+// enumState is v's name in lower case, or "" for the unspecified zero value or a number
+// the enum doesn't name.
+func enumState[E interface {
+	~int32
+	String() string
+}](v E, names map[int32]string) string {
+	if _, ok := names[int32(v)]; !ok || v == 0 {
+		return ""
+	}
+	return strings.ToLower(v.String())
+}
+
+func transportDirection(d transportpb.Transport_Direction) string {
+	if s, ok := directionStates[d]; ok {
+		return s
+	}
+	return enumState(d, transportpb.Transport_Direction_name)
+}
+
+// floorNumber parses a transport's floor as the integer floor_count takes. The OPC UA driver
+// gives a numeric node's value as its decimal string, "12", or "12.00" from a float node. A
+// floor that isn't a whole number, such as a named "GF", has no number to send.
+func floorNumber(floor string) (int, bool) {
+	floor = strings.TrimSpace(floor)
+	if i, err := strconv.Atoi(floor); err == nil {
+		return i, true
+	}
+	f, err := strconv.ParseFloat(floor, 64)
+	if err != nil || f != math.Trunc(f) || math.Abs(f) > math.MaxInt32 {
+		return 0, false
+	}
+	return int(f), true
+}
+
+// forEachTransportPoint calls fn for each value of a lift's or escalator's Transport that has a
+// field agreed with Connect: its floor, moving direction, each door's state, its load, its speed
+// and its operating mode. An unspecified state, or an unset load or speed, sends no point, nor
+// does a floor that isn't a whole number. Multistate values go as lower-case strings in both
+// namings, Connect's vocabulary for them.
+//
+// A transport with one door sends it as position_status, and one with more sends each as
+// position_status_<n>, n from 1 in the trait's door order, Connect taking only a numeric
+// instance. The OPC UA driver keeps its doors in config order, so a door keeps its number.
+//
+// The load goes on load_percentage_sensor or mass_sensor as its unit says, and is never
+// converted from one to the other. A load or speed whose unit isn't known isn't sent, see
+// transportUnits.
+//
+// Next destinations, the journey, ETA, payloads, the passenger alarm, the active state and the
+// stopped reason have no agreed field, and faults go to health, so none is sent.
+func forEachTransportPoint(r *transportpb.Transport, u transportUnits, n dbo.Naming, fn envPointFunc) {
+	if r == nil {
+		return
+	}
+	emit := func(p envPoint, v any) { fn(p.name(n), v, p.units) }
+	if f, ok := floorNumber(r.GetActualPosition().GetFloor()); ok {
+		emit(pointFloor, f)
+	}
+	if s := transportDirection(r.GetMovingDirection()); s != "" {
+		emit(pointDirection, s)
+	}
+	doors := r.GetDoors()
+	for i, d := range doors {
+		s, ok := doorStates[d.GetStatus()]
+		if !ok {
+			continue
+		}
+		name := pointDoor.name(n)
+		if len(doors) > 1 {
+			name = fmt.Sprintf("%s_%d", name, i+1)
+		}
+		fn(name, s, pointDoor.units)
+	}
+	if r.Load != nil && u.load != nil {
+		emit(*u.load, r.GetLoad())
+	}
+	if r.Speed != nil && u.speed != nil {
+		emit(*u.speed, r.GetSpeed())
+	}
+	if s := enumState(r.GetOperatingMode(), transportpb.Transport_OperatingMode_name); s != "" {
+		emit(pointOperatingMode, s)
+	}
+}
+
+// forEachTransportPointFor binds a transport's units to forEachTransportPoint, giving the shape
+// sensorCollector takes.
+func forEachTransportPointFor(u transportUnits) func(*transportpb.Transport, dbo.Naming, envPointFunc) {
+	return func(r *transportpb.Transport, n dbo.Naming, fn envPointFunc) {
+		forEachTransportPoint(r, u, n, fn)
 	}
 }
 

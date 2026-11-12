@@ -11,11 +11,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 )
 
 // traitCollector fetches telemetry and declares the discovery inventory for one
@@ -252,10 +254,10 @@ func (c *resourceUseCollector) inventory() map[string]udmi.MetadataPoint {
 	return resourceUseInventory(c.last)
 }
 
-// sensorCollector exports one environmental sensor trait (AirTemperature,
-// AirQualitySensor or OccupancySensor) of a device, whose reading is a T, and
+// sensorCollector exports one sensor trait (AirTemperature, AirQualitySensor,
+// OccupancySensor, Temperature, Light or Transport) of a device, whose reading is a T, and
 // builds discovery from the last reading, so it declares only the points the
-// sensor populates. newSensorCollector seeds last.
+// sensor populates, plus any in declared. newSensorCollector seeds last.
 //
 // The reading comes from Get, which every driver serves (some poll the device
 // on it), and is stamped with the time it was fetched, as a meter's is: a value
@@ -268,6 +270,12 @@ type sensorCollector[T any] struct {
 	get     func(ctx context.Context, name string) (T, error)
 	forEach func(T, dbo.Naming, envPointFunc)
 	last    T
+	// declared are points discovery declares whatever the last reading holds. A Light
+	// sends nothing while its level is unknown, and a driver that reports confidence
+	// may start every lamp that way until it reports. Discovery goes only every
+	// metadataInterval sends, so without this such a lamp could go hours after a
+	// restart before Connect learns its unit.
+	declared []envPoint
 }
 
 // newSensorCollector builds a sensorCollector and seeds it with a Get, so
@@ -295,8 +303,19 @@ func (c *sensorCollector[T]) points(ctx context.Context, now time.Time) (udmi.Po
 	return envTelemetry(r, c.naming, c.forEach), now, nil
 }
 
+// alwaysDeclare adds points to those discovery declares even when the reading doesn't hold
+// them, see declared.
+func (c *sensorCollector[T]) alwaysDeclare(points ...envPoint) *sensorCollector[T] {
+	c.declared = append(c.declared, points...)
+	return c
+}
+
 func (c *sensorCollector[T]) inventory() map[string]udmi.MetadataPoint {
-	return envInventory(c.last, c.naming, c.forEach)
+	inv := envInventory(c.last, c.naming, c.forEach)
+	for _, p := range c.declared {
+		inv[p.name(c.naming)] = udmi.MetadataPoint{Units: p.units}
+	}
+	return inv
 }
 
 func getAirTemperature(client airtemperaturepb.AirTemperatureApiClient) func(context.Context, string) (*airtemperaturepb.AirTemperature, error) {
@@ -314,6 +333,18 @@ func getAirQuality(client airqualitysensorpb.AirQualitySensorApiClient) func(con
 func getTemperature(client temperaturepb.TemperatureApiClient) func(context.Context, string) (*temperaturepb.Temperature, error) {
 	return func(ctx context.Context, name string) (*temperaturepb.Temperature, error) {
 		return client.GetTemperature(ctx, &temperaturepb.GetTemperatureRequest{Name: name})
+	}
+}
+
+func getBrightness(client lightpb.LightApiClient) func(context.Context, string) (*lightpb.Brightness, error) {
+	return func(ctx context.Context, name string) (*lightpb.Brightness, error) {
+		return client.GetBrightness(ctx, &lightpb.GetBrightnessRequest{Name: name})
+	}
+}
+
+func getTransport(client transportpb.TransportApiClient) func(context.Context, string) (*transportpb.Transport, error) {
+	return func(ctx context.Context, name string) (*transportpb.Transport, error) {
+		return client.GetTransport(ctx, &transportpb.GetTransportRequest{Name: name})
 	}
 }
 
