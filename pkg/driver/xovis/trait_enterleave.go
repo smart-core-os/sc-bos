@@ -28,6 +28,7 @@ type enterLeaveServer struct {
 	pollInit   sync.Once
 	poll       *task.Intermittent
 	polls      *minibus.Bus[LiveLogicResponse]
+	pushReads  *task.Intermittent // reads the sensor when it pushes data, see readOnPush
 
 	EnterLeaveTotal *resource.Value
 }
@@ -52,10 +53,11 @@ func (e *enterLeaveServer) read(ctx context.Context) (*enterleavesensorpb.EnterL
 	return totals, nil
 }
 
-// watch polls the sensor, keeping EnterLeaveTotal current, until ctx is done.
+// watch keeps EnterLeaveTotal current until ctx is done, by polling the sensor and reading it whenever it pushes data.
 func (e *enterLeaveServer) watch(ctx context.Context) {
 	e.doPollInit()
-	_ = e.poll.Attach(ctx) // can't error
+	_ = e.poll.Attach(ctx)      // can't error
+	_ = e.pushReads.Attach(ctx) // can't error
 }
 
 func (e *enterLeaveServer) ResetEnterLeaveTotals(ctx context.Context, request *enterleavesensorpb.ResetEnterLeaveTotalsRequest) (*enterleavesensorpb.ResetEnterLeaveTotalsResponse, error) {
@@ -220,6 +222,10 @@ func (e *enterLeaveServer) PullEnterLeaveEvents(request *enterleavesensorpb.Pull
 
 func (e *enterLeaveServer) doPollInit() {
 	e.pollInit.Do(func() {
+		e.pushReads = readOnPush(e.bus, e.logicID, func(ctx context.Context) error {
+			_, err := e.read(ctx)
+			return err
+		})
 		e.polls = &minibus.Bus[LiveLogicResponse]{}
 		e.poll = task.Poll(func(ctx context.Context) {
 			res, err := getLiveLogic(ctx, e.client, e.multiSensor, e.logicID, e.faultCheck)

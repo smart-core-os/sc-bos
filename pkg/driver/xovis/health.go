@@ -9,16 +9,19 @@ const (
 	Offline     = "Offline"
 )
 
-var (
-	// This health check monitors the device to check if it is online and communicating properly.
-	commsHealthCheck = &healthpb.HealthCheck{
+// commsHealthCheck returns a health check that monitors whether a device is online and communicating properly.
+// Each device needs its own instance: the health system takes ownership of the check it's given and rewrites its Id.
+func commsHealthCheck() *healthpb.HealthCheck {
+	return &healthpb.HealthCheck{
 		Id:              "commsCheck",
 		DisplayName:     "Comms Check",
 		Description:     "Checks if the device is online and communicating properly",
 		OccupantImpact:  healthpb.HealthCheck_NO_OCCUPANT_IMPACT,
 		EquipmentImpact: healthpb.HealthCheck_FUNCTION,
 	}
+}
 
+var (
 	noResponse = &healthpb.HealthCheck_Reliability{
 		State: healthpb.HealthCheck_Reliability_NO_RESPONSE,
 		LastError: &healthpb.HealthCheck_Error{

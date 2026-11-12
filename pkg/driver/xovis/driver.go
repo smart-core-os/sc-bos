@@ -62,6 +62,7 @@ type Driver struct {
 	client      *client
 	server      *http.Server // only used if httpPort is configured for the webhook
 	udmiServers []*udmiServiceServer
+	faultChecks []*healthpb.FaultCheck // created by the last applyConfig
 }
 
 func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
@@ -88,15 +89,24 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 	}
 	d.client = newInsecureClient(conf.Host, conf.Username, pass)
 
+	// Each device's check has the same id on every apply, and the registry rejects a duplicate while the old one is
+	// live. The previous apply's ctx is already cancelled, but its AfterFunc may not have run yet, so dispose here too.
+	for _, fc := range d.faultChecks {
+		fc.Dispose()
+	}
+	d.faultChecks = nil
+
 	// announce new devices
 	for _, dev := range conf.Devices {
 		features := []node.Feature{node.HasMetadata(dev.Metadata), node.HasDeviceType(metadatapb.Metadata_DEVICE)}
 
-		faultCheck, err := d.health.NewFaultCheck(dev.Name, commsHealthCheck)
+		faultCheck, err := d.health.NewFaultCheck(dev.Name, commsHealthCheck())
 		if err != nil {
 			d.logger.Error("failed to create health check", zap.String("device", dev.Name), zap.Error(err))
 			return err
 		}
+		d.faultChecks = append(d.faultChecks, faultCheck)
+		context.AfterFunc(ctx, faultCheck.Dispose)
 
 		// reads and watches are the live read and poll of each configured logic, for UDMI
 		var (
@@ -185,11 +195,12 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 			}
 			mux := http.NewServeMux()
 			mux.HandleFunc(dp.WebhookPath, d.handleWebhook)
-			d.server = &http.Server{
+			srv := &http.Server{
 				Handler: mux,
 			}
+			d.server = srv
 			grp.Go(func() error {
-				return d.server.Serve(lis)
+				return srv.Serve(lis)
 			})
 		} else {
 			d.httpMux.HandleFunc(dp.WebhookPath, d.handleWebhook)
@@ -197,15 +208,17 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 	}
 
 	d.config = conf
+	// Clean up this apply's server and client, not whichever ones a later apply has put on d since.
+	srv, client := d.server, d.client
 	go func() {
-		err = grp.Wait()
-		if err != nil {
+		// the next apply closes srv, which isn't a failure
+		if err := grp.Wait(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			d.logger.Error("xovis driver stopped unexpectedly", zap.Error(err))
 		}
-		if d.server != nil {
-			_ = d.server.Close()
+		if srv != nil {
+			_ = srv.Close()
 		}
-		d.client.Client.CloseIdleConnections()
+		client.Client.CloseIdleConnections()
 	}()
 
 	return nil
