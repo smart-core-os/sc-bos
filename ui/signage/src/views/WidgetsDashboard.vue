@@ -1,5 +1,5 @@
 <template>
-  <section class="widgets">
+  <section class="widgets" :class="{'no-generation': !hasGeneration}">
     <AirQuality :name="props.airQuality.name"
                 :min-value="props.airQuality.minValue"
                 :max-value="props.airQuality.maxValue"
@@ -9,7 +9,8 @@
                        id="BuildingOccupancy"/>
     <EnergyUsage :name="props.energy.name" :generated="props.energy.generated"
                  id="EnergyUsage"/>
-    <EnergyGeneration :name="props.generation.name"
+    <EnergyGeneration v-if="hasGeneration"
+                      :name="props.generation.name"
                       id="EnergyGeneration"/>
     <TemperatureSystems :name="props.temperature.name"
                         id="TemperatureSystems"/>
@@ -30,6 +31,7 @@ import EnergyGeneration from '@/views/EnergyGeneration.vue';
 import EnergyUsage from '@/views/EnergyUsage.vue';
 import TemperatureSystems from '@/views/TemperatureSystems.vue';
 import WaterUsage from '@/views/WaterUsage.vue';
+import {computed} from 'vue';
 
 const props = defineProps({
   airQuality: {
@@ -57,6 +59,8 @@ const props = defineProps({
     default: () => ({})
   }
 });
+
+const hasGeneration = computed(() => !!props.generation.name);
 </script>
 
 <style lang="scss" scoped>
@@ -74,6 +78,16 @@ const props = defineProps({
   gap: 2vw 0;
   width: 100%;
   height: auto;
+
+  &.no-generation {
+    grid-template-areas:
+      'Energy'
+      'Temperature'
+      'Water'
+      'Building'
+      'Flower';
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+  }
 
   // :deep(h2) {
   //   font-family: sans-serif;

@@ -1,5 +1,6 @@
 import {useInterval} from '@/composables/time.js';
 import {useMeterReadingAt, usePullMeterReading} from '@/traits/meter/meter.js';
+import {isNullOrUndef} from '@/util/types.js';
 import {startOfDay, startOfHour, startOfMinute, startOfMonth, startOfYear, sub} from 'date-fns';
 import {computed, effectScope, onScopeDispose, shallowRef, toValue, watch} from 'vue';
 
@@ -138,12 +139,19 @@ export function useMeterDelta(name, opts = {}) {
  * meter or a zone meterGroup named `generated`. Some setups instead expose it
  * as `produced` on the consumption meter, so fall back to that.
  *
+ * Returns null until both readings are known: treating a missing reading as
+ * zero would report the meter's lifetime total, and the widgets never shrink
+ * their range back after a spike.
+ *
  * @param {null | MeterReading.AsObject} start
  * @param {null | MeterReading.AsObject} end
- * @return {number}
+ * @return {number | null}
  */
 export function generatedBetween(start, end) {
-  const usage = (end?.usage ?? 0) - (start?.usage ?? 0);
+  if (isNullOrUndef(start) || isNullOrUndef(end)) {
+    return null;
+  }
+  const usage = (end.usage ?? 0) - (start.usage ?? 0);
   if (usage !== 0) return usage;
-  return (end?.produced ?? 0) - (start?.produced ?? 0);
+  return (end.produced ?? 0) - (start.produced ?? 0);
 }
