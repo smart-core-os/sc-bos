@@ -460,7 +460,7 @@ type traitExport struct {
 
 // getAllTraitImplementors populates devices with those implementing traitName,
 // attaching a collector for the trait, chosen and sent as export says.
-// Zones are skipped unless export includes them.
+// Zones and their groups are skipped unless export includes them, see zoneMembership.
 func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.Name, fetchTimeout time.Duration, export traitExport, devices map[string]*device) error {
 	conditions := []*devicespb.Device_Query_Condition{
 		{
@@ -492,11 +492,18 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	if err != nil {
 		return err
 	}
-	if !export.includeZones && len(export.only) == 0 {
+	skipZones := !export.includeZones && len(export.only) == 0
+	var inZone func(*devicespb.Device) bool
+	if skipZones || len(export.zones) > 0 {
+		if inZone, err = a.zoneMembership(ctx); err != nil {
+			return err
+		}
+	}
+	if skipZones {
 		// Filtered here rather than in the query: devices with no device type
 		// have no value for the field, so a "not ZONE" condition would drop them too.
 		deviceInfos = slices.DeleteFunc(deviceInfos, func(d *devicespb.Device) bool {
-			return isZone(d) && !slices.Contains(export.zones, d.GetName())
+			return inZone(d) && !slices.Contains(export.zones, d.GetName())
 		})
 	}
 
@@ -561,7 +568,7 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 	}
 	for _, name := range export.zones {
 		// As above, and a name that isn't a zone is never exported by zones, so it is missing too.
-		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name && isZone(d) }) {
+		if !slices.ContainsFunc(deviceInfos, func(d *devicespb.Device) bool { return d.GetName() == name && inZone(d) }) {
 			a.Logger.Warn("configured zone not found for trait",
 				zap.String("trait", string(traitName)), zap.String("zone", name))
 		}
@@ -571,6 +578,31 @@ func (a *AutoImpl) getAllTraitImplementors(ctx context.Context, traitName trait.
 
 func isZone(d *devicespb.Device) bool {
 	return d.GetMetadata().GetDeviceType() == metadatapb.Metadata_ZONE
+}
+
+// zoneMembership returns whether a device is a zone or one of a zone's groups. A zone announces
+// its groups, such as lightGroups, meterGroups and thermostatGroups, as <zone>/<key> with no
+// device type, and builds each from member devices just as it builds its own reading. A driver's
+// devices carry a type, so one named under a zone isn't taken for a group.
+func (a *AutoImpl) zoneMembership(ctx context.Context) (func(*devicespb.Device) bool, error) {
+	zones, err := a.listDevices(ctx, []*devicespb.Device_Query_Condition{{
+		Field: "metadata.device_type",
+		Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: metadatapb.Metadata_ZONE.String()},
+	}})
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]bool, len(zones))
+	for _, z := range zones {
+		names[z.GetName()] = true
+	}
+	return func(d *devicespb.Device) bool {
+		if isZone(d) {
+			return true
+		}
+		parent, _, ok := splitChild(d.GetName())
+		return ok && names[parent] && d.GetMetadata().GetDeviceType() == metadatapb.Metadata_DEVICE_TYPE_UNSPECIFIED
+	}, nil
 }
 
 // listDevices lists every device matching conditions.

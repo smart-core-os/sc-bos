@@ -46,7 +46,10 @@ These traits are exported for every device that implements them:
 
 Zones (device type `ZONE`) are skipped unless `includeZones` is set. A zone's reading is built from
 devices the node already publishes, such as the sum of its meters, and Connect models zones itself, so
-publishing them would count those devices twice. Zone health is separate: see `health.includeZones`.
+publishing them would count those devices twice. The same goes for the groups a zone announces as
+`<zone>/<key>`, such as its `lightGroups`, `meterGroups` and `thermostatGroups`: a device named under a
+zone with no device type is taken to be one of these. `devices` and `zones` can name a group as they
+name a zone. Zone health is separate: see `health.includeZones`.
 
 `devices` limits a trait to the devices it names, and admits a named zone whatever `includeZones`
 says. Use it for a zone whose reading is its own measurement rather than a sum of devices already
@@ -413,7 +416,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `sendOnChange` | no | — | Map of trait name to `{"heartbeat": "<duration>"}`. Those traits' points are sent only when they change or when `heartbeat` (default `1h`) has passed since they were last sent, see [Sending on change](#sending-on-change). Each key must be in `traits`; `smartcore.bos.Meter` is rejected |
 | `pointNaming` | no | `dbo` | `dbo` emits DBO field names; `raw` emits the trait's own names (`usage`/`produced` for meters) and leaves the mapping to the consumer. ResourceUse points are the same in both |
 | `fetchTimeout` | no | `5s` | Per-device trait-fetch timeout |
-| `includeZones` | no | `false` | Also publish zones that implement `traits`. Off by default because a zone's readings are built from devices already published |
+| `includeZones` | no | `false` | Also publish zones that implement `traits`, and their groups such as `lightGroups`. Off by default because a zone's readings are built from devices already published |
 | `devices` | no | — | Map of trait name to the device names to export for it. A trait with an entry exports only those devices, zones included whatever `includeZones` says; traits without one are unchanged. Each key must be in `traits` and each list non-empty |
 | `zones` | no | — | Map of trait name to zone names to export alongside the trait's other devices, see [Supported traits](#supported-traits). Has no effect with `includeZones` set. Each key must be in `traits` and have no `devices` entry, and each list non-empty |
 | `mqtt.host` | yes | — | MQTT v5 broker URL; must use a TLS scheme (`tls://`, `ssl://`, `mqtts://`, `wss://`) — non-TLS schemes are rejected so certs are never silently dropped |

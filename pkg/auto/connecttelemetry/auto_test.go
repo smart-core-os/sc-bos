@@ -347,8 +347,8 @@ func TestGetAllTraitImplementorsMeter(t *testing.T) {
 	assert.Equal(t, "kWh", disc.Pointset.Points[dbo.FieldExportedEnergyAccumulator].Units)
 }
 
-// TestGetAllTraitImplementorsSkipsZones confirms zones are left out unless
-// includeZones is set, while meters with no device type are always kept.
+// TestGetAllTraitImplementorsSkipsZones confirms zones and their groups are left out
+// unless includeZones is set, while meters with no device type are otherwise kept.
 func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 	root := node.New("zones")
 
@@ -365,6 +365,11 @@ func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 	announce("meter", node.HasDeviceType(metadatapb.Metadata_DEVICE))
 	announce("untyped")
 	announce("zone", node.HasDeviceType(metadatapb.Metadata_ZONE))
+	announce("zone/east") // a group of the zone's, see meterGroups
+	root.Announce("plain-zone", node.HasDeviceType(metadatapb.Metadata_ZONE))
+	announce("plain-zone/west")                                                // a group of a zone that doesn't have the trait itself
+	announce("meter/sub")                                                      // a child of a device, not a zone
+	announce("zone/sub-meter", node.HasDeviceType(metadatapb.Metadata_DEVICE)) // a driver's device named under the zone
 
 	a := &AutoImpl{Services: auto.Services{
 		Logger:  zap.NewNop(),
@@ -377,8 +382,8 @@ func TestGetAllTraitImplementorsSkipsZones(t *testing.T) {
 		includeZones bool
 		want         []string
 	}{
-		{includeZones: false, want: []string{"meter", "untyped"}},
-		{includeZones: true, want: []string{"meter", "untyped", "zone"}},
+		{includeZones: false, want: []string{"meter", "untyped", "meter/sub", "zone/sub-meter"}},
+		{includeZones: true, want: []string{"meter", "untyped", "meter/sub", "zone/sub-meter", "zone", "zone/east", "plain-zone/west"}},
 	} {
 		allDevices := make(map[string]*device)
 		require.NoError(t, a.getAllTraitImplementors(context.Background(), meterpb.TraitName, testFetchTimeout, traitExport{includeZones: tc.includeZones}, allDevices))
@@ -403,6 +408,7 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 	announceOccupancy("pir", metadatapb.Metadata_DEVICE)
 	announceOccupancy("other-zone", metadatapb.Metadata_ZONE)
 	announceOccupancy("treehouse", metadatapb.Metadata_ZONE)
+	announceOccupancy("treehouse/upstairs", metadatapb.Metadata_DEVICE_TYPE_UNSPECIFIED)
 	meterModel := meterpb.NewModel()
 	root.Announce("meter",
 		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
@@ -444,6 +450,11 @@ func TestRefreshDevicesAllowlist(t *testing.T) {
 			name:  "occupancy zones",
 			zones: map[string][]string{string(trait.OccupancySensor): {"treehouse"}},
 			want:  []string{"pir", "treehouse", "meter"},
+		},
+		{
+			name:  "zones naming a zone's group",
+			zones: map[string][]string{string(trait.OccupancySensor): {"treehouse/upstairs"}},
+			want:  []string{"pir", "treehouse/upstairs", "meter"},
 		},
 		{
 			name:             "zones naming a missing zone",
@@ -1703,7 +1714,7 @@ func TestGetAllTraitImplementorsGroupsTemperature(t *testing.T) {
 	// Devices whose parent isn't announced, or is a zone, go as themselves.
 	f.point("site/devices/AHU-01/temp", 21) // no site/devices/AHU-01
 	f.root.Announce("site/zones/plant", node.HasDeviceType(metadatapb.Metadata_ZONE))
-	f.point("site/zones/plant/temp", 18)
+	f.point("site/zones/plant/temp", 18, node.HasDeviceType(metadatapb.Metadata_DEVICE)) // a driver's, not one of the zone's groups
 
 	t.Run("grouped", func(t *testing.T) {
 		devs := f.refresh(true)

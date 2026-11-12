@@ -86,8 +86,8 @@ type Root struct {
 	// If a device takes longer than this, the fetch is cancelled and the device is skipped
 	// Default is 5 seconds
 	FetchTimeout *jsontypes.Duration `json:"fetchTimeout,omitempty,omitzero"`
-	// IncludeZones publishes zones (device type ZONE) that implement Traits.
-	// Off by default: a zone's reading is the sum of meters this node already
+	// IncludeZones publishes zones (device type ZONE) that implement Traits, and the
+	// groups a zone announces as <zone>/<key>, such as its lightGroups. Off by default: a zone's reading is the sum of meters this node already
 	// publishes, and Connect models zones itself, so publishing them double
 	// counts. Zone health is controlled separately, by health.includeZones.
 	IncludeZones bool `json:"includeZones,omitempty"`
