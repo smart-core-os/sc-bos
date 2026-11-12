@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,9 +41,17 @@ type Camera struct {
 	state *CameraState
 	// readAt is when each poll last wrote state, which only follows a successful read.
 	readAt [pollCount]time.Time
+	// failed is whether each poll has failed on this camera since its last successful read.
+	failed [pollCount]bool
+	// readLimit is how long each poll's point stays current as judged at its last successful
+	// read, which is the limit that stands once the poll has failed on this camera since.
+	readLimit [pollCount]time.Duration
 	// staleAfter is how long the point each poll owns stays current after readAt.
 	// It's zero for a poll that isn't configured.
 	staleAfter [pollCount]time.Duration
+	// cycles times each poll's walk over every camera, shared by the driver's cameras. nil
+	// when nothing is polling, as in tests; pollCycles' methods accept a nil receiver.
+	cycles     *pollCycles
 	bus        minibus.Bus[*CameraState]
 	faultCheck *healthpb.FaultCheck
 }
@@ -60,16 +69,17 @@ const (
 
 // pollFields names the CameraState fields each poll owns.
 var pollFields = [pollCount][]string{
-	infoPoll:      {"CamState", "CamStateTime"},
+	infoPoll:      {"CamState"},
 	occupancyPoll: {"CamOcc"},
-	eventsPoll:    {"CamFlt", "CamFltTime"},
+	eventsPoll:    {"CamFlt"},
 	streamPoll:    {"CamVideo"},
 }
 
 // NewCamera returns a Camera polled as polls configures. Each point counts as current
-// for twice the interval of the poll that owns it, so a single late or failed poll
-// doesn't make it stale.
-func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *healthpb.FaultCheck, polls *config.Settings) *Camera {
+// for twice the gap between polls of it, so a single late or failed poll doesn't make it
+// stale. That gap is the poll's interval, or the time cycles says the poll takes to walk
+// every camera when that is longer.
+func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *healthpb.FaultCheck, polls *config.Settings, cycles *pollCycles) *Camera {
 	var staleAfter [pollCount]time.Duration
 	for p, interval := range [pollCount]*jsontypes.Duration{
 		infoPoll:      polls.InfoPoll,
@@ -88,7 +98,57 @@ func NewCamera(client *client, logger *zap.Logger, conf *config.Camera, fc *heal
 		logger:     logger,
 		state:      &CameraState{},
 		staleAfter: staleAfter,
+		cycles:     cycles,
 	}
+}
+
+// pollCycles times each poll's walk over the cameras.
+//
+// A poll visits the cameras one after another, so polls of one camera are a whole walk
+// apart. On a large site, or behind a slow HikCentral server, a walk can outlast the poll's
+// interval, and a point judged against the interval alone goes stale before its camera has
+// even been asked again (SCB-1473).
+type pollCycles struct {
+	mu    sync.Mutex
+	start [pollCount]time.Time     // of the walk in progress, zero between walks
+	last  [pollCount]time.Duration // of the latest complete walk, zero until one completes
+}
+
+func (pc *pollCycles) begin(p poll, now time.Time) {
+	if pc == nil {
+		return
+	}
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+	pc.start[p] = now
+}
+
+func (pc *pollCycles) end(p poll, now time.Time) {
+	if pc == nil {
+		return
+	}
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+	pc.last[p] = now.Sub(pc.start[p])
+	pc.start[p] = time.Time{}
+}
+
+// length is how long p takes to walk every camera.
+//
+// It's the latest complete walk, not the one in progress: a walk stalled behind failing
+// requests gets slower as it goes, and counting that would keep the cameras it hasn't reached
+// yet looking current for as long as it stalls. The exception is the first walk, before which
+// no camera has been read, so there's nothing for its time so far to keep current.
+func (pc *pollCycles) length(p poll, now time.Time) time.Duration {
+	if pc == nil {
+		return 0
+	}
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+	if pc.last[p] > 0 || pc.start[p].IsZero() {
+		return pc.last[p]
+	}
+	return now.Sub(pc.start[p])
 }
 
 func (c *Camera) UpdatePtz(ctx context.Context, request *ptzpb.UpdatePtzRequest) (*ptzpb.Ptz, error) {
@@ -211,7 +271,7 @@ func (c *Camera) OnMessage(ctx context.Context, request *udmipb.OnMessageRequest
 // them would also publish the result on PullExportMessages.
 func (c *Camera) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageRequest) (*udmipb.MqttMessage, error) {
 	c.lock.Lock()
-	readAt := c.readAt
+	readAt, failed, readLimit := c.readAt, c.failed, c.readLimit
 	state := c.copyState()
 	c.lock.Unlock()
 
@@ -219,7 +279,15 @@ func (c *Camera) GetExportMessage(_ context.Context, _ *udmipb.GetExportMessageR
 	stale := make(map[string]bool)
 	var lastRead time.Time
 	for p, fields := range pollFields {
-		if readAt[p].IsZero() || now.Sub(readAt[p]) > c.staleAfter[p] {
+		limit := max(c.staleAfter[p], 2*c.cycles.length(poll(p), now))
+		if failed[p] {
+			// the walk that failed on this camera may be slow for that very reason, and
+			// allowing for it would bring the point back once that walk finished. Allow for
+			// walks as they were when the point was read instead, which still tolerates one
+			// failed poll.
+			limit = readLimit[p]
+		}
+		if readAt[p].IsZero() || now.Sub(readAt[p]) > limit {
 			for _, f := range fields {
 				stale[f] = true
 			}
@@ -295,13 +363,18 @@ func udmiPoints(msg any, skip map[string]bool) map[string]udmiPoint {
 		if skip[field.Name] {
 			continue
 		}
+		// named and skipped by the json tag the way encoding/json does, so the points match
+		// the camera's MQTT payload (SCB-1463)
 		key := field.Name
 		var omitEmpty bool
-		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
-			if p, _, ok := strings.Cut(jsonTag, ","); ok {
-				key = p
+		if jsonTag := field.Tag.Get("json"); jsonTag == "-" {
+			continue
+		} else if jsonTag != "" {
+			name, opts, _ := strings.Cut(jsonTag, ",")
+			if name != "" {
+				key = name
 			}
-			omitEmpty = strings.Contains(jsonTag, ",omitempty")
+			omitEmpty = slices.Contains(strings.Split(opts, ","), "omitempty")
 		}
 
 		value := mv.Field(i)
@@ -341,6 +414,7 @@ func (c *Camera) getEvents(ctx context.Context) {
 		}, c.faultCheck)
 		if err != nil {
 			logger.Warn("response error", zap.Error(err))
+			c.pollFailed(eventsPoll)
 			break
 		} else {
 			c.processEventRecords(ctx, res.List)
@@ -414,12 +488,14 @@ func (c *Camera) getOcc(ctx context.Context) {
 		}, c.faultCheck)
 		if err != nil {
 			logger.Warn("response error", zap.Error(err))
+			c.pollFailed(occupancyPoll)
 			break
 		} else {
 			if len(res.List) == 0 {
 				logger.Warn("no people count data in response", zap.Any("res", res))
 			} else if res.List[0].CameraIndexCode != c.conf.IndexCode {
 				logger.Warn("response for unexpected camera", zap.String("got", res.List[0].CameraIndexCode), zap.String("want", c.conf.IndexCode))
+				c.pollFailed(occupancyPoll)
 				break
 			} else {
 				i := res.List[0]
@@ -441,10 +517,12 @@ func (c *Camera) getStream(ctx context.Context) {
 	res, err := c.client.getCameraPreviewUrl(ctx, &api.CameraPreviewRequest{CameraRequest: api.CameraRequest{CameraIndexCode: c.conf.IndexCode}}, c.faultCheck)
 	if err != nil {
 		logger.Warn("response error", zap.Error(err))
+		c.pollFailed(streamPoll)
 	} else {
 		bytes, err := json.Marshal(res)
 		if err != nil {
 			logger.Warn("error serialising stream info", zap.Error(err))
+			c.pollFailed(streamPoll)
 		} else {
 			c.updateVideo(ctx, string(bytes))
 		}
@@ -456,6 +534,7 @@ func (c *Camera) getInfo(ctx context.Context) {
 	res, err := c.client.getCameraInfo(ctx, &api.CameraRequest{CameraIndexCode: c.conf.IndexCode}, c.faultCheck)
 	if err != nil {
 		logger.Warn("response error", zap.Error(err))
+		c.pollFailed(infoPoll)
 	} else {
 		active := res.Status == api.CameraStatusOnline
 		c.updateActive(ctx, active)
@@ -477,14 +556,12 @@ func (c *Camera) updateVideo(ctx context.Context, video string) {
 func (c *Camera) updateFault(ctx context.Context, fault bool) {
 	c.updateAndNotify(ctx, eventsPoll, func() {
 		c.state.CamFlt = fault
-		c.state.CamFltTime = c.now()
 	})
 }
 
 func (c *Camera) updateActive(ctx context.Context, active bool) {
 	c.updateAndNotify(ctx, infoPoll, func() {
 		c.state.CamState = active
-		c.state.CamStateTime = c.now()
 	})
 }
 
@@ -494,10 +571,20 @@ func (c *Camera) updateActive(ctx context.Context, active bool) {
 func (c *Camera) updateAndNotify(ctx context.Context, p poll, updateFn func()) {
 	c.lock.Lock()
 	updateFn()
-	c.readAt[p] = c.now()
+	now := c.now()
+	c.readAt[p] = now
+	c.failed[p] = false
+	c.readLimit[p] = max(c.staleAfter[p], 2*c.cycles.length(p, now))
 	stateCopy := c.copyState()
 	c.lock.Unlock()
 	c.bus.Send(ctx, stateCopy)
+}
+
+// pollFailed records that p failed to read this camera.
+func (c *Camera) pollFailed(p poll) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.failed[p] = true
 }
 
 func (c *Camera) copyState() *CameraState {
@@ -522,9 +609,6 @@ type CameraState struct {
 	CamAim   *PTZ   `json:"camAim,omitempty"`
 	CamOcc   string `json:"camOcc,omitempty"`
 	CamVideo string `json:"camVideo,omitempty"`
-
-	CamStateTime time.Time `json:"-"`
-	CamFltTime   time.Time `json:"-"`
 }
 
 func (c *CameraState) IsEqual(c2 *CameraState) bool {

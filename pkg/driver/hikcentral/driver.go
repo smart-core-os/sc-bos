@@ -21,6 +21,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
 	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
+	"github.com/smart-core-os/sc-bos/pkg/util/jsontypes"
 )
 
 const DriverName = "hikcentral"
@@ -70,6 +71,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	}
 
 	grp, ctx := errgroup.WithContext(ctx)
+	cycles := &pollCycles{}
 	var cameras []*Camera
 	var faultChecks []*healthpb.FaultCheck
 	for _, camera := range cfg.Cameras {
@@ -81,7 +83,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		}
 		faultChecks = append(faultChecks, faultCheck)
 
-		cam := NewCamera(client, logger, camera, faultCheck, cfg.Settings)
+		cam := NewCamera(client, logger, camera, faultCheck, cfg.Settings, cycles)
 		rootAnnouncer.Announce(camera.Name,
 			node.HasMetadata(camera.Metadata),
 			node.HasServer(mqttpb.RegisterMqttServiceServer, mqttpb.MqttServiceServer(cam)),
@@ -94,7 +96,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 		cameras = append(cameras, cam)
 	}
 
-	run(ctx, cameras, cfg, grp)
+	run(ctx, cameras, cfg, grp, cycles)
 
 	go func() {
 		err := grp.Wait()
@@ -109,55 +111,36 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 	return nil
 }
 
-func run(ctx context.Context, cameras []*Camera, cfg config.Root, grp *errgroup.Group) {
-
-	if cfg.Settings.InfoPoll != nil {
+func run(ctx context.Context, cameras []*Camera, cfg config.Root, grp *errgroup.Group, cycles *pollCycles) {
+	for _, pl := range []struct {
+		p     poll
+		every *jsontypes.Duration
+		visit func(*Camera, context.Context)
+	}{
+		{infoPoll, cfg.Settings.InfoPoll, (*Camera).getInfo},
+		{occupancyPoll, cfg.Settings.OccupancyPoll, (*Camera).getOcc},
+		{eventsPoll, cfg.Settings.EventsPoll, (*Camera).getEvents},
+		{streamPoll, cfg.Settings.StreamPoll, (*Camera).getStream},
+	} {
+		if pl.every == nil {
+			continue
+		}
 		grp.Go(func() error {
-			t := newTickerWithCtx(ctx, cfg.Settings.InfoPoll.Duration)
-			for range t {
-				for _, c := range cameras {
-					c.getInfo(ctx)
-				}
+			for range newTickerWithCtx(ctx, pl.every.Duration) {
+				walkCameras(ctx, cycles, pl.p, cameras, pl.visit, time.Now)
 			}
 			return ctx.Err()
 		})
 	}
+}
 
-	if cfg.Settings.OccupancyPoll != nil {
-		grp.Go(func() error {
-			t := newTickerWithCtx(ctx, cfg.Settings.OccupancyPoll.Duration)
-			for range t {
-				for _, c := range cameras {
-					c.getOcc(ctx)
-				}
-			}
-			return ctx.Err()
-		})
+// walkCameras runs one poll over every camera in turn, timing the walk in cycles.
+func walkCameras(ctx context.Context, cycles *pollCycles, p poll, cameras []*Camera, visit func(*Camera, context.Context), now func() time.Time) {
+	cycles.begin(p, now())
+	for _, c := range cameras {
+		visit(c, ctx)
 	}
-
-	if cfg.Settings.EventsPoll != nil {
-		grp.Go(func() error {
-			t := newTickerWithCtx(ctx, cfg.Settings.EventsPoll.Duration)
-			for range t {
-				for _, c := range cameras {
-					c.getEvents(ctx)
-				}
-			}
-			return ctx.Err()
-		})
-	}
-
-	if cfg.Settings.StreamPoll != nil {
-		grp.Go(func() error {
-			t := newTickerWithCtx(ctx, cfg.Settings.StreamPoll.Duration)
-			for range t {
-				for _, c := range cameras {
-					c.getStream(ctx)
-				}
-			}
-			return ctx.Err()
-		})
-	}
+	cycles.end(p, now())
 }
 
 func newTickerWithCtx(ctx context.Context, dur time.Duration) <-chan time.Time {
