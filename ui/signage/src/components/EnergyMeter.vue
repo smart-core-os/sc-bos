@@ -268,7 +268,7 @@
         </g>
       </svg>
     </div>
-    <h2>Net Energy Consumption</h2>
+    <h2>{{ props.showGeneration ? 'Net Energy Consumption' : 'Energy Consumption' }}</h2>
     <template v-if="props.showPeriod">
       <div>
         <sub>
