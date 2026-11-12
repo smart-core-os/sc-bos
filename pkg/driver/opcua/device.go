@@ -157,16 +157,8 @@ func (d *device) subscribe(ctx context.Context) error {
 	// a device with no variables (metadata only, say) has nothing to ask the server for and
 	// nothing it can refuse, so it skips the task rather than being reported as abandoned
 	if len(d.conf.Variables) > 0 && d.stagger(ctx) {
-		err := task.Run(ctx, d.deviceTask(),
-			task.WithRetry(task.RetryUnlimited),
-			task.WithBackoff(subscribeRetryInitial, subscribeRetryMax),
-			// no WithTimeout: Runner.Step cancels the attempt ctx as soon as the Task
-			// returns, and this Task only returns when the subscription dies, so a
-			// per-attempt deadline would sever a live subscription on a timer. Client puts a
-			// deadline on each request instead.
-			// no WithErrorLogger either, logSubscribeFailure thins the logging out.
-		)
-		// with RetryUnlimited the only way task.Run gives up while its ctx is still live is a
+		err := d.runDeviceTask(ctx)
+		// with RetryUnlimited the only way the runner gives up while its ctx is still live is a
 		// device with no point left that could ever work, so this is that device being
 		// abandoned
 		if err != nil && ctx.Err() == nil {
@@ -179,6 +171,42 @@ func (d *device) subscribe(ctx context.Context) error {
 	// device is still using.
 	<-ctx.Done()
 	return ctx.Err()
+}
+
+// runDeviceTask runs deviceTask until it stops for good, as task.Run would, except that the
+// connection coming back cuts a retry delay short.
+//
+// A device whose resubscribe failed while the server was down sits out a backoff that grows to
+// subscribeRetryMax, and the server coming back is the one moment worth trying again: waiting
+// out the rest would leave it unmonitored for minutes after every other device has recovered.
+func (d *device) runDeviceTask(ctx context.Context) error {
+	r := task.NewRunner(d.deviceTask(),
+		task.WithRetry(task.RetryUnlimited),
+		task.WithBackoff(subscribeRetryInitial, subscribeRetryMax),
+		// no WithTimeout: Runner.Step cancels the attempt ctx as soon as the Task returns, and
+		// this Task only returns when the subscription dies, so a per-attempt deadline would
+		// sever a live subscription on a timer. Client puts a deadline on each request instead.
+		// no WithErrorLogger either, logSubscribeFailure thins the logging out.
+	)
+	for {
+		err, again, delay := r.Step(ctx)
+		if !again {
+			return err
+		}
+		t := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return ctx.Err()
+		case <-t.C:
+		case <-d.restored:
+			t.Stop()
+			// every waiting device on the connection wakes at once, so spread them out
+			if !d.stagger(ctx) {
+				return ctx.Err()
+			}
+		}
+	}
 }
 
 // stagger waits a random part of maxStagger, reporting false if ctx ended first.

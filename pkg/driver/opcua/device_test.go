@@ -1650,3 +1650,34 @@ func TestDevice_subscribe_reconnectBeforeSubscribing(t *testing.T) {
 		requireSubscribeReturns(t, done)
 	})
 }
+
+// TestDevice_subscribe_reconnectCutsBackoffShort checks a device whose resubscribe failed while
+// the server was down tries again as soon as the connection is back, rather than sitting out a
+// backoff that can reach subscribeRetryMax.
+func TestDevice_subscribe_reconnectCutsBackoffShort(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// the first subscription works, the resubscribe after it dies fails, then the server is back
+		sub := newFakeSubscriber(nil, nil, ua.StatusBadServerNotConnected, nil)
+		dev, _, _ := newTestDevice(t, sub, testMeterNode)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		sub.subAt(0).send(&opcua.PublishNotificationData{
+			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
+		})
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2) // the resubscribe failed, and the next is a longer backoff away
+
+		dev.connectionRestored()
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+		requireMonitored(t, sub.subAt(1), [][]string{{testMeterNode}})
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
