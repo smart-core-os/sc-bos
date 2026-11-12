@@ -12,6 +12,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/util/concurrent"
 )
 
 // Udmi implements the Smart Core UDMI (Universal Device Management Interface) trait for OPC UA devices.
@@ -56,29 +57,29 @@ func newUdmi(n string, c config.RawTrait, l *zap.Logger) (*Udmi, error) {
 }
 
 func (u *Udmi) handleEvent(ctx context.Context, node *ua.NodeID, value any) {
-
-	if p, ok := u.monitoredPoints[node.String()]; ok {
-
-		pointName := p.Name
-		presetValue := p.GetValueFromIntKey(value)
-		u.pointsMu.Lock()
-		defer u.pointsMu.Unlock()
-		u.pointEvents[pointName] = udmi.PointValue{PresentValue: presetValue}
-
-		body, err := json.Marshal(u.pointEvents)
-		if err != nil {
-			u.logger.Error("failed to marshal points event", zap.String("device", u.scName), zap.Error(err))
-			return
-		}
-
-		u.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
-			Name: u.scName,
-			Message: &udmipb.MqttMessage{
-				Topic:   u.udmiConfig.TopicPrefix + config.PointsEventTopicSuffix,
-				Payload: string(body),
-			},
-		})
+	p, ok := u.monitoredPoints[node.String()]
+	if !ok {
+		return
 	}
+
+	// Build the message under the lock but send it outside: the send can wait on a reader,
+	// and GetExportMessage and the next value shouldn't wait with it.
+	u.pointsMu.Lock()
+	u.pointEvents[p.Name] = udmi.PointValue{PresentValue: p.GetValueFromIntKey(value)}
+	body, err := json.Marshal(u.pointEvents)
+	u.pointsMu.Unlock()
+	if err != nil {
+		u.logger.Error("failed to marshal points event", zap.String("device", u.scName), zap.Error(err))
+		return
+	}
+
+	u.udmiBus.Send(ctx, &udmipb.PullExportMessagesResponse{
+		Name: u.scName,
+		Message: &udmipb.MqttMessage{
+			Topic:   u.udmiConfig.TopicPrefix + config.PointsEventTopicSuffix,
+			Payload: string(body),
+		},
+	})
 }
 
 func (u *Udmi) PullControlTopics(_ *udmipb.PullControlTopicsRequest, topicsServer udmipb.UdmiService_PullControlTopicsServer) error {
@@ -92,8 +93,14 @@ func (u *Udmi) OnMessage(context.Context, *udmipb.OnMessageRequest) (*udmipb.OnM
 	return &udmipb.OnMessageResponse{}, nil
 }
 
+// PullExportMessages streams a pointset each time a point changes.
+//
+// handleEvent runs on the device's notification pump, and behind that gopcua's one publish
+// goroutine serves every device on the connection, so a reader that stops reading must not hold
+// up the send. A reader that falls behind skips to the latest message instead, which loses
+// nothing: each message carries every point's current value.
 func (u *Udmi) PullExportMessages(_ *udmipb.PullExportMessagesRequest, server udmipb.UdmiService_PullExportMessagesServer) error {
-	for msg := range u.udmiBus.Listen(server.Context()) {
+	for msg := range concurrent.BreakBackpressure(u.udmiBus.Listen(server.Context())) {
 		err := server.Send(msg)
 		if err != nil {
 			return err

@@ -114,8 +114,12 @@ func NewClient(client *opcua.Client, logger *zap.Logger, conn config.Conn) *Clie
 // while the server is gone. Its own type rather than part of Client because the hook is an
 // option on the gopcua client, which has to exist before Client can wrap it.
 type connWatch struct {
-	mu   sync.Mutex
-	lost []func()
+	mu       sync.Mutex
+	lost     []func()
+	restored []func()
+	// dropped is whether the connection has been lost since it was last up, so that the first
+	// Connected is not taken for a reconnect.
+	dropped bool
 	// up is whether the connection is established right now. Vouching for a value also needs
 	// this, because nothing orders the drop against values already in flight: a notification
 	// queued before the drop can land after it, and gopcua reports a long outage once.
@@ -134,18 +138,43 @@ func (w *connWatch) onLost(f func()) {
 	w.lost = append(w.lost, f)
 }
 
+// onRestored registers f to be called whenever the connection comes back after being lost.
+//
+// gopcua reports Connected only once it has finished transferring or recreating the
+// subscriptions, so by then a recreated subscription has already dropped any item the server
+// refused. gopcua logs that and carries on, so this is the only word a device gets that it
+// may have lost points.
+func (w *connWatch) onRestored(f func()) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.restored = append(w.restored, f)
+}
+
+// watchDevice tells d whenever the connection drops or comes back.
+func (w *connWatch) watchDevice(d *device) {
+	w.onLost(d.connectionLost)
+	w.onRestored(d.connectionRestored)
+}
+
 // observe is the opcua.StateChangedFunc. gopcua calls it synchronously from the goroutine that
 // manages the connection, so the callbacks must not block.
 func (w *connWatch) observe(s opcua.ConnState) {
 	w.up.Store(s == opcua.Connected)
-	switch s {
-	case opcua.Connecting, opcua.Connected:
-		return
-	}
+	var call []func()
 	w.mu.Lock()
-	lost := slices.Clone(w.lost)
+	switch s {
+	case opcua.Connecting:
+	case opcua.Connected:
+		if w.dropped {
+			w.dropped = false
+			call = slices.Clone(w.restored)
+		}
+	default:
+		w.dropped = true
+		call = slices.Clone(w.lost)
+	}
 	w.mu.Unlock()
-	for _, f := range lost {
+	for _, f := range call {
 		f()
 	}
 }

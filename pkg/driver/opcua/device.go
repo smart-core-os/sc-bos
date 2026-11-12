@@ -102,6 +102,10 @@ type device struct {
 	// unknownHandles counts notifications we could not attribute to a node, for the thinning
 	// in logUnknownHandle. Only ever touched from the goroutine pumping this device.
 	unknownHandles int
+
+	// restored is signalled when the connection comes back after being lost, which ends the
+	// pump so the device resubscribes. Buffered so gopcua's connection goroutine never waits.
+	restored chan struct{}
 }
 
 // newDevice creates a new device instance for the given configuration.
@@ -117,6 +121,7 @@ func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check
 		systemCheck: systemCheck,
 		points:      newPointHealth(check),
 		maxStagger:  subscribeStagger,
+		restored:    make(chan struct{}, 1),
 	}
 	if informationalCheck == nil {
 		return d
@@ -221,6 +226,11 @@ func (d *device) deviceTask() task.Task {
 			return task.StopNow, errNoWorkablePoints
 		}
 
+		// a reconnect from before this subscription exists says nothing about it
+		select {
+		case <-d.restored:
+		default:
+		}
 		sub, err := d.client.NewSubscription(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
@@ -272,6 +282,19 @@ func (d *device) deviceTask() task.Task {
 		sub.Cancel(ctx)
 		if ctx.Err() != nil {
 			return task.StopNow, err
+		}
+		if errors.Is(err, errConnectionRestored) {
+			// nothing has failed yet, so raise no faults: the new subscription reports on every
+			// point, and that is what makes an item gopcua dropped visible. Its values stop being
+			// vouched for, though, as the subscription they came from is gone.
+			d.eachLivenessHandler(livenessHandler.subscriptionLost)
+			d.logger.Info("connection to the server restored, resubscribing device", zap.String("device", d.conf.Name))
+			// every device on the connection gets here at once, so spread them out the way a
+			// config load is
+			if !d.stagger(ctx) {
+				return task.StopNow, ctx.Err()
+			}
+			return task.RetryNow, err
 		}
 		d.failAllPoints(ctx, permanent, err)
 		if lived := time.Since(start); lived >= resubscribeGrace {
@@ -502,6 +525,8 @@ func (d *device) pumpEvents(ctx context.Context, sub pointSubscription) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case <-d.restored:
+			return errConnectionRestored
 		case event, open := <-notifications:
 			if !open {
 				// gopcua does not close the channel today, so this is belt and braces
@@ -681,6 +706,20 @@ func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status 
 func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
 	for _, handler := range d.eventHandlers {
 		handler.handleEvent(ctx, node, value)
+	}
+}
+
+// connectionRestored ends the device's subscription so that it resubscribes, once the
+// connection is back after a loss.
+//
+// By then gopcua has recreated the subscription itself, and an item the server refused on the
+// way is dropped with nothing but a log line: the point stops delivering while every signal we
+// have says it is fine (SCB-1455). Resubscribing puts every point back through Monitor, whose
+// results say which ones the server refused. Called from gopcua's connection goroutine.
+func (d *device) connectionRestored() {
+	select {
+	case d.restored <- struct{}{}:
+	default: // already due
 	}
 }
 
