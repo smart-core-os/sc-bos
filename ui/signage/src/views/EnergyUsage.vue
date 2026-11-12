@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <EnergyComp :demand="usageDiff" :generated="producedDiff" :period="period" :total-range="props.totalRange" id="EnergyComp" :show-period="false" :show-energy="false" :run-demo="false"/>
+    <EnergyComp :demand="usageDiff" :generated="producedDiff" :period="period" :total-range="props.totalRange" id="EnergyComp" :show-period="false" :show-energy="false" :show-generation="hasGeneration" :run-demo="false"/>
   </div>
 </template>
 
@@ -43,6 +43,8 @@ const props = defineProps({
     default: 60 * 1000 // 1 minute in ms; set to 0 to disable
   }
 });
+
+const hasGeneration = computed(() => !!props.generated);
 
 const _offset = computed(() => -Math.abs(parseInt(props.offset)));
 
