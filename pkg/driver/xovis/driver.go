@@ -58,9 +58,12 @@ type Driver struct {
 	logger      *zap.Logger
 	pushDataBus *minibus.Bus[PushData]
 
-	config      config.Root
-	client      *client
-	server      *http.Server // only used if httpPort is configured for the webhook
+	config config.Root
+	client *client
+	server *http.Server // only used if httpPort is configured for the webhook
+	// muxWebhook is the path registered on httpMux, if any. ServeMux panics on a second registration of a path and
+	// can't remove one, so it's registered once and outlives the applies that follow.
+	muxWebhook  string
 	udmiServers []*udmiServiceServer
 	faultChecks []*healthpb.FaultCheck // created by the last applyConfig
 }
@@ -202,8 +205,9 @@ func (d *Driver) applyConfig(ctx context.Context, conf config.Root) error {
 			grp.Go(func() error {
 				return srv.Serve(lis)
 			})
-		} else {
+		} else if d.muxWebhook == "" {
 			d.httpMux.HandleFunc(dp.WebhookPath, d.handleWebhook)
+			d.muxWebhook = dp.WebhookPath
 		}
 	}
 
