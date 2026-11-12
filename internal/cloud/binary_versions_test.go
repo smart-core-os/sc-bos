@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"testing"
 
+	"github.com/smart-core-os/sc-bos/internal/cloud/sim"
 	"github.com/smart-core-os/sc-bos/pkg/proto/supervisorpb"
 )
 
@@ -95,68 +96,39 @@ func assertLookup(t *testing.T, b *binaryVersions, version, wantID string) {
 	}
 }
 
-// checkInRecorder is a Client that records each check-in request before passing it on.
-type checkInRecorder struct {
-	Client
-	mu   sync.Mutex
-	reqs []CheckInRequest
-}
-
-func (r *checkInRecorder) CheckIn(ctx context.Context, req CheckInRequest) (CheckInResponse, error) {
-	r.mu.Lock()
-	r.reqs = append(r.reqs, req)
-	r.mu.Unlock()
-	return r.Client.CheckIn(ctx, req)
-}
-
-// take returns the requests recorded since the last take.
-func (r *checkInRecorder) take() []CheckInRequest {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	reqs := r.reqs
-	r.reqs = nil
-	return reqs
-}
-
-// newRecordedConn is newConnEnv with every check-in recorded.
-func newRecordedConn(t *testing.T, env *clientEnv, opts ...BinaryUpdaterOption) (*Conn, *checkInRecorder) {
+// assertReportedBinaryVersionID checks the binary version id the sim has recorded for the env's node.
+// An empty want means none is recorded.
+func assertReportedBinaryVersionID(t *testing.T, env *clientEnv, label, want string) {
 	t.Helper()
-	rec := &checkInRecorder{Client: env.client}
-	recEnv := *env
-	recEnv.client = rec
-	return newConnEnv(t, &recEnv, opts...), rec
-}
-
-func assertBinaryVersionID(t *testing.T, label string, req CheckInRequest, want ReportedID) {
-	t.Helper()
-	var got ReportedID
-	if req.Running.Binary != nil {
-		got = req.Running.Binary.VersionID
+	var node sim.Node
+	resp := doSimRequest(t, env.httpClient, "GET",
+		fmt.Sprintf("%s/api/v1/management/nodes/%d", env.testServer.URL, env.nodeID), nil, &node)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("get node: expected 200, got %d", resp.StatusCode)
 	}
-	if got != want {
-		t.Errorf("%s: running.binary.versionId = %+v, want %+v", label, got, want)
+	if node.ReportedBinaryVersionID != want {
+		t.Errorf("%s: recorded binary version id = %q, want %q", label, node.ReportedBinaryVersionID, want)
 	}
 }
 
-// appliedReq returns the recorded check-in from reqs which reported that deployment depID was applied.
-func appliedReq(t *testing.T, reqs []CheckInRequest, depID string) CheckInRequest {
+func assertDeploymentStatus(t *testing.T, env *clientEnv, label string, dep int64, want string) {
 	t.Helper()
-	for _, req := range reqs {
-		for _, p := range req.Progress {
-			if p.DeploymentID == depID && p.State == ProgressApplied {
-				return req
-			}
-		}
+	if got := getBinaryDeployment(t, env.httpClient, env.testServer.URL, dep).Status; got != want {
+		t.Errorf("%s: deployment status = %q, want %q", label, got, want)
 	}
-	t.Fatalf("no check-in reports that depID=%s applied", depID)
-	return CheckInRequest{}
+}
+
+func mustUpdate(t *testing.T, conn *Conn) {
+	t.Helper()
+	if _, err := conn.Update(context.Background()); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
 }
 
 // TestBinaryVersionID_DeploymentLifecycle follows one software deployment through install, the
-// Supervisor's pending commit and its confirmation, checking which version id BOS reports at each step.
-// It doesn't check the deployment's status, because the sim ignores the version ids BOS sends.
+// Supervisor's pending commit and its confirmation. The cloud learns the new version's id, and completes
+// the deployment, only once the Supervisor confirms it.
 func TestBinaryVersionID_DeploymentLifecycle(t *testing.T) {
-	ctx := context.Background()
 	env := setupClientEnv(t)
 	versionsFile := WithBinaryVersionsFile(filepath.Join(t.TempDir(), "binary-versions.json"))
 	fake := &fakeSupervisor{}
@@ -168,69 +140,90 @@ func TestBinaryVersionID_DeploymentLifecycle(t *testing.T) {
 	wantID := strconv.FormatInt(artID, 10)
 
 	// BOS runs a hand-installed 1.0.0 and is offered 2.0.0.
-	conn, rec := newRecordedConn(t, env, sup, versionsFile, WithBinaryVersion("1.0.0"))
-	if _, err := conn.Update(ctx); err != nil {
-		t.Fatalf("Update: %v", err)
-	}
+	mustUpdate(t, newConnEnv(t, env, sup, versionsFile, WithBinaryVersion("1.0.0")))
 	if fake.calls() != 1 {
 		t.Fatalf("InstallUpdate calls = %d, want 1", fake.calls())
 	}
-	assertBinaryVersionID(t, "hand-installed", rec.take()[0], ReportNoID())
 
 	// BOS restarts into 2.0.0; the Supervisor waits for BOS to confirm it.
 	fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_INSTALLING, Version: "2.0.0", DeploymentId: depID})
-	conn, rec = newRecordedConn(t, env, sup, versionsFile, WithBinaryVersion("2.0.0"))
-	if _, err := conn.Update(ctx); err != nil {
-		t.Fatalf("Update: %v", err)
-	}
-	for i, req := range rec.take() {
-		assertBinaryVersionID(t, fmt.Sprintf("awaiting commit, check-in %d", i), req, ReportedID{})
-	}
+	conn := newConnEnv(t, env, sup, versionsFile, WithBinaryVersion("2.0.0"))
+	mustUpdate(t, conn)
+	assertReportedBinaryVersionID(t, env, "awaiting commit", "")
+	assertDeploymentStatus(t, env, "awaiting commit", dep, "in_progress")
 
-	// The Supervisor confirms 2.0.0: BOS reports its version id, and reports it applied.
+	// The Supervisor confirms 2.0.0.
 	fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_COMPLETED, Version: "2.0.0", DeploymentId: depID})
-	if _, err := conn.Update(ctx); err != nil {
-		t.Fatalf("Update: %v", err)
-	}
-	reqs := rec.take()
-	assertBinaryVersionID(t, "confirmed", reqs[0], ReportID(wantID))
-	assertBinaryVersionID(t, "applied", appliedReq(t, reqs, depID), ReportID(wantID))
+	mustUpdate(t, conn)
+	assertReportedBinaryVersionID(t, env, "confirmed", wantID)
+	assertDeploymentStatus(t, env, "confirmed", dep, "completed")
 
-	// After another restart BOS still knows the id, though the cloud no longer offers the deployment.
-	conn, rec = newRecordedConn(t, env, sup, versionsFile, WithBinaryVersion("2.0.0"))
-	if _, err := conn.Update(ctx); err != nil {
-		t.Fatalf("Update: %v", err)
-	}
-	assertBinaryVersionID(t, "after restart", rec.take()[0], ReportID(wantID))
+	// BOS restarts again and keeps reporting the id.
+	mustUpdate(t, newConnEnv(t, env, sup, versionsFile, WithBinaryVersion("2.0.0")))
+	assertReportedBinaryVersionID(t, env, "after restart", wantID)
 }
 
-// TestBinaryVersionID_Rollback: after the Supervisor rolls an update back, BOS reports the id of the
-// version it is running again.
+// TestBinaryVersionID_Rollback: after the Supervisor rolls an update back, the cloud learns the update
+// failed, and records the id of the version BOS runs again.
 func TestBinaryVersionID_Rollback(t *testing.T) {
-	ctx := context.Background()
 	env := setupClientEnv(t)
 	path := filepath.Join(t.TempDir(), "binary-versions.json")
 	mustAdd(t, &binaryVersions{path: path}, "1.0.0", "v-1")
 	fake := &fakeSupervisor{}
 
-	depID := fmt.Sprintf("b-%d", seedInProgressBinary(t, env, "2.0.0"))
+	dep := seedInProgressBinary(t, env, "2.0.0")
 	mustAdd(t, &binaryVersions{path: path}, "2.0.0", "v-2") // as installBinary would
-	fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_FAILED, Version: "2.0.0", DeploymentId: depID})
+	fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_FAILED, Version: "2.0.0", DeploymentId: fmt.Sprintf("b-%d", dep)})
 
-	conn, rec := newRecordedConn(t, env, WithBinaryInstaller(dialFakeSupervisor(t, fake)),
-		WithBinaryVersionsFile(path), WithBinaryVersion("1.0.0"))
-	if _, err := conn.Update(ctx); err != nil {
-		t.Fatalf("Update: %v", err)
-	}
-	assertBinaryVersionID(t, "rolled back", rec.take()[0], ReportID("v-1"))
+	mustUpdate(t, newConnEnv(t, env, WithBinaryInstaller(dialFakeSupervisor(t, fake)),
+		WithBinaryVersionsFile(path), WithBinaryVersion("1.0.0")))
+	assertReportedBinaryVersionID(t, env, "rolled back", "v-1")
+	assertDeploymentStatus(t, env, "rolled back", dep, "failed")
 }
 
-// TestBinaryVersionID_AdoptsRunningVersion: deploying the version BOS already runs records its id
-// without reinstalling, and reports it with the applied report.
+// TestBinaryVersionID_RollbackFailed: when the Supervisor's rollback fails, leaving BOS on the version it
+// failed, the cloud records the deployment as failed and no longer records the earlier version's id.
+func TestBinaryVersionID_RollbackFailed(t *testing.T) {
+	env := setupClientEnv(t)
+	path := filepath.Join(t.TempDir(), "binary-versions.json")
+	versionsFile := WithBinaryVersionsFile(path)
+	mustAdd(t, &binaryVersions{path: path}, "1.0.0", "v-1")
+	fake := &fakeSupervisor{}
+	sup := WithBinaryInstaller(dialFakeSupervisor(t, fake))
+
+	mustUpdate(t, newConnEnv(t, env, sup, versionsFile, WithBinaryVersion("1.0.0")))
+	assertReportedBinaryVersionID(t, env, "before update", "v-1")
+
+	dep := seedInProgressBinary(t, env, "2.0.0")
+	artID := getBinaryDeployment(t, env.httpClient, env.testServer.URL, dep).BinaryArtefactID
+	mustAdd(t, &binaryVersions{path: path}, "2.0.0", strconv.FormatInt(artID, 10)) // as installBinary would
+	fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_FAILED, Version: "2.0.0", DeploymentId: fmt.Sprintf("b-%d", dep)})
+
+	mustUpdate(t, newConnEnv(t, env, sup, versionsFile, WithBinaryVersion("2.0.0")))
+	assertReportedBinaryVersionID(t, env, "rollback failed", "")
+	assertDeploymentStatus(t, env, "rollback failed", dep, "failed")
+}
+
+// TestBinaryVersionID_ManualInstall: after a manual install of a version BOS has no record of, the cloud
+// no longer records a version id for the node.
+func TestBinaryVersionID_ManualInstall(t *testing.T) {
+	env := setupClientEnv(t)
+	versionsFile := WithBinaryVersionsFile(filepath.Join(t.TempDir(), "binary-versions.json"))
+	artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "1.0.0", []byte("dummy-artefact-payload"))
+	createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
+
+	mustUpdate(t, newConnEnv(t, env, versionsFile, WithBinaryVersion("1.0.0")))
+	assertReportedBinaryVersionID(t, env, "deployed", strconv.FormatInt(artID, 10))
+
+	mustUpdate(t, newConnEnv(t, env, versionsFile, WithBinaryVersion("3.0.0")))
+	assertReportedBinaryVersionID(t, env, "manually installed", "")
+}
+
+// TestBinaryVersionID_AdoptsRunningVersion: deploying the version BOS already runs completes the
+// deployment without reinstalling, and the cloud records its id.
 func TestBinaryVersionID_AdoptsRunningVersion(t *testing.T) {
 	for _, withSupervisor := range []bool{true, false} {
 		t.Run(fmt.Sprintf("supervisor=%v", withSupervisor), func(t *testing.T) {
-			ctx := context.Background()
 			env := setupClientEnv(t)
 			fake := &fakeSupervisor{}
 			opts := []BinaryUpdaterOption{
@@ -240,32 +233,21 @@ func TestBinaryVersionID_AdoptsRunningVersion(t *testing.T) {
 			if withSupervisor {
 				opts = append(opts, WithBinaryInstaller(dialFakeSupervisor(t, fake)))
 			}
-			conn, rec := newRecordedConn(t, env, opts...)
-
 			artID := createBinaryArtefact(t, env.httpClient, env.testServer.URL, "1.0.0", []byte("dummy-artefact-payload"))
 			dep := createBinaryDeployment(t, env.httpClient, env.testServer.URL, artID, env.nodeID)
-			wantID := strconv.FormatInt(artID, 10)
 
-			if _, err := conn.Update(ctx); err != nil {
-				t.Fatalf("Update: %v", err)
-			}
+			mustUpdate(t, newConnEnv(t, env, opts...))
 			if fake.calls() != 0 {
 				t.Errorf("InstallUpdate calls = %d, want 0", fake.calls())
 			}
-			reqs := rec.take()
-			assertBinaryVersionID(t, "before adoption", reqs[0], ReportNoID())
-			assertBinaryVersionID(t, "applied", appliedReq(t, reqs, fmt.Sprintf("b-%d", dep)), ReportID(wantID))
-
-			if _, err := conn.Update(ctx); err != nil {
-				t.Fatalf("Update: %v", err)
-			}
-			assertBinaryVersionID(t, "next poll", rec.take()[0], ReportID(wantID))
+			assertReportedBinaryVersionID(t, env, "adopted", strconv.FormatInt(artID, 10))
+			assertDeploymentStatus(t, env, "adopted", dep, "completed")
 		})
 	}
 }
 
 // TestBinaryVersionID_Withheld: BOS sends no version id when it can't be sure the version it runs will
-// stay, or can't read its record.
+// stay, or can't read its record, so the cloud keeps the id it had.
 func TestBinaryVersionID_Withheld(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -274,12 +256,10 @@ func TestBinaryVersionID_Withheld(t *testing.T) {
 		{"supervisor downloading", func(t *testing.T, fake *fakeSupervisor, path string) {
 			fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_DOWNLOADING, Version: "2.0.0", DeploymentId: "b-1"})
 		}},
-		{"supervisor failed the running version", func(t *testing.T, fake *fakeSupervisor, path string) {
-			// the Supervisor's rollback failed, leaving BOS on the version it failed
-			fake.setStatus(&supervisorpb.UpdateStatus{State: supervisorpb.UpdateStatus_FAILED, Version: "1.0.0", DeploymentId: "b-1"})
-		}},
 		{"supervisor status unknown", func(t *testing.T, fake *fakeSupervisor, path string) {
+			fake.mu.Lock()
 			fake.statusErr = errors.New("unavailable")
+			fake.mu.Unlock()
 		}},
 		{"record unreadable", func(t *testing.T, fake *fakeSupervisor, path string) {
 			if err := os.WriteFile(path, []byte("not json"), 0600); err != nil {
@@ -289,21 +269,18 @@ func TestBinaryVersionID_Withheld(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			env := setupClientEnv(t)
 			path := filepath.Join(t.TempDir(), "binary-versions.json")
 			mustAdd(t, &binaryVersions{path: path}, "1.0.0", "v-1")
 			fake := &fakeSupervisor{}
-			tt.setup(t, fake, path)
-
-			conn, rec := newRecordedConn(t, env, WithBinaryInstaller(dialFakeSupervisor(t, fake)),
+			conn := newConnEnv(t, env, WithBinaryInstaller(dialFakeSupervisor(t, fake)),
 				WithBinaryVersionsFile(path), WithBinaryVersion("1.0.0"))
-			_, _ = conn.Update(ctx) // an unknown Supervisor status fails the poll after the check-in
-			reqs := rec.take()
-			if len(reqs) == 0 {
-				t.Fatal("no check-in made")
-			}
-			assertBinaryVersionID(t, tt.name, reqs[0], ReportedID{})
+			mustUpdate(t, conn)
+			assertReportedBinaryVersionID(t, env, "before", "v-1")
+
+			tt.setup(t, fake, path)
+			_, _ = conn.Update(context.Background()) // an unknown Supervisor status fails the poll after the check-in
+			assertReportedBinaryVersionID(t, env, "after", "v-1")
 		})
 	}
 }

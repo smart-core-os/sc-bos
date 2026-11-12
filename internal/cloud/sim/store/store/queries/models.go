@@ -71,13 +71,15 @@ type EnrollmentCode struct {
 }
 
 type Node struct {
-	ID            int64
-	Hostname      string
-	SiteID        int64
-	CreateTime    time.Time
-	Os            string
-	Arch          string
-	BinaryUpdates sql.NullBool
+	ID                      int64
+	Hostname                string
+	SiteID                  int64
+	CreateTime              time.Time
+	Os                      string
+	Arch                    string
+	BinaryUpdates           sql.NullBool
+	ReportedConfigVersionID sql.NullString
+	ReportedBinaryVersionID sql.NullString
 }
 
 type NodeCheckIn struct {

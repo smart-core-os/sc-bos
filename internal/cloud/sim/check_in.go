@@ -128,8 +128,7 @@ type CheckInRequest struct {
 }
 
 // RunningState reports what the node is running, its platform and its capabilities. Platform is
-// reconciled onto the node and Capabilities is recorded on it; Config/Binary versions are accepted for
-// wire compatibility but the deployment lifecycle is driven by Progress.
+// reconciled onto the node and Capabilities is recorded on it.
 type RunningState struct {
 	Config       *RunningArtefact `json:"config,omitempty"`
 	Binary       *RunningArtefact `json:"binary,omitempty"`
@@ -150,11 +149,33 @@ func (c *Capabilities) binaryUpdates() *bool {
 	return c.BinaryUpdates
 }
 
-// RunningArtefact identifies the version a stream is running.
+// RunningArtefact identifies the version a stream is running. VersionID is kept raw to tell an absent
+// id (no change) from null (no known version).
 type RunningArtefact struct {
-	Version   string `json:"version,omitempty"`
-	VersionID string `json:"versionId,omitempty"`
-	Hash      string `json:"hash,omitempty"`
+	Version   string          `json:"version,omitempty"`
+	VersionID json.RawMessage `json:"versionId,omitempty"`
+	Hash      string          `json:"hash,omitempty"`
+}
+
+// reportedVersionID decodes a's version id. It returns ok=false when the id is absent, and a NULL id
+// when it is null.
+func reportedVersionID(a *RunningArtefact) (id sql.NullString, ok bool, err error) {
+	if a == nil || a.VersionID == nil {
+		return sql.NullString{}, false, nil
+	}
+	var s *string
+	if err := json.Unmarshal(a.VersionID, &s); err != nil {
+		return sql.NullString{}, false, fmt.Errorf("versionId: %w", errInvalidRequest)
+	}
+	if s == nil {
+		return sql.NullString{}, true, nil
+	}
+	return sql.NullString{String: *s, Valid: true}, true, nil
+}
+
+// reachedTarget reports whether reported, a node's recorded version id, names versionID.
+func reachedTarget(reported sql.NullString, versionID int64) bool {
+	return reported.Valid && reported.String == strconv.FormatInt(versionID, 10)
 }
 
 // Platform is the node's GOOS/GOARCH, reconciled onto the node on check-in.
@@ -389,6 +410,32 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Record each stream's reported version id. An absent id leaves the recorded one unchanged.
+		reportedConfig := node.ReportedConfigVersionID
+		if id, ok, err := reportedVersionID(req.Running.Config); err != nil {
+			return err
+		} else if ok && id != reportedConfig {
+			if err := tx.UpdateNodeReportedConfigVersionID(r.Context(), queries.UpdateNodeReportedConfigVersionIDParams{
+				ID:                      node.ID,
+				ReportedConfigVersionID: id,
+			}); err != nil {
+				return err
+			}
+			reportedConfig = id
+		}
+		reportedBinary := node.ReportedBinaryVersionID
+		if id, ok, err := reportedVersionID(req.Running.Binary); err != nil {
+			return err
+		} else if ok && id != reportedBinary {
+			if err := tx.UpdateNodeReportedBinaryVersionID(r.Context(), queries.UpdateNodeReportedBinaryVersionIDParams{
+				ID:                      node.ID,
+				ReportedBinaryVersionID: id,
+			}); err != nil {
+				return err
+			}
+			reportedBinary = id
+		}
+
 		// Apply each progress report to its deployment, routing on the id's stream prefix, and collect
 		// the per-stream current/installing ids for the check-in record.
 		var rec checkInRecord
@@ -421,6 +468,15 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			hasDeploy = false
 		case err != nil:
 			return err
+		case reachedTarget(reportedConfig, deployment.ConfigVersionID):
+			// node is already running the target version - complete the deployment
+			// (and therefore there is no new version to offer either)
+			if _, err := tx.UpdateConfigDeploymentStatus(r.Context(), queries.UpdateConfigDeploymentStatusParams{
+				ID:     deployment.ID,
+				Status: statusCompleted,
+			}); err != nil {
+				return err
+			}
 		default:
 			hasDeploy = true
 			configVersion, err = tx.GetConfigVersion(r.Context(), deployment.ConfigVersionID)
@@ -435,6 +491,13 @@ func (s *Server) checkIn(w http.ResponseWriter, r *http.Request) {
 			hasBinary = false
 		case err != nil:
 			return err
+		case reachedTarget(reportedBinary, updateDep.BinaryArtefactID):
+			if _, err := tx.SetBinaryDeploymentStatus(r.Context(), queries.SetBinaryDeploymentStatusParams{
+				ID:     updateDep.ID,
+				Status: statusCompleted,
+			}); err != nil {
+				return err
+			}
 		default:
 			hasBinary = true
 		}

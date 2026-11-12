@@ -145,12 +145,9 @@ func installInFlight(st *supervisorpb.UpdateStatus) bool {
 	}
 }
 
-// mayRollBack reports whether the Supervisor might still roll back version.
-func mayRollBack(st *supervisorpb.UpdateStatus, stErr error, version string) bool {
-	if stErr != nil || installInFlight(st) {
-		return true
-	}
-	return st.GetState() == supervisorpb.UpdateStatus_FAILED && st.GetVersion() == version
+// mayRollBack reports whether the Supervisor might still roll back.
+func mayRollBack(st *supervisorpb.UpdateStatus, stErr error) bool {
+	return stErr != nil || installInFlight(st)
 }
 
 // reportBinary reports the binary channel's status from a check-in response, using the Supervisor status

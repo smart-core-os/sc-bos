@@ -78,6 +78,9 @@ paths:
       description: >-
         Records a check-in for the controller (authenticated by its X.509 client
         certificate, mutual TLS) and returns the newest active deployment, if any.
+        If the reported versionId of either deployment stream (config or binary)
+        matches the versionId of a currently in-progress deployment for this node,
+        then that deployment is automatically marked as completed.
       requestBody:
         required: false
         content:
@@ -894,6 +897,12 @@ components:
         createTime:
           type: string
           format: date-time
+        reportedConfigVersionId:
+          type: string
+          description: Config version ID the node last reported running on check-in; absent when none is recorded
+        reportedBinaryVersionId:
+          type: string
+          description: Binary artefact ID the node last reported running on check-in; absent when none is recorded
 
     NodeList:
       type: object
@@ -1167,6 +1176,7 @@ components:
           description: >-
             Version ID of the running artefact as reported by the cloud when the node installed that version.
             Null if the running artefact was not installed from the cloud (so no version ID is known).
+            Absent leaves the recorded ID unchanged.
         hash:
           type: string
           description: Type-prefixed "<algo>:<base64>" digest of the running artefact
