@@ -15,11 +15,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/dbo"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airqualitysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 )
 
@@ -485,6 +487,234 @@ func TestTemperatureTelemetry(t *testing.T) {
 			envTelemetry(&temperaturepb.Temperature{Measured: &typespb.Temperature{}}, dbo.NamingDBO, forEachTemperaturePoint),
 			"a measured 0 °C is a reading")
 	})
+}
+
+func TestLightTelemetry(t *testing.T) {
+	conf := func(c float32) *float32 { return &c }
+	for _, n := range []dbo.Naming{dbo.NamingDBO, dbo.NamingRaw} {
+		name := pointBrightness.name(n)
+		want := func(level float32) udmi.PointsEvent { return udmi.PointsEvent{name: {PresentValue: level}} }
+		for _, tc := range []struct {
+			desc string
+			r    *lightpb.Brightness
+			want udmi.PointsEvent
+		}{
+			{"a level", &lightpb.Brightness{LevelPercent: 42}, want(42)},
+			{"off is a reading", &lightpb.Brightness{}, want(0)},
+			{"full confidence", &lightpb.Brightness{LevelPercent: 42, Confidence: conf(100)}, want(42)},
+			{"low confidence is still sent", &lightpb.Brightness{LevelPercent: 42, Confidence: conf(10)}, want(42)},
+			{"an unknown level sends nothing", &lightpb.Brightness{LevelPercent: 42, Confidence: conf(0)}, udmi.PointsEvent{}},
+			{"no reading sends nothing", nil, udmi.PointsEvent{}},
+			{"a preset sends only the level",
+				&lightpb.Brightness{LevelPercent: 60, Preset: &lightpb.LightPreset{Name: "bright"}, TargetLevelPercent: 80}, want(60)},
+			{"a zero level with an empty preset is off, not ignored",
+				&lightpb.Brightness{Preset: &lightpb.LightPreset{}}, want(0)},
+		} {
+			assert.Equal(t, tc.want, envTelemetry(tc.r, n, forEachLightPoint), "%s (naming %v)", tc.desc, n)
+		}
+		assert.Equal(t, map[string]udmi.MetadataPoint{name: {Units: dbo.UnitPercent}},
+			envInventory(&lightpb.Brightness{LevelPercent: 42}, n, forEachLightPoint), "naming %v", n)
+	}
+	assert.Equal(t, dbo.FieldBrightnessPercentageSensor, pointBrightness.name(dbo.NamingDBO))
+	assert.Equal(t, "level_percent", pointBrightness.name(dbo.NamingRaw))
+}
+
+// TestTransportTelemetry is SCB-1542: a lift's or escalator's values go on the fields agreed with
+// Connect in SCC-1209, with Connect's multistate vocabulary, in either naming.
+func TestTransportTelemetry(t *testing.T) {
+	f := func(v float32) *float32 { return &v }
+	percent := transportUnitsOf(&transportpb.TransportSupport{LoadUnit: "% of max load"})
+	kg := transportUnitsOf(&transportpb.TransportSupport{LoadUnit: "kg", MaxLoad: 1600})
+	mmps := transportUnitsOf(&transportpb.TransportSupport{SpeedUnit: "mm/s"})
+	door := func(title string, s transportpb.Transport_Door_DoorStatus) *transportpb.Transport_Door {
+		return &transportpb.Transport_Door{Title: title, Status: s}
+	}
+	at := func(floor string) *transportpb.Transport_Location {
+		return &transportpb.Transport_Location{Floor: floor}
+	}
+
+	for _, tc := range []struct {
+		desc     string
+		r        *transportpb.Transport
+		u        transportUnits
+		dbo, raw udmi.PointsEvent
+	}{
+		{
+			desc: "a 40LH lift",
+			r: &transportpb.Transport{
+				ActualPosition:   at("12"),
+				MovingDirection:  transportpb.Transport_UP,
+				Doors:            []*transportpb.Transport_Door{door("Side 1", transportpb.Transport_Door_OPENING)},
+				Load:             f(35),
+				NextDestinations: []*transportpb.Transport_Location{at("14")},
+			},
+			u: percent,
+			dbo: udmi.PointsEvent{
+				dbo.FieldFloorCount:           {PresentValue: 12},
+				dbo.FieldDirectionStatus:      {PresentValue: "up"},
+				dbo.FieldPositionStatus:       {PresentValue: "opening"},
+				dbo.FieldLoadPercentageSensor: {PresentValue: float32(35)},
+			},
+			raw: udmi.PointsEvent{
+				"actual_position":  {PresentValue: 12},
+				"moving_direction": {PresentValue: "up"},
+				"doors":            {PresentValue: "opening"},
+				"load":             {PresentValue: float32(35)},
+			},
+		},
+		{
+			desc: "a 40LH escalator",
+			r:    &transportpb.Transport{MovingDirection: transportpb.Transport_DOWN, Speed: f(500)},
+			u:    mmps,
+			dbo: udmi.PointsEvent{
+				dbo.FieldDirectionStatus:      {PresentValue: "down"},
+				dbo.FieldLinearVelocitySensor: {PresentValue: float32(500)},
+			},
+			raw: udmi.PointsEvent{
+				"moving_direction": {PresentValue: "down"},
+				"speed":            {PresentValue: float32(500)},
+			},
+		},
+		{
+			desc: "not moving is stopped, and a stopped escalator's speed is a reading",
+			r:    &transportpb.Transport{MovingDirection: transportpb.Transport_NO_DIRECTION, Speed: f(0)},
+			u:    mmps,
+			dbo: udmi.PointsEvent{
+				dbo.FieldDirectionStatus:      {PresentValue: "stopped"},
+				dbo.FieldLinearVelocitySensor: {PresentValue: float32(0)},
+			},
+			raw: udmi.PointsEvent{"moving_direction": {PresentValue: "stopped"}, "speed": {PresentValue: float32(0)}},
+		},
+		{
+			desc: "another direction goes as its own name",
+			r:    &transportpb.Transport{MovingDirection: transportpb.Transport_FORWARD},
+			dbo:  udmi.PointsEvent{dbo.FieldDirectionStatus: {PresentValue: "forward"}},
+			raw:  udmi.PointsEvent{"moving_direction": {PresentValue: "forward"}},
+		},
+		{
+			desc: "unspecified states send nothing",
+			r: &transportpb.Transport{
+				Doors: []*transportpb.Transport_Door{door("Side 1", transportpb.Transport_Door_DOOR_STATUS_UNSPECIFIED)},
+			},
+			dbo: udmi.PointsEvent{},
+			raw: udmi.PointsEvent{},
+		},
+		{
+			desc: "an enum number with no name sends nothing",
+			r:    &transportpb.Transport{MovingDirection: 99, OperatingMode: 99},
+			dbo:  udmi.PointsEvent{},
+			raw:  udmi.PointsEvent{},
+		},
+		{
+			desc: "a float node's basement floor",
+			r:    &transportpb.Transport{ActualPosition: at("-3.00")},
+			dbo:  udmi.PointsEvent{dbo.FieldFloorCount: {PresentValue: -3}},
+			raw:  udmi.PointsEvent{"actual_position": {PresentValue: -3}},
+		},
+		{
+			desc: "ground is floor 0",
+			r:    &transportpb.Transport{ActualPosition: at("0")},
+			dbo:  udmi.PointsEvent{dbo.FieldFloorCount: {PresentValue: 0}},
+			raw:  udmi.PointsEvent{"actual_position": {PresentValue: 0}},
+		},
+		{
+			desc: "a named floor isn't sent",
+			r:    &transportpb.Transport{ActualPosition: at("GF")},
+			dbo:  udmi.PointsEvent{},
+			raw:  udmi.PointsEvent{},
+		},
+		{
+			desc: "a fractional floor isn't sent",
+			r:    &transportpb.Transport{ActualPosition: at("2.50")},
+			dbo:  udmi.PointsEvent{},
+			raw:  udmi.PointsEvent{},
+		},
+		{
+			desc: "a load in kilograms goes on mass_sensor",
+			r:    &transportpb.Transport{Load: f(800)},
+			u:    kg,
+			dbo:  udmi.PointsEvent{dbo.FieldMassSensor: {PresentValue: float32(800)}},
+			raw:  udmi.PointsEvent{"load": {PresentValue: float32(800)}},
+		},
+		{
+			desc: "a load or speed with no unit isn't sent",
+			r:    &transportpb.Transport{Load: f(35), Speed: f(500)},
+			dbo:  udmi.PointsEvent{},
+			raw:  udmi.PointsEvent{},
+		},
+		{
+			desc: "doors are numbered in door order, whatever their titles",
+			r: &transportpb.Transport{Doors: []*transportpb.Transport_Door{
+				door("Front", transportpb.Transport_Door_CLOSED),
+				door("", transportpb.Transport_Door_DOOR_STATUS_UNSPECIFIED),
+				door("Front", transportpb.Transport_Door_LIMITED_OPENED),
+			}},
+			dbo: udmi.PointsEvent{
+				dbo.FieldPositionStatus + "_1": {PresentValue: "closed"},
+				dbo.FieldPositionStatus + "_3": {PresentValue: "limited_open"},
+			},
+			raw: udmi.PointsEvent{
+				"doors_1": {PresentValue: "closed"},
+				"doors_3": {PresentValue: "limited_open"},
+			},
+		},
+		{
+			desc: "the operating mode's full name",
+			r:    &transportpb.Transport{OperatingMode: transportpb.Transport_FIREFIGHTER_CONTROL},
+			dbo:  udmi.PointsEvent{dbo.FieldOperatingMode: {PresentValue: "firefighter_control"}},
+			raw:  udmi.PointsEvent{"operating_mode": {PresentValue: "firefighter_control"}},
+		},
+		{desc: "no reading", dbo: udmi.PointsEvent{}, raw: udmi.PointsEvent{}},
+	} {
+		forEach := forEachTransportPointFor(tc.u)
+		assert.Equal(t, tc.dbo, envTelemetry(tc.r, dbo.NamingDBO, forEach), "%s (dbo naming)", tc.desc)
+		assert.Equal(t, tc.raw, envTelemetry(tc.r, dbo.NamingRaw, forEach), "%s (raw naming)", tc.desc)
+	}
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldLinearVelocitySensor: {Units: dbo.UnitMillimetersPerSecond},
+		dbo.FieldDirectionStatus:      {},
+	}, envInventory(&transportpb.Transport{MovingDirection: transportpb.Transport_UP, Speed: f(500)}, dbo.NamingDBO, forEachTransportPointFor(mmps)))
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldLoadPercentageSensor: {Units: dbo.UnitPercent},
+	}, envInventory(&transportpb.Transport{Load: f(35)}, dbo.NamingDBO, forEachTransportPointFor(percent)))
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		"load": {Units: dbo.UnitKilograms},
+	}, envInventory(&transportpb.Transport{Load: f(800)}, dbo.NamingRaw, forEachTransportPointFor(kg)))
+}
+
+func TestTransportUnitsOf(t *testing.T) {
+	with := func(p envPoint, units string) *envPoint {
+		p.units = units
+		return &p
+	}
+	for _, tc := range []struct {
+		desc        string
+		support     *transportpb.TransportSupport
+		load, speed *envPoint
+	}{
+		{"undescribed", nil, nil, nil},
+		{"KONE's percentage", &transportpb.TransportSupport{LoadUnit: "% of max load"}, &pointLoadPercent, nil},
+		{"a bare percent sign", &transportpb.TransportSupport{LoadUnit: "%"}, &pointLoadPercent, nil},
+		{"percent spelt out", &transportpb.TransportSupport{LoadUnit: " Percent "}, &pointLoadPercent, nil},
+		{"kilograms", &transportpb.TransportSupport{LoadUnit: "KG"}, with(pointLoadMass, dbo.UnitKilograms), nil},
+		{"pounds", &transportpb.TransportSupport{LoadUnit: "lb"}, with(pointLoadMass, dbo.UnitPoundsMass), nil},
+		{"tonnes", &transportpb.TransportSupport{LoadUnit: "t"}, with(pointLoadMass, dbo.UnitMetricTons), nil},
+		{"a load unit Connect can't resolve", &transportpb.TransportSupport{LoadUnit: "passengers"}, nil, nil},
+		{"a load in a speed unit", &transportpb.TransportSupport{LoadUnit: "m/s"}, nil, nil},
+		{"40LH's escalators", &transportpb.TransportSupport{SpeedUnit: "mm/s"}, nil, with(pointSpeed, dbo.UnitMillimetersPerSecond)},
+		{"metres per second", &transportpb.TransportSupport{SpeedUnit: "m/s"}, nil, with(pointSpeed, dbo.UnitMetersPerSecond)},
+		{"feet per minute", &transportpb.TransportSupport{SpeedUnit: "ft/min"}, nil, with(pointSpeed, dbo.UnitFeetPerMinute)},
+		{"a speed unit Connect can't resolve", &transportpb.TransportSupport{SpeedUnit: "steps/min"}, nil, nil},
+		{"a speed in a mass unit", &transportpb.TransportSupport{SpeedUnit: "kg"}, nil, nil},
+	} {
+		u := transportUnitsOf(tc.support)
+		assert.Equal(t, tc.load, u.load, tc.desc)
+		assert.Equal(t, tc.speed, u.speed, tc.desc)
+	}
+	assert.Empty(t, transportUnitsOf(nil).declared())
+	assert.Equal(t, []envPoint{pointLoadPercent, *with(pointSpeed, dbo.UnitMillimetersPerSecond)},
+		transportUnitsOf(&transportpb.TransportSupport{LoadUnit: "%", SpeedUnit: "mm/s"}).declared())
 }
 
 func TestPointKey(t *testing.T) {

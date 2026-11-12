@@ -36,11 +36,13 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/airtemperaturepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/devicespb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/enterleavesensorpb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/lightpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/metadatapb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/resourceusepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/temperaturepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
@@ -1337,6 +1339,206 @@ func TestGetAllTraitImplementorsEnvironment(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, udmi.MetadataPoint{Units: dbo.UnitMicrogramsPerCubicMeter},
 		dev.buildDiscovery(now).Pointset.Points[dbo.FieldZoneAirPM2pt5DensitySensor])
+}
+
+// TestGetAllTraitImplementorsLight is SCB-1541: a lamp's brightness goes to Connect as a percentage,
+// stamped with when it was read, declared at discovery even while its level is unknown, and sent
+// nothing while it is.
+func TestGetAllTraitImplementorsLight(t *testing.T) {
+	logger := zap.NewNop()
+	root := node.New("lights")
+
+	changed := time.Date(2026, 11, 11, 6, 0, 0, 0, time.UTC)
+	light := lightpb.NewModel(resource.WithClock(fixedClock(changed)), resource.WithInitialValue(&lightpb.Brightness{
+		LevelPercent: 42,
+		Confidence:   new(float32(0)), // as a confidence-reporting driver starts a lamp it hasn't heard from
+	}))
+	devicesApi := devices.NewServer(root)
+	root.Announce("lamp",
+		node.HasServer(lightpb.RegisterLightApiServer, lightpb.LightApiServer(lightpb.NewModelServer(light))),
+		node.HasTrait(trait.Light),
+	)
+	root.Announce("lights", node.HasServices(root.ClientConn(), devicespb.DevicesApi_ServiceDesc))
+
+	now := time.Date(2026, 11, 11, 9, 0, 0, 0, time.UTC)
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  logger,
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		Now:     func() time.Time { return now },
+	}}
+	a.initialiseClients(root)
+
+	allDevices := make(map[string]*device)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), trait.Light, testFetchTimeout, traitExport{heartbeat: time.Hour}, allDevices))
+	require.Len(t, allDevices, 1)
+	dev := allDevices["lamp"]
+	require.NotNil(t, dev)
+	require.Len(t, dev.collectors, 1)
+
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldBrightnessPercentageSensor: {Units: dbo.UnitPercent},
+	}, dev.buildDiscovery(now).Pointset.Points, "declared while the level is unknown")
+
+	cfg := config.Root{FetchTimeout: &jsontypes.Duration{Duration: testFetchTimeout}, Mqtt: config.Mqtt{TopicPrefix: "tlm"}}
+	sink := &pointsetSink{}
+	t0 := now
+	cycle := func(n int) time.Time { return t0.Add(time.Duration(n) * 5 * time.Minute) }
+	// publish runs cycle n of a 5 minute grid, read at its scheduled time, and returns the pointset it sent, or nil.
+	publish := func(n int) *udmi.PointsetEvent {
+		t.Helper()
+		before := len(sink.sent)
+		now = cycle(n)
+		a.publishDevice(context.Background(), cfg, sink, dev, cycle(n))
+		if len(sink.sent) == before {
+			return nil
+		}
+		return &sink.sent[len(sink.sent)-1]
+	}
+	setLevel := func(level, confidence float32) {
+		t.Helper()
+		_, err := light.UpdateBrightness(&lightpb.Brightness{LevelPercent: level, Confidence: &confidence})
+		require.NoError(t, err)
+	}
+
+	assert.Nil(t, publish(0), "an unknown level sends nothing")
+
+	setLevel(42, 100)
+	ev := publish(1)
+	require.NotNil(t, ev, "the level is known")
+	assert.Equal(t, cycle(1), ev.Timestamp, "stamped when read, not when the level changed")
+	assert.Equal(t, udmi.PointsEvent{dbo.FieldBrightnessPercentageSensor: {PresentValue: 42.0}}, ev.Points)
+
+	assert.Nil(t, publish(2), "an unchanged lamp waits for its heartbeat")
+	setLevel(0, 100)
+	ev = publish(3)
+	require.NotNil(t, ev, "a changed level goes at once")
+	assert.Equal(t, udmi.PointsEvent{dbo.FieldBrightnessPercentageSensor: {PresentValue: 0.0}}, ev.Points, "off is a level")
+	for n := 4; n < 15; n++ {
+		assert.Nil(t, publish(n), "unchanged at cycle %d", n)
+	}
+	ev = publish(15)
+	require.NotNil(t, ev, "an hour after the last send")
+	assert.Equal(t, cycle(15), ev.Timestamp, "the heartbeat is stamped when read")
+
+	setLevel(0, 0)
+	assert.Nil(t, publish(16), "the level went unknown")
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldBrightnessPercentageSensor: {Units: dbo.UnitPercent},
+	}, dev.buildDiscovery(now).Pointset.Points, "still declared once the level is unknown again")
+}
+
+// transportInfo describes a transport's load and speed units, as the OPC UA driver does from config.
+type transportInfo struct {
+	transportpb.UnimplementedTransportInfoServer
+	support *transportpb.TransportSupport
+}
+
+func (i transportInfo) DescribeTransport(context.Context, *transportpb.DescribeTransportRequest) (*transportpb.TransportSupport, error) {
+	return i.support, nil
+}
+
+// TestGetAllTraitImplementorsTransport is SCB-1542: 40LH's lifts and escalators reach Connect, their
+// load and speed in the units their driver describes, stamped with when they were read.
+func TestGetAllTraitImplementorsTransport(t *testing.T) {
+	root := node.New("lifts")
+	devicesApi := devices.NewServer(root)
+	changed := time.Date(2026, 11, 11, 6, 0, 0, 0, time.UTC)
+	announce := func(name string, reading *transportpb.Transport, info ...node.Feature) *transportpb.Model {
+		model := transportpb.NewModel(resource.WithClock(fixedClock(changed)), resource.WithInitialValue(reading))
+		root.Announce(name, append([]node.Feature{
+			node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(transportpb.NewModelServer(model))),
+			node.HasTrait(transportpb.TraitName),
+		}, info...)...)
+		return model
+	}
+	describes := func(s *transportpb.TransportSupport) node.Feature {
+		return node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(transportInfo{support: s}))
+	}
+	load := float32(35)
+	liftReading := &transportpb.Transport{
+		ActualPosition:  &transportpb.Transport_Location{Floor: "12"},
+		MovingDirection: transportpb.Transport_UP,
+		Doors:           []*transportpb.Transport_Door{{Title: "Side 1", Status: transportpb.Transport_Door_OPENING}},
+		Load:            &load,
+	}
+	lift := announce("lift", liftReading, describes(&transportpb.TransportSupport{LoadUnit: "% of max load"}))
+	// A transport whose driver reports no speed yet, as the OPC UA driver's does until its
+	// subscription delivers.
+	escalator := announce("escalator", &transportpb.Transport{}, describes(&transportpb.TransportSupport{SpeedUnit: "mm/s"}))
+	announce("undescribed", liftReading)
+
+	now := time.Date(2026, 11, 11, 9, 0, 0, 0, time.UTC)
+	a := &AutoImpl{Services: auto.Services{
+		Logger:  zap.NewNop(),
+		Node:    root,
+		Devices: devicespb.NewDevicesApiClient(wrap.ServerToClient(devicespb.DevicesApi_ServiceDesc, devicesApi)),
+		Now:     func() time.Time { return now },
+	}}
+	a.initialiseClients(root)
+	allDevices := make(map[string]*device)
+	require.NoError(t, a.getAllTraitImplementors(context.Background(), transportpb.TraitName, testFetchTimeout, traitExport{}, allDevices))
+	require.Len(t, allDevices, 3)
+
+	discovered := func(name string) map[string]udmi.MetadataPoint {
+		return allDevices[name].buildDiscovery(now).Pointset.Points
+	}
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldFloorCount:           {},
+		dbo.FieldDirectionStatus:      {},
+		dbo.FieldPositionStatus:       {},
+		dbo.FieldLoadPercentageSensor: {Units: dbo.UnitPercent},
+	}, discovered("lift"))
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldLinearVelocitySensor: {Units: dbo.UnitMillimetersPerSecond},
+	}, discovered("escalator"), "the speed's unit is declared before the first speed")
+
+	sent := func(name string) udmi.PointsetEvent {
+		t.Helper()
+		ev, _, ok := allDevices[name].buildTelemetry(context.Background(), now, now, zap.NewNop())
+		require.True(t, ok, name)
+		return ev
+	}
+	ev := sent("lift")
+	assert.Equal(t, now, ev.Timestamp, "stamped when read, not when the lift last changed")
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldFloorCount:           {PresentValue: 12},
+		dbo.FieldDirectionStatus:      {PresentValue: dbo.DirectionUp},
+		dbo.FieldPositionStatus:       {PresentValue: dbo.DoorOpening},
+		dbo.FieldLoadPercentageSensor: {PresentValue: float32(35)},
+	}, ev.Points)
+
+	_, err := lift.UpdateTransport(&transportpb.Transport{
+		ActualPosition:  &transportpb.Transport_Location{Floor: "0"},
+		MovingDirection: transportpb.Transport_NO_DIRECTION,
+		Doors:           []*transportpb.Transport_Door{{Title: "Side 1", Status: transportpb.Transport_Door_OPEN}},
+		Load:            new(float32(0)),
+	})
+	require.NoError(t, err)
+	now = now.Add(time.Minute)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldFloorCount:           {PresentValue: 0},
+		dbo.FieldDirectionStatus:      {PresentValue: dbo.DirectionStopped},
+		dbo.FieldPositionStatus:       {PresentValue: dbo.DoorOpen},
+		dbo.FieldLoadPercentageSensor: {PresentValue: float32(0)},
+	}, sent("lift").Points, "the next read sends the lift's new state")
+
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldFloorCount:      {PresentValue: 12},
+		dbo.FieldDirectionStatus: {PresentValue: dbo.DirectionUp},
+		dbo.FieldPositionStatus:  {PresentValue: dbo.DoorOpening},
+	}, sent("undescribed").Points, "a lift with no Info server sends all but its load")
+
+	_, err = escalator.UpdateTransport(&transportpb.Transport{MovingDirection: transportpb.Transport_DOWN, Speed: new(float32(500))})
+	require.NoError(t, err)
+	assert.Equal(t, udmi.PointsEvent{
+		dbo.FieldDirectionStatus:      {PresentValue: dbo.DirectionDown},
+		dbo.FieldLinearVelocitySensor: {PresentValue: float32(500)},
+	}, sent("escalator").Points)
+	assert.Equal(t, map[string]udmi.MetadataPoint{
+		dbo.FieldDirectionStatus:      {},
+		dbo.FieldLinearVelocitySensor: {Units: dbo.UnitMillimetersPerSecond},
+	}, discovered("escalator"))
 }
 
 // TestSensorCollectorPoints checks a sensor reading comes from Get and is

@@ -60,6 +60,53 @@ const (
 // takes no more specific field; Connect's per-source mappings can land it on one.
 const FieldTemperatureSensor = "temperature_sensor"
 
+// FieldBrightnessPercentageSensor is a lamp's light output as a percentage of full, for a
+// smartcore.traits.Light device: DBO's brightness-monitoring field, from the dimming
+// monitoring and control (DM/DC) abstracts. It isn't lighting_percentage_sensor, which is a
+// photocell's input to a lighting controller.
+const FieldBrightnessPercentageSensor = "brightness_percentage_sensor"
+
+// Fields for a smartcore.bos.Transport device, a lift or escalator, as agreed with Smart Core
+// Connect in SCC-1209. floor_count, position_status (a door's) and load_percentage_sensor are
+// DBO's own; the rest are built from DBO subfields to Connect's field grammar, which drops a
+// point whose name it can't parse.
+const (
+	// FieldFloorCount is the floor the car is at, an integer. Connect reads 0 as the ground
+	// floor and a basement as negative; the exporter sends the driver's number as it is, so a
+	// controller that numbers floors otherwise must be mapped in the driver's config.
+	FieldFloorCount = "floor_count"
+	// FieldDirectionStatus is multistate: its value is one of the Direction* states, or another
+	// direction's lower-case name.
+	FieldDirectionStatus = "direction_status"
+	// FieldPositionStatus is a door's state, multistate: one of the Door* states. A transport
+	// with more than one door sends each as FieldPositionStatus_<n>, n from 1 in door order.
+	FieldPositionStatus = "position_status"
+	// FieldLoadPercentageSensor is the load carried as a percentage of the rated load.
+	FieldLoadPercentageSensor = "load_percentage_sensor"
+	// FieldMassSensor is the load carried as a weight, for a transport that reports it so.
+	FieldMassSensor = "mass_sensor"
+	// FieldLinearVelocitySensor is the transport's speed.
+	FieldLinearVelocitySensor = "linearvelocity_sensor"
+	// FieldOperatingMode is multistate: the transport's operating mode, its full enum name in
+	// lower case, such as normal or out_of_service.
+	FieldOperatingMode = "operating_mode"
+)
+
+// States of FieldDirectionStatus and FieldPositionStatus Connect knows. DirectionStopped is a
+// transport not moving, which Connect's UI reads as at rest.
+const (
+	DirectionUp      = "up"
+	DirectionDown    = "down"
+	DirectionStopped = "stopped"
+
+	DoorOpen         = "open"
+	DoorOpening      = "opening"
+	DoorClosed       = "closed"
+	DoorClosing      = "closing"
+	DoorSafetyLocked = "safety_locked"
+	DoorLimitedOpen  = "limited_open"
+)
+
 // States of FieldZoneOccupancyStatus, spelt in lower case as Smart Core Connect's
 // catalogue lands them.
 const (
@@ -86,6 +133,30 @@ const (
 	UnitPartsPerMillion         = "parts_per_million"
 	UnitHectopascals            = "hectopascals"
 	UnitMicrogramsPerCubicMeter = "micrograms_per_cubic_meter"
+	UnitPercent                 = "percent"
+
+	// Speed (linear velocity) and mass, the units a transport's speed and load may be in.
+	UnitMillimetersPerSecond = "millimeters_per_second"
+	UnitMetersPerSecond      = "meters_per_second"
+	UnitMetersPerMinute      = "meters_per_minute"
+	UnitKilometersPerHour    = "kilometers_per_hour"
+	UnitFeetPerSecond        = "feet_per_second"
+	UnitFeetPerMinute        = "feet_per_minute"
+	UnitMilesPerHour         = "miles_per_hour"
+	UnitKilograms            = "kilograms"
+	UnitPoundsMass           = "pounds_mass"
+	UnitMetricTons           = "metric_tons"
+)
+
+// LinearVelocityUnits and MassUnits are the units of each quantity UnitName can give. Smart Core
+// Connect converts each to its quantity's standard unit, and fails a point whose unit it doesn't
+// know, so a point in any other unit should not be sent.
+var (
+	LinearVelocityUnits = []string{
+		UnitMillimetersPerSecond, UnitMetersPerSecond, UnitMetersPerMinute, UnitKilometersPerHour,
+		UnitFeetPerSecond, UnitFeetPerMinute, UnitMilesPerHour,
+	}
+	MassUnits = []string{UnitKilograms, UnitPoundsMass, UnitMetricTons}
 )
 
 // ElectricityMeterType is the DBO entity type for an energy-only electricity meter.
@@ -148,6 +219,26 @@ func UnitName(raw string) string {
 		return UnitKilowatts
 	case "m³", "m3", "cubic_meters", "cubic-meters", "cubicmeters", "cubicmetres", "cubic_metres":
 		return UnitCubicMeters
+	case "mm/s", "millimeters_per_second", "millimetres_per_second":
+		return UnitMillimetersPerSecond
+	case "m/s", "meters_per_second", "metres_per_second":
+		return UnitMetersPerSecond
+	case "m/min", "meters_per_minute", "metres_per_minute":
+		return UnitMetersPerMinute
+	case "km/h", "kph", "kmh", "kilometers_per_hour", "kilometres_per_hour":
+		return UnitKilometersPerHour
+	case "ft/s", "fps", "feet_per_second":
+		return UnitFeetPerSecond
+	case "ft/min", "fpm", "feet_per_minute":
+		return UnitFeetPerMinute
+	case "mph", "miles_per_hour":
+		return UnitMilesPerHour
+	case "kg", "kgs", "kilogram", "kilograms", "kilogramme", "kilogrammes":
+		return UnitKilograms
+	case "lb", "lbs", "pound", "pounds", "pounds_mass":
+		return UnitPoundsMass
+	case "t", "tonne", "tonnes", "metric_ton", "metric_tons":
+		return UnitMetricTons
 	default:
 		return ""
 	}
