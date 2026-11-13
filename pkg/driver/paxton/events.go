@@ -76,7 +76,20 @@ func (d *Driver) linkEvents(ctx context.Context, events []Event) error {
 	return nil
 }
 
+// GetEvents fetches events from the API, reporting the outcome on the system check.
+// Use it for the polling loop, which calls again soon enough to clear a failure.
 func (c *Client) GetEvents(ctx context.Context, timeFilter time.Time, olderThan bool) ([]Event, error) {
+	return c.getEvents(ctx, timeFilter, olderThan, c.Do)
+}
+
+// GetEventsOnDemand is GetEvents for requests made on behalf of a caller, which gets the error itself.
+// The check is left alone because nothing may call again to clear a failure, for example with polling disabled.
+func (c *Client) GetEventsOnDemand(ctx context.Context, timeFilter time.Time, olderThan bool) ([]Event, error) {
+	return c.getEvents(ctx, timeFilter, olderThan, c.doBestEffort)
+}
+
+func (c *Client) getEvents(ctx context.Context, timeFilter time.Time, olderThan bool,
+	do func(context.Context, *retryablehttp.Request) (*http.Response, error)) ([]Event, error) {
 	reqUrl, err := url.JoinPath(c.baseUrl, "api", "v1", "events")
 
 	if err != nil {
@@ -107,7 +120,7 @@ func (c *Client) GetEvents(ctx context.Context, timeFilter time.Time, olderThan 
 		return nil, err
 	}
 
-	resp, err := c.Do(ctx, req)
+	resp, err := do(ctx, req)
 
 	if err != nil {
 		return nil, err

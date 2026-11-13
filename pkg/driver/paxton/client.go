@@ -8,14 +8,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"go.uber.org/zap"
 
-	"github.com/smart-core-os/sc-bos/pkg/task/service"
 	"github.com/smart-core-os/sc-bos/pkg/driver/paxton/config"
+	"github.com/smart-core-os/sc-bos/pkg/task/service"
 )
 
 // tokenExpiryMargin is how long before the reported expiry the access token is treated
@@ -39,6 +41,21 @@ type Client struct {
 	expiry       time.Time
 
 	mtx sync.Mutex
+
+	// checkMu guards failing and is held across the systemCheck call, so reports reach the check in order.
+	checkMu sync.Mutex
+	// failing holds the latest error from each source (an endpoint path or authSource) that is currently failing.
+	// The doors, users and events loops share one check, so one loop's success must not clear another's failure.
+	failing map[string]error
+}
+
+// authSource is the source reported for access token failures.
+const authSource = "auth"
+
+// outcome is the result of one call to a source, for report.
+type outcome struct {
+	source string
+	err    error
 }
 
 func NewClient(cli *retryablehttp.Client, logger *zap.Logger, cfg config.Root, systemCheck service.SystemCheck) *Client {
@@ -56,33 +73,82 @@ func NewClient(cli *retryablehttp.Client, logger *zap.Logger, cfg config.Root, s
 	}
 }
 
-func (c *Client) updateSystemCheck(err error) {
+// report records the outcome of calls to each source and updates the system check from every source's latest
+// outcome: running only when no source is failing, otherwise failed with every failure listed.
+func (c *Client) report(outcomes ...outcome) {
 	if c.systemCheck == nil {
 		return
 	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	c.checkMu.Lock()
+	defer c.checkMu.Unlock()
+	var recorded bool
+	for _, o := range outcomes {
+		switch {
+		case errors.Is(o.err, context.Canceled) || errors.Is(o.err, context.DeadlineExceeded):
+			continue // says nothing about the source, the caller gave up
+		case o.err != nil:
+			if c.failing == nil {
+				c.failing = make(map[string]error)
+			}
+			c.failing[o.source] = o.err
+		default:
+			delete(c.failing, o.source)
+		}
+		recorded = true
+	}
+	if !recorded {
 		return
 	}
-	if err != nil {
-		c.systemCheck.MarkFailed(err)
-	} else {
+	if len(c.failing) == 0 {
 		c.systemCheck.MarkRunning()
+		return
 	}
+	// sorted so the fault text, and so the check, only changes when a failure does
+	sources := make([]string, 0, len(c.failing))
+	for source := range c.failing {
+		sources = append(sources, source)
+	}
+	slices.Sort(sources)
+	msgs := make([]string, len(sources))
+	for i, source := range sources {
+		msgs[i] = fmt.Sprintf("%s: %v", source, c.failing[source])
+	}
+	c.systemCheck.MarkFailed(errors.New(strings.Join(msgs, "; ")))
 }
 
+// Do sends req with a valid access token, reporting the outcome against req's path on the system check.
 func (c *Client) Do(ctx context.Context, req *retryablehttp.Request) (*http.Response, error) {
+	return c.do(ctx, req, req.URL.Path)
+}
+
+// doBestEffort is Do for requests the driver can work without. Their failures are left to the caller to log:
+// they are only retried when the caller next asks, so holding one on the check could keep it failed for good.
+func (c *Client) doBestEffort(ctx context.Context, req *retryablehttp.Request) (*http.Response, error) {
+	return c.do(ctx, req, "")
+}
+
+// do sends req, reporting the token outcome and, when source is not empty, the request outcome against source.
+func (c *Client) do(ctx context.Context, req *retryablehttp.Request, source string) (*http.Response, error) {
 	token, err := c.auth(ctx)
 	if err != nil {
-		c.updateSystemCheck(err)
+		c.report(outcome{authSource, err})
 		return nil, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
 	req.Header.Set("Accept", "application/json")
 
+	reportReq := func(err error) {
+		if source == "" {
+			c.report(outcome{source: authSource})
+		} else {
+			c.report(outcome{source: authSource}, outcome{source, err})
+		}
+	}
+
 	resp, err := c.cli.Do(req)
 	if err != nil {
-		c.updateSystemCheck(err)
+		reportReq(err)
 		return nil, err
 	}
 
@@ -91,11 +157,11 @@ func (c *Client) Do(ctx context.Context, req *retryablehttp.Request) (*http.Resp
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			c.logger.Error("failed to close response body", zap.Error(closeErr))
 		}
-		c.updateSystemCheck(err)
+		reportReq(err)
 		return nil, err
 	}
 
-	c.updateSystemCheck(nil)
+	reportReq(nil)
 	return resp, nil
 }
 
@@ -169,7 +235,7 @@ func (c *Client) auth(ctx context.Context) (string, error) {
 // Used by the SignalR client which must pass the token as a query parameter.
 func (c *Client) GetAccessToken(ctx context.Context) (string, error) {
 	token, err := c.auth(ctx)
-	c.updateSystemCheck(err)
+	c.report(outcome{authSource, err})
 	return token, err
 }
 

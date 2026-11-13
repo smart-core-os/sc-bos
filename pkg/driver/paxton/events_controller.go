@@ -104,7 +104,7 @@ func (e *EventsController) ListSecurityEvents(ctx context.Context, request *secu
 	}
 
 	for {
-		events, err := e.client.GetEvents(ctx, timeFilter, true)
+		events, err := e.client.GetEventsOnDemand(ctx, timeFilter, true)
 
 		if err != nil {
 			return nil, err
