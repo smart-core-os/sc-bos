@@ -105,29 +105,35 @@ func (cb *checkBase) UpdateReliability(_ context.Context, nr *HealthCheck_Reliab
 	}
 
 	cb.write(func(dst *HealthCheck) {
-		rel := dst.GetReliability()
-		if rel == nil {
-			rel = &HealthCheck_Reliability{}
-			dst.Reliability = rel
-		}
-
-		oldState := rel.GetState()
-		rel.State = nr.GetState()
-		rel.Cause = nr.GetCause()
-		rel.Effects = nr.GetEffects()
-		// last error stays unless we have a new one
-		if v := nr.GetLastError(); v != nil {
-			rel.LastError = v
-		}
-		wasReliable, isReliable := oldState == HealthCheck_Reliability_RELIABLE, rel.GetState() == HealthCheck_Reliability_RELIABLE
-		switch {
-		case wasReliable == isReliable:
-		case wasReliable: // && !isReliable
-			rel.UnreliableTime = timestamppb.Now()
-		case isReliable: // && !wasReliable
-			rel.ReliableTime = timestamppb.Now()
-		}
+		applyReliability(dst, nr)
 	})
+}
+
+// applyReliability sets the reliability of dst to nr, updating the reliability timestamps on a change of state.
+// nr must already be validated, see UpdateReliability.
+func applyReliability(dst *HealthCheck, nr *HealthCheck_Reliability) {
+	rel := dst.GetReliability()
+	if rel == nil {
+		rel = &HealthCheck_Reliability{}
+		dst.Reliability = rel
+	}
+
+	oldState := rel.GetState()
+	rel.State = nr.GetState()
+	rel.Cause = nr.GetCause()
+	rel.Effects = nr.GetEffects()
+	// last error stays unless we have a new one
+	if v := nr.GetLastError(); v != nil {
+		rel.LastError = v
+	}
+	wasReliable, isReliable := oldState == HealthCheck_Reliability_RELIABLE, rel.GetState() == HealthCheck_Reliability_RELIABLE
+	switch {
+	case wasReliable == isReliable:
+	case wasReliable: // && !isReliable
+		rel.UnreliableTime = timestamppb.Now()
+	case isReliable: // && !wasReliable
+		rel.ReliableTime = timestamppb.Now()
+	}
 }
 
 // load returns the current state of the check, or nil if disposed.

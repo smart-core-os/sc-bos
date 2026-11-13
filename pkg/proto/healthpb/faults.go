@@ -2,7 +2,6 @@ package healthpb
 
 import (
 	"cmp"
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -134,30 +133,42 @@ func (c *FaultCheck) MarkRunning() {
 // It sets normality to ABNORMAL and also updates reliability to reflect the error type
 // (e.g. NO_RESPONSE for timeouts, BAD_RESPONSE for other errors) so that connectivity
 // failures are visible in both the normality and reliability fields.
+//
+// The fault and reliability are committed together, so no other write can land between them and a repeated
+// MarkFailed with the same error commits nothing.
 func (c *FaultCheck) MarkFailed(err error) {
-	c.SetFault(&HealthCheck_Error{
-		SummaryText: err.Error(),
+	fault := &HealthCheck_Error{SummaryText: err.Error()}
+	rel := ReliabilityFromErr(err)
+	c.write(func(dst *HealthCheck) {
+		applyFaults(dst, func(old []*HealthCheck_Error) []*HealthCheck_Error {
+			return []*HealthCheck_Error{fault}
+		})
+		applyReliability(dst, rel)
 	})
-	c.UpdateReliability(context.Background(), ReliabilityFromErr(err))
 }
 
 func (c *FaultCheck) writeFaults(f func(old []*HealthCheck_Error) []*HealthCheck_Error) {
 	c.write(func(dst *HealthCheck) {
-		out := dst.GetFaults()
-		if out == nil {
-			panic("no faults object, normalisation bypassed")
-		}
-		oldState := dst.GetNormality()
-		oldFaults := out.GetCurrentFaults()
-		newFaults := f(oldFaults)
-		newState := HealthCheck_NORMAL
-		if len(newFaults) > 0 {
-			newState = HealthCheck_ABNORMAL
-		}
-		out.CurrentFaults = newFaults
-		dst.Normality = newState
-		updateStateTimes(dst, oldState, newState)
+		applyFaults(dst, f)
 		// any error means the out is working, transport errors will call UpdateReliability directly
 		makeReliable(dst)
 	})
+}
+
+// applyFaults replaces the faults of dst with the result of f, updating normality to match.
+func applyFaults(dst *HealthCheck, f func(old []*HealthCheck_Error) []*HealthCheck_Error) {
+	out := dst.GetFaults()
+	if out == nil {
+		panic("no faults object, normalisation bypassed")
+	}
+	oldState := dst.GetNormality()
+	oldFaults := out.GetCurrentFaults()
+	newFaults := f(oldFaults)
+	newState := HealthCheck_NORMAL
+	if len(newFaults) > 0 {
+		newState = HealthCheck_ABNORMAL
+	}
+	out.CurrentFaults = newFaults
+	dst.Normality = newState
+	updateStateTimes(dst, oldState, newState)
 }
