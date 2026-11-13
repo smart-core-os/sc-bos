@@ -11,10 +11,12 @@
 package block
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -31,17 +33,38 @@ import (
 func Diff(a, b any, blocks []Block) ([]Patch, error) {
 	// convert a and b from any Go type to the default JSON representation: map[string]any, []any, and primitive types
 	var err error
-	a, err = convert[any](a)
+	a, err = toGeneric(a)
 	if err != nil {
 		return nil, err
 	}
-	b, err = convert[any](b)
+	b, err = toGeneric(b)
 	if err != nil {
 		return nil, err
 	}
 
 	patches := diff(a, b, Block{Blocks: blocks})
 	return patches, nil
+}
+
+// toGeneric converts in to its generic JSON form: map[string]any, []any and primitives.
+// Numbers become json.Number rather than float64, so integers above 2^53 keep every digit (SCB-1427).
+// json.Number marshals back to the same text, so the digits survive the later convert into a typed value.
+func toGeneric(in any) (any, error) {
+	serialised, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGeneric(serialised)
+}
+
+func decodeGeneric(data []byte) (any, error) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	var out any
+	if err := dec.Decode(&out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // performs a round-trip conversion to and from JSON
@@ -470,7 +493,7 @@ func equalKeys(a, b map[string]any) bool {
 // The type must be both JSON-serializable and JSON-deserializable.
 // A patched copy of the data structure will be returned. The original will not be modified.
 func ApplyPatches[T any](data T, patches []Patch) (T, error) {
-	workingCopy, err := convert[any](data)
+	workingCopy, err := toGeneric(data)
 	if err != nil {
 		return data, err
 	}
@@ -535,7 +558,7 @@ func applyPatch(data any, patch Patch) (any, error) {
 			if !ok {
 				return false
 			}
-			return reflect.ValueOf(v).Comparable() && v == segment.ArrayElem
+			return keysEqual(v, segment.ArrayElem)
 		})
 		if patch.Deleted && len(patch.Path) == 1 {
 			if i >= 0 {
@@ -625,6 +648,36 @@ func patchMap(m map[string]any, patch map[string]any) (map[string]any, error) {
 	return patched, nil
 }
 
+// keysEqual reports whether the array element key v matches the path selector want.
+// Keys read from data are json.Number, but selectors from ParsePath hold float64, so numbers are compared by value.
+func keysEqual(v, want any) bool {
+	if !reflect.ValueOf(v).Comparable() || !reflect.ValueOf(want).Comparable() {
+		return false
+	}
+	if v == want {
+		return true
+	}
+	if reflect.TypeOf(v) == reflect.TypeOf(want) {
+		// same type and not equal; comparing json.Numbers as float64 would match distinct integers above 2^53
+		return false
+	}
+	vf, vok := numberValue(v)
+	wf, wok := numberValue(want)
+	return vok && wok && vf == wf
+}
+
+func numberValue(v any) (float64, bool) {
+	switch v := v.(type) {
+	case json.Number:
+		f, err := strconv.ParseFloat(string(v), 64)
+		return f, err == nil
+	case float64:
+		return v, true
+	default:
+		return 0, false
+	}
+}
+
 // creates a new empty value that can be indexed by the given path
 func emptyValue(segs []PathSegment) any {
 	if len(segs) == 0 {
@@ -655,7 +708,9 @@ type Patch struct {
 
 func (p *Patch) UnmarshalJSON(data []byte) error {
 	type patchAlias Patch
-	err := json.Unmarshal(data, (*patchAlias)(p))
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber() // keep large integers in Value exact, see toGeneric
+	err := dec.Decode((*patchAlias)(p))
 	if err != nil {
 		return err
 	}
@@ -669,7 +724,9 @@ func (p *Patch) UnmarshalJSON(data []byte) error {
 // to indicate that the data in this position should be left unchanged.
 type Ignore struct{}
 
-func (i *Ignore) MarshalJSON() ([]byte, error) {
+// MarshalJSON has a value receiver because Ignore{} sits in map[string]any values, which are not addressable;
+// with a pointer receiver it marshalled as {} and the logged patches could not be applied again.
+func (i Ignore) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ignoreSentinal)
 }
 

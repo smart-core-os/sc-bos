@@ -1,6 +1,7 @@
 package block
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,9 @@ func (ps *PathSegment) MarshalJSON() ([]byte, error) {
 
 func (ps *PathSegment) UnmarshalJSON(data []byte) error {
 	var m map[string]any
-	if err := json.Unmarshal(data, &m); err == nil {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber() // match the json.Number keys Diff produces
+	if err := dec.Decode(&m); err == nil {
 		if len(m) != 1 {
 			return ErrInvalidPathSegment
 		}
