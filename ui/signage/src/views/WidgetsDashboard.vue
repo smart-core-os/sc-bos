@@ -1,5 +1,5 @@
 <template>
-  <section class="widgets">
+  <section class="widgets" :class="{'no-generation': !hasGeneration}">
     <AirQuality :name="props.airQuality.name"
                 :min-value="props.airQuality.minValue"
                 :max-value="props.airQuality.maxValue"
@@ -9,6 +9,9 @@
                        id="BuildingOccupancy"/>
     <EnergyUsage :name="props.energy.name" :generated="props.energy.generated"
                  id="EnergyUsage"/>
+    <EnergyGeneration v-if="hasGeneration"
+                      :name="props.generation.name"
+                      id="EnergyGeneration"/>
     <TemperatureSystems :name="props.temperature.name"
                         id="TemperatureSystems"/>
     <WaterUsage :name="props.water.name"
@@ -24,9 +27,11 @@
 <script setup>
 import AirQuality from '@/views/AirQuality.vue';
 import BuildingOccupancy from '@/views/BuildingOccupancy.vue';
+import EnergyGeneration from '@/views/EnergyGeneration.vue';
 import EnergyUsage from '@/views/EnergyUsage.vue';
 import TemperatureSystems from '@/views/TemperatureSystems.vue';
 import WaterUsage from '@/views/WaterUsage.vue';
+import {computed} from 'vue';
 
 const props = defineProps({
   airQuality: {
@@ -41,6 +46,10 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
+  generation: {
+    type: Object,
+    default: () => ({})
+  },
   temperature: {
     type: Object,
     default: () => ({})
@@ -50,6 +59,8 @@ const props = defineProps({
     default: () => ({})
   }
 });
+
+const hasGeneration = computed(() => !!props.generation.name);
 </script>
 
 <style lang="scss" scoped>
@@ -57,15 +68,26 @@ const props = defineProps({
   display: grid;
   grid-template-areas:
     'Energy'
+    'Generation'
     'Temperature'
     'Water'
     'Building'
     'Flower';
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 2vw 0;
   width: 100%;
   height: auto;
+
+  &.no-generation {
+    grid-template-areas:
+      'Energy'
+      'Temperature'
+      'Water'
+      'Building'
+      'Flower';
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+  }
 
   // :deep(h2) {
   //   font-family: sans-serif;
@@ -78,6 +100,7 @@ const props = defineProps({
   #BuildingOccupancy,
   #AirQuality,
   #EnergyUsage,
+  #EnergyGeneration,
   #TemperatureSystems,
   #Logo {
     grid-area: Water;
@@ -96,6 +119,10 @@ const props = defineProps({
 
   #EnergyUsage {
     grid-area: Energy;
+  }
+
+  #EnergyGeneration {
+    grid-area: Generation;
   }
 
   #TemperatureSystems {

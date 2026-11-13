@@ -1,19 +1,14 @@
 <template>
   <div class="card">
-    <EnergyComp :demand="usageDiff" :generated="producedDiff" :period="period" :total-range="props.totalRange" id="EnergyComp" :show-period="false" :show-energy="false" :run-demo="false"/>
+    <EnergyComp :demand="usageDiff" :generated="producedDiff" :period="period" :total-range="props.totalRange" id="EnergyComp" :show-period="false" :show-energy="false" :show-generation="hasGeneration" :run-demo="false"/>
   </div>
 </template>
 
 <script setup>
 import EnergyComp from '@/components/EnergyMeter.vue';
-import {useInterval} from '@/composables/time.js';
-import {
-  useMeterReadingAt,
-  usePullMeterReading
-} from '@/traits/meter/meter.js';
+import {generatedBetween, useMeterDelta, useMeterWindow} from '@/composables/meterDelta.js';
 import {isNullOrUndef} from '@/util/types.js';
-import {sub} from 'date-fns';
-import {computed, effectScope, reactive, watch} from 'vue';
+import {computed} from 'vue';
 
 const props = defineProps({
   name: {
@@ -44,58 +39,30 @@ const props = defineProps({
   }
 });
 
-const _offset = computed(() => -Math.abs(parseInt(props.offset)));
+const hasGeneration = computed(() => !!props.generated);
 
-// Tick drives the rolling window — start and end update each interval
-const tick = useInterval(() => props.refreshInterval);
-const end = computed(() => { tick.value; return sub(new Date(), {[`${props.period}s`]: -_offset.value}); });
-const start = computed(() => sub(end.value, {[`${props.period}s`]: 1}));
+// Both meters are measured over one shared window, so net consumption is a like-for-like
+// subtraction.
+const meterWindow = useMeterWindow({
+  period: () => props.period,
+  offset: () => props.offset,
+  refreshInterval: () => props.refreshInterval
+});
 
-// const {response: meterReadingInfo} = useDescribeMeterReading(() => props.name);
-
-const readingAtStart = useMeterReadingAt(() => props.name, start);
-const generatedAtStart = useMeterReadingAt(() => props.generated, start);
-
-const endIsLive = computed(() => _offset.value === 0);
-let endCalcScope = null;
-const readingAtEnd = reactive({value: null});
-const generatedAtEnd = reactive({value: null});
-watch(endIsLive, (endIsLive) => {
-  if (endCalcScope) {
-    endCalcScope();
-  }
-  const scope = effectScope();
-  endCalcScope = () => scope.stop();
-  scope.run(() => {
-    if (endIsLive) {
-      const {value: meterReading} = usePullMeterReading(() => props.name);
-      readingAtEnd.value = meterReading;
-      const {value: generatedReading} = usePullMeterReading(() => props.generated);
-      generatedAtEnd.value = generatedReading;
-    } else {
-      readingAtEnd.value = useMeterReadingAt(() => props.name, end);
-      generatedAtEnd.value = useMeterReadingAt(() => props.generated, end);
-    }
-  });
-}, {immediate: true});
+const {startReading, endReading} = useMeterDelta(() => props.name, {window: meterWindow});
+const {startReading: generatedAtStart, endReading: generatedAtEnd} =
+    useMeterDelta(() => props.generated, {window: meterWindow});
 
 const usageDiff = computed(() => {
-  const start = readingAtStart.value;
-  const end = readingAtEnd.value;
+  const start = startReading.value;
+  const end = endReading.value;
   if (isNullOrUndef(start) || isNullOrUndef(end)) {
     return null;
   }
   return end.usage - start.usage;
 });
 
-const producedDiff = computed(() => {
-  const start = generatedAtStart.value;
-  const end = generatedAtEnd.value;
-  if (isNullOrUndef(start) || isNullOrUndef(end)) {
-    return null;
-  }
-  return end.produced - start.produced;
-});
+const producedDiff = computed(() => generatedBetween(generatedAtStart.value, generatedAtEnd.value));
 
 </script>
 

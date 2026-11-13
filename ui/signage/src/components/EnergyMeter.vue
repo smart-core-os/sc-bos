@@ -16,7 +16,7 @@
           xmlns="http://www.w3.org/2000/svg"
           ref="energyMeterSVG">
         <g id="pipsCrescent">
-          <g id="generating">
+          <g id="generating" v-show="props.showGeneration">
             <path
                 d="M308.05 241.42L327.39 250.13C328.64 247.39 329.81 244.61 330.9 241.79L310.62 235.03L308.05 241.42Z"
                 class="fillGray pip"/>
@@ -268,7 +268,7 @@
         </g>
       </svg>
     </div>
-    <h2>Net Energy Consumption</h2>
+    <h2>{{ props.showGeneration ? 'Net Energy Consumption' : 'Energy Consumption' }}</h2>
     <template v-if="props.showPeriod">
       <div>
         <sub>
@@ -306,6 +306,11 @@ const props = defineProps({
   showEnergy: {
     type: Boolean,
     default: false,
+    required: false,
+  },
+  showGeneration: {
+    type: Boolean,
+    default: true,
     required: false,
   },
   totalRange: {
