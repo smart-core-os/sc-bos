@@ -368,8 +368,8 @@ func TestDiff(t *testing.T) {
 			},
 			expect: []Patch{
 				{
-					Path:  []PathSegment{{Field: "foo"}, {ArrayKey: "id", ArrayElem: float64(2)}},
-					Value: map[string]any{"id": float64(2), "addr": "baz"},
+					Path:  []PathSegment{{Field: "foo"}, {ArrayKey: "id", ArrayElem: json.Number("2")}},
+					Value: map[string]any{"id": json.Number("2"), "addr": "baz"},
 				},
 			},
 		},
@@ -533,9 +533,9 @@ func TestDiff(t *testing.T) {
 						{Field: "drivers"},
 						{ArrayKey: "name", ArrayElem: "driver-1"},
 						{Field: "objects"},
-						{ArrayKey: "id", ArrayElem: float64(1)},
+						{ArrayKey: "id", ArrayElem: json.Number("1")},
 					},
-					Value: map[string]any{"id": float64(1), "addr": "foo2"},
+					Value: map[string]any{"id": json.Number("1"), "addr": "foo2"},
 				},
 				{
 					Path: []PathSegment{

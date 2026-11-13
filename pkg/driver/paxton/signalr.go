@@ -261,7 +261,8 @@ func (c *Client) GetRollCallIDs(ctx context.Context) ([]int, error) {
 		return nil, err
 	}
 
-	resp, err := c.Do(ctx, req)
+	// runSignalR connects without roll calls when this fails and only fetches them again on reconnect
+	resp, err := c.doBestEffort(ctx, req)
 	if err != nil {
 		return nil, err
 	}

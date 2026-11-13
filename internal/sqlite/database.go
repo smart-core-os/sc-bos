@@ -340,6 +340,10 @@ func (ft *Timestamp) Scan(v any) error {
 	return nil
 }
 
+// busyTimeoutPragma makes a connection wait up to 10s for a lock, matching the timeout callers such as the
+// health recorder put on their writes.
+const busyTimeoutPragma = "busy_timeout(10000)"
+
 func buildFileURI(path string, writer bool, pragmas []pragma) string {
 	query := make(url.Values)
 	if writer {
@@ -348,6 +352,10 @@ func buildFileURI(path string, writer bool, pragmas []pragma) string {
 		query.Add("mode", "ro")
 	}
 	query.Add("_timefmt", DateTimeFormat)
+	// The driver only applies its default busy timeout when no _pragma is given, so without this every
+	// connection fails at once with "database is locked" instead of waiting (SCB-1534).
+	// It must come first; caller pragmas are added later and can override it.
+	query.Add("_pragma", busyTimeoutPragma)
 	query.Add("_pragma", "journal_mode(WAL)")
 	query.Add("_pragma", "synchronous(NORMAL)")
 	query.Add("_pragma", "foreign_keys(ON)")
@@ -377,6 +385,7 @@ func buildMemoryURI(name string, writer bool, pragmas []pragma) string {
 		query.Add("mode", "ro")
 	}
 	query.Add("_timefmt", DateTimeFormat)
+	query.Add("_pragma", busyTimeoutPragma) // see buildFileURI
 	query.Add("_pragma", "foreign_keys(ON)")
 	for _, p := range pragmas {
 		query.Add("_pragma", fmt.Sprintf("%s(%s)", p.Key, p.Value))

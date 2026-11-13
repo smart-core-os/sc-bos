@@ -269,7 +269,7 @@ func TestPath_UnmarshalJSON(t *testing.T) {
 		},
 		"arrfmt_array_elem_num": {
 			input: `["foo", {"id": 42}]`,
-			path:  Path{{Field: "foo"}, {ArrayKey: "id", ArrayElem: 42.0}},
+			path:  Path{{Field: "foo"}, {ArrayKey: "id", ArrayElem: json.Number("42")}},
 		},
 		"arrfmt_invalid_array_elem": {
 			input:     `["foo", {"id": "bar", "extra": "field"}]`,

@@ -2,6 +2,7 @@ package appconf
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -147,4 +148,40 @@ func setupStoreServiceTest(t *testing.T) *Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+// The second LoadStore on a directory merges through block.Diff and block.ApplyPatches,
+// which used to round-trip numbers through float64 and corrupt integers above 2^53 (SCB-1427).
+func TestLoadStore_KeepsLargeIntegers(t *testing.T) {
+	const bigID = "1308675217947965579"
+	external := func(property string) Config {
+		return Config{
+			Drivers: []driver.RawConfig{
+				{
+					BaseConfig: driver.BaseConfig{Name: "foodriver", Type: "bar"},
+					Raw:        []byte(`{"name":"foodriver","type":"bar","deviceId":` + bigID + `,"property":"` + property + `"}`),
+				},
+			},
+		}
+	}
+	dir := t.TempDir()
+	if _, err := LoadStore(external("first"), Schema{}, dir, zap.NewNop()); err != nil {
+		t.Fatalf("first LoadStore: %v", err)
+	}
+	store, err := LoadStore(external("second"), Schema{}, dir, zap.NewNop())
+	if err != nil {
+		t.Fatalf("second LoadStore: %v", err)
+	}
+
+	drivers := store.Active().Drivers
+	if len(drivers) != 1 {
+		t.Fatalf("got %d drivers, want 1", len(drivers))
+	}
+	raw := string(drivers[0].Raw)
+	if !strings.Contains(raw, `"deviceId":`+bigID) {
+		t.Errorf("active driver config lost the exact deviceId %s: %s", bigID, raw)
+	}
+	if !strings.Contains(raw, `"property":"second"`) {
+		t.Errorf("active driver config did not take the external change: %s", raw)
+	}
 }
