@@ -2,6 +2,7 @@ package historypb
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -230,5 +231,30 @@ func Test_pageReader_listRecords_period_reverse(t *testing.T) {
 	}
 	if diff := cmp.Diff(wantPage, page, protocmp.Transform()); diff != "" {
 		t.Fatalf("page (-want,+got)\n%s", diff)
+	}
+}
+
+// A page size below -1 used to reach make with a negative length and panic (SCB-1470).
+func Test_pageReader_listRecords_negativePageSize(t *testing.T) {
+	s := memstore.New()
+	ctx := context.Background()
+	for range 3 {
+		data, err := proto.Marshal(&occupancysensorpb.Occupancy{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.Append(ctx, data); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, pageSize := range []int{-1, -2, math.MinInt32} {
+		page, size, nextToken, err := occupancyPager.ListRecords(ctx, s, &timepb.Period{}, pageSize, "", "")
+		if err != nil {
+			t.Fatalf("pageSize %d: %v", pageSize, err)
+		}
+		if len(page) != 3 || size != 3 || nextToken != "" {
+			t.Errorf("pageSize %d: got %d records, size %d, next %q; want the default page of all 3", pageSize, len(page), size, nextToken)
+		}
 	}
 }

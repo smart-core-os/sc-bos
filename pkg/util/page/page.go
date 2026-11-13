@@ -86,7 +86,10 @@ var defaultListOptions = listOptions{
 }
 
 func (lo listOptions) capPageSize(pageSize int32) int {
-	if pageSize == 0 {
+	// A negative size is treated like an unset one, as internal/health/healthhistory does, rather than rejected:
+	// these lists already cap an oversized request instead of failing it.
+	// Passing it through would put endOfPage before nextIndex and panic on the slice.
+	if pageSize <= 0 {
 		return lo.defaultPageSize
 	}
 	if int(pageSize) > lo.maxPageSize {

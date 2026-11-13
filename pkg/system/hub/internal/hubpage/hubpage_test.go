@@ -1,6 +1,7 @@
 package hubpage
 
 import (
+	"math"
 	"testing"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/hubpb"
@@ -107,5 +108,18 @@ func TestPaginate_PageSizeCapAndDefault(t *testing.T) {
 func TestPaginate_BadToken(t *testing.T) {
 	if _, _, _, err := Paginate(nodes("a"), 10, "!!!not-base64!!!"); err == nil {
 		t.Error("expected error for malformed page token, got nil")
+	}
+}
+
+// A negative page size used to index before the start of the list and panic (SCB-1470).
+func TestPaginate_NegativePageSize(t *testing.T) {
+	for _, size := range []int32{-1, math.MinInt32} {
+		page, next, total, err := Paginate(nodes("b", "a"), size, "")
+		if err != nil {
+			t.Fatalf("size %d: %v", size, err)
+		}
+		if got := names(page); len(got) != 2 || total != 2 || next != "" {
+			t.Errorf("size %d: got page %v, total %d, next %q; want the default page of both nodes", size, got, total, next)
+		}
 	}
 }

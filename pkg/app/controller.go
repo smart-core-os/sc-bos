@@ -78,6 +78,8 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		return nil, err
 	}
 	logger.Info("bootstrapping BOS", zap.String("version", EffectiveVersion()))
+	// most handlers run on wrap's goroutines, which can't be passed a logger, so panics there are reported here
+	wrap.SetPanicLogger(logger.Named("wrap"))
 
 	if err = os.MkdirAll(config.DataDir, 0750); err != nil {
 		return nil, err
@@ -193,7 +195,7 @@ func Bootstrap(ctx context.Context, config sysconf.Config) (*Controller, error) 
 		node.HasServer[setuppb.SetupApiServer](setuppb.RegisterSetupApiServer, setup.NewServer(setupCodes, cName, EffectiveVersion())),
 	)
 
-	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai)
+	grpcServer, reflectionServer := buildGRPCServer(rootNode, nodeRouter, pi, ai, logger)
 
 	downloadRouter, err := buildDownloadRouter(config, logger)
 	if err != nil {
@@ -576,8 +578,17 @@ func initAuth(config sysconf.Config, logger *zap.Logger) authInfo {
 	}
 }
 
-func buildGRPCServer(rootNode *node.Node, nodeRouter *router.Router, pi pkiInfo, ai authInfo) (*grpc.Server, *reflectionapi.Server) {
+func buildGRPCServer(rootNode *node.Node, nodeRouter *router.Router, pi pkiInfo, ai authInfo, logger *zap.Logger) (*grpc.Server, *reflectionapi.Server) {
 	var grpcOpts []grpc.ServerOption
+
+	// Recovery is chained first so a panic in any later interceptor, or in a service registered directly
+	// on the server, fails the one request rather than exiting the process.
+	// Handlers reached through rootNode.ServerHandler() run on wrap's own goroutines, which recover separately.
+	recoverLogger := logger.Named("grpc")
+	grpcOpts = append(grpcOpts,
+		grpc.ChainUnaryInterceptor(interceptors.RecoverUnary(recoverLogger)),
+		grpc.ChainStreamInterceptor(interceptors.RecoverStream(recoverLogger)),
+	)
 
 	// migrationInterceptor rewrites old unversioned service paths to their new versioned equivalents,
 	// allowing old clients to communicate with new servers during a rolling upgrade.

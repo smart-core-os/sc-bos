@@ -54,7 +54,7 @@ func (pr PageReader[R]) ListRecords(ctx context.Context, store history.Store, pe
 // Retrieve subsequent pages by passing a previously returned page token.
 // The orderBy string must be parsable by the OrderByParser function, typically a parser for strings like "record_time asc".
 func (pr PageReader[R]) ListRecordsBetween(ctx context.Context, store history.Store, from, to history.Record, pageSize int, pageToken, orderBy string) (page []R, totalSize int, nextPageToken string, err error) {
-	if pageSize == 0 {
+	if pageSize <= 0 { // a negative size from the caller would otherwise panic
 		pageSize = pr.DefaultPageSize
 	}
 	if pageSize > pr.MaxPageSize {
