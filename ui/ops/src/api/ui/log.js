@@ -4,6 +4,7 @@ import {LogApiPromiseClient} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/
 import {
   GetDownloadLogUrlRequest,
   GetLogLevelRequest,
+  GetLogMetadataRequest,
   LogLevel,
   PullLogLevelRequest,
   PullLogMessagesRequest,
@@ -113,6 +114,23 @@ export function updateLogLevel(request, tracker) {
       req.setLogLevel(ll);
     }
     return api.updateLogLevel(req);
+  });
+}
+
+/**
+ * Fetches the current log metadata once (unary). Useful for probing whether a
+ * device exposes the Log trait (e.g. a per-node audit-log device).
+ *
+ * @param {Partial<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/log/v1/log_pb').GetLogMetadataRequest.AsObject>} request
+ * @param {Object} [tracker]
+ * @return {Promise<import('@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/log/v1/log_pb').LogMetadata.AsObject>}
+ */
+export function getLogMetadata(request, tracker) {
+  return trackAction('Log.getLogMetadata', tracker ?? {}, endpoint => {
+    const api = apiClient(endpoint);
+    const req = new GetLogMetadataRequest();
+    if (request?.name) req.setName(request.name);
+    return api.getLogMetadata(req);
   });
 }
 

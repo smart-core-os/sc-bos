@@ -19,7 +19,9 @@
     "system": {
       "drivers": true,
       "features": true,
-      "components": true
+      "components": true,
+      "logs": true,
+      "audit": true
     }
   },
   "config": {
