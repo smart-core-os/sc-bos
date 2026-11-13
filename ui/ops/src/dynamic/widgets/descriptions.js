@@ -17,6 +17,7 @@ export const widgetDescriptions = {
   'environmental/SoundSensorHistoryChart': 'Shows how noisy a space has been. This is great for identifying loud periods in a workspace or checking if equipment is making too much noise at night.',
   'environmental/SoundSensorHistoryCard': 'A summary of recent noise levels, helping you understand the "volume" of a room over time.',
   'meter/EnergyVsBaselineCard': 'Shows if you are using more or less energy than usual. It compares today\'s usage against a "normal" day (like the same day last week). A green badge means you are saving energy, while red means you are using more.',
+  'meter/MeterHealthCard': 'Shows how many of your meters are actually sending readings right now, as a count and a percentage. A gap here means missing data for billing, energy ratings or reporting, so it is worth catching early. A meter counts as reporting only if none of its checks is raising a problem and none of them has gone unreadable.',
   'meter/MeterDensityCard': 'Shows which areas are the "densest" energy users for their size. It helps identify rooms that use a lot of power even if they are small.',
   'meter/MeterHistoryCard': 'A deep-dive into the history of a specific energy meter, showing every drop of energy used over weeks or months.',
   'notifications/ZoneNotifications': 'A digital "to-do list" or alert log for a specific area. It shows recent problems or important messages that need your attention.',
