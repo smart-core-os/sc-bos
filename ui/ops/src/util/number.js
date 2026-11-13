@@ -66,12 +66,15 @@ export function roundTo(num, decimals) {
 /**
  * Returns a string representation of a number, formatted for display.
  *
+ * Rounds to at most 1 decimal place below 100, and to a whole number above.
+ *
  * @example
  * format(1234.5678) // "1,235"
+ * format(99.5)      // "99.5"
+ * format(21.5)      // "21.5"
  * format(0)         // "0"
  * format(null)      // "-"
- * format(0.0123)    // "0.012"
- * format(0.000123)  // "~0"
+ * format(0.0123)    // "~0"
  *
  * @param {number|null|undefined} num
  * @param {string} [unit]
@@ -81,10 +84,13 @@ export function format(num, unit = '') {
   const usageStr = (() => {
     if (isNullOrUndef(num)) return '-';
     if (num === 0) return '0';
-    if (Math.abs(num) < 0.001) return '~0'
-    if (Math.abs(num) < 0.01) return num.toPrecision(1);
-    if (Math.abs(num) < 100) return num.toPrecision(2);
-    return num.toLocaleString(undefined, {maximumFractionDigits: 0});
+    const abs = Math.abs(num);
+    // Anything below 0.05 rounds to "0.0" at 1dp, which reads as an exact zero.
+    if (abs < 0.05) return '~0';
+    // toLocaleString rather than toPrecision: toPrecision switches to exponential
+    // notation once the rounded exponent reaches the requested precision, so a
+    // 99.5 kWh reading used to render as "1.0e+2".
+    return num.toLocaleString(undefined, {maximumFractionDigits: abs < 100 ? 1 : 0});
   })();
   if (unit) {
     let sp = ' ';
