@@ -90,6 +90,11 @@ export function usageToString(usage, unit = '') {
  *   usage: ComputedRef<number | undefined>,
  *   usageStr: ComputedRef<string>,
  *   usageAndUnit: ComputedRef<string>,
+ *   producedUnit: ComputedRef<string>,
+ *   produced: ComputedRef<number | undefined>,
+ *   producedStr: ComputedRef<string>,
+ *   producedAndUnit: ComputedRef<string>,
+ *   hasProduced: ComputedRef<boolean>,
  *   table: ComputedRef<Array<{label:string, unit:string, value:string}>>
  * }}
  */
@@ -113,12 +118,39 @@ export function useMeterReading(value, support = null) {
     return val;
   });
 
+  // Most devices that produce only declare a usage unit, produced is measured in the same unit.
+  const producedUnit = computed(() => {
+    return _s.value?.producedUnit || unit.value;
+  });
+  const produced = computed(() => {
+    return _v.value?.produced;
+  });
+  const producedStr = computed(() => usageToString(produced.value));
+  const producedAndUnit = computed(() => {
+    let val = producedStr.value;
+    if (producedUnit.value) {
+      val += ` ${producedUnit.value}`;
+    }
+    return val;
+  });
+  // Only meters that actually produce are worth showing produced for, consumption-only meters report 0
+  // (or nothing at all).
+  const hasProduced = computed(() => produced.value > 0);
+
   const table = computed(() => {
-    return [{
+    const rows = [{
       label: 'Usage',
       unit: unit.value,
       value: usageStr.value
     }];
+    if (hasProduced.value) {
+      rows.push({
+        label: 'Produced',
+        unit: producedUnit.value,
+        value: producedStr.value
+      });
+    }
+    return rows;
   });
 
   return {
@@ -126,6 +158,11 @@ export function useMeterReading(value, support = null) {
     usage,
     usageStr,
     usageAndUnit,
+    producedUnit,
+    produced,
+    producedStr,
+    producedAndUnit,
+    hasProduced,
     table
   };
 }
