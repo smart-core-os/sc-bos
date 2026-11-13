@@ -2,13 +2,16 @@ package opcua
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"testing/synctest"
 
 	"github.com/gopcua/opcua/ua"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/smart-core-os/sc-bos/pkg/driver/opcua/config"
 	"github.com/smart-core-os/sc-bos/pkg/proto/udmipb"
+	"github.com/smart-core-os/sc-bos/pkg/wrap"
 )
 
 func TestUdmi_GetExportMessage(t *testing.T) {
@@ -236,4 +239,64 @@ func (m *mockUdmiControlTopicsServer) Context() context.Context {
 
 func (m *mockUdmiControlTopicsServer) Send(*udmipb.PullControlTopicsResponse) error {
 	return nil
+}
+
+// TestUdmi_wedgedReader checks an export reader that stops reading can't hold up the values: handleEvent runs on the
+// device's notification pump, which gopcua's one publish goroutine for the whole connection waits on (SCB-1453).
+func TestUdmi_wedgedReader(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		u, err := newUdmi("test/device", config.RawTrait{Raw: []byte(`{
+			"kind":"smartcore.bos.UDMI",
+			"topicPrefix":"test/device",
+			"points":{"temp":{"nodeId":"ns=2;s=Tag1","name":"Temperature"}}
+		}`)}, zaptest.NewLogger(t))
+		if err != nil {
+			t.Fatalf("newUdmi: %v", err)
+		}
+		node := ua.MustParseNodeID("ns=2;s=Tag1")
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+
+		client := udmipb.NewUdmiServiceClient(wrap.ServerToClient(udmipb.UdmiService_ServiceDesc, u))
+		// a reader that never reads
+		if _, err := client.PullExportMessages(ctx, &udmipb.PullExportMessagesRequest{}); err != nil {
+			t.Fatalf("PullExportMessages: %v", err)
+		}
+		live, err := client.PullExportMessages(ctx, &udmipb.PullExportMessagesRequest{})
+		if err != nil {
+			t.Fatalf("PullExportMessages: %v", err)
+		}
+		synctest.Wait() // both readers are listening
+
+		const last = 20
+		sent := make(chan struct{})
+		go func() {
+			defer close(sent)
+			for i := 1; i <= last; i++ {
+				u.handleEvent(ctx, node, float32(i))
+			}
+		}()
+		synctest.Wait()
+		select {
+		case <-sent:
+		default:
+			t.Fatal("handleEvent blocked behind a reader that stopped reading")
+		}
+
+		if _, err := u.GetExportMessage(ctx, &udmipb.GetExportMessageRequest{}); err != nil {
+			t.Fatalf("GetExportMessage: %v", err)
+		}
+
+		// the reader that kept up may skip values, but reaches the latest
+		want := fmt.Sprintf(`{"Temperature":{"present_value":%d}}`, last)
+		for {
+			res, err := live.Recv()
+			if err != nil {
+				t.Fatalf("live reader never saw %s: %v", want, err)
+			}
+			if res.GetMessage().GetPayload() == want {
+				break
+			}
+		}
+	})
 }

@@ -55,8 +55,9 @@ type udmiServiceServer struct {
 	// through the values above. GetExportMessage calls it so that a pointset it
 	// returns always follows a real read.
 	refresh func(context.Context) error
-	// watch keeps the values above current until ctx is done. Nothing else feeds
-	// them, so PullExportMessages has nothing to send without it.
+	// watch keeps the values above current until ctx is done, polling the sensor and
+	// reading it whenever it pushes data. Nothing else feeds them, so
+	// PullExportMessages has nothing to send without it.
 	watch func(context.Context)
 }
 

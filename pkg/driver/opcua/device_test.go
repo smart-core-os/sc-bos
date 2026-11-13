@@ -814,6 +814,13 @@ func (r *faultRecorder) set(c *healthpb.HealthCheck) {
 	r.check = c
 }
 
+// reliability returns the check's current reliability state.
+func (r *faultRecorder) reliability() healthpb.HealthCheck_Reliability_State {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.check.GetReliability().GetState()
+}
+
 // fault returns the current fault carrying code, or nil when there is none.
 func (r *faultRecorder) fault(code string) *healthpb.HealthCheck_Error {
 	r.mu.Lock()
@@ -1547,4 +1554,130 @@ func TestDevice_connectionLost_tellsMeter(t *testing.T) {
 
 	dev.connectionLost()
 	require.False(t, meter.vouched())
+}
+
+// TestDevice_subscribe_resubscribesOnReconnect is SCB-1455. When gopcua recreates a subscription
+// after a reconnect it drops any item the server refuses, with nothing but a log line, so the
+// device resubscribes itself and lets Monitor's results say which points the server refused.
+func TestDevice_subscribe_resubscribesOnReconnect(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const flaky, gone = "ns=2;s=Flaky", "ns=2;s=Gone"
+		sub := newFakeSubscriber(map[string][]error{
+			flaky: {nil, ua.StatusBadTimeout, nil},  // refused once after the reconnect, then back
+			gone:  {nil, ua.StatusBadNodeIDUnknown}, // removed from the server while we were away
+		})
+		dev, meter, rec := newTestDevice(t, sub, testMeterNode, flaky, gone)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		requireCalls(t, sub, 1)
+		sub.subAt(0).send(makeStatusEvent(sub.subAt(0).handleFor(testMeterNode), ua.StatusOK))
+		synctest.Wait()
+		require.True(t, meter.vouched())
+		require.Nil(t, rec.fault(PointSubscribeError))
+		require.Nil(t, rec.fault(DeviceConfigError))
+
+		dev.connectionRestored()
+		synctest.Wait()
+		require.Equal(t, 1, sub.subAt(0).cancelCount(), "gopcua's recreated subscription is cancelled")
+		requireCalls(t, sub, 2) // at once, not a backoff away: nothing has failed
+		requireMonitored(t, sub.subAt(1), [][]string{{testMeterNode, flaky, gone}})
+		require.False(t, meter.vouched(), "the new subscription has to deliver before it is vouched for")
+		require.NotNil(t, rec.fault(DeviceConfigError), "the point the server no longer has is reported")
+		require.NotNil(t, rec.fault(PointSubscribeError), "the point the server refused is reported")
+
+		// the refused point rejoins on the live subscription, the removed one is given up on
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireMonitored(t, sub.subAt(1), [][]string{{testMeterNode, flaky, gone}, {flaky}})
+		require.Nil(t, rec.fault(PointSubscribeError))
+		require.NotNil(t, rec.fault(DeviceConfigError))
+		requireCalls(t, sub, 2)
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_reconnectRaisesNoFaults checks resubscribing after a reconnect does not
+// flap the device's health: nothing has failed, and the new subscription reports on every point.
+func TestDevice_subscribe_reconnectRaisesNoFaults(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber(nil)
+		dev, _, rec := newTestDevice(t, sub, testMeterNode)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		sub.subAt(0).send(makeStatusEvent(sub.subAt(0).handleFor(testMeterNode), ua.StatusOK))
+		synctest.Wait()
+		require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, rec.reliability())
+
+		dev.connectionRestored()
+		synctest.Wait()
+		requireCalls(t, sub, 2)
+		require.Nil(t, rec.fault(PointSubscribeError))
+		require.Equal(t, healthpb.HealthCheck_Reliability_RELIABLE, rec.reliability())
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_reconnectBeforeSubscribing checks a reconnect the device heard about
+// before its subscription existed doesn't tear that subscription down: it was created on the
+// restored connection, by us, so there is nothing gopcua could have dropped from it.
+func TestDevice_subscribe_reconnectBeforeSubscribing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber(nil)
+		dev, _, _ := newTestDevice(t, sub, testMeterNode)
+		dev.connectionRestored()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		requireCalls(t, sub, 1)
+		require.Zero(t, sub.subAt(0).cancelCount())
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
+}
+
+// TestDevice_subscribe_reconnectCutsBackoffShort checks a device whose resubscribe failed while
+// the server was down tries again as soon as the connection is back, rather than sitting out a
+// backoff that can reach subscribeRetryMax.
+func TestDevice_subscribe_reconnectCutsBackoffShort(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// the first subscription works, the resubscribe after it dies fails, then the server is back
+		sub := newFakeSubscriber(nil, nil, ua.StatusBadServerNotConnected, nil)
+		dev, _, _ := newTestDevice(t, sub, testMeterNode)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := goSubscribe(ctx, dev)
+
+		synctest.Wait()
+		sub.subAt(0).send(&opcua.PublishNotificationData{
+			Value: &ua.StatusChangeNotification{Status: ua.StatusBadTimeout},
+		})
+		time.Sleep(subscribeRetryInitial)
+		synctest.Wait()
+		requireCalls(t, sub, 2) // the resubscribe failed, and the next is a longer backoff away
+
+		dev.connectionRestored()
+		synctest.Wait()
+		requireCalls(t, sub, 3)
+		requireMonitored(t, sub.subAt(1), [][]string{{testMeterNode}})
+
+		cancel()
+		requireSubscribeReturns(t, done)
+	})
 }

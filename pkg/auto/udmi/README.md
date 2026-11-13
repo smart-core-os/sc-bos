@@ -14,7 +14,7 @@ An answer that is not a pointset event is not published either: a `state` or `me
 
 The deadline is tracked per source, not per topic, and is reset by any pointset event that source publishes — so a heartbeat only ever arrives in place of traffic, never on top of it. Per source rather than per topic because `GetExportMessage` is addressed by source name: one call answers for the source as a whole. State and metadata don't reset the deadline; they are published retained, so the broker already holds the latest, and drivers re-announce them on every reconnect.
 
-A source must implement `GetExportMessage` to be heartbeated. Today that means the BACnet merge driver; Steinel HPD, Xovis and HikCentral return `Unimplemented`, which permanently disarms the heartbeat for that source rather than being retried (see SCB-1441). Drivers that publish on a ticker regardless of change — OPC UA, HelvarNet light, Gallagher, mock — never go quiet, so the heartbeat doesn't apply to them.
+A source must implement `GetExportMessage` to be heartbeated. Today that means the BACnet merge driver, Steinel HPD, Xovis, HikCentral and the HelvarNet PIR, each of which answers `Unavailable` once its device stops responding. A source that answers `Unimplemented` permanently disarms the heartbeat for that source rather than being retried. Drivers that publish on a ticker regardless of change — OPC UA, HelvarNet light, Gallagher, mock — never go quiet, so the heartbeat doesn't apply to them.
 
 ```json
 {

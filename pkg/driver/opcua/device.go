@@ -102,6 +102,10 @@ type device struct {
 	// unknownHandles counts notifications we could not attribute to a node, for the thinning
 	// in logUnknownHandle. Only ever touched from the goroutine pumping this device.
 	unknownHandles int
+
+	// restored is signalled when the connection comes back after being lost, which ends the
+	// pump so the device resubscribes. Buffered so gopcua's connection goroutine never waits.
+	restored chan struct{}
 }
 
 // newDevice creates a new device instance for the given configuration.
@@ -117,6 +121,7 @@ func newDevice(conf *config.Device, logger *zap.Logger, client subscriber, check
 		systemCheck: systemCheck,
 		points:      newPointHealth(check),
 		maxStagger:  subscribeStagger,
+		restored:    make(chan struct{}, 1),
 	}
 	if informationalCheck == nil {
 		return d
@@ -152,16 +157,8 @@ func (d *device) subscribe(ctx context.Context) error {
 	// a device with no variables (metadata only, say) has nothing to ask the server for and
 	// nothing it can refuse, so it skips the task rather than being reported as abandoned
 	if len(d.conf.Variables) > 0 && d.stagger(ctx) {
-		err := task.Run(ctx, d.deviceTask(),
-			task.WithRetry(task.RetryUnlimited),
-			task.WithBackoff(subscribeRetryInitial, subscribeRetryMax),
-			// no WithTimeout: Runner.Step cancels the attempt ctx as soon as the Task
-			// returns, and this Task only returns when the subscription dies, so a
-			// per-attempt deadline would sever a live subscription on a timer. Client puts a
-			// deadline on each request instead.
-			// no WithErrorLogger either, logSubscribeFailure thins the logging out.
-		)
-		// with RetryUnlimited the only way task.Run gives up while its ctx is still live is a
+		err := d.runDeviceTask(ctx)
+		// with RetryUnlimited the only way the runner gives up while its ctx is still live is a
 		// device with no point left that could ever work, so this is that device being
 		// abandoned
 		if err != nil && ctx.Err() == nil {
@@ -174,6 +171,42 @@ func (d *device) subscribe(ctx context.Context) error {
 	// device is still using.
 	<-ctx.Done()
 	return ctx.Err()
+}
+
+// runDeviceTask runs deviceTask until it stops for good, as task.Run would, except that the
+// connection coming back cuts a retry delay short.
+//
+// A device whose resubscribe failed while the server was down sits out a backoff that grows to
+// subscribeRetryMax, and the server coming back is the one moment worth trying again: waiting
+// out the rest would leave it unmonitored for minutes after every other device has recovered.
+func (d *device) runDeviceTask(ctx context.Context) error {
+	r := task.NewRunner(d.deviceTask(),
+		task.WithRetry(task.RetryUnlimited),
+		task.WithBackoff(subscribeRetryInitial, subscribeRetryMax),
+		// no WithTimeout: Runner.Step cancels the attempt ctx as soon as the Task returns, and
+		// this Task only returns when the subscription dies, so a per-attempt deadline would
+		// sever a live subscription on a timer. Client puts a deadline on each request instead.
+		// no WithErrorLogger either, logSubscribeFailure thins the logging out.
+	)
+	for {
+		err, again, delay := r.Step(ctx)
+		if !again {
+			return err
+		}
+		t := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return ctx.Err()
+		case <-t.C:
+		case <-d.restored:
+			t.Stop()
+			// every waiting device on the connection wakes at once, so spread them out
+			if !d.stagger(ctx) {
+				return ctx.Err()
+			}
+		}
+	}
 }
 
 // stagger waits a random part of maxStagger, reporting false if ctx ended first.
@@ -221,6 +254,11 @@ func (d *device) deviceTask() task.Task {
 			return task.StopNow, errNoWorkablePoints
 		}
 
+		// a reconnect from before this subscription exists says nothing about it
+		select {
+		case <-d.restored:
+		default:
+		}
 		sub, err := d.client.NewSubscription(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
@@ -272,6 +310,19 @@ func (d *device) deviceTask() task.Task {
 		sub.Cancel(ctx)
 		if ctx.Err() != nil {
 			return task.StopNow, err
+		}
+		if errors.Is(err, errConnectionRestored) {
+			// nothing has failed yet, so raise no faults: the new subscription reports on every
+			// point, and that is what makes an item gopcua dropped visible. Its values stop being
+			// vouched for, though, as the subscription they came from is gone.
+			d.eachLivenessHandler(livenessHandler.subscriptionLost)
+			d.logger.Info("connection to the server restored, resubscribing device", zap.String("device", d.conf.Name))
+			// every device on the connection gets here at once, so spread them out the way a
+			// config load is
+			if !d.stagger(ctx) {
+				return task.StopNow, ctx.Err()
+			}
+			return task.RetryNow, err
 		}
 		d.failAllPoints(ctx, permanent, err)
 		if lived := time.Since(start); lived >= resubscribeGrace {
@@ -502,6 +553,8 @@ func (d *device) pumpEvents(ctx context.Context, sub pointSubscription) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case <-d.restored:
+			return errConnectionRestored
 		case event, open := <-notifications:
 			if !open {
 				// gopcua does not close the channel today, so this is belt and braces
@@ -681,6 +734,20 @@ func (d *device) handleStatusValue(ctx context.Context, node *ua.NodeID, status 
 func (d *device) handleTraitEvent(ctx context.Context, node *ua.NodeID, value any) {
 	for _, handler := range d.eventHandlers {
 		handler.handleEvent(ctx, node, value)
+	}
+}
+
+// connectionRestored ends the device's subscription so that it resubscribes, once the
+// connection is back after a loss.
+//
+// By then gopcua has recreated the subscription itself, and an item the server refused on the
+// way is dropped with nothing but a log line: the point stops delivering while every signal we
+// have says it is fine (SCB-1455). Resubscribing puts every point back through Monitor, whose
+// results say which ones the server refused. Called from gopcua's connection goroutine.
+func (d *device) connectionRestored() {
+	select {
+	case d.restored <- struct{}{}:
+	default: // already due
 	}
 }
 

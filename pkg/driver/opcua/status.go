@@ -64,6 +64,9 @@ var (
 	errUnexpectedReadResults = errors.New("expected one read result per node requested")
 	// errSubscriptionClosed reports the notification channel closing under us.
 	errSubscriptionClosed = errors.New("subscription notification channel closed")
+	// errConnectionRestored ends a pump whose subscription gopcua recreated after a reconnect,
+	// which may have dropped items on the way, so that the device resubscribes.
+	errConnectionRestored = errors.New("connection to the server restored")
 	// errNoWorkablePoints reports a device left with nothing to subscribe to, because the
 	// server has said no to every one of its points for a reason that will never change.
 	errNoWorkablePoints = errors.New("no point on this device can be monitored")

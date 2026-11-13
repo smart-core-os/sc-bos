@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -388,6 +389,140 @@ func TestDriver_udmi(t *testing.T) {
 	_, err = client.GetExportMessage(ctx, &udmipb.GetExportMessageRequest{Name: "sensors/01"})
 	if code := status.Code(err); code != codes.Unavailable {
 		t.Errorf("GetExportMessage with the sensor down: code = %v, want %v (err %v)", code, codes.Unavailable, err)
+	}
+}
+
+// TestDriver_udmiPush checks data pushed by the sensor reaches the export stream without waiting for the next poll,
+// and carries the sensor's own totals rather than the pushed deltas added to an earlier total.
+func TestDriver_udmiPush(t *testing.T) {
+	sensor := &fakeSensor{}
+	sensor.balance.Store(4)
+	sensor.fw.Store(10)
+	sensor.bw.Store(6)
+	server := httptest.NewTLSServer(sensor)
+	defer server.Close()
+
+	cfg, err := config.ParseConfig([]byte(`{
+		"name": "xovis",
+		"host": "` + strings.TrimPrefix(server.URL, "https://") + `",
+		"username": "admin",
+		"password": "secret",
+		"dataPush": {"webhookPath": "/xovis/push"},
+		"devices": [
+			{"name": "sensors/01", "occupancy": {"id": 1}, "enterLeave": {"id": 2}, "udmiTopicPrefix": "site/01"}
+		]
+	}`))
+	if err != nil {
+		t.Fatalf("ParseConfig: %v", err)
+	}
+	n := node.New("test")
+	d := &Driver{
+		announcer:   node.NewReplaceAnnouncer(n),
+		health:      healthpb.NewRegistry().ForOwner("driver:xovis"),
+		httpMux:     http.NewServeMux(),
+		logger:      zap.NewNop(),
+		pushDataBus: &minibus.Bus[PushData]{},
+	}
+	// well inside the 30s poll interval, so anything the stream sends after its first poll came from a push
+	ctx, stop := context.WithTimeout(t.Context(), 10*time.Second)
+	defer stop()
+	if err := d.applyConfig(ctx, cfg); err != nil {
+		t.Fatalf("applyConfig: %v", err)
+	}
+	stream, err := udmipb.NewUdmiServiceClient(n.ClientConn()).PullExportMessages(ctx, &udmipb.PullExportMessagesRequest{Name: "sensors/01"})
+	if err != nil {
+		t.Fatalf("PullExportMessages: %v", err)
+	}
+	msgs := make(chan EventPoints)
+	go func() {
+		defer close(msgs)
+		for {
+			res, err := stream.Recv()
+			if err != nil {
+				return
+			}
+			var msg PointsetEventMessage
+			if err := json.Unmarshal([]byte(res.GetMessage().GetPayload()), &msg); err != nil {
+				t.Errorf("unmarshal payload: %v", err)
+				return
+			}
+			select {
+			case msgs <- msg.Points:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	next := func(step string) EventPoints {
+		t.Helper()
+		select {
+		case p, ok := <-msgs:
+			if !ok {
+				t.Fatalf("%s: stream closed", step)
+			}
+			return p
+		case <-ctx.Done():
+			t.Fatalf("%s: nothing arrived before the next poll", step)
+		}
+		return EventPoints{}
+	}
+	// the push agent sends every logic's records for the period just closed; the counts here are deltas
+	push := func(logicIDs ...int) {
+		t.Helper()
+		var logics []string
+		for _, id := range logicIDs {
+			logics = append(logics, fmt.Sprintf(`{"id": %d, "records": [{"from": "2026-01-01T10:00:00Z", "to": "2026-01-01T10:01:00Z", "counts": [{"id": 1, "name": "fw", "value": 5}]}]}`, id))
+		}
+		body := `{"logics_data": {"logics": [` + strings.Join(logics, ",") + `]}}`
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/xovis/push", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		d.httpMux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("webhook status = %d: %s", rec.Code, rec.Body)
+		}
+	}
+
+	// the stream's first poll reads both logics
+	for got := (EventPoints{}); got.PeopleCount == nil || got.EnterCount == nil; {
+		p := next("first poll")
+		if p.PeopleCount != nil {
+			got.PeopleCount = p.PeopleCount
+		}
+		if p.EnterCount != nil {
+			got.EnterCount = p.EnterCount
+		}
+	}
+
+	sensor.fw.Store(11)
+	sensor.balance.Store(0)
+	push(2) // only the in/out logic
+	got := next("in/out push")
+	want := EventPoints{
+		DeviceType: &EventPoint[string]{PresentValue: DriverName},
+		EnterCount: &EventPoint[int32]{PresentValue: 11}, // the sensor's total, not 10 plus the pushed 5
+		LeaveCount: &EventPoint[int32]{PresentValue: 6},
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("after a push for the in/out logic (-want +got):\n%s", diff)
+	}
+
+	// the occupancy logic changed too, but nothing was pushed for it yet
+	select {
+	case p := <-msgs:
+		t.Fatalf("unexpected message before the occupancy push: %+v", p)
+	case <-time.After(300 * time.Millisecond):
+	}
+
+	push(1, 2) // the in/out logic hasn't changed since its last read, so only occupancy has anything to send
+	got = next("occupancy push")
+	want = EventPoints{
+		DeviceType:     &EventPoint[string]{PresentValue: DriverName},
+		PeopleCount:    &EventPoint[int32]{PresentValue: 0},
+		OccupancyState: &EventPoint[string]{PresentValue: occupancysensorpb.Occupancy_UNOCCUPIED.String()},
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("after a push for both logics (-want +got):\n%s", diff)
 	}
 }
 

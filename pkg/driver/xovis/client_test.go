@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/smart-core-os/sc-bos/pkg/proto/healthpb"
 )
 
@@ -79,12 +77,12 @@ func Test_getLiveLogic_reliability(t *testing.T) {
 			conn := newInsecureClient(strings.TrimPrefix(server.URL, "https://"), "admin", "secret")
 
 			registry := healthpb.NewRegistry()
-			fc, err := registry.ForOwner("driver:xovis").NewFaultCheck("sensors/01", proto.Clone(commsHealthCheck).(*healthpb.HealthCheck))
+			fc, err := registry.ForOwner("driver:xovis").NewFaultCheck("sensors/01", commsHealthCheck())
 			if err != nil {
 				t.Fatalf("NewFaultCheck: %v", err)
 			}
 			state := func() healthpb.HealthCheck_Reliability_State {
-				return registry.GetCheck("sensors/01", "driver:xovis:"+commsHealthCheck.Id).GetReliability().GetState()
+				return registry.GetCheck("sensors/01", "driver:xovis:commsCheck").GetReliability().GetState()
 			}
 
 			// start from a known good state, so a read that leaves it alone is visible

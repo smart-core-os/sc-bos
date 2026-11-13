@@ -28,6 +28,7 @@ type occupancyServer struct {
 	pollInit   sync.Once
 	poll       *task.Intermittent
 	polls      *minibus.Bus[LiveLogicResponse]
+	pushReads  *task.Intermittent // reads the sensor when it pushes data, see readOnPush
 
 	OccupancyTotal *resource.Value
 }
@@ -54,10 +55,11 @@ func (o *occupancyServer) read(ctx context.Context) (*occupancysensorpb.Occupanc
 	return occupancy, nil
 }
 
-// watch polls the sensor, keeping OccupancyTotal current, until ctx is done.
+// watch keeps OccupancyTotal current until ctx is done, by polling the sensor and reading it whenever it pushes data.
 func (o *occupancyServer) watch(ctx context.Context) {
 	o.doPollInit()
-	_ = o.poll.Attach(ctx) // can't error
+	_ = o.poll.Attach(ctx)      // can't error
+	_ = o.pushReads.Attach(ctx) // can't error
 }
 
 func (o *occupancyServer) PullOccupancy(request *occupancysensorpb.PullOccupancyRequest, server occupancysensorpb.OccupancySensorApi_PullOccupancyServer) error {
@@ -169,6 +171,10 @@ func (o *occupancyServer) PullOccupancy(request *occupancysensorpb.PullOccupancy
 
 func (o *occupancyServer) doPollInit() {
 	o.pollInit.Do(func() {
+		o.pushReads = readOnPush(o.bus, o.logicID, func(ctx context.Context) error {
+			_, err := o.read(ctx)
+			return err
+		})
 		o.polls = &minibus.Bus[LiveLogicResponse]{}
 		o.poll = task.Poll(func(ctx context.Context) {
 			res, err := getLiveLogic(ctx, o.client, o.multiSensor, o.logicID, o.faultCheck)

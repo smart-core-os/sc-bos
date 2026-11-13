@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/smart-core-os/sc-bos/pkg/minibus"
@@ -29,7 +28,7 @@ func TestEnterLeaveServer_PullEnterLeaveEvents(t *testing.T) {
 	sensor.bw.Store(6)
 	httpServer := httptest.NewTLSServer(sensor)
 	defer httpServer.Close()
-	fc, err := healthpb.NewRegistry().ForOwner("driver:xovis").NewFaultCheck("sensors/01", proto.Clone(commsHealthCheck).(*healthpb.HealthCheck))
+	fc, err := healthpb.NewRegistry().ForOwner("driver:xovis").NewFaultCheck("sensors/01", commsHealthCheck())
 	if err != nil {
 		t.Fatalf("NewFaultCheck: %v", err)
 	}
@@ -115,6 +114,23 @@ func TestEnterLeaveServer_PullEnterLeaveEvents(t *testing.T) {
 			}}})
 		})
 		check(t, "poll", recv(stream), event(enterleavesensorpb.EnterLeaveEvent_LEAVE, 12, 8))
+
+		// SCB-1460: the leave total is judged against the previous leave total, not the enter total
+		poll := func(fw, bw int) {
+			t.Helper()
+			send(ctx, func(ctx context.Context) int {
+				return e.polls.Send(ctx, LiveLogicResponse{Time: time.Now(), Logic: LiveLogicData{ID: 2, Counts: []Count{
+					{ID: 1, Name: "fw", Value: fw},
+					{ID: 2, Name: "bw", Value: bw},
+				}}})
+			})
+		}
+		poll(12, 20)
+		check(t, "leave total passes enter total", recv(stream), event(enterleavesensorpb.EnterLeaveEvent_LEAVE, 12, 20))
+		// a count that went down means the sensor was reset, so there's no telling which way anyone went,
+		// even though the leave total is still above the enter total
+		poll(12, 15)
+		check(t, "leave total reset", recv(stream), event(enterleavesensorpb.EnterLeaveEvent_DIRECTION_UNSPECIFIED, 12, 15))
 	})
 
 	t.Run("not an in/out logic", func(t *testing.T) {

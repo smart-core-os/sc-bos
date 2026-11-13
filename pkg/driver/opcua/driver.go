@@ -235,7 +235,7 @@ func (d *Driver) applyConfig(ctx context.Context, cfg config.Root) error {
 
 		a.Announce(dev.Name, allFeatures...)
 		// after the traits are added: the callback reads eventHandlers from gopcua's goroutine
-		watch.onLost(opcDev.connectionLost)
+		watch.watchDevice(opcDev)
 		dev := opcDev
 		grp.Go(func() error {
 			return dev.subscribe(ctx)

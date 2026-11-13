@@ -752,3 +752,59 @@ func TestConnWatch(t *testing.T) {
 		t.Error("not connected again after reconnecting")
 	}
 }
+
+// TestConnWatch_watchDevice checks the connection state reaches a device: a drop stops its
+// meter vouching, and the connection coming back ends its subscription so it resubscribes.
+func TestConnWatch_watchDevice(t *testing.T) {
+	dev, meter := newLivenessDevice(t, newSimpleFaultCheck(t))
+	var w connWatch
+	w.watchDevice(dev)
+	w.observe(opcua.Connected)
+
+	dev.handleEvent(t.Context(), makeStatusEvent(1, ua.StatusOK), fixedLookup(mustParseNodeID(testMeterNode)))
+	if !meter.vouched() {
+		t.Fatal("meter not vouching after a Good value")
+	}
+	w.observe(opcua.Reconnecting)
+	if meter.vouched() {
+		t.Error("meter still vouching after the connection dropped")
+	}
+	select {
+	case <-dev.restored:
+		t.Fatal("device told the connection was restored while it was still down")
+	default:
+	}
+	w.observe(opcua.Connected)
+	select {
+	case <-dev.restored:
+	default:
+		t.Error("device not told the connection was restored")
+	}
+}
+
+// TestConnWatch_restored checks a device hears when the connection comes back, which is when
+// gopcua has finished recreating its subscriptions, and not when it first connects.
+func TestConnWatch_restored(t *testing.T) {
+	var w connWatch
+	var restored int
+	w.onRestored(func() { restored++ })
+
+	w.observe(opcua.Connecting)
+	w.observe(opcua.Connected)
+	if restored != 0 {
+		t.Errorf("first connect reported as restored %d times", restored)
+	}
+	w.observe(opcua.Disconnected)
+	w.observe(opcua.Reconnecting)
+	if restored != 0 {
+		t.Errorf("reported restored %d times while still down", restored)
+	}
+	w.observe(opcua.Connected)
+	if restored != 1 {
+		t.Errorf("reconnect reported as restored %d times, want 1", restored)
+	}
+	w.observe(opcua.Connected)
+	if restored != 1 {
+		t.Errorf("Connected without a drop reported as restored, %d times in all", restored)
+	}
+}
