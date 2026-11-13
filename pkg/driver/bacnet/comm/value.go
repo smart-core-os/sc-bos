@@ -324,6 +324,8 @@ func WriteProperty(ctx context.Context, client *Client, known known.Context, val
 		return err
 	}
 
+	// data is in the trait's units, the device expects its own.
+	data = value.Unscaled(data)
 	data = massageValueForWrite(device, object, property, data)
 
 	req := bactypes.ReadPropertyData{
@@ -512,8 +514,14 @@ var unitSymbols = map[EngineeringUnits]string{
 
 // String implements fmt.Stringer.
 func (u EngineeringUnits) String() string {
-	if s, ok := unitSymbols[u]; ok {
+	if s, ok := u.Symbol(); ok {
 		return s
 	}
 	return "Unknown(" + strconv.Itoa(int(u)) + ")"
+}
+
+// Symbol returns the shorthand symbol for u, and false if u isn't one we know.
+func (u EngineeringUnits) Symbol() (string, bool) {
+	s, ok := unitSymbols[u]
+	return s, ok
 }

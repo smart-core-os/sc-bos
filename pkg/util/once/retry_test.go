@@ -83,3 +83,55 @@ func TestRetryError(t *testing.T) {
 		}
 	})
 }
+
+// Waiters on a failed attempt must see that attempt's error,
+// even when a retry started straight after the failure has already reset things for the next attempt.
+func TestRetryError_waitersSeeTheirAttemptsError(t *testing.T) {
+	failed := errors.New("failed")
+	for range 200 {
+		var o RetryError
+		release := make(chan struct{})
+		first := make(chan error, 1)
+		go func() {
+			first <- o.Do(context.Background(), func() error {
+				<-release
+				return failed
+			})
+		}()
+
+		// wait for the first attempt to be in progress, then queue waiters on it
+		for {
+			o.mu.Lock()
+			started := o.cur != nil
+			o.mu.Unlock()
+			if started {
+				break
+			}
+		}
+		const waiters = 5
+		errs := make(chan error, waiters)
+		for range waiters {
+			go func() {
+				errs <- o.Do(context.Background(), func() error { return nil })
+			}()
+		}
+
+		close(release)
+		// retry as soon as the failure is visible, racing the waiters reading their result
+		for {
+			if err := o.Do(context.Background(), func() error { return nil }); err == nil {
+				break
+			}
+		}
+
+		if err := <-first; !errors.Is(err, failed) {
+			t.Fatalf("first Do = %v, want %v", err, failed)
+		}
+		for range waiters {
+			// a waiter that arrived after the failure legitimately runs or joins the retry, which succeeds
+			if err := <-errs; err != nil && !errors.Is(err, failed) {
+				t.Fatalf("waiter Do = %v, want nil or %v", err, failed)
+			}
+		}
+	}
+}
