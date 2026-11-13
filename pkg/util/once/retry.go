@@ -9,10 +9,16 @@ import (
 // RetryError is like sync.Once except if f returns an err Do will try again the next time it's called.
 type RetryError struct {
 	mu  sync.Mutex
-	c   chan struct{} // nil if needs init, blocked if init-ing, closed if successfully done
-	err error
+	cur *attempt // nil if needs init, in progress if init-ing, done without error if successfully done
 
 	recoverPanic bool // for testing, when true panics will be not be left to the system to log and fail tests.
+}
+
+// attempt is one call of f.
+// Each waiter holds the attempt it waited on, so a retry started after a failure can't change the error it sees.
+type attempt struct {
+	done chan struct{} // closed when f returns
+	err  error         // written before done is closed, read only after
 }
 
 var (
@@ -25,17 +31,16 @@ var (
 // Subsequent calls to Do after an error will invoke f as if Do had not been called before.
 func (o *RetryError) Do(ctx context.Context, f func() error) error {
 	o.mu.Lock()
-	if o.c != nil {
-		// some other routine is working on it
-		c := o.c
+	if o.cur != nil {
+		// some other routine is working on it, or it's done
+		a := o.cur
 		o.mu.Unlock()
-		return o.wait(ctx, c)
+		return a.wait(ctx)
 	}
 
 	// we should work on it
-	c := make(chan struct{})
-	o.err = nil
-	o.c = c
+	a := &attempt{done: make(chan struct{})}
+	o.cur = a
 	o.mu.Unlock()
 
 	// we call f in a go routine to allow this call to return when ctx is done, even if f hasn't completed yet.
@@ -47,29 +52,28 @@ func (o *RetryError) Do(ctx context.Context, f func() error) error {
 			if o.recoverPanic {
 				recover()
 			}
-			o.mu.Lock()
-			defer o.mu.Unlock()
-			if !ran && o.err == nil {
+			if !ran && a.err == nil {
 				// there was a panic
-				o.err = ErrPanicSuppressed
+				a.err = ErrPanicSuppressed
 			}
-			if o.err != nil {
-				o.c = nil // try again next time Do is called
+			o.mu.Lock()
+			if a.err != nil {
+				o.cur = nil // try again next time Do is called
 			}
-			close(c) // release any of those waiting for Do to complete
+			o.mu.Unlock()
+			close(a.done) // release any of those waiting for Do to complete
 		}()
-		// no lock needed here as err is only read when c is closed
-		o.err = f()
+		a.err = f()
 		ran = true // only not set if f() panics
 	}()
 
-	return o.wait(ctx, c)
+	return a.wait(ctx)
 }
 
-func (o *RetryError) wait(ctx context.Context, c chan struct{}) error {
+func (a *attempt) wait(ctx context.Context) error {
 	select {
-	case <-c:
-		return o.err
+	case <-a.done:
+		return a.err
 	case <-ctx.Done():
 		return ctx.Err()
 	}

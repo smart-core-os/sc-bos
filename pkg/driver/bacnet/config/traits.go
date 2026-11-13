@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strconv"
 	"time"
 
@@ -97,6 +98,7 @@ type ValueSource struct {
 	// used for converting simple units like kW -> W.
 	// The value from the source will be multiplied by Scale when reading, and divided when writing.
 	// For example if the trait is in watts and the device is in kW then Scale should be 1000 (aka kilo).
+	// 0 (the default when omitted) means no scaling.
 	Scale float64 `json:"scale,omitempty"`
 }
 
@@ -145,6 +147,40 @@ func (vs ValueSource) Scaled(v any) any {
 		return uint32(float64(v) * vs.Scale)
 	case uint64:
 		return uint64(float64(v) * vs.Scale)
+	}
+	return v
+}
+
+// Unscaled is the reciprocal of Scaled: it returns v divided by the Scale factor, converting a trait value back to
+// the device's units before a write.
+// Integer results are rounded to the nearest whole number, as truncating would turn 4.999… into 4.
+// If vs.Scale is 0 or v is not a number then v is returned unchanged.
+func (vs ValueSource) Unscaled(v any) any {
+	if v == nil {
+		return v
+	}
+	if vs.Scale == 0 {
+		return v
+	}
+	div := func(f float64) float64 { return f / vs.Scale }
+	round := func(f float64) float64 { return math.Round(div(f)) }
+	switch v := v.(type) {
+	case float32:
+		return float32(div(float64(v)))
+	case float64:
+		return div(v)
+	case int:
+		return int(round(float64(v)))
+	case int32:
+		return int32(round(float64(v)))
+	case int64:
+		return int64(round(float64(v)))
+	case uint:
+		return uint(round(float64(v)))
+	case uint32:
+		return uint32(round(float64(v)))
+	case uint64:
+		return uint64(round(float64(v)))
 	}
 	return v
 }
