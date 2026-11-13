@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/smart-core-os/sc-bos/pkg/resource"
 )
@@ -72,5 +73,21 @@ func TestModel_MergeMetadata(t *testing.T) {
 				t.Fatalf("MergeMetadata (-want,+got)\n%s", diff)
 			}
 		})
+	}
+}
+
+// A read_mask path naming a key in the more map used to panic in fmutils and exit the process (SCB-1469).
+func TestModel_GetMetadata_moreKeyMask(t *testing.T) {
+	model := NewModel(resource.WithInitialValue(&Metadata{
+		Name: "dev",
+		More: map[string]string{"x": "1", "y": "2"},
+	}))
+	got, err := model.GetMetadata(resource.WithReadMask(&fieldmaskpb.FieldMask{Paths: []string{"more.x"}}))
+	if err != nil {
+		t.Fatalf("GetMetadata: %v", err)
+	}
+	want := &Metadata{More: map[string]string{"x": "1"}}
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+		t.Errorf("GetMetadata (-want +got):\n%s", diff)
 	}
 }

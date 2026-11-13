@@ -3,9 +3,12 @@ package page
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -86,6 +89,35 @@ func TestList(t *testing.T) {
 				if gotNextPageToken != "" {
 					t.Errorf("last page got next page token %q, want empty", gotNextPageToken)
 				}
+			}
+		})
+	}
+
+	// a negative page size used to index before the start of the list and panic (SCB-1470)
+	negativeSizeTests := []struct {
+		name  string
+		size  int32
+		items []string
+		want  []string
+	}{
+		{name: "negative size, full list", size: -1, items: allItems, want: allItems[:50]},
+		{name: "most negative size, full list", size: math.MinInt32, items: allItems, want: allItems[:50]},
+		{name: "negative size, one item", size: -1, items: allItems[:1], want: allItems[:1]},
+		{name: "negative size, empty list", size: -1, items: nil, want: nil},
+	}
+	for _, tt := range negativeSizeTests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotItems, gotSize, _, err := List(testRequest{pageSize: tt.size}, idFunc, func() []string {
+				return slices.Clone(tt.items)
+			})
+			if err != nil {
+				t.Fatalf("List returned error: %v", err)
+			}
+			if gotSize != len(tt.items) {
+				t.Errorf("List got size %d, want %d", gotSize, len(tt.items))
+			}
+			if diff := cmp.Diff(tt.want, gotItems, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("List got items mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

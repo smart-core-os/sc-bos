@@ -3,8 +3,12 @@ package wrap
 import (
 	"context"
 	"fmt"
+	"log"
 	"reflect"
+	"runtime/debug"
+	"sync/atomic"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -13,6 +17,38 @@ import (
 
 var ErrMethodNotFound = status.Error(codes.Unimplemented, "method not found")
 var ErrMethodShape = status.Error(codes.Internal, "method stream shape mismatch")
+
+// ErrHandlerPanic is returned to the caller when a wrapped handler panics.
+// The panic value isn't included, as it may describe server internals; it is logged instead.
+var ErrHandlerPanic = status.Error(codes.Internal, "internal error")
+
+var panicLogger atomic.Pointer[zap.Logger]
+
+// SetPanicLogger sets the logger that handler panics recovered by ServerToClient connections are reported to.
+// It applies to all connections, including those already created.
+// Until it is set, or if it is set to nil, panics are reported via the standard library log package.
+func SetPanicLogger(logger *zap.Logger) {
+	panicLogger.Store(logger)
+}
+
+// callHandler calls f, turning a panic into ErrHandlerPanic.
+// Handlers run on goroutines started by the wrapper, where an unrecovered panic exits the whole process
+// and no gRPC server interceptor can reach it.
+func callHandler(method string, f func() error) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			stack := debug.Stack()
+			if logger := panicLogger.Load(); logger != nil {
+				logger.Error("recovered from handler panic",
+					zap.String("method", method), zap.Any("panic", p), zap.ByteString("stack", stack))
+			} else {
+				log.Printf("wrap: recovered from handler panic in %s: %v\n%s", method, p, stack)
+			}
+			err = ErrHandlerPanic
+		}
+	}()
+	return f()
+}
 
 // ServerToClient returns a grpc.ClientConnInterface that can service all methods described by desc.
 // srv is the gRPC server implementation type (a type that could be passed to a grpc RegisterXxxServer function).
@@ -59,15 +95,15 @@ func (w *wrapper) Invoke(ctx context.Context, method string, args any, reply any
 
 	ctx, clientServerStream, ss, cs := w.startStream(ctx, method)
 	go func() {
-		res, err := matched.Handler(w.srv, ctx, func(dst any) error {
-			return ss.RecvMsg(dst)
-		}, nil)
-		if err != nil {
-			clientServerStream.Close(err)
-			return
-		}
-		err = ss.SendMsg(res)
-		clientServerStream.Close(err)
+		clientServerStream.Close(callHandler(method, func() error {
+			res, err := matched.Handler(w.srv, ctx, func(dst any) error {
+				return ss.RecvMsg(dst)
+			}, nil)
+			if err != nil {
+				return err
+			}
+			return ss.SendMsg(res)
+		}))
 	}()
 
 	if err := cs.SendMsg(args); err != nil {
@@ -103,8 +139,9 @@ func (w *wrapper) NewStream(ctx context.Context, desc *grpc.StreamDesc, method s
 
 	_, clientServerStream, ss, cs := w.startStream(ctx, method)
 	go func() {
-		err := matched.Handler(w.srv, ss)
-		clientServerStream.Close(err)
+		clientServerStream.Close(callHandler(method, func() error {
+			return matched.Handler(w.srv, ss)
+		}))
 	}()
 
 	return cs, nil

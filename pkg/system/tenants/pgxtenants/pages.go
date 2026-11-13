@@ -58,7 +58,7 @@ func paginate[T any](items []T, pageSize int32, pageToken string, key func(T) st
 }
 
 func capPageSize(pageSize int) int {
-	if pageSize == 0 {
+	if pageSize <= 0 { // a negative size from the caller would otherwise panic
 		return defaultPageSize
 	}
 	if pageSize > maxPageSize {
