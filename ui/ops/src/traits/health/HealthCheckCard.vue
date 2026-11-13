@@ -36,6 +36,7 @@ import BoundsText from '@/traits/health/BoundsText.vue';
 import ImpactsText from '@/traits/health/ImpactsText.vue';
 import NormalityTimeText from '@/traits/health/NormalityTimeText.vue';
 import ReliabilityTimeText from '@/traits/health/ReliabilityTimeText.vue';
+import {HealthCheck} from '@smart-core-os/sc-bos-ui-gen/proto/smartcore/bos/health/v1/health_pb';
 import {computed} from 'vue';
 
 const props = defineProps({
@@ -51,8 +52,17 @@ const description = computed(() => props.modelValue?.description);
 
 const hasBounds = computed(() => Boolean(props.modelValue?.bounds));
 const currentFaults = computed(() => props.modelValue?.faults?.currentFaultsList ?? []);
-const errorSummary = computed(() => props.modelValue?.reliability?.lastError?.summaryText ?? null);
-const errorDetails = computed(() => props.modelValue?.reliability?.lastError?.detailsText ?? null);
+// lastError is a record of the most recent error rather than a current one: healthpb keeps it
+// on recovery, deliberately, so it can sit alongside reliableTime. Reading it unguarded shows
+// an error banner on a check that is reporting fine. HealthCheckRow and SubsystemHealthCard
+// both suppress it once the state is RELIABLE; do the same here.
+const lastError = computed(() => {
+  const rel = props.modelValue?.reliability;
+  if (!rel || rel.state === HealthCheck.Reliability.State.RELIABLE) return null;
+  return rel.lastError ?? null;
+});
+const errorSummary = computed(() => lastError.value?.summaryText ?? null);
+const errorDetails = computed(() => lastError.value?.detailsText ?? null);
 </script>
 
 <style scoped>
