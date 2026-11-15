@@ -80,6 +80,10 @@ export default function() {
         return; // ignore this response
       }
       zoneCollection.error = e;
+      // Move on to the next name, otherwise one unreachable node (e.g. a controller that's down) is retried forever
+      // and the zones of every node after it are never listed.
+      cursor.value.nameIndex++;
+      cursor.value.pageToken = '';
     } finally {
       if (v0 === namesVersion.value) {
         zoneCollection.loading = false;
