@@ -580,8 +580,9 @@ credential.
 Discovery is published on the first cycle that reaches the broker and then once every
 `metadataInterval` poll cycles, spread by device across those cycles so a node's devices don't
 re-announce together, and a discovery that fails to send is retried each cycle until it goes;
-telemetry every cycle. Connect should expect a node's discovery messages to arrive a few at a
-time between restarts, not as one batch. Each cycle waits for the broker connection, up to the next
+telemetry every cycle. A node sends every device's discovery at once only when its export
+starts: on a restart, a reconfigure or a re-enrolment. In between, Connect should expect them
+to arrive a few at a time. Each cycle waits for the broker connection, up to the next
 scheduled send, and is skipped if it can't connect by then.
 
 Per `ingest.md`, matching the UDMI shape is not "zero-config" landing: UDMI is a **future

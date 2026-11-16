@@ -14,8 +14,10 @@ heartbeat, see [Sending on change](#sending-on-change)) as:
   reaches the broker and then once every `metadataInterval` cycles. The repeats are spread by
   device across those cycles, on a slot picked from the device name, so about
   1/`metadataInterval` of a node's devices re-announce each cycle, and nodes started together
-  don't all re-announce at once. A device found later, or whose discovery changes when the
-  device list is refreshed, announces on that cycle. A discovery that fails to send is
+  don't all re-announce at once. A device found when the device list is refreshed announces on
+  that cycle, as does one whose metadata, units or traits the refresh changes. A change that
+  comes from a reading instead, such as a new disk or a sensor that starts reporting a point,
+  goes on the device's own slot, within `metadataInterval` cycles. A discovery that fails to send is
   retried each cycle until it goes.
 
 Each cycle waits for the broker connection, up to the next scheduled send, before it fetches
