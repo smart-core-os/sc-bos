@@ -60,19 +60,32 @@ func (t *timeInterceptor) now() time.Time {
 }
 
 type event struct {
-	usage float32
-	err   error
+	usage    float32
+	produced float32
+	err      error
 }
 type meterModelInterceptor struct {
 	meterpb.UnimplementedMeterApiServer
 	meterpb.UnimplementedMeterInfoServer
 	events map[string][]event
+	// support is what DescribeMeterReading returns per meter, a meter not in the map is in kWh
+	support map[string]*meterpb.MeterReadingSupport
+	// describeErr is returned by DescribeMeterReading per meter, ahead of support
+	describeErr map[string]error
 
 	mtx          sync.Mutex
 	meterToIndex map[string]int
 }
 
-func (m *meterModelInterceptor) DescribeMeterReading(_ context.Context, _ *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
+func (m *meterModelInterceptor) DescribeMeterReading(_ context.Context, r *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	if err := m.describeErr[r.Name]; err != nil {
+		return nil, err
+	}
+	if s, ok := m.support[r.Name]; ok {
+		return s, nil
+	}
 	return &meterpb.MeterReadingSupport{
 		UsageUnit: "kWh",
 	}, nil
@@ -107,7 +120,8 @@ func (m *meterModelInterceptor) GetMeterReading(_ context.Context, r *meterpb.Ge
 	}
 
 	return &meterpb.MeterReading{
-		Usage: ev.usage,
+		Usage:    ev.usage,
+		Produced: ev.produced,
 	}, nil
 }
 
