@@ -981,25 +981,103 @@ func TestRunTelemetry_skipsCycleWhenConnectionTakesTooLong(t *testing.T) {
 }
 
 // TestRunTelemetry_retriesFailedDiscovery confirms discovery that fails to publish is resent
-// on the next cycle, without moving the every-N-cycles cadence.
+// on the next cycle, without moving the device's every-N-cycles phase.
 func TestRunTelemetry_retriesFailedDiscovery(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		const n = 3
 		h := newTelemetryHarness(t)
 		h.sink.setFailNextDiscovery(1)
-		h.run(3)
+		h.run(n)
 
 		h.sleepUntil(time.Minute + time.Second)
 		assert.Len(t, h.telemetry(), 1)
 		assert.Empty(t, h.discovery(), "first discovery failed")
 
 		h.sleepUntil(2*time.Minute + time.Second)
-		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute)}, h.discovery(), "resent on the next cycle")
+		assert.Equal(t, h.minutes(2), h.discovery(), "resent on the next cycle")
 
-		h.sleepUntil(4*time.Minute + time.Second)
-		assert.Len(t, h.telemetry(), 4)
-		assert.Equal(t, []time.Time{h.start.Add(2 * time.Minute), h.start.Add(4 * time.Minute)}, h.discovery(),
-			"not again until cycle N")
+		// cycle c runs c+1 minutes after the start; the next re-announce is the first cycle after
+		// the retry on foo's phase
+		next := 2
+		for next%n != discoveryPhase("foo", n) {
+			next++
+		}
+		h.sleepUntil(time.Duration(next+1)*time.Minute + time.Second)
+		assert.Len(t, h.telemetry(), next+1)
+		assert.Equal(t, h.minutes(2, next+1), h.discovery(), "not again until the device's phase")
 	})
+}
+
+// TestRunTelemetry_spreadsReannouncements is SCB-1545: each device announces when it is found
+// and then once every N cycles on the cycle its phase picks, rather than every device on the
+// cycle the device list is refreshed, so a node's re-announcements don't all go at once.
+func TestRunTelemetry_spreadsReannouncements(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const n, cycles = 3, 10
+		h := newTelemetryHarness(t)
+		h.runConfig(fmt.Sprintf(`{
+			"traits": [%q, %q],
+			"mqtt": {"host": "tls://broker:8883", "clientCertPath": "c", "clientKeyPath": "k",
+				"sendInterval": "* * * * *", "metadataInterval": %d}
+		}`, meterpb.TraitName, trait.OccupancySensor, n))
+		require.NotEqual(t, discoveryPhase("foo", n), discoveryPhase("pir", n), "the devices should differ in phase")
+
+		h.sleepUntil(time.Duration(cycles)*time.Minute + time.Second)
+		for _, name := range []string{"foo", "pir"} {
+			want := h.minutes(1) // found on cycle 0
+			for c := 1; c < cycles; c++ {
+				if c%n == discoveryPhase(name, n) {
+					want = append(want, h.minutes(c+1)...)
+				}
+			}
+			assert.Equal(t, want, h.sink.sent(discoveryTopic("tlm", name)), "discovery of %s", name)
+		}
+	})
+}
+
+func TestDiscoveryPhase(t *testing.T) {
+	assert.Equal(t, 0, discoveryPhase("anything", 1), "one slot")
+	assert.Equal(t, discoveryPhase("foo", 100), discoveryPhase("foo", 100), "deterministic")
+
+	// Names alike but for a number, as a site's devices often are, still spread over the slots.
+	const names, slots = 1000, 100
+	counts := make([]int, slots)
+	for i := range names {
+		p := discoveryPhase(fmt.Sprintf("floor-%02d/lamp-%03d", i%20, i), slots)
+		require.True(t, p >= 0 && p < slots, "phase %d out of range", p)
+		counts[p]++
+	}
+	for slot, c := range counts {
+		assert.Positive(t, c, "slot %d empty", slot)
+		assert.LessOrEqual(t, c, 25, "slot %d has %d of %d names", slot, c, names)
+	}
+}
+
+// TestCarryDiscovery checks a device refresh owes discovery only for devices whose discovery
+// changed, or that still owed it, so the refresh doesn't re-announce every device at once.
+func TestCarryDiscovery(t *testing.T) {
+	now := time.Now()
+	kwh := fakeCollector{inv: map[string]udmi.MetadataPoint{"usage": {Units: "kWh"}}}
+	wh := fakeCollector{inv: map[string]udmi.MetadataPoint{"usage": {Units: "Wh"}}}
+	newDevice := func(name string, owed bool, c traitCollector) *device {
+		return &device{name: name, metaData: &metadatapb.Metadata{Name: name}, collectors: []traitCollector{c}, discoveryOwed: owed}
+	}
+	before := map[string]*device{
+		"same":    newDevice("same", false, kwh),
+		"changed": newDevice("changed", false, kwh),
+		"failed":  newDevice("failed", true, kwh),
+	}
+	after := map[string]*device{
+		"same":    newDevice("same", true, kwh),
+		"changed": newDevice("changed", true, wh),
+		"failed":  newDevice("failed", true, kwh),
+		"new":     newDevice("new", true, kwh),
+	}
+	carryDiscovery(before, after, now)
+	assert.False(t, after["same"].discoveryOwed, "unchanged, waits for its phase")
+	assert.True(t, after["changed"].discoveryOwed, "its discovery changed")
+	assert.True(t, after["failed"].discoveryOwed, "its last send failed")
+	assert.True(t, after["new"].discoveryOwed, "newly found")
 }
 
 // TestRunTelemetry_retriesFailedRefresh confirms a failed first device list is retried on the
