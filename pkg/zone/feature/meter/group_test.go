@@ -548,78 +548,68 @@ func Test_newUnitPlan(t *testing.T) {
 	tests := []struct {
 		name             string
 		members          []member
-		prevUsage        string // the usage unit an earlier, partial plan reported
+		prevUsage        string // the usage unit an earlier plan reported
 		wantUsage        string
 		wantProduced     string
 		wantScales       []memberScale
-		wantComplete     bool
 		wantErr          codes.Code // OK for no clash
 		wantDescribeErr  bool
 		wantNoUnits      []string
 		wantErrMentioned []string // members the clash error names
 	}{
 		{
-			name:         "all kWh",
-			members:      []member{{"a", support("kWh", ""), nil}, {"b", support("kWh", ""), nil}},
-			wantUsage:    "kWh",
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
+			name:       "all kWh",
+			members:    []member{{"a", support("kWh", ""), nil}, {"b", support("kWh", ""), nil}},
+			wantUsage:  "kWh",
+			wantScales: []memberScale{identityScale, identityScale},
 		},
 		{
-			name:         "kWh and Wh",
-			members:      []member{{"a", support("kWh", ""), nil}, {"b", support("Wh", ""), nil}},
-			wantUsage:    "kWh",
-			wantScales:   []memberScale{identityScale, {usage: 1e-3, produced: 1}},
-			wantComplete: true,
+			name:       "kWh and Wh",
+			members:    []member{{"a", support("kWh", ""), nil}, {"b", support("Wh", ""), nil}},
+			wantUsage:  "kWh",
+			wantScales: []memberScale{identityScale, {usage: 1e-3, produced: 1}},
 		},
 		{
-			name:         "group unit spelled as first member",
-			members:      []member{{"a", support("watt_hours", ""), nil}, {"b", support("MWh", ""), nil}},
-			wantUsage:    "watt_hours",
-			wantScales:   []memberScale{identityScale, {usage: 1e6, produced: 1}},
-			wantComplete: true,
+			name:       "group unit spelled as first member",
+			members:    []member{{"a", support("watt_hours", ""), nil}, {"b", support("MWh", ""), nil}},
+			wantUsage:  "watt_hours",
+			wantScales: []memberScale{identityScale, {usage: 1e6, produced: 1}},
 		},
 		{
-			name:         "same unit different spelling",
-			members:      []member{{"a", support("kWh", ""), nil}, {"b", support("kilowatt_hours", ""), nil}},
-			wantUsage:    "kWh",
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
+			name:       "same unit different spelling",
+			members:    []member{{"a", support("kWh", ""), nil}, {"b", support("kilowatt_hours", ""), nil}},
+			wantUsage:  "kWh",
+			wantScales: []memberScale{identityScale, identityScale},
 		},
 		{
-			name:         "unknown units that match",
-			members:      []member{{"a", support("therms", ""), nil}, {"b", support("Therms", ""), nil}},
-			wantUsage:    "therms",
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
+			name:       "unknown units that match",
+			members:    []member{{"a", support("therms", ""), nil}, {"b", support("Therms", ""), nil}},
+			wantUsage:  "therms",
+			wantScales: []memberScale{identityScale, identityScale},
 		},
 		{
-			name:         "kWh and empty",
-			members:      []member{{"a", support("kWh", ""), nil}, {"b", support("", ""), nil}},
-			wantUsage:    "kWh",
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
-			wantNoUnits:  []string{"b"},
+			name:        "kWh and empty",
+			members:     []member{{"a", support("kWh", ""), nil}, {"b", support("", ""), nil}},
+			wantUsage:   "kWh",
+			wantScales:  []memberScale{identityScale, identityScale},
+			wantNoUnits: []string{"b"},
 		},
 		{
-			name:         "empty first takes unit from later member",
-			members:      []member{{"a", support("", ""), nil}, {"b", support("Wh", ""), nil}},
-			wantUsage:    "Wh",
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
-			wantNoUnits:  []string{"a"},
+			name:        "empty first takes unit from later member",
+			members:     []member{{"a", support("", ""), nil}, {"b", support("Wh", ""), nil}},
+			wantUsage:   "Wh",
+			wantScales:  []memberScale{identityScale, identityScale},
+			wantNoUnits: []string{"a"},
 		},
 		{
-			name:         "all empty",
-			members:      []member{{"a", support("", ""), nil}, {"b", support("", ""), nil}},
-			wantScales:   []memberScale{identityScale, identityScale},
-			wantComplete: true,
+			name:       "all empty",
+			members:    []member{{"a", support("", ""), nil}, {"b", support("", ""), nil}},
+			wantScales: []memberScale{identityScale, identityScale},
 		},
 		{
 			name:             "kWh and m³ clash",
 			members:          []member{{"a", support("kWh", ""), nil}, {"b", support("m³", ""), nil}},
 			wantUsage:        "kWh",
-			wantComplete:     true,
 			wantErr:          codes.FailedPrecondition,
 			wantErrMentioned: []string{"b", "m³"},
 		},
@@ -627,7 +617,6 @@ func Test_newUnitPlan(t *testing.T) {
 			name:             "energy and power clash",
 			members:          []member{{"a", support("kWh", ""), nil}, {"b", support("kW", ""), nil}},
 			wantUsage:        "kWh",
-			wantComplete:     true,
 			wantErr:          codes.FailedPrecondition,
 			wantErrMentioned: []string{"b", "kW"},
 		},
@@ -641,37 +630,48 @@ func Test_newUnitPlan(t *testing.T) {
 			wantUsage:    "kWh",
 			wantProduced: "Wh",
 			wantScales:   []memberScale{identityScale, identityScale, {usage: 1, produced: 1000}},
-			wantComplete: true,
 		},
 		{
 			name:             "produced clash",
 			members:          []member{{"a", support("kWh", "kWh"), nil}, {"b", support("kWh", "L"), nil}},
 			wantUsage:        "kWh",
 			wantProduced:     "kWh",
-			wantComplete:     true,
 			wantErr:          codes.FailedPrecondition,
 			wantErrMentioned: []string{"b produced", "L"},
 		},
 		{
-			name:         "member offline",
-			members:      []member{{"a", nil, offline}, {"b", support("Wh", ""), nil}, {"c", support("kWh", ""), nil}},
-			wantUsage:    "Wh",
-			wantScales:   []memberScale{identityScale, identityScale, {usage: 1000, produced: 1}},
-			wantComplete: false,
+			name:       "member offline",
+			members:    []member{{"a", nil, offline}, {"b", support("Wh", ""), nil}, {"c", support("kWh", ""), nil}},
+			wantUsage:  "Wh",
+			wantScales: []memberScale{identityScale, identityScale, {usage: 1000, produced: 1}},
 		},
 		{
-			name:         "earlier unit kept when the first member answers late",
-			members:      []member{{"a", support("Wh", ""), nil}, {"b", support("kWh", ""), nil}},
-			prevUsage:    "kWh",
-			wantUsage:    "kWh",
-			wantScales:   []memberScale{{usage: 1e-3, produced: 1}, identityScale},
-			wantComplete: true,
+			name:       "earlier unit kept when the first member answers late",
+			members:    []member{{"a", support("Wh", ""), nil}, {"b", support("kWh", ""), nil}},
+			prevUsage:  "kWh",
+			wantUsage:  "kWh",
+			wantScales: []memberScale{{usage: 1e-3, produced: 1}, identityScale},
+		},
+		{
+			name:       "earlier unit dropped when every member now clashes with it",
+			members:    []member{{"a", support("kWh", ""), nil}, {"b", support("kWh", ""), nil}},
+			prevUsage:  "m³",
+			wantUsage:  "kWh",
+			wantScales: []memberScale{identityScale, identityScale},
+		},
+		{
+			// starting again would take a's m³ and blame b, but the group already reported kWh
+			name:             "earlier unit kept, real clash still fails",
+			members:          []member{{"a", support("m³", ""), nil}, {"b", support("kWh", ""), nil}},
+			prevUsage:        "kWh",
+			wantUsage:        "kWh",
+			wantErr:          codes.FailedPrecondition,
+			wantErrMentioned: []string{"a usage", "m³"},
 		},
 		{
 			name:            "all offline",
 			members:         []member{{"a", nil, offline}, {"b", nil, offline}},
 			wantScales:      []memberScale{identityScale, identityScale},
-			wantComplete:    false,
 			wantDescribeErr: true,
 		},
 	}
@@ -692,7 +692,6 @@ func Test_newUnitPlan(t *testing.T) {
 			got := newUnitPlan(names, supports, errs, prev)
 			assert.Equal(t, tt.wantUsage, got.usageUnit, "usageUnit")
 			assert.Equal(t, tt.wantProduced, got.producedUnit, "producedUnit")
-			assert.Equal(t, tt.wantComplete, got.complete, "complete")
 			assert.Equal(t, tt.wantNoUnits, got.noUnits, "noUnits")
 			assert.Equal(t, tt.wantDescribeErr, got.describeErr != nil, "describeErr = %v", got.describeErr)
 			assert.Equal(t, tt.wantErr, status.Code(got.err), "err = %v", got.err)
@@ -803,7 +802,7 @@ func TestGroup_mixedUnits(t *testing.T) {
 		}
 		assert.InDelta(t, 15, got.Usage, 1e-4)
 
-		// the member comes back in Wh, the plan only notices after planRetryInterval
+		// the member comes back in Wh, the plan only notices after planRefreshInterval
 		m.mtx.Lock()
 		delete(m.describeErr, "offline")
 		m.support = map[string]*meterpb.MeterReadingSupport{"offline": {UsageUnit: "Wh"}}
@@ -812,9 +811,9 @@ func TestGroup_mixedUnits(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetMeterReading: %v", err)
 		}
-		assert.InDelta(t, 15, got.Usage, 1e-4, "plan re-resolved before planRetryInterval")
+		assert.InDelta(t, 15, got.Usage, 1e-4, "plan re-resolved before planRefreshInterval")
 
-		now := time.Now().Add(planRetryInterval)
+		now := time.Now().Add(planRefreshInterval)
 		group.now = func() time.Time { return now }
 		// re-resolving happens in the background, so the read that starts it still uses the old plan
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -823,6 +822,148 @@ func TestGroup_mixedUnits(t *testing.T) {
 				assert.InDelta(c, 10.005, got.Usage, 1e-4)
 			}
 		}, 5*time.Second, 10*time.Millisecond)
+	})
+}
+
+// setSupport replaces what DescribeMeterReading returns for name.
+func setSupport(m *meterModelInterceptor, name string, s *meterpb.MeterReadingSupport) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	if m.support == nil {
+		m.support = make(map[string]*meterpb.MeterReadingSupport)
+	}
+	m.support[name] = s
+}
+
+// TestGroup_unitsRefresh checks members are described again once a group's plan is complete,
+// so unit fixes and changes apply without restarting the zone.
+func TestGroup_unitsRefresh(t *testing.T) {
+	// newGroup returns a group over names and a func that moves its clock on by planRefreshInterval.
+	// The clock is read by background refreshes, so it's moved atomically rather than by replacing group.now.
+	newGroup := func(t *testing.T, m *meterModelInterceptor, names ...string) (*Group, func()) {
+		group := newUnitsTestGroup(t, m, names...)
+		var offset atomic.Int64
+		group.now = func() time.Time { return time.Now().Add(time.Duration(offset.Load())) }
+		return group, func() { offset.Add(int64(planRefreshInterval)) }
+	}
+	get := func(ctx context.Context, group *Group) (*meterpb.MeterReading, error) {
+		return group.GetMeterReading(ctx, &meterpb.GetMeterReadingRequest{Name: "group"})
+	}
+
+	t.Run("fixing a clashing member heals without restart", func(t *testing.T) {
+		m := &meterModelInterceptor{
+			events: map[string][]event{
+				"kwh":   {{usage: 10}},
+				"water": {{usage: 3}},
+			},
+			support: map[string]*meterpb.MeterReadingSupport{
+				"kwh":   {UsageUnit: "kWh"},
+				"water": {UsageUnit: "m³"},
+			},
+		}
+		group, advance := newGroup(t, m, "kwh", "water")
+		ctx := t.Context()
+
+		_, err := get(ctx, group)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err), "Get err = %v", err)
+
+		setSupport(m, "water", &meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+		advance()
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			got, err := get(ctx, group)
+			if assert.NoError(c, err) {
+				assert.InDelta(c, 13, got.Usage, 1e-4)
+			}
+		}, 5*time.Second, 10*time.Millisecond)
+	})
+
+	t.Run("member unit change applies to a complete plan", func(t *testing.T) {
+		m := &meterModelInterceptor{
+			events: map[string][]event{
+				"kwh": {{usage: 10}},
+				"wh":  {{usage: 2500}},
+			},
+			support: map[string]*meterpb.MeterReadingSupport{
+				"kwh": {UsageUnit: "kWh"},
+				"wh":  {UsageUnit: "Wh"},
+			},
+		}
+		group, advance := newGroup(t, m, "kwh", "wh")
+		ctx := t.Context()
+
+		got, err := get(ctx, group)
+		if err != nil {
+			t.Fatalf("GetMeterReading: %v", err)
+		}
+		assert.InDelta(t, 12.5, got.Usage, 1e-4)
+
+		// the member's reported unit was wrong, its readings were kWh all along
+		setSupport(m, "wh", &meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+		advance()
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			got, err := get(ctx, group)
+			if assert.NoError(c, err) {
+				assert.InDelta(c, 2510, got.Usage, 1e-4)
+			}
+		}, 5*time.Second, 10*time.Millisecond)
+	})
+
+	t.Run("member that stops answering keeps its units", func(t *testing.T) {
+		m := &meterModelInterceptor{
+			support: map[string]*meterpb.MeterReadingSupport{
+				"kwh": {UsageUnit: "kWh"},
+				"wh":  {UsageUnit: "Wh"},
+			},
+		}
+		group, _ := newGroup(t, m, "kwh", "wh")
+		ctx := t.Context()
+		first := group.resolveUnitPlan(ctx, nil)
+
+		m.mtx.Lock()
+		m.describeErr = map[string]error{"wh": status.Error(codes.DeadlineExceeded, "timeout")}
+		m.mtx.Unlock()
+		got := group.resolveUnitPlan(ctx, first)
+		assert.NoError(t, got.err)
+		assert.Equal(t, "kWh", got.usageUnit)
+		assert.InDelta(t, 1e-3, got.scales[1].usage, 1e-9, "wh scale")
+
+		m.mtx.Lock()
+		m.describeErr["kwh"] = status.Error(codes.DeadlineExceeded, "timeout")
+		m.mtx.Unlock()
+		got = group.resolveUnitPlan(ctx, got)
+		assert.NoError(t, got.describeErr, "no member answered, but every member has before")
+		assert.InDelta(t, 1e-3, got.scales[1].usage, 1e-9, "wh scale")
+	})
+
+	t.Run("group unit re-picked when the member that set it is fixed", func(t *testing.T) {
+		m := &meterModelInterceptor{
+			events: map[string][]event{
+				"a": {{usage: 1}},
+				"b": {{usage: 2}},
+			},
+			support: map[string]*meterpb.MeterReadingSupport{
+				"a": {UsageUnit: "m³"},
+				"b": {UsageUnit: "kWh"},
+			},
+		}
+		group, advance := newGroup(t, m, "a", "b")
+		ctx := t.Context()
+
+		_, err := get(ctx, group)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err), "Get err = %v", err)
+
+		setSupport(m, "a", &meterpb.MeterReadingSupport{UsageUnit: "kWh"})
+		advance()
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			desc, err := group.DescribeMeterReading(ctx, &meterpb.DescribeMeterReadingRequest{Name: "group"})
+			if assert.NoError(c, err) {
+				assert.Equal(c, "kWh", desc.UsageUnit)
+			}
+		}, 5*time.Second, 10*time.Millisecond)
+		got, err := get(ctx, group)
+		if assert.NoError(t, err) {
+			assert.InDelta(t, 3, got.Usage, 1e-4)
+		}
 	})
 }
 
@@ -865,7 +1006,7 @@ func TestGroup_PullMeterReadings_unitsResolveMidStream(t *testing.T) {
 			delete(m.describeErr, "late")
 			m.support = map[string]*meterpb.MeterReadingSupport{"late": {UsageUnit: tt.lateUnit}}
 			m.mtx.Unlock()
-			offset.Store(int64(planRetryInterval))
+			offset.Store(int64(planRefreshInterval))
 
 			timeout := time.After(5 * time.Second)
 			for {

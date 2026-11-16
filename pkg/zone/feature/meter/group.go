@@ -36,7 +36,7 @@ type Group struct {
 	readOnly         bool
 
 	planMu      sync.Mutex
-	plan        *unitPlan // nil until first resolved, replaced until plan.complete
+	plan        *unitPlan // nil until first resolved, then replaced by each refresh
 	planAt      time.Time // when plan was resolved
 	resolving   bool      // a background re-resolve of plan is running
 	warnedEmpty sync.Map  // member name -> struct{}, members we've warned declare no units
@@ -49,8 +49,8 @@ type Group struct {
 
 const (
 	describeMemberTimeout = 5 * time.Second
-	// planRetryInterval limits how often members are described again while some haven't answered.
-	planRetryInterval = time.Minute
+	// planRefreshInterval limits how often members are described again while the group is read.
+	planRefreshInterval = time.Minute
 )
 
 func (g *Group) DescribeMeterReading(ctx context.Context, _ *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
@@ -74,9 +74,9 @@ func (g *Group) DescribeMeterReading(ctx context.Context, _ *meterpb.DescribeMet
 }
 
 // unitPlan returns how to convert and combine member readings.
-// Once every member has described itself the plan is fixed for the life of the group.
-// Until then a partial plan is used, so a member that's down doesn't stop reads,
-// and members are described again in the background at most once every planRetryInterval.
+// Only the first call waits for members to describe themselves. After that members are described again in the
+// background at most once every planRefreshInterval, so a member that comes back, has its unit fixed or changes unit
+// is picked up without restarting the zone, and a member that's down doesn't stop reads.
 func (g *Group) unitPlan(ctx context.Context) *unitPlan {
 	g.planMu.Lock()
 	defer g.planMu.Unlock()
@@ -85,7 +85,7 @@ func (g *Group) unitPlan(ctx context.Context) *unitPlan {
 		g.setPlanLocked(g.resolveUnitPlan(ctx, nil))
 		return g.plan
 	}
-	if !g.plan.complete && !g.resolving && g.timeNow().Sub(g.planAt) >= planRetryInterval {
+	if !g.resolving && g.timeNow().Sub(g.planAt) >= planRefreshInterval {
 		// A member that's still down takes describeMemberTimeout to fail, reads shouldn't wait for it.
 		g.resolving = true
 		prev := g.plan
@@ -100,7 +100,11 @@ func (g *Group) unitPlan(ctx context.Context) *unitPlan {
 	return g.plan
 }
 
+// setPlanLocked replaces the group's plan with p.
+// Plans are refreshed every planRefreshInterval for as long as the group is read,
+// so it only logs what differs from the plan p replaces.
 func (g *Group) setPlanLocked(p *unitPlan) {
+	prev := g.plan
 	g.plan = p
 	g.planAt = g.timeNow()
 	for _, name := range p.noUnits {
@@ -109,12 +113,26 @@ func (g *Group) setPlanLocked(p *unitPlan) {
 				zap.String("member", name), zap.String("usageUnit", p.usageUnit), zap.String("producedUnit", p.producedUnit))
 		}
 	}
-	if p.err != nil {
+	switch {
+	case p.err != nil && (prev == nil || prev.err == nil || prev.err.Error() != p.err.Error()):
 		g.log().Warn("meter group can't combine its members", zap.Error(p.err))
+	case p.err == nil && prev != nil && prev.err != nil:
+		g.log().Info("meter group can combine its members again",
+			zap.String("usageUnit", p.usageUnit), zap.String("producedUnit", p.producedUnit))
+	}
+	if prev == nil {
+		return
+	}
+	// A unit that's never been reported changing isn't news, the group had no unit to read in.
+	if (prev.usageUnit != "" && prev.usageUnit != p.usageUnit) || (prev.producedUnit != "" && prev.producedUnit != p.producedUnit) {
+		g.log().Warn("meter group units changed, readings are now in the new units",
+			zap.String("usageUnit", p.usageUnit), zap.String("producedUnit", p.producedUnit),
+			zap.String("previousUsageUnit", prev.usageUnit), zap.String("previousProducedUnit", prev.producedUnit))
 	}
 }
 
 // resolveUnitPlan describes every member and works out a plan from the answers, keeping prev's units if it has any.
+// A member that answered for prev but doesn't now is taken to still be in the units it gave then.
 func (g *Group) resolveUnitPlan(ctx context.Context, prev *unitPlan) *unitPlan {
 	// The plan is shared by every caller, so one caller giving up shouldn't cut the describes short.
 	ctx = context.WithoutCancel(ctx)
@@ -129,6 +147,14 @@ func (g *Group) resolveUnitPlan(ctx context.Context, prev *unitPlan) *unitPlan {
 		})
 	}
 	wg.Wait()
+	if prev != nil {
+		// Without this a member timing out once would lose its scale and be summed unconverted until the next refresh.
+		for i := range errs {
+			if errs[i] != nil && prev.supports[i] != nil {
+				supports[i], errs[i] = prev.supports[i], nil
+			}
+		}
+	}
 	return newUnitPlan(g.names, supports, errs, prev)
 }
 
@@ -156,11 +182,11 @@ var identityScale = memberScale{usage: 1, produced: 1}
 // unitPlan is the group's units and how to convert each member's readings into them.
 type unitPlan struct {
 	usageUnit, producedUnit string
-	scales                  []memberScale // indexed like Group.names
-	complete                bool          // every member described itself
-	err                     error         // members' units can't be reconciled, reads fail with this
-	describeErr             error         // set only if no member described itself, the last error seen
-	noUnits                 []string      // members that answered but declare no units at all
+	scales                  []memberScale                  // indexed like Group.names
+	supports                []*meterpb.MeterReadingSupport // each member's answer, nil if it hasn't answered
+	err                     error                          // members' units can't be reconciled, reads fail with this
+	describeErr             error                          // set only if no member described itself, the last error seen
+	noUnits                 []string                       // members that answered but declare no units at all
 }
 
 // newUnitPlan works out the group's units from its members' descriptions.
@@ -169,12 +195,24 @@ type unitPlan struct {
 // Each quantity's unit is the first unit a member declares for it, spelled as that member spells it.
 // Once a unit has been reported, prev carries it forward: a member answering later is converted to it rather than
 // changing the group's unit, which would make readings jump by its scale with nothing telling clients.
+// The earlier unit gives way only when it is what stops the members combining, say because the member that set it
+// has since had its unit corrected; the group then starts again from its members' current units.
 // Members in another unit of the same family (Wh, kWh, MWh or W, kW) are scaled to match.
 // A member declaring no unit is assumed to already match, which is how every member was treated before units were
 // checked at all.
 // Any other difference can't be combined, and the plan's err says which members differ.
 func newUnitPlan(names []string, supports []*meterpb.MeterReadingSupport, errs []error, prev *unitPlan) *unitPlan {
-	p := &unitPlan{scales: make([]memberScale, len(names)), complete: true}
+	p := buildUnitPlan(names, supports, errs, prev)
+	if p.err != nil && prev != nil {
+		if fresh := buildUnitPlan(names, supports, errs, nil); fresh.err == nil {
+			return fresh
+		}
+	}
+	return p
+}
+
+func buildUnitPlan(names []string, supports []*meterpb.MeterReadingSupport, errs []error, prev *unitPlan) *unitPlan {
+	p := &unitPlan{scales: make([]memberScale, len(names)), supports: make([]*meterpb.MeterReadingSupport, len(names))}
 	if prev != nil {
 		p.usageUnit, p.producedUnit = prev.usageUnit, prev.producedUnit
 	}
@@ -182,11 +220,11 @@ func newUnitPlan(names []string, supports []*meterpb.MeterReadingSupport, errs [
 	for i := range names {
 		p.scales[i] = identityScale
 		if errs[i] != nil {
-			p.complete = false
 			p.describeErr = errs[i]
 			continue
 		}
 		answered++
+		p.supports[i] = supports[i]
 		if p.usageUnit == "" {
 			p.usageUnit = supports[i].GetUsageUnit()
 		}
@@ -427,12 +465,10 @@ func (g *Group) PullMeterReadings(request *meterpb.PullMeterReadingsRequest, ser
 				return ctx.Err()
 			case change := <-changes:
 				values[indexes[change.name]] = change
-				if !plan.complete {
-					// unitPlan is rate limited, so this is cheap to ask on every change
-					plan = g.unitPlan(ctx)
-					if plan.err != nil {
-						return plan.err
-					}
+				// unitPlan is rate limited, so this is cheap to ask on every change
+				plan = g.unitPlan(ctx)
+				if plan.err != nil {
+					return plan.err
 				}
 				r, err := mergeMeterReading(values, plan.scales)
 				if err != nil {
