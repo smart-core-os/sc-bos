@@ -122,6 +122,9 @@ A switch reads as on when any of its fittings is on, so one tap turns a partly-l
 moves the room to manual mode, as moving the slider does. Light groups share a name space with lighting presets, so a
 switch's group key must not match the name of a preset.
 
+A switch only appears once its group has reported a brightness, so a zone without that `lightGroups` key shows no
+switch for it. One UI config can therefore list a switch that only some rooms have, e.g. pendants.
+
 ### Theme
 
 ```json
