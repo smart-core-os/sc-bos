@@ -106,7 +106,7 @@ export function getBrightnessRequestFromObject(obj) {
 
   const dst = new GetBrightnessRequest();
   setProperties(dst, obj, 'name');
-  dst.setUpdateMask(fieldMaskFromObject(obj.readMask));
+  dst.setReadMask(fieldMaskFromObject(obj.readMask));
   return dst;
 }
 
