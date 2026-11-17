@@ -23,6 +23,14 @@ heartbeat, see [Sending on change](#sending-on-change)) as:
 Each cycle waits for the broker connection, up to the next scheduled send, before it fetches
 and publishes. A cycle that can't connect in that time is skipped, not caught up.
 
+Telemetry and discovery go no faster than `mqtt.maxPublishRate` messages a second, 50 by
+default, so a site whose nodes restart together offers Connect's broker at most that rate per
+node, however many devices they export. A cycle of N devices takes about N/rate seconds, and
+twice that on the first cycle and on discovery cycles, when each device sends its discovery as
+well. A cycle that runs past the next send logs a warning, with how long it waited for the broker
+and how long it spent publishing, and the next cycle starts as soon as it ends. If publishing is
+what takes the time, raise the rate or lengthen `sendInterval`.
+
 With `health.enabled` it also publishes the health checks this node evaluates, one complete
 set per resource on `tlm/bos/health` whenever the set changes, plus a periodic manifest of every
 set's hash on `tlm/bos/health-manifest`. Zones' checks are left out unless `health.includeZones`
@@ -388,6 +396,7 @@ Two mutually-exclusive credential modes:
     "useCloudCredential": true,
     "sendInterval": "*/15 * * * *",
     "metadataInterval": 100,
+    "maxPublishRate": 50,
     "qos": 1,
     "connectTimeout": "5s",
     "publishTimeout": "5s"
@@ -433,6 +442,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `mqtt.caCertPath` | no | system roots | CA to verify the broker |
 | `mqtt.sendInterval` | no | `*/15 * * * *` | Telemetry poll schedule |
 | `mqtt.metadataInterval` | no | `100` | Refresh the device list every N cycles (and cycle 0), and re-announce each device's discovery once every N cycles, spread by device across them; either is retried each cycle until it succeeds |
+| `mqtt.maxPublishRate` | no | `50` | Most telemetry and discovery messages a second from this node, see the top of this page. Health has its own limit, `health.maxPublishRate` |
 | `mqtt.qos` | no | `1` | MQTT QoS (0, 1, or 2) |
 | `mqtt.connectTimeout` | no | `5s` | Connect timeout |
 | `mqtt.publishTimeout` | no | `5s` | Per-publish timeout. Each cycle has already waited for the connection, up to the next send |

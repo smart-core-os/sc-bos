@@ -585,6 +585,12 @@ starts: on a restart, a reconfigure or a re-enrolment. In between, Connect shoul
 to arrive a few at a time. Each cycle waits for the broker connection, up to the next
 scheduled send, and is skipped if it can't connect by then.
 
+A node publishes telemetry and discovery no faster than `mqtt.maxPublishRate`, 50 a second by
+default, so a cycle of N devices takes about N/rate seconds (2N/rate when discovery goes too) and
+a site restarting together offers the broker at most that rate per node. The broker's limit is
+1,000 publishes a second per throughput unit across the namespace, shared by every node, and it
+throttles, rather than drops, what goes over it.
+
 Per `ingest.md`, matching the UDMI shape is not "zero-config" landing: UDMI is a **future
 built-in template** (a starting layout + mappings an operator adopts), and even then an
 operator must ratify the stream (bind `(bos, ref)` → entity) and author the point-name →
