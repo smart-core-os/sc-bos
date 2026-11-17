@@ -324,6 +324,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				a.Logger.Warn("broker not connected; skipping telemetry cycle", zap.Error(err))
 				continue
 			}
+			connected := a.now()
 
 			if refreshDue {
 				// Refresh into a fresh map and only swap on success, so a transient
@@ -346,13 +347,13 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 			started := a.now()
 			a.publishCycle(autoCtx, cfg, sink, limiter, allDevices, next)
 			// Past the next send, the loop starts the next cycle straight away, so the node publishes
-			// continuously at the limit and its readings fall behind the grid. The cause may be the rate
-			// or the wait for the broker before publishing, so both times are logged, not advice.
+			// continuously at the limit and its readings fall behind the grid. The cause may be the rate,
+			// the wait for the broker or the device-list refresh, so each time is logged, not advice.
 			if due, now := cfg.Mqtt.SendInterval.Next(t), a.now(); now.After(due) && autoCtx.Err() == nil {
 				a.Logger.Warn("telemetry cycle ran past the next send",
 					zap.Int("devices", len(allDevices)), zap.Float64("maxPublishRate", cfg.Mqtt.MaxPublishRate),
-					zap.Duration("waited", started.Sub(t)), zap.Duration("published", now.Sub(started)),
-					zap.Duration("overrun", now.Sub(due)))
+					zap.Duration("waited", connected.Sub(t)), zap.Duration("refreshed", started.Sub(connected)),
+					zap.Duration("published", now.Sub(started)), zap.Duration("overrun", now.Sub(due)))
 			}
 		}
 	})

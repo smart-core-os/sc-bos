@@ -28,8 +28,9 @@ default, so a site whose nodes restart together offers Connect's broker at most 
 node, however many devices they export. A cycle of N devices takes about N/rate seconds, and
 twice that on the first cycle and on discovery cycles, when each device sends its discovery as
 well. A cycle that runs past the next send logs a warning, with how long it waited for the broker
-and how long it spent publishing, and the next cycle starts as soon as it ends. If publishing is
-what takes the time, raise the rate or lengthen `sendInterval`.
+(`waited`), refreshed the device list (`refreshed`, zero on cycles that don't) and spent publishing
+(`published`), and the next cycle starts as soon as it ends. If publishing is what takes the time,
+raise the rate or lengthen `sendInterval`.
 
 With `health.enabled` it also publishes the health checks this node evaluates, one complete
 set per resource on `tlm/bos/health` whenever the set changes, plus a periodic manifest of every

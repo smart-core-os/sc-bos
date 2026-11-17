@@ -835,8 +835,9 @@ func noLimit() *rate.Limiter { return rate.NewLimiter(rate.Inf, 0) }
 // flakyDevicesClient fails the first failNext ListDevices calls.
 type flakyDevicesClient struct {
 	devicespb.DevicesApiClient
-	mu       sync.Mutex
-	failNext int
+	mu        sync.Mutex
+	failNext  int
+	delayNext time.Duration // how long the next ListDevices takes
 }
 
 func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.ListDevicesRequest, opts ...grpc.CallOption) (*devicespb.ListDevicesResponse, error) {
@@ -845,7 +846,10 @@ func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.List
 	if fail {
 		c.failNext--
 	}
+	delay := c.delayNext
+	c.delayNext = 0
 	c.mu.Unlock()
+	time.Sleep(delay)
 	if fail {
 		return nil, errors.New("devices unavailable")
 	}
@@ -1218,7 +1222,12 @@ func TestRunTelemetry_overrun(t *testing.T) {
 		h.runRate(2) // the first cycle's 200 messages take 100s, the next's 100 take 50s
 
 		h.sleepUntil(2*time.Minute + 41*time.Second)
-		assert.Equal(t, 1, warnings.FilterMessage(overrunMsg).Len(), "the first cycle overran the 2m send")
+		overruns := warnings.FilterMessage(overrunMsg).All()
+		require.Len(t, overruns, 1, "the first cycle overran the 2m send")
+		fields := overruns[0].ContextMap()
+		assert.Equal(t, time.Duration(0), fields["waited"], "connected throughout")
+		assert.Equal(t, time.Duration(0), fields["refreshed"], "the device list comes back at once")
+		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
 
 		h.sleepUntil(3*time.Minute + 31*time.Second)
 		for _, name := range names {
@@ -1227,6 +1236,35 @@ func TestRunTelemetry_overrun(t *testing.T) {
 		}
 		assert.Equal(t, 2, warnings.FilterMessage(overrunMsg).Len(), "the second, started at once, overran the 3m send")
 		assertRate(t, h.sink.all(), 2)
+	})
+}
+
+// TestRunTelemetry_overrunTimes is SCB-1546: the overrun warning tells the wait for the broker
+// apart from the device-list refresh and the publishing, so a slow refresh doesn't read as a slow
+// broker.
+func TestRunTelemetry_overrunTimes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		h.announceMeters(99)
+		warnings := h.observeWarnings()
+		h.sink.setConnected(false)
+		h.devices.mu.Lock()
+		h.devices.delayNext = 15 * time.Second
+		h.devices.mu.Unlock()
+		h.runRate(2)
+
+		h.sleepUntil(80 * time.Second) // 20s into the first cycle
+		h.sink.setConnected(true)
+
+		// 20s waiting, 15s refreshing and 100s publishing end the cycle at 3m15s.
+		h.sleepUntil(3*time.Minute + 16*time.Second)
+		overruns := warnings.FilterMessage(overrunMsg).All()
+		require.NotEmpty(t, overruns, "the first cycle overran the 2m send")
+		fields := overruns[0].ContextMap()
+		assert.Equal(t, 20*time.Second, fields["waited"], "the wait for the broker alone")
+		assert.Equal(t, 15*time.Second, fields["refreshed"], "the device-list refresh alone")
+		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
+		assert.InDelta(t, 75*time.Second, fields["overrun"], float64(time.Second), "past the 2m send")
 	})
 }
 
