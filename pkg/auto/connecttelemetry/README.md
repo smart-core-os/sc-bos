@@ -26,8 +26,8 @@ and publishes. A cycle that can't connect in that time is skipped, not caught up
 Telemetry and discovery go no faster than `mqtt.maxPublishRate` messages a second, 50 by
 default, so a site whose nodes restart together offers Connect's broker at most that rate per
 node, however many devices they export. A cycle of N devices takes about N/rate seconds, and
-twice that on the first cycle and on discovery cycles, when each device sends its discovery as
-well. A cycle that runs past the next send logs a warning, with how long it waited for the broker
+twice that on the first cycle after the node starts or is reconfigured, when each device sends its
+discovery as well. A cycle that runs past the next send logs a warning, with how long it waited for the broker
 (`waited`), refreshed the device list (`refreshed`, zero on cycles that don't) and spent publishing
 (`published`), and the next cycle starts as soon as it ends. If publishing is what takes the time,
 raise the rate or lengthen `sendInterval`.

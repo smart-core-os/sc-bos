@@ -1204,10 +1204,10 @@ func TestRunTelemetry_boundsPublishRate(t *testing.T) {
 
 		h.sleepUntil(2*time.Minute + 10*time.Second)
 		second := h.sink.all()[len(first):]
-		require.Len(t, second, 200, "readings only")
+		require.Len(t, second, 200+len(reannouncing(names, 100, 1)), "readings, and the discovery of devices on this slot")
 		assertRate(t, second, config.DefaultMqttMaxPublishRate)
-		assert.WithinDuration(t, h.start.Add(2*time.Minute+4*time.Second), second[len(second)-1].at, 100*time.Millisecond,
-			"200 messages at 50 a second")
+		assert.WithinDuration(t, h.start.Add(2*time.Minute+time.Duration(len(second))*time.Second/50), second[len(second)-1].at,
+			100*time.Millisecond, "the second cycle's messages at 50 a second")
 		assert.Zero(t, warnings.FilterMessage(overrunMsg).Len(), "both cycles ended well before the next send")
 	})
 }
@@ -1230,9 +1230,18 @@ func TestRunTelemetry_overrun(t *testing.T) {
 		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
 
 		h.sleepUntil(3*time.Minute + 31*time.Second)
+		// Only the devices whose slot is the second or third cycle send their discovery again.
+		again := reannouncing(names, 100, 1, 2)
 		for _, name := range names {
 			assert.GreaterOrEqual(t, len(h.sink.sent(pointsetTopic("tlm", name))), 2, "%s's readings", name)
-			assert.Len(t, h.sink.sent(discoveryTopic("tlm", name)), 1, "%s's discovery", name)
+			discovery := h.sink.sent(discoveryTopic("tlm", name))
+			require.NotEmpty(t, discovery, "%s's discovery", name)
+			assert.True(t, discovery[0].Before(h.start.Add(2*time.Minute+41*time.Second)), "%s's discovery on the first cycle", name)
+			if !slices.Contains(again, name) {
+				assert.Len(t, discovery, 1, "%s's discovery not again", name)
+			} else {
+				assert.LessOrEqual(t, len(discovery), 2, "%s's discovery, again on its slot", name)
+			}
 		}
 		assert.Equal(t, 2, warnings.FilterMessage(overrunMsg).Len(), "the second, started at once, overran the 3m send")
 		assertRate(t, h.sink.all(), 2)
@@ -1266,6 +1275,17 @@ func TestRunTelemetry_overrunTimes(t *testing.T) {
 		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
 		assert.InDelta(t, 75*time.Second, fields["overrun"], float64(time.Second), "past the 2m send")
 	})
+}
+
+// reannouncing returns which of names re-announce their discovery on any of cycles, of every n.
+func reannouncing(names []string, n int, cycles ...int) []string {
+	var res []string
+	for _, name := range names {
+		if slices.Contains(cycles, discoveryPhase(name, n)) {
+			res = append(res, name)
+		}
+	}
+	return res
 }
 
 // assertRate fails if any second of msgs holds more than perSec of them, plus the limiter's burst of one.
