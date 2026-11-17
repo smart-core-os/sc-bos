@@ -1,8 +1,11 @@
 package connecttelemetry
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"hash/fnv"
 	"time"
 
 	"go.uber.org/zap"
@@ -37,11 +40,15 @@ type device struct {
 	name       string // Smart Core device name; also the deviceRef in the topic (parked gap)
 	metaData   *metadatapb.Metadata
 	collectors []traitCollector
-	// discoveryOwed is set when the device is found and every metadataInterval cycles,
-	// and cleared once its discovery is published, so a failed send is retried next cycle.
+	// discoveryOwed is set when the device is found, when a refresh changes its discovery, and
+	// once every metadataInterval cycles on the cycle its phase picks, and cleared once its
+	// discovery is published, so a failed send is retried next cycle.
 	// Only one goroutine touches a device at a time: the loop between cycles, or its
 	// publishDevice during one.
 	discoveryOwed bool
+	// phase is the cycle, of every metadataInterval, on which discovery is owed again, see
+	// discoveryPhase.
+	phase int
 	// state is each collector's, by index. Its fetch and send state is carried across a device
 	// refresh by carryFetchState.
 	state []collectorState
@@ -170,6 +177,37 @@ func carryFetchState(from, to map[string]*device) {
 	}
 }
 
+// carryDiscovery decides which refreshed devices owe their discovery. A device that is new, whose
+// discovery the refresh changed, or whose old self still owed it (a failed send keeps retrying)
+// owes it; the rest wait for their phase. Owing every device on the refresh would send the whole
+// set on one cycle, which is what the phase is there to avoid. now stamps both sides of the
+// comparison, so only the content counts.
+func carryDiscovery(from, to map[string]*device, now time.Time) {
+	for name, dev := range to {
+		old, ok := from[name]
+		if !ok {
+			continue // owed since it was built
+		}
+		dev.discoveryOwed = old.discoveryOwed || !sameDiscovery(old, dev, now)
+	}
+}
+
+// sameDiscovery reports whether a and b would publish the same discovery at now.
+func sameDiscovery(a, b *device, now time.Time) bool {
+	aj, aErr := json.Marshal(a.buildDiscovery(now))
+	bj, bErr := json.Marshal(b.buildDiscovery(now))
+	return aErr == nil && bErr == nil && bytes.Equal(aj, bj)
+}
+
+// discoveryPhase returns which of every n cycles the device named name re-announces on.
+// It depends only on the name, so nodes started together, whose cycles line up, spread their
+// re-announcements across the n cycles instead of all sending on the same one.
+func discoveryPhase(name string, n int) int {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(name))
+	return int(h.Sum32() % uint32(n))
+}
+
 // childCollector is the collector of a child device sent as a point of its parent, see groupTarget.
 type childCollector struct {
 	traitCollector
@@ -272,8 +310,8 @@ type sensorCollector[T any] struct {
 	last    T
 	// declared are points discovery declares whatever the last reading holds. A Light
 	// sends nothing while its level is unknown, and a driver that reports confidence
-	// may start every lamp that way until it reports. Discovery goes only every
-	// metadataInterval sends, so without this such a lamp could go hours after a
+	// may start every lamp that way until it reports. A device's discovery goes once
+	// every metadataInterval sends, so without this such a lamp could go hours after a
 	// restart before Connect learns its unit.
 	declared []envPoint
 }

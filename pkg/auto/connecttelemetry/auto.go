@@ -276,6 +276,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 	refreshDue := true
 	t := a.now()
 	iterationCount := 0
+	metadataInterval := *cfg.Mqtt.MetadataInterval
 	grp.Go(func() error {
 		for {
 			next := cfg.Mqtt.SendInterval.Next(t)
@@ -286,13 +287,18 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				t = a.now()
 			}
 
-			// Owe every device its discovery on the first cycle and then every N
-			// cycles, and refresh the device list on the same cadence. Skipped cycles
-			// count, keeping the cadence on the schedule; whatever is owed goes on the
-			// next cycle that reaches the broker.
-			if iterationCount%*cfg.Mqtt.MetadataInterval == 0 {
+			// Every device owes its discovery when it is found, on the first cycle for
+			// most, and then once every N cycles, on the cycle its phase picks, so about
+			// 1/N of the devices re-announce each cycle rather than all of them on one.
+			// The device list is refreshed every N cycles, on the first of them. Skipped
+			// cycles count, keeping the cadence on the schedule; whatever is owed goes on
+			// the next cycle that reaches the broker.
+			cycle := iterationCount % metadataInterval
+			if cycle == 0 {
 				refreshDue = true
-				for _, dev := range allDevices {
+			}
+			for _, dev := range allDevices {
+				if dev.phase == cycle {
 					dev.discoveryOwed = true
 				}
 			}
@@ -321,6 +327,10 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 					a.Logger.Error("error refreshing device list; retaining previous set", zap.Error(err))
 				} else {
 					carryFetchState(allDevices, refreshed)
+					carryDiscovery(allDevices, refreshed, t)
+					for _, dev := range refreshed {
+						dev.phase = discoveryPhase(dev.name, metadataInterval)
+					}
 					allDevices = refreshed
 					refreshDue = false
 				}

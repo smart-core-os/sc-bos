@@ -11,8 +11,14 @@ heartbeat, see [Sending on change](#sending-on-change)) as:
 - **Telemetry** — a UDMI pointset (`{timestamp, version, points{<name>{present_value}}}`).
 - **Discovery** — a UDMI device-metadata message (`{system{name, description, tags,
   location}, pointset{points{<name>{units, writable, ref}}}}`), on the first cycle that
-  reaches the broker and then every `metadataInterval` cycles. A discovery that fails to
-  send is retried each cycle until it goes.
+  reaches the broker and then once every `metadataInterval` cycles. The repeats are spread by
+  device across those cycles, on a slot picked from the device name, so about
+  1/`metadataInterval` of a node's devices re-announce each cycle, and nodes started together
+  don't all re-announce at once. A device found when the device list is refreshed announces on
+  that cycle, as does one whose metadata, units or traits the refresh changes. A change that
+  comes from a reading instead, such as a new disk or a sensor that starts reporting a point,
+  goes on the device's own slot, within `metadataInterval` cycles. A discovery that fails to send is
+  retried each cycle until it goes.
 
 Each cycle waits for the broker connection, up to the next scheduled send, before it fetches
 and publishes. A cycle that can't connect in that time is skipped, not caught up.
@@ -426,7 +432,7 @@ For the file-path dev mode, drop `useCloudCredential` and supply certs instead:
 | `mqtt.clientCertPath` / `mqtt.clientKeyPath` | file mode | — | Client cert + key for mTLS |
 | `mqtt.caCertPath` | no | system roots | CA to verify the broker |
 | `mqtt.sendInterval` | no | `*/15 * * * *` | Telemetry poll schedule |
-| `mqtt.metadataInterval` | no | `100` | Publish discovery, and refresh the device list, every N cycles (and cycle 0); either is retried each cycle until it succeeds |
+| `mqtt.metadataInterval` | no | `100` | Refresh the device list every N cycles (and cycle 0), and re-announce each device's discovery once every N cycles, spread by device across them; either is retried each cycle until it succeeds |
 | `mqtt.qos` | no | `1` | MQTT QoS (0, 1, or 2) |
 | `mqtt.connectTimeout` | no | `5s` | Connect timeout |
 | `mqtt.publishTimeout` | no | `5s` | Per-publish timeout. Each cycle has already waited for the connection, up to the next send |
