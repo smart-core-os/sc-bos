@@ -51,6 +51,14 @@
           <span class="text-h5 mr-1">{{ `${brightness}%` }}</span>
         </template>
       </v-slider>
+      <light-switch-row
+          v-for="s in switches"
+          :key="`${name}/${s.group}`"
+          class="mt-4"
+          :name="`${name}/${s.group}`"
+          :title="s.title"
+          :disabled="blockActions"
+          @change="autoMode(false)"/>
     </v-card-text>
     <v-progress-linear :active="updateValue.loading" color="primary" indeterminate/>
   </v-card>
@@ -60,6 +68,7 @@
 import {closeResource, newActionTracker, newResourceValue} from '@/api/resource';
 import {describeBrightness, pullBrightness, updateBrightness} from '@/api/sc/traits/light';
 import {pullModeValues, updateModeValues} from '@/api/sc/traits/mode';
+import LightSwitchRow from '@/routes/components/LightSwitchRow.vue';
 import {useRoundTrip} from '@/routes/components/useRoundTrip';
 import debounce from 'debounce';
 import {computed, onMounted, onUnmounted, reactive, ref, toRef, watch} from 'vue';
@@ -70,6 +79,11 @@ const props = defineProps({
   name: {
     type: String,
     default: ''
+  },
+  // on/off switches for light groups announced at {name}/{group}, e.g. non-dimmable fittings
+  switches: {
+    type: Array, // {group: string, title?: string}[]
+    default: () => []
   },
   manualTimeout: {
     type: Number,
