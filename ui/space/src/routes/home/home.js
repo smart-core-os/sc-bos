@@ -35,8 +35,8 @@ export function useHomeConfig(zoneIdOverride) {
     },
     'lighting': {
       is: LightCard,
-      props() {
-        return {name: zoneId.value};
+      props(cfg) {
+        return {name: zoneId.value, switches: cfg.switches ?? []};
       }
     },
     'temperature': {
@@ -58,7 +58,7 @@ export function useHomeConfig(zoneIdOverride) {
           return {
             is: w.is,
             key,
-            props: w.props()
+            props: w.props(cfg)
           };
         })
         .filter(Boolean);

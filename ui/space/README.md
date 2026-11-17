@@ -91,11 +91,36 @@ The `config.pages.home.widgets` array controls which cards appear on the home sc
 
 | Name | Description |
 |---|---|
-| `lighting` | Brightness slider with auto/manual mode toggle |
+| `lighting` | Brightness slider with auto/manual mode toggle, plus optional on/off switches (see below) |
 | `temperature` | Temperature set-point slider with auto/manual HVAC toggle |
 | `air-quality` | Air quality score indicator |
 
 Widgets are shown in the order they appear in the array. If `widgets` is omitted, no controls are shown.
+
+#### Mixed dimmable and switched lights
+
+In a room with both dimmable and non-dimmable fittings, the lighting widget can show an on/off switch for each set of
+non-dimmable fittings below the brightness slider. Split the fittings in the zone's lighting config: `lights` holds the
+dimmable fittings, which the slider and presets control, and each `lightGroups` entry holds fittings for one switch.
+
+```json
+{
+  "name": "zones/rooms/copper",
+  "lights": ["devices/DIM-01", "devices/DIM-02"],
+  "lightGroups": {"feature": ["devices/SW-01"], "whiteboard": ["devices/SW-02"]}
+}
+```
+
+Then list the groups in the widget config. `group` is the `lightGroups` key and `title` is the label shown beside the
+switch:
+
+```json
+{"name": "lighting", "switches": [{"group": "feature", "title": "Feature lights"}, {"group": "whiteboard", "title": "Whiteboard"}]}
+```
+
+A switch reads as on when any of its fittings is on, so one tap turns a partly-lit group fully off. Flipping a switch
+moves the room to manual mode, as moving the slider does. Light groups share a name space with lighting presets, so a
+switch's group key must not match the name of a preset.
 
 ### Theme
 
