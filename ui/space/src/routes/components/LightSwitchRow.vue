@@ -1,12 +1,13 @@
 <template>
-  <div>
+  <!-- Hidden until the group sends its brightness, so a zone without this group shows no switch. -->
+  <div v-if="groupValue.value">
     <div class="d-flex align-center">
       <v-icon size="35">mdi-lightbulb-outline</v-icon>
       <span class="text-h6 flex-grow-1 ml-4">{{ title || name }}</span>
       <v-switch
           :aria-label="title || name"
           color="accent"
-          :disabled="!groupValue.value || disabled"
+          :disabled="disabled"
           hide-details
           inset
           :model-value="isOn"
