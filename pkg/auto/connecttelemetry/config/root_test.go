@@ -30,6 +30,22 @@ func TestParseConfig(t *testing.T) {
 		assert.Equal(t, "dbo", root.PointNaming, "pointNaming defaults to dbo")
 		assert.False(t, root.HealthEnabled(), "health defaults to off")
 		assert.False(t, root.IncludeZones, "zones are skipped by default")
+		assert.Equal(t, float64(DefaultMqttMaxPublishRate), root.Mqtt.MaxPublishRate)
+	})
+
+	t.Run("mqtt.maxPublishRate", func(t *testing.T) {
+		root, err := ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true, "maxPublishRate": 200}
+		}`))
+		require.NoError(t, err)
+		assert.Equal(t, 200.0, root.Mqtt.MaxPublishRate, "no upper bound, unlike health's")
+
+		_, err = ParseConfig([]byte(`{
+			"traits": ["smartcore.bos.Meter"],
+			"mqtt": {"host": "tls://broker:8883", "useCloudCredential": true, "maxPublishRate": -1}
+		}`))
+		assert.ErrorContains(t, err, "mqtt.maxPublishRate must be positive")
 	})
 
 	t.Run("includeZones", func(t *testing.T) {

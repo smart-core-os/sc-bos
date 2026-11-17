@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap/zaptest"
 	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -219,7 +220,7 @@ func TestPublishDevice_sendOnChange(t *testing.T) {
 	publish := func(t *testing.T, sink *pointsetSink, dev *device, n int) udmi.PointsEvent {
 		t.Helper()
 		before := len(sink.sent)
-		a.publishDevice(context.Background(), cfg, sink, dev, cycle(n))
+		a.publishDevice(context.Background(), cfg, sink, noLimit(), dev, cycle(n))
 		if len(sink.sent) == before {
 			return nil
 		}
@@ -806,24 +807,37 @@ func (f *fakeTelemetrySink) setFailNextDiscovery(n int) {
 	f.failNextDiscovery = n
 }
 
-// sent returns when each message on topic was published.
+// sent returns when each message on topic was published, to the second: the rate limit spaces
+// a cycle's messages a few ms apart.
 func (f *fakeTelemetrySink) sent(topic string) []time.Time {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	var res []time.Time
 	for _, m := range f.msgs {
 		if m.topic == topic {
-			res = append(res, m.at)
+			// Add rather than Truncate, which would drop the monotonic reading the expected times carry.
+			res = append(res, m.at.Add(-time.Duration(m.at.Nanosecond())))
 		}
 	}
 	return res
 }
 
+// all returns every message published, in the order they were.
+func (f *fakeTelemetrySink) all() []telemetryMsg {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.msgs)
+}
+
+// noLimit is a limiter that never waits, for publishing outside runTelemetry.
+func noLimit() *rate.Limiter { return rate.NewLimiter(rate.Inf, 0) }
+
 // flakyDevicesClient fails the first failNext ListDevices calls.
 type flakyDevicesClient struct {
 	devicespb.DevicesApiClient
-	mu       sync.Mutex
-	failNext int
+	mu        sync.Mutex
+	failNext  int
+	delayNext time.Duration // how long the next ListDevices takes
 }
 
 func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.ListDevicesRequest, opts ...grpc.CallOption) (*devicespb.ListDevicesResponse, error) {
@@ -832,7 +846,10 @@ func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.List
 	if fail {
 		c.failNext--
 	}
+	delay := c.delayNext
+	c.delayNext = 0
 	c.mu.Unlock()
+	time.Sleep(delay)
 	if fail {
 		return nil, errors.New("devices unavailable")
 	}
@@ -841,6 +858,7 @@ func (c *flakyDevicesClient) ListDevices(ctx context.Context, in *devicespb.List
 
 type telemetryHarness struct {
 	t         *testing.T
+	root      *node.Node
 	sink      *fakeTelemetrySink
 	devices   *flakyDevicesClient
 	a         *AutoImpl
@@ -852,12 +870,7 @@ type telemetryHarness struct {
 // It announces one meter, "foo", and one PIR, "pir", which only runOnChange exports.
 func newTelemetryHarness(t *testing.T) *telemetryHarness {
 	root := node.New("meter")
-	meterModel := meterpb.NewModel(resource.WithInitialValue(&meterpb.MeterReading{Usage: 123.45}))
-	root.Announce("foo",
-		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
-		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{UsageUnit: "kWh"}})),
-		node.HasTrait(meterpb.TraitName),
-	)
+	announceMeter(root, "foo")
 	occupancyModel := occupancysensorpb.NewModel(resource.WithInitialValue(&occupancysensorpb.Occupancy{State: occupancysensorpb.Occupancy_UNOCCUPIED}))
 	root.Announce("pir",
 		node.HasServer(occupancysensorpb.RegisterOccupancySensorApiServer, occupancysensorpb.OccupancySensorApiServer(occupancysensorpb.NewModelServer(occupancyModel))),
@@ -872,8 +885,46 @@ func newTelemetryHarness(t *testing.T) *telemetryHarness {
 		Devices: devicesClient,
 	}}
 	a.initialiseClients(root)
-	return &telemetryHarness{t: t, sink: newFakeTelemetrySink(), devices: devicesClient, a: a, occupancy: occupancyModel}
+	return &telemetryHarness{t: t, root: root, sink: newFakeTelemetrySink(), devices: devicesClient, a: a, occupancy: occupancyModel}
 }
+
+func announceMeter(root *node.Node, name string) {
+	meterModel := meterpb.NewModel(resource.WithInitialValue(&meterpb.MeterReading{Usage: 123.45}))
+	root.Announce(name,
+		node.HasServer(meterpb.RegisterMeterApiServer, meterpb.MeterApiServer(meterpb.NewModelServer(meterModel))),
+		node.HasServer(meterpb.RegisterMeterInfoServer, meterpb.MeterInfoServer(&meterpb.InfoServer{MeterReading: &meterpb.MeterReadingSupport{UsageUnit: "kWh"}})),
+		node.HasTrait(meterpb.TraitName),
+	)
+}
+
+// announceMeters announces n more meters, so the loop exports n+1 with "foo", and returns their names.
+func (h *telemetryHarness) announceMeters(n int) []string {
+	names := []string{"foo"}
+	for i := range n {
+		name := fmt.Sprintf("m%03d", i)
+		announceMeter(h.root, name)
+		names = append(names, name)
+	}
+	return names
+}
+
+// runRate starts the telemetry loop for the meters, sending every minute at no more than ratePerSec.
+func (h *telemetryHarness) runRate(ratePerSec float64) {
+	h.runConfig(fmt.Sprintf(`{
+		"traits": [%q],
+		"mqtt": {"host": "tls://broker:8883", "clientCertPath": "c", "clientKeyPath": "k",
+			"sendInterval": "* * * * *", "maxPublishRate": %v}
+	}`, meterpb.TraitName, ratePerSec))
+}
+
+// observeWarnings replaces the loop's logger with one recording warnings and above.
+func (h *telemetryHarness) observeWarnings() *observer.ObservedLogs {
+	core, logs := observer.New(zap.WarnLevel)
+	h.a.Logger = zap.New(core)
+	return logs
+}
+
+const overrunMsg = "telemetry cycle ran past the next send"
 
 // run starts the telemetry loop for the meter, sending every minute and discovery every
 // metadataInterval sends.
@@ -946,6 +997,7 @@ func TestRunTelemetry_waitsForConnection(t *testing.T) {
 		assert.Empty(t, h.discovery(), "nothing sent while disconnected")
 
 		h.sink.setConnected(true)
+		time.Sleep(time.Second) // the cycle's sends are spaced by the rate limit
 		synctest.Wait()
 		connected := h.start.Add(90 * time.Second)
 		assert.Equal(t, []time.Time{connected}, h.telemetry(), "the first cycle's telemetry, once connected")
@@ -969,6 +1021,7 @@ func TestRunTelemetry_skipsCycleWhenConnectionTakesTooLong(t *testing.T) {
 		assert.Empty(t, h.telemetry(), "nothing sent while disconnected")
 
 		h.sink.setConnected(true)
+		time.Sleep(time.Second)
 		synctest.Wait()
 		connected := h.start.Add(150 * time.Second)
 		assert.Equal(t, []time.Time{connected}, h.telemetry(), "one cycle sent, the skipped one not caught up")
@@ -1127,6 +1180,127 @@ func TestRunTelemetry_sendOnChangeChange(t *testing.T) {
 		assert.Equal(t, h.minutes(1, 3, 8, 13), h.telemetryOf("pir"))
 		assert.Len(t, h.telemetry(), 13, "the meter every cycle")
 	})
+}
+
+// TestRunTelemetry_boundsPublishRate is SCB-1546: the first cycle after a start sends every
+// device's reading and discovery, but no faster than mqtt.maxPublishRate, rather than all at once.
+func TestRunTelemetry_boundsPublishRate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		names := h.announceMeters(199)
+		warnings := h.observeWarnings()
+		h.run(100) // at the default rate, 50 a second
+
+		h.sleepUntil(time.Minute + 10*time.Second)
+		for _, name := range names {
+			assert.Len(t, h.sink.sent(pointsetTopic("tlm", name)), 1, "%s's reading", name)
+			assert.Len(t, h.sink.sent(discoveryTopic("tlm", name)), 1, "%s's discovery", name)
+		}
+		first := h.sink.all()
+		require.Len(t, first, 400)
+		assertRate(t, first, config.DefaultMqttMaxPublishRate)
+		assert.WithinDuration(t, h.start.Add(time.Minute+8*time.Second), first[len(first)-1].at, 100*time.Millisecond,
+			"400 messages at 50 a second")
+
+		h.sleepUntil(2*time.Minute + 10*time.Second)
+		second := h.sink.all()[len(first):]
+		require.Len(t, second, 200+len(reannouncing(names, 100, 1)), "readings, and the discovery of devices on this slot")
+		assertRate(t, second, config.DefaultMqttMaxPublishRate)
+		assert.WithinDuration(t, h.start.Add(2*time.Minute+time.Duration(len(second))*time.Second/50), second[len(second)-1].at,
+			100*time.Millisecond, "the second cycle's messages at 50 a second")
+		assert.Zero(t, warnings.FilterMessage(overrunMsg).Len(), "both cycles ended well before the next send")
+	})
+}
+
+// TestRunTelemetry_overrun is SCB-1546: a cycle the rate limit stretches past the next send is
+// warned about, and the next cycle starts as soon as it ends, still sending every device.
+func TestRunTelemetry_overrun(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		names := h.announceMeters(99)
+		warnings := h.observeWarnings()
+		h.runRate(2) // the first cycle's 200 messages take 100s, the next's 100 take 50s
+
+		h.sleepUntil(2*time.Minute + 41*time.Second)
+		overruns := warnings.FilterMessage(overrunMsg).All()
+		require.Len(t, overruns, 1, "the first cycle overran the 2m send")
+		fields := overruns[0].ContextMap()
+		assert.Equal(t, time.Duration(0), fields["waited"], "connected throughout")
+		assert.Equal(t, time.Duration(0), fields["refreshed"], "the device list comes back at once")
+		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
+
+		h.sleepUntil(3*time.Minute + 31*time.Second)
+		// Only the devices whose slot is the second or third cycle send their discovery again.
+		again := reannouncing(names, 100, 1, 2)
+		for _, name := range names {
+			assert.GreaterOrEqual(t, len(h.sink.sent(pointsetTopic("tlm", name))), 2, "%s's readings", name)
+			discovery := h.sink.sent(discoveryTopic("tlm", name))
+			require.NotEmpty(t, discovery, "%s's discovery", name)
+			assert.True(t, discovery[0].Before(h.start.Add(2*time.Minute+41*time.Second)), "%s's discovery on the first cycle", name)
+			if !slices.Contains(again, name) {
+				assert.Len(t, discovery, 1, "%s's discovery not again", name)
+			} else {
+				assert.LessOrEqual(t, len(discovery), 2, "%s's discovery, again on its slot", name)
+			}
+		}
+		assert.Equal(t, 2, warnings.FilterMessage(overrunMsg).Len(), "the second, started at once, overran the 3m send")
+		assertRate(t, h.sink.all(), 2)
+	})
+}
+
+// TestRunTelemetry_overrunTimes is SCB-1546: the overrun warning tells the wait for the broker
+// apart from the device-list refresh and the publishing, so a slow refresh doesn't read as a slow
+// broker.
+func TestRunTelemetry_overrunTimes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		h := newTelemetryHarness(t)
+		h.announceMeters(99)
+		warnings := h.observeWarnings()
+		h.sink.setConnected(false)
+		h.devices.mu.Lock()
+		h.devices.delayNext = 15 * time.Second
+		h.devices.mu.Unlock()
+		h.runRate(2)
+
+		h.sleepUntil(80 * time.Second) // 20s into the first cycle
+		h.sink.setConnected(true)
+
+		// 20s waiting, 15s refreshing and 100s publishing end the cycle at 3m15s.
+		h.sleepUntil(3*time.Minute + 16*time.Second)
+		overruns := warnings.FilterMessage(overrunMsg).All()
+		require.NotEmpty(t, overruns, "the first cycle overran the 2m send")
+		fields := overruns[0].ContextMap()
+		assert.Equal(t, 20*time.Second, fields["waited"], "the wait for the broker alone")
+		assert.Equal(t, 15*time.Second, fields["refreshed"], "the device-list refresh alone")
+		assert.InDelta(t, 100*time.Second, fields["published"], float64(time.Second), "200 messages at 2 a second")
+		assert.InDelta(t, 75*time.Second, fields["overrun"], float64(time.Second), "past the 2m send")
+	})
+}
+
+// reannouncing returns which of names re-announce their discovery on any of cycles, of every n.
+func reannouncing(names []string, n int, cycles ...int) []string {
+	var res []string
+	for _, name := range names {
+		if slices.Contains(cycles, discoveryPhase(name, n)) {
+			res = append(res, name)
+		}
+	}
+	return res
+}
+
+// assertRate fails if any second of msgs holds more than perSec of them, plus the limiter's burst of one.
+func assertRate(t *testing.T, msgs []telemetryMsg, perSec int) {
+	t.Helper()
+	j := 0
+	for i := range msgs {
+		for j < len(msgs) && msgs[j].at.Before(msgs[i].at.Add(time.Second)) {
+			j++
+		}
+		if n := j - i; n > perSec+1 {
+			t.Errorf("%d messages in the second from %v, want at most %d", n, msgs[i].at, perSec+1)
+			return
+		}
+	}
 }
 
 // fakeCredential is a connect.Credential whose state the test sets.
@@ -1478,7 +1652,7 @@ func TestGetAllTraitImplementorsLight(t *testing.T) {
 		t.Helper()
 		before := len(sink.sent)
 		now = cycle(n)
-		a.publishDevice(context.Background(), cfg, sink, dev, cycle(n))
+		a.publishDevice(context.Background(), cfg, sink, noLimit(), dev, cycle(n))
 		if len(sink.sent) == before {
 			return nil
 		}

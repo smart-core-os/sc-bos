@@ -34,7 +34,16 @@ type Mqtt struct {
 	PublishTimeout   *jsontypes.Duration `json:"publishTimeout,omitempty,omitzero"`   // timeout for publishing to MQTT, defaults to 5s
 	SendInterval     *jsontypes.Schedule `json:"sendInterval,omitempty,omitzero"`     // time between sends, defaults to 15m
 	MetadataInterval *int                `json:"metadataInterval,omitempty,omitzero"` // how often to publish discovery (every N data sends), defaults to 100
+
+	// MaxPublishRate is the most telemetry and discovery messages published per second by this node,
+	// sustained, so a site whose nodes restart together offers the broker at most this per node,
+	// however many devices they export. Defaults to DefaultMqttMaxPublishRate. Health has its own
+	// limit, Health.MaxPublishRate, on the same MQTT session.
+	MaxPublishRate float64 `json:"maxPublishRate,omitempty"`
 }
+
+// DefaultMqttMaxPublishRate is Mqtt.MaxPublishRate when it isn't set.
+const DefaultMqttMaxPublishRate = 50
 
 // Bounds on Health, from Connect's intake.
 const (
@@ -200,6 +209,14 @@ func ParseConfig(data []byte) (Root, error) {
 		// A non-positive interval would divide-by-zero (iterationCount % N) in the
 		// publish loop, taking the controller down; reject it here.
 		return Root{}, fmt.Errorf("config parse failed, mqtt.metadataInterval must be a positive integer")
+	}
+	// No upper bound, unlike health's: Event Grid's limit that binds is the namespace's throughput,
+	// shared by every node on a site, and a dev broker has none to speak of, so only the site knows
+	// what its nodes may use.
+	if root.Mqtt.MaxPublishRate == 0 {
+		root.Mqtt.MaxPublishRate = DefaultMqttMaxPublishRate
+	} else if root.Mqtt.MaxPublishRate < 0 {
+		return Root{}, fmt.Errorf("config parse failed, mqtt.maxPublishRate must be positive")
 	}
 	if root.FetchTimeout == nil || root.FetchTimeout.Duration == 0 {
 		root.FetchTimeout = &jsontypes.Duration{Duration: 5 * time.Second}

@@ -15,6 +15,9 @@
 // collectorState.due. Its device's pointsets are then partial, or absent, in between. Meters
 // can't be sent on change: they stay on the send grid.
 //
+// Telemetry and discovery go no faster than mqtt.maxPublishRate, so a cycle's sends are spread over
+// about N/rate seconds rather than offered to the broker at once, see publishJSON.
+//
 // When health is enabled it also publishes the health checks this node evaluates,
 // over the same connection.
 //
@@ -32,6 +35,7 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -277,6 +281,9 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 	t := a.now()
 	iterationCount := 0
 	metadataInterval := *cfg.Mqtt.MetadataInterval
+	// Burst 1, as health's, so nothing goes faster than the rate even briefly. One per run, so a
+	// reconfigure or new enrolment starts afresh.
+	limiter := rate.NewLimiter(rate.Limit(cfg.Mqtt.MaxPublishRate), 1)
 	grp.Go(func() error {
 		for {
 			next := cfg.Mqtt.SendInterval.Next(t)
@@ -317,6 +324,7 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				a.Logger.Warn("broker not connected; skipping telemetry cycle", zap.Error(err))
 				continue
 			}
+			connected := a.now()
 
 			if refreshDue {
 				// Refresh into a fresh map and only swap on success, so a transient
@@ -336,7 +344,17 @@ func (a *AutoImpl) runTelemetry(autoCtx context.Context, grp *errgroup.Group, cf
 				}
 			}
 
-			a.publishCycle(autoCtx, cfg, sink, allDevices, next)
+			started := a.now()
+			a.publishCycle(autoCtx, cfg, sink, limiter, allDevices, next)
+			// Past the next send, the loop starts the next cycle straight away, so the node publishes
+			// continuously at the limit and its readings fall behind the grid. The cause may be the rate,
+			// the wait for the broker or the device-list refresh, so each time is logged, not advice.
+			if due, now := cfg.Mqtt.SendInterval.Next(t), a.now(); now.After(due) && autoCtx.Err() == nil {
+				a.Logger.Warn("telemetry cycle ran past the next send",
+					zap.Int("devices", len(allDevices)), zap.Float64("maxPublishRate", cfg.Mqtt.MaxPublishRate),
+					zap.Duration("waited", connected.Sub(t)), zap.Duration("refreshed", started.Sub(connected)),
+					zap.Duration("published", now.Sub(started)), zap.Duration("overrun", now.Sub(due)))
+			}
 		}
 	})
 }
@@ -380,13 +398,13 @@ func (a *AutoImpl) runHealth(autoCtx context.Context, grp *errgroup.Group, cfg c
 
 // publishCycle publishes telemetry, and any discovery owed, for every device,
 // bounding concurrency to avoid overwhelming slow devices. cycle is the time the cycle was
-// scheduled for, see publishDevice.
-func (a *AutoImpl) publishCycle(ctx context.Context, cfg config.Root, sink telemetrySink, devices map[string]*device, cycle time.Time) {
+// scheduled for, see publishDevice. limiter paces the publishes, see publishJSON.
+func (a *AutoImpl) publishCycle(ctx context.Context, cfg config.Root, sink telemetrySink, limiter *rate.Limiter, devices map[string]*device, cycle time.Time) {
 	var wg errgroup.Group
 	wg.SetLimit(maxConcurrentFetches)
 	for _, dev := range devices {
 		wg.Go(func() error {
-			a.publishDevice(ctx, cfg, sink, dev, cycle)
+			a.publishDevice(ctx, cfg, sink, limiter, dev, cycle)
 			return nil
 		})
 	}
@@ -398,7 +416,7 @@ func (a *AutoImpl) publishCycle(ctx context.Context, cfg config.Root, sink telem
 // cycle is the time the cycle was scheduled for, which an on-change collector's heartbeat is
 // measured between. The time a cycle actually runs lags its schedule by a varying amount, so
 // measured by that a 1h heartbeat could fall just short on the hour and slip to the next cycle.
-func (a *AutoImpl) publishDevice(ctx context.Context, cfg config.Root, sink telemetrySink, dev *device, cycle time.Time) {
+func (a *AutoImpl) publishDevice(ctx context.Context, cfg config.Root, sink telemetrySink, limiter *rate.Limiter, dev *device, cycle time.Time) {
 	// Bound the trait fetches so a slow device can't stall the cycle.
 	fetchCtx, cancel := context.WithTimeout(ctx, cfg.FetchTimeout.Duration)
 	defer cancel()
@@ -407,24 +425,32 @@ func (a *AutoImpl) publishDevice(ctx context.Context, cfg config.Root, sink tele
 
 	if ev, sent, ok := dev.buildTelemetry(fetchCtx, now, cycle, a.Logger); ok {
 		// Unrecorded, a failed send's points go again next cycle.
-		if a.publishJSON(ctx, sink, pointsetTopic(cfg.Mqtt.TopicPrefix, dev.name), ev, "telemetry", dev.name) {
+		if a.publishJSON(ctx, sink, limiter, pointsetTopic(cfg.Mqtt.TopicPrefix, dev.name), ev, "telemetry", dev.name) {
 			dev.recordSent(sent, cycle)
 		}
 	}
 
 	if dev.discoveryOwed {
-		if a.publishJSON(ctx, sink, discoveryTopic(cfg.Mqtt.TopicPrefix, dev.name), dev.buildDiscovery(now), "discovery", dev.name) {
+		if a.publishJSON(ctx, sink, limiter, discoveryTopic(cfg.Mqtt.TopicPrefix, dev.name), dev.buildDiscovery(now), "discovery", dev.name) {
 			dev.discoveryOwed = false
 		}
 	}
 }
 
-// publishJSON reports whether payload was published.
-func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, topic string, payload any, kind, deviceName string) bool {
+// publishJSON reports whether payload was published. It waits for limiter first.
+//
+// The wait is here rather than around the fetch so an on-change device with nothing due spends no
+// token. A waiting device holds its place in publishCycle's concurrency limit, so fetches are paced
+// by the limiter too, and a reading waits at most about maxConcurrentFetches/rate before it goes,
+// carrying the time it was read.
+func (a *AutoImpl) publishJSON(ctx context.Context, sink telemetrySink, limiter *rate.Limiter, topic string, payload any, kind, deviceName string) bool {
 	bytes, err := json.Marshal(payload)
 	if err != nil {
 		a.Logger.Error("failed to marshal "+kind, zap.String("device", deviceName), zap.Error(err))
 		return false
+	}
+	if err := limiter.Wait(ctx); err != nil {
+		return false // ctx is done, so the run is stopping
 	}
 	if err := sink.publish(ctx, topic, bytes); err != nil {
 		a.Logger.Warn("failed to publish "+kind, zap.String("device", deviceName), zap.String("topic", topic), zap.Error(err))
