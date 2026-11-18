@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/csv"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,6 +30,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/meterpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/occupancysensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/typespb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
@@ -399,6 +401,177 @@ func TestAirQualityToRow_voc(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTransportToRow(t *testing.T) {
+	support := &transportpb.TransportSupport{LoadUnit: "% of max load", SpeedUnit: "mm/s"}
+	// Every column is written, blank when unset (see transportToRow).
+	row := func(set map[string]string) map[string]string {
+		vals := make(map[string]string, len(transportHeaders))
+		for _, h := range transportHeaders {
+			vals[h] = ""
+		}
+		maps.Copy(vals, set)
+		return vals
+	}
+	tests := []struct {
+		name    string
+		in      *transportpb.Transport
+		support *transportpb.TransportSupport
+		want    map[string]string
+	}{
+		{
+			name: "lift",
+			in: &transportpb.Transport{
+				ActualPosition:  &transportpb.Transport_Location{Floor: "12"},
+				MovingDirection: transportpb.Transport_UP,
+				Doors: []*transportpb.Transport_Door{
+					{Status: transportpb.Transport_Door_OPEN},
+					{Status: transportpb.Transport_Door_DOOR_STATUS_UNSPECIFIED},
+					{Status: transportpb.Transport_Door_LIMITED_OPENED},
+				},
+				Load:          new(float32(35)),
+				Speed:         new(float32(2500)),
+				OperatingMode: transportpb.Transport_NORMAL,
+			},
+			support: support,
+			want: row(map[string]string{
+				"transport.floor":         "12",
+				"transport.direction":     "UP",
+				"transport.doors":         "OPEN;DOOR_STATUS_UNSPECIFIED;LIMITED_OPENED",
+				"transport.load":          "35.000",
+				"transport.loadunit":      "% of max load",
+				"transport.speed":         "2500.000",
+				"transport.speedunit":     "mm/s",
+				"transport.operatingmode": "NORMAL",
+			}),
+		},
+		{
+			name:    "escalator with no position, doors, load or speed",
+			in:      &transportpb.Transport{MovingDirection: transportpb.Transport_FORWARD},
+			support: support,
+			want: row(map[string]string{
+				"transport.direction":     "FORWARD",
+				"transport.operatingmode": "OPERATING_MODE_UNSPECIFIED",
+			}),
+		},
+		{
+			name: "undescribed device",
+			in:   &transportpb.Transport{Load: new(float32(640)), Speed: new(float32(1.5))},
+			want: row(map[string]string{
+				"transport.direction":     "DIRECTION_UNSPECIFIED",
+				"transport.load":          "640.000",
+				"transport.speed":         "1.500",
+				"transport.operatingmode": "OPERATING_MODE_UNSPECIFIED",
+			}),
+		},
+		{
+			name: "no record",
+			want: row(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if diff := cmp.Diff(tt.want, transportToRow(tt.in, tt.support)); diff != "" {
+				t.Errorf("transportToRow (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+// TestServer_DownloadDevicesHTTPHandler_transport exports a lift's current state and its history, each with the
+// load unit its TransportSupport describes. A record that leaves a value unset exports it blank, not as the
+// previous record's value.
+func TestServer_DownloadDevicesHTTPHandler_transport(t *testing.T) {
+	n := node.New("test")
+	lift := transportpb.NewModel()
+	_, _ = lift.UpdateTransport(&transportpb.Transport{
+		ActualPosition:  &transportpb.Transport_Location{Floor: "3"},
+		MovingDirection: transportpb.Transport_NO_DIRECTION,
+		Load:            new(float32(10)),
+	})
+	historyStart := time.Date(2026, 1, 27, 9, 0, 0, 0, time.UTC)
+	records := []*transportpb.TransportRecord{
+		{RecordTime: timestamppb.New(historyStart), Transport: &transportpb.Transport{
+			ActualPosition: &transportpb.Transport_Location{Floor: "0"}, MovingDirection: transportpb.Transport_UP, Load: new(float32(40)),
+		}},
+		{RecordTime: timestamppb.New(historyStart.Add(time.Minute)), Transport: &transportpb.Transport{
+			ActualPosition: &transportpb.Transport_Location{Floor: "7"}, MovingDirection: transportpb.Transport_NO_DIRECTION, Load: new(float32(25)),
+		}},
+		{RecordTime: timestamppb.New(historyStart.Add(2 * time.Minute)), Transport: &transportpb.Transport{
+			MovingDirection: transportpb.Transport_DOWN,
+		}},
+	}
+	n.Announce("lift-1",
+		node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(transportpb.NewModelServer(lift))),
+		node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(&transportpb.InfoServer{
+			Transport: &transportpb.TransportSupport{LoadUnit: "% of max load"},
+		})),
+		node.HasServer(transportpb.RegisterTransportHistoryServer, transportpb.TransportHistoryServer(&stubTransportHistory{records: records})),
+		node.HasTrait(transportpb.TraitName),
+	)
+	s, rt := newDownloadedServer(t, n)
+
+	download := func(t *testing.T, req *devicespb.GetDownloadDevicesUrlRequest) *csvTester {
+		t.Helper()
+		u, err := s.GetDownloadDevicesUrl(context.Background(), req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rec := httptest.NewRecorder()
+		rt.ServeHTTP(rec, httptest.NewRequest("GET", u.Url, nil))
+		if rec.Code != 200 {
+			t.Fatalf("HTTP status code: expected 200, got %d", rec.Code)
+		}
+		return newCsvTester(t, rec.Result().Body)
+	}
+
+	t.Run("current", func(t *testing.T) {
+		ct := download(t, &devicespb.GetDownloadDevicesUrlRequest{})
+		assertHeaderOrder(t, ct.headerRow)
+		ct.assertCellValue("lift-1", "transport.floor", "3")
+		ct.assertCellValue("lift-1", "transport.direction", "NO_DIRECTION")
+		ct.assertCellValue("lift-1", "transport.load", "10.000")
+		ct.assertCellValue("lift-1", "transport.loadunit", "% of max load")
+	})
+
+	t.Run("history", func(t *testing.T) {
+		ct := download(t, &devicespb.GetDownloadDevicesUrlRequest{History: &timepb.Period{
+			StartTime: timestamppb.New(historyStart),
+			EndTime:   timestamppb.New(historyStart.Add(time.Hour)),
+		}})
+		if len(ct.rows) != len(records) {
+			t.Fatalf("expected %d rows, got %d", len(records), len(ct.rows))
+		}
+		cols := []string{"transport.floor", "transport.direction", "transport.load", "transport.loadunit"}
+		want := [][]string{
+			{"0", "UP", "40.000", "% of max load"},
+			{"7", "NO_DIRECTION", "25.000", "% of max load"},
+			{"", "DOWN", "", ""},
+		}
+		for i, row := range ct.rows {
+			got := make([]string, len(cols))
+			for j, col := range cols {
+				idx, ok := ct.headerIndex[col]
+				if !ok {
+					t.Fatalf("expected %s column, headers=%v", col, ct.headerRow)
+				}
+				got[j] = row[idx]
+			}
+			if diff := cmp.Diff(want[i], got); diff != "" {
+				t.Errorf("row %d (-want +got):\n%s", i, diff)
+			}
+		}
+	})
+}
+
+type stubTransportHistory struct {
+	transportpb.UnimplementedTransportHistoryServer
+	records []*transportpb.TransportRecord
+}
+
+func (s *stubTransportHistory) ListTransportHistory(_ context.Context, _ *transportpb.ListTransportHistoryRequest) (*transportpb.ListTransportHistoryResponse, error) {
+	return &transportpb.ListTransportHistoryResponse{TransportRecords: s.records}, nil
 }
 
 type stubMeterHistory struct {

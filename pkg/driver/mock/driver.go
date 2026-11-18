@@ -455,7 +455,19 @@ func newMockClient(traitMd *metadatapb.TraitMetadata, deviceName string, logger 
 				return nil, nil, nil
 			}
 		}
-		return []node.Feature{node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(transportpb.NewModelServer(model)))}, auto.TransportAuto(model, maxFloor),
+		// The simulated load is a weight of up to 1000, so it is described in kg unless configured otherwise.
+		loadUnit, ok := traitMd.GetMore()["loadUnit"]
+		if !ok {
+			loadUnit = "kg"
+		}
+		info := &transportpb.InfoServer{Transport: &transportpb.TransportSupport{
+			ResourceSupport: &typespb.ResourceSupport{Readable: true, Writable: true, Observable: true},
+			LoadUnit:        loadUnit,
+		}}
+		return []node.Feature{
+				node.HasServer(transportpb.RegisterTransportApiServer, transportpb.TransportApiServer(transportpb.NewModelServer(model))),
+				node.HasServer(transportpb.RegisterTransportInfoServer, transportpb.TransportInfoServer(info)),
+			}, auto.TransportAuto(model, maxFloor),
 			ctrl.Register(deviceName, traitMd.Name, forceJSON(func() *transportpb.Transport { return new(transportpb.Transport) },
 				func(v *transportpb.Transport, opts ...resource.WriteOption) error { _, err := model.UpdateTransport(v, opts...); return err }))
 	case udmipb.TraitName:
