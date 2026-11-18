@@ -10,7 +10,8 @@ heartbeat, see [Sending on change](#sending-on-change)) as:
 
 - **Telemetry** — a UDMI pointset (`{timestamp, version, points{<name>{present_value}}}`).
 - **Discovery** — a UDMI device-metadata message (`{system{name, description, tags,
-  location}, pointset{points{<name>{units, writable, ref}}}}`), on the first cycle that
+  location{floor, zone}}, pointset{points{<name>{units, writable, ref}}}}`, the location from
+  the device's metadata, sent when either label is set), on the first cycle that
   reaches the broker and then once every `metadataInterval` cycles. The repeats are spread by
   device across those cycles, on a slot picked from the device name, so about
   1/`metadataInterval` of a node's devices re-announce each cycle, and nodes started together
