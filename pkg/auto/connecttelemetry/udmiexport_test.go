@@ -171,6 +171,7 @@ func TestDiscoveryEvent(t *testing.T) {
 	assert.Equal(t, []string{"hvac"}, ev.System.Tags)
 	require.NotNil(t, ev.System.Location)
 	assert.Equal(t, "03", ev.System.Location.Floor)
+	assert.Equal(t, "electrical-room", ev.System.Location.Zone)
 
 	// site is left empty (Connect enrichment supplies it) and must be omitted, not
 	// emitted as an invalid "site":"".
@@ -180,6 +181,24 @@ func TestDiscoveryEvent(t *testing.T) {
 	require.NotNil(t, ev.Pointset)
 	require.Contains(t, ev.Pointset.Points, dbo.FieldEnergyAccumulator)
 	assert.Equal(t, "kWh", ev.Pointset.Points[dbo.FieldEnergyAccumulator].Units)
+}
+
+func TestDiscoveryEventSendsZoneWithoutFloor(t *testing.T) {
+	now := time.Date(2026, 6, 22, 10, 15, 0, 0, time.UTC)
+
+	meta := &metadatapb.Metadata{
+		Name:     "van/uk/brum/ugs/lights/l-001",
+		Location: &metadatapb.Metadata_Location{Zone: "North"},
+	}
+	ev := discoveryEvent(meta, nil, now)
+
+	require.NotNil(t, ev.System.Location, "a zone alone still sends location")
+	assert.Equal(t, "North", ev.System.Location.Zone)
+	assert.Empty(t, ev.System.Location.Floor)
+
+	b, err := json.Marshal(ev)
+	require.NoError(t, err)
+	assert.Contains(t, string(b), `"location":{"zone":"North"}`, "an empty floor must be omitted")
 }
 
 func TestDiscoveryEventFallsBackToDeviceName(t *testing.T) {

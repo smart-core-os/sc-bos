@@ -109,6 +109,10 @@ type MetadataLocation struct {
 	// path site identity is supplied by broker enrichment, not the payload.
 	Site  string `json:"site,omitempty"`
 	Floor string `json:"floor,omitempty"`
+	// Zone is the device's Smart Core zone label (metadata location.zone), such as
+	// "North". It is not a UDMI field; Connect reads it to place the device in its
+	// zone's space.
+	Zone string `json:"zone,omitempty"`
 }
 
 // MetadataPointset is the declared point inventory of a metadata message

@@ -547,7 +547,8 @@ func diskInstance(mount string) uint32 {
 // device's Smart Core metadata and the declared point inventory.
 //
 // system.name prefers the appearance title (falling back to the device name),
-// tags carry the building subsystem selector, and location carries the floor.
+// tags carry the building subsystem selector, and location carries the floor and
+// zone label (sent when either is set).
 // site is intentionally left empty here: on the Connect path org/site identity is
 // supplied by broker enrichment, not by the payload.
 func discoveryEvent(meta *metadatapb.Metadata, inventory map[string]udmi.MetadataPoint, now time.Time) udmi.MetadataEvent {
@@ -566,8 +567,8 @@ func discoveryEvent(meta *metadatapb.Metadata, inventory map[string]udmi.Metadat
 		if sub := meta.GetMembership().GetSubsystem(); sub != "" {
 			ev.System.Tags = append(ev.System.Tags, sub)
 		}
-		if loc := meta.GetLocation(); loc != nil && loc.GetFloor() != "" {
-			ev.System.Location = &udmi.MetadataLocation{Floor: loc.GetFloor()}
+		if loc := meta.GetLocation(); loc != nil && (loc.GetFloor() != "" || loc.GetZone() != "") {
+			ev.System.Location = &udmi.MetadataLocation{Floor: loc.GetFloor(), Zone: loc.GetZone()}
 		}
 	}
 	if len(inventory) > 0 {
