@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/smart-core-os/sc-bos/pkg/proto/accesspb"
@@ -19,6 +20,7 @@ import (
 	"github.com/smart-core-os/sc-bos/pkg/proto/openclosepb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/soundsensorpb"
 	"github.com/smart-core-os/sc-bos/pkg/proto/timepb"
+	"github.com/smart-core-os/sc-bos/pkg/proto/transportpb"
 	"github.com/smart-core-os/sc-bos/pkg/trait"
 )
 
@@ -378,6 +380,51 @@ func (s *Server) getTraitInfo() map[string]traitInfo {
 				}
 			},
 		},
+		string(transportpb.TraitName): {
+			headers: transportHeaders,
+			get: func(ctx context.Context, name string) (map[string]string, error) {
+				c := transportpb.NewTransportApiClient(s.m.ClientConn())
+				data, err := c.GetTransport(ctx, &transportpb.GetTransportRequest{Name: name})
+				if err != nil {
+					return nil, err
+				}
+				ci := transportpb.NewTransportInfoClient(s.m.ClientConn())
+				support, _ := ci.DescribeTransport(ctx, &transportpb.DescribeTransportRequest{Name: name})
+				return transportToRow(data, support), nil
+			},
+			history: func(name string, period *timepb.Period, pageSize int32) *historyCursor {
+				c := transportpb.NewTransportHistoryClient(s.m.ClientConn())
+				ci := transportpb.NewTransportInfoClient(s.m.ClientConn())
+				var support *transportpb.TransportSupport
+				return &historyCursor{
+					getPage: func(ctx context.Context, token string) ([]historyRecord, string, error) {
+						if token == "" {
+							// fetch info the first time
+							support, _ = ci.DescribeTransport(ctx, &transportpb.DescribeTransportRequest{Name: name})
+						}
+
+						page, err := c.ListTransportHistory(ctx, &transportpb.ListTransportHistoryRequest{
+							Name:      name,
+							PageToken: token,
+							PageSize:  pageSize,
+							Period:    period,
+						})
+						if err != nil {
+							return nil, "", err
+						}
+
+						records := make([]historyRecord, 0, len(page.TransportRecords))
+						for _, record := range page.TransportRecords {
+							records = append(records, historyRecord{
+								at:   record.GetRecordTime().AsTime(),
+								vals: transportToRow(record.GetTransport(), support),
+							})
+						}
+						return records, page.NextPageToken, nil
+					},
+				}
+			},
+		},
 	}
 }
 
@@ -575,5 +622,46 @@ func soundLevelToRow(d *soundsensorpb.SoundLevel) map[string]string {
 	if d.SoundPressureLevel != nil {
 		vals["sound.pressurelevel"] = fmt.Sprintf("%.1f", *d.SoundPressureLevel)
 	}
+	return vals
+}
+
+var transportHeaders = []string{"transport.floor", "transport.direction", "transport.doors", "transport.load", "transport.loadunit", "transport.speed", "transport.speedunit", "transport.operatingmode"}
+
+// transportToRow writes a lift's or escalator's Transport as the trait has it: enum names, and the load and
+// speed units from its TransportSupport (nil when the device isn't described), which the trait leaves to the
+// driver. The doors' states go in one column in the trait's door order, separated by ";", since a transport
+// has any number of doors. Only the values connecttelemetry streams are written: Smart Core Connect imports
+// these columns onto the same fields, so a renamed column or a change in how one is written needs the same
+// change in its import.
+//
+// Every column is written, blank when the value is unset. A history download reuses a device's row from one
+// record to the next, so a column left unwritten would repeat the previous record's value, and an import would
+// read a load or floor the transport never reported.
+func transportToRow(d *transportpb.Transport, support *transportpb.TransportSupport) map[string]string {
+	vals := make(map[string]string, len(transportHeaders))
+	for _, h := range transportHeaders {
+		vals[h] = ""
+	}
+	if d == nil {
+		return vals
+	}
+	vals["transport.floor"] = d.GetActualPosition().GetFloor()
+	vals["transport.direction"] = d.GetMovingDirection().String()
+	if doors := d.GetDoors(); len(doors) > 0 {
+		statuses := make([]string, len(doors))
+		for i, door := range doors {
+			statuses[i] = door.GetStatus().String()
+		}
+		vals["transport.doors"] = strings.Join(statuses, ";")
+	}
+	if d.Load != nil {
+		vals["transport.load"] = fmt.Sprintf("%.3f", d.GetLoad())
+		vals["transport.loadunit"] = support.GetLoadUnit()
+	}
+	if d.Speed != nil {
+		vals["transport.speed"] = fmt.Sprintf("%.3f", d.GetSpeed())
+		vals["transport.speedunit"] = support.GetSpeedUnit()
+	}
+	vals["transport.operatingmode"] = d.GetOperatingMode().String()
 	return vals
 }

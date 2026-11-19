@@ -26,10 +26,12 @@ jobs:
       PROTOC_GEN_GRPC_WEB_VERSION: '2.0.2'
     steps:
       - uses: actions/checkout@v4
+      # pinned to the go.mod minor, not '^1.26.x': gofmt's doc comment formatting changes between
+      # minors, and generated code formatted by a newer Go than the committed output fails this check
       - uses: actions/setup-go@v5
         with:
           cache: true
-          go-version: '^1.26.x'
+          go-version: '1.26.x'
 
       # the go plugins come from the go.mod tool directives, so only the native tools
       # need installing. the script writes to /opt and /usr/local/bin, hence sudo.
