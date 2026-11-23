@@ -161,6 +161,12 @@ func TestMigrations(t *testing.T) {
 			if err != nil {
 				t.Fatalf("OpenStore: %v", err)
 			}
+			// Registered after restoreDump's t.TempDir, so it runs first: Windows can't delete an open file.
+			t.Cleanup(func() {
+				if err := store.Close(); err != nil {
+					t.Errorf("store.Close: %v", err)
+				}
+			})
 			server := NewServer(store, logger)
 
 			accounts := listAccounts(t, server)
