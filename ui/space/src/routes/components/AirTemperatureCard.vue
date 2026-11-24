@@ -1,5 +1,6 @@
 <template>
-  <v-card elevation="0">
+  <!-- Hidden until the zone sends its temperature, so a zone without thermostats shows no card. -->
+  <v-card v-if="airTempValue.value" elevation="0">
     <v-card-title class="d-flex align-center pl-7">
       <span class="text-h4 font-weight-medium flex-grow-1">Temperature</span>
       <v-switch

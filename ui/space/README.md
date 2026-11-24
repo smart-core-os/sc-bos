@@ -92,7 +92,7 @@ The `config.pages.home.widgets` array controls which cards appear on the home sc
 | Name | Description |
 |---|---|
 | `lighting` | Brightness slider with auto/manual mode toggle, plus optional on/off switches (see below) |
-| `temperature` | Temperature set-point slider with auto/manual HVAC toggle |
+| `temperature` | Temperature set-point slider with auto/manual HVAC toggle. Only shown once the zone reports a temperature, so one UI config can list it for rooms with and without thermostats |
 | `air-quality` | Air quality score indicator |
 
 Widgets are shown in the order they appear in the array. If `widgets` is omitted, no controls are shown.
