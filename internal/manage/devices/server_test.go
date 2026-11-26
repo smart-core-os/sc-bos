@@ -234,6 +234,35 @@ func TestServer_ListDevices(t *testing.T) {
 	}
 }
 
+// TestServer_GetDevicesMetadata_NoMatches guards the zero-count answer. A query that matches
+// nothing used to return nil, which PullDevicesMetadata's send-on-change then swallowed
+// because nil equalled the nil it starts with: the stream opened, worked, and never said
+// anything. Any client counting devices by query waited forever on the perfectly ordinary
+// case of nothing matching.
+func TestServer_GetDevicesMetadata_NoMatches(t *testing.T) {
+	n := node.New("test")
+	n.Announce("devices/LTF-001", node.HasMetadata(&metadatapb.Metadata{
+		Membership: &metadatapb.Metadata_Membership{Subsystem: "Lighting"},
+	}), node.HasTrait(trait.Light))
+	server := &Server{m: n}
+
+	metadata, err := server.GetDevicesMetadata(context.Background(), &devicespb.GetDevicesMetadataRequest{
+		Query: &devicespb.Device_Query{Conditions: []*devicespb.Device_Query_Condition{{
+			Field: "metadata.membership.subsystem",
+			Value: &devicespb.Device_Query_Condition_StringEqual{StringEqual: "Metering"},
+		}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if metadata == nil {
+		t.Fatal("GetDevicesMetadata returned nil for a query that matched nothing, want a zero count")
+	}
+	if metadata.TotalCount != 0 {
+		t.Errorf("TotalCount = %d, want 0", metadata.TotalCount)
+	}
+}
+
 func TestServer_GetDevicesMetadata(t *testing.T) {
 	n := node.New("test")
 
