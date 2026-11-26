@@ -257,6 +257,15 @@ func handleMessages(ctx context.Context, name string, client exportMessageGetter
 				}
 			}
 		case now := <-beat:
+			// A release can fall due at the same instant, as it does whenever the two
+			// intervals are equal, and select picks between ready arms at random. Publish
+			// it first: it is a fresh sample, and publishing it answers the heartbeat
+			// without asking the device for another reading.
+			for _, msg := range th.due(now) {
+				if err := publish(msg.topic, msg.payload, now); err != nil {
+					return err
+				}
+			}
 			if !hb.due(now) {
 				break
 			}

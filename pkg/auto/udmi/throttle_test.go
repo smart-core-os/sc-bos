@@ -287,6 +287,11 @@ func TestThrottle_EqualIntervalsGiveAFixedRate(t *testing.T) {
 				}
 				h.assertTopics(eventTopic)
 			}
+			// The release and the heartbeat fall due at the same instant. The release
+			// answers the heartbeat, so the device must not be asked for a reading too.
+			if got := h.get.callCount(); got != 0 {
+				t.Errorf("GetExportMessage called %d times, want 0", got)
+			}
 		})
 	})
 	t.Run("quiet device is covered by the heartbeat", func(t *testing.T) {
