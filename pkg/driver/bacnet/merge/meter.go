@@ -3,7 +3,9 @@ package merge
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
+	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -30,10 +32,22 @@ type meterConfig struct {
 	// Unit is the unit of the usage reading, after any usage.scale is applied.
 	// When empty the unit is read from the usage object's BACnet Units property, unless usage is scaled.
 	Unit string `json:"unit,omitempty"`
+	// Production is read into MeterReading.Produced, for meters that export as well as import.
+	Production *config.ValueSource `json:"production,omitempty"`
+	// ProducedUnit is the unit of the production reading, after any production.scale is applied.
+	// When empty the unit is read from the production object's BACnet Units property, unless production is scaled.
+	// It is not taken from Unit: import and export are the same commodity but needn't be in the same unit.
+	ProducedUnit string `json:"producedUnit,omitempty"`
 }
 
 func readMeterConfig(raw []byte) (cfg meterConfig, err error) {
 	err = json.Unmarshal(raw, &cfg)
+	if err != nil {
+		return
+	}
+	if cfg.Usage == nil && cfg.Production == nil {
+		err = errors.New("meter needs at least one of usage or production")
+	}
 	return
 }
 
@@ -49,12 +63,8 @@ type meterTrait struct {
 	config   meterConfig
 	pollTask *task.Intermittent
 
-	// readUnits reads the usage object's BACnet Units property, replaced in tests.
-	readUnits  func(ctx context.Context) (any, error)
-	unitOnce   once.RetryError
-	unit       string // resolved from readUnits, valid once unitOnce succeeds
-	warnScaled sync.Once
-	warnNoUnit sync.Once
+	usageUnit    *readingUnit
+	producedUnit *readingUnit // nil unless production is configured
 }
 
 func newMeter(client *comm.Client, devices known.Context, fault *traitFault, config config.RawTrait, logger *zap.Logger) (*meterTrait, error) {
@@ -75,7 +85,10 @@ func newMeter(client *comm.Client, devices known.Context, fault *traitFault, con
 		config:      cfg,
 	}
 	t.pollTask = task.NewIntermittent(t.startPoll)
-	t.readUnits = t.readUsageUnits
+	t.usageUnit = t.newReadingUnit("usage", "unit", cfg.Unit, cfg.Usage)
+	if cfg.Production != nil {
+		t.producedUnit = t.newReadingUnit("production", "producedUnit", cfg.ProducedUnit, cfg.Production)
+	}
 	return t, nil
 }
 
@@ -88,41 +101,87 @@ func (t *meterTrait) AnnounceSelf(a node.Announcer) node.Undo {
 }
 
 func (t *meterTrait) DescribeMeterReading(ctx context.Context, _ *meterpb.DescribeMeterReadingRequest) (*meterpb.MeterReadingSupport, error) {
-	unit, err := t.usageUnit(ctx)
+	usageUnit, err := t.usageUnit.get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &meterpb.MeterReadingSupport{
+	support := &meterpb.MeterReadingSupport{
 		ResourceSupport: &typespb.ResourceSupport{Readable: true, Observable: true},
-		UsageUnit:       unit,
-	}, nil
+		UsageUnit:       usageUnit,
+	}
+	// The produced unit stays empty unless production is read: consumers, dbo.MeterFields among them, use its
+	// presence to decide whether the meter reports export at all, and a spurious unit yields a constant-zero series.
+	if t.producedUnit != nil {
+		support.ProducedUnit, err = t.producedUnit.get(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return support, nil
 }
 
-// usageUnit returns the unit of the usage reading, or "" if the meter has none.
+// readingUnit resolves the unit of one of the meter's readings: the configured unit, else the BACnet Units
+// property of the object the reading comes from.
+type readingUnit struct {
+	reading    string // "usage" or "production", for messages
+	configKey  string // the config field that sets the unit, for messages
+	configured string
+	src        *config.ValueSource // nil if the reading isn't configured
+	timeout    time.Duration
+	logger     *zap.Logger
+
+	// read reads src's BACnet Units property, replaced in tests.
+	read       func(ctx context.Context) (any, error)
+	once       once.RetryError
+	unit       string // resolved from read, valid once once succeeds
+	warnScaled sync.Once
+	warnNoUnit sync.Once
+}
+
+func (t *meterTrait) newReadingUnit(reading, configKey, configured string, src *config.ValueSource) *readingUnit {
+	u := &readingUnit{
+		reading:    reading,
+		configKey:  configKey,
+		configured: configured,
+		src:        src,
+		timeout:    t.config.PollTimeoutDuration(),
+		logger:     t.logger.With(zap.String("reading", reading)),
+	}
+	u.read = func(ctx context.Context) (any, error) {
+		src := *u.src
+		units := config.PropertyID(property.Units)
+		src.Property = &units
+		src.Scale = 0
+		return comm.ReadProperty(ctx, t.client, t.known, src)
+	}
+	return u
+}
+
+// get returns the unit of the reading, or "" if it has none.
 // Consumers that can't tell a meter's unit have to guess, so a meter with no unit is worth a warning.
 //
-// While the unit can't be read from the device usageUnit returns an Unavailable error rather than "".
+// While the unit can't be read from the device get returns an Unavailable error rather than "".
 // Consumers treat "" as the meter's answer: a zone group would assume the member matches it and stop asking.
-func (t *meterTrait) usageUnit(ctx context.Context) (string, error) {
-	if t.config.Unit != "" {
-		return t.config.Unit, nil
+func (u *readingUnit) get(ctx context.Context) (string, error) {
+	if u.configured != "" {
+		return u.configured, nil
 	}
-	if t.config.Usage == nil {
+	if u.src == nil {
 		return "", nil
 	}
-	if s := t.config.Usage.Scale; s != 0 && s != 1 {
+	if s := u.src.Scale; s != 0 && s != 1 {
 		// The device's Units describe the value before scaling, so they'd be wrong for what we report.
-		t.warnScaled.Do(func() {
-			t.logger.Warn("meter usage is scaled but has no unit configured, set unit to the scaled unit",
+		u.warnScaled.Do(func() {
+			u.logger.Warn("meter reading is scaled but has no unit configured, set "+u.configKey+" to the scaled unit",
 				zap.Float64("scale", s))
 		})
 		return "", nil
 	}
-	err := t.unitOnce.Do(ctx, func() error {
+	err := u.once.Do(ctx, func() error {
 		// not ctx: the read is shared by all waiting callers, so one caller giving up shouldn't fail it for the rest
-		readCtx, cancel := context.WithTimeout(context.Background(), t.config.PollTimeoutDuration())
+		readCtx, cancel := context.WithTimeout(context.Background(), u.timeout)
 		defer cancel()
-		raw, err := t.readUnits(readCtx)
+		raw, err := u.read(readCtx)
 		if err != nil {
 			return err
 		}
@@ -130,27 +189,19 @@ func (t *meterTrait) usageUnit(ctx context.Context) (string, error) {
 		if err != nil {
 			return err
 		}
-		t.unit = meterUnitSymbol(comm.EngineeringUnits(n))
+		u.unit = meterUnitSymbol(comm.EngineeringUnits(n))
 		return nil
 	})
 	if err != nil {
-		t.logger.Warn("reading meter units from device, will try again on next describe", zap.Error(err))
-		return "", status.Errorf(codes.Unavailable, "reading meter units from device: %v", err)
+		u.logger.Warn("reading meter units from device, will try again on next describe", zap.Error(err))
+		return "", status.Errorf(codes.Unavailable, "reading meter %s units from device: %v", u.reading, err)
 	}
-	if t.unit == "" {
-		t.warnNoUnit.Do(func() {
-			t.logger.Warn("meter has no usable unit on the device or in config, set unit")
+	if u.unit == "" {
+		u.warnNoUnit.Do(func() {
+			u.logger.Warn("meter reading has no usable unit on the device or in config, set " + u.configKey)
 		})
 	}
-	return t.unit, nil
-}
-
-func (t *meterTrait) readUsageUnits(ctx context.Context) (any, error) {
-	src := *t.config.Usage
-	units := config.PropertyID(property.Units)
-	src.Property = &units
-	src.Scale = 0
-	return comm.ReadProperty(ctx, t.client, t.known, src)
+	return u.unit, nil
 }
 
 // meterUnits are the spellings meter consumers recognise for BACnet engineering units a meter might report in.
@@ -200,7 +251,7 @@ func (t *meterTrait) PullMeterReadings(request *meterpb.PullMeterReadingsRequest
 	timeoutCtx, cleanup := context.WithTimeout(server.Context(), t.config.PollTimeoutDuration())
 	defer cleanup()
 	for change := range t.model.PullMeterReadings(timeoutCtx) {
-		if change.Value.Usage != 0 {
+		if change.Value.Usage != 0 || change.Value.Produced != 0 {
 			break
 		}
 	}
@@ -216,20 +267,53 @@ func (t *meterTrait) startPoll(init context.Context) (stop task.StopFn, err erro
 }
 
 func (t *meterTrait) pollPeer(ctx context.Context) (*meterpb.MeterReading, error) {
-	responses := comm.ReadProperties(ctx, t.client, t.known, *t.config.Usage)
-	var errs []error
-	usage, err := comm.Float32Value(responses[0])
-	if err != nil {
-		errs = append(errs, comm.ErrReadProperty{Prop: "usage", Cause: err})
+	reads := t.meterReads()
+	srcs := make([]config.ValueSource, len(reads))
+	for i, r := range reads {
+		srcs[i] = r.src
 	}
+	data, errs := applyMeterReads(reads, comm.ReadProperties(ctx, t.client, t.known, srcs...))
 	t.fault.update(t.config.Name, trait.Meter, errs)
 	if len(errs) > 0 {
 		return nil, multierr.Combine(errs...)
 	}
-	data := &meterpb.MeterReading{
-		Usage: usage,
-	}
 	return t.model.UpdateMeterReading(data)
+}
+
+// meterRead is one configured value source and where its value goes in a MeterReading.
+type meterRead struct {
+	prop string // names the reading in errors
+	src  config.ValueSource
+	set  func(r *meterpb.MeterReading, v float32)
+}
+
+// meterReads returns the value sources to read on each poll, in the order their responses come back.
+func (t *meterTrait) meterReads() []meterRead {
+	var reads []meterRead
+	if t.config.Usage != nil {
+		reads = append(reads, meterRead{prop: "usage", src: *t.config.Usage,
+			set: func(r *meterpb.MeterReading, v float32) { r.Usage = v }})
+	}
+	if t.config.Production != nil {
+		reads = append(reads, meterRead{prop: "production", src: *t.config.Production,
+			set: func(r *meterpb.MeterReading, v float32) { r.Produced = v }})
+	}
+	return reads
+}
+
+// applyMeterReads builds a reading from responses, which pair with reads by index.
+func applyMeterReads(reads []meterRead, responses []any) (*meterpb.MeterReading, []error) {
+	data := &meterpb.MeterReading{}
+	var errs []error
+	for i, r := range reads {
+		v, err := comm.Float32Value(responses[i])
+		if err != nil {
+			errs = append(errs, comm.ErrReadProperty{Prop: r.prop, Cause: err})
+			continue
+		}
+		r.set(data, v)
+	}
+	return data, errs
 }
 
 func (t *meterTrait) PollTask() *task.Intermittent { return t.pollTask }
